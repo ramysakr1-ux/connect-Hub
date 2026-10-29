@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- MOCK-UP of the whole timetable (Ramy, 29 Oct 2026: "show me a mock-up of the whole thing"). Equal tiles under one
+     time bar; view only or edit; across or down; the course's shape; who teaches the inputs; each assignment's own
+     due-date rule; a shelf of ready-made tiles plus "Make a tile"; deadline flags on the days; a day that starts late,
+     finishes early, has no TP or is off; the checks Cambridge asks for. Connect's five weeks with Friday off, from
+     Monday 2 November. Nothing here saves. -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timetable — mock-up</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<style>
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:Karla,sans-serif;}
+  .wrap{max-width:1480px; margin:0 auto; padding:28px 24px 60px;}
+  .eyebrow{font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--a-red); margin:0 0 6px;}
+  h1{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:2rem; margin:0 0 6px;}
+  h2{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.18rem; margin:0 0 4px;}
+  .lede{color:var(--grey); margin:0 0 18px; max-width:780px; line-height:1.5;}
+  .bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:0 0 14px;}
+  .seg{display:inline-flex; flex-wrap:wrap; background:var(--card); border:1px solid var(--sand-line); border-radius:999px; padding:3px;}
+  .seg button{border:0; background:none; font:600 .86rem Karla,sans-serif; color:var(--grey); padding:7px 14px; border-radius:999px; cursor:pointer;}
+  .seg button.on{background:var(--a-forest); color:var(--paper);}
+  .weeks{margin-left:auto;}
+  .card{background:var(--card); border:1px solid var(--sand-line); border-top:3px solid var(--a-forest); border-radius:var(--r-card); padding:16px 18px;}
+  .card p.s{margin:0 0 12px; color:var(--grey); font-size:.86rem; line-height:1.45;}
+  .setup{display:none; grid-template-columns:1.25fr 1fr; gap:14px; margin:0 0 14px;}
+  .editing .setup{display:grid;}
+  .setup > *, .side > *{min-width:0;}
+  .f{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px 12px;}
+  .f label span, .lab{display:block; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 4px;}
+  select, input[type=time], input[type=text], input[type=number]{box-sizing:border-box; width:100%; height:38px; padding:0 8px; border:1px solid var(--sand-line); border-radius:9px; background:var(--field); font:500 .9rem Karla,sans-serif; color:var(--ink);}
+  .fixed b{display:block; font-size:.9rem; padding:8px 0 0;} .fixed small{color:var(--faint); font-size:.72rem;}
+  .sum{margin:12px 0 0; padding:10px 0 0; border-top:1px solid var(--row-line); font-size:.86rem; color:var(--grey);} .sum b{color:var(--ink);}
+  .side{display:grid; gap:14px; align-content:start;}
+  .tut{display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:.88rem;}
+  .tut select{width:auto;}
+  .asg{width:100%; border-collapse:collapse; font-size:.84rem;}
+  .asg th{text-align:left; font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--grey); padding:0 6px 6px 0; font-weight:700;}
+  .asg td{padding:4px 6px 4px 0; vertical-align:middle;}
+  .asg td:first-child{font-weight:700; white-space:nowrap;}
+  .asg input[type=number]{width:56px;} .asg input[type=time]{width:128px;}
+  .asg small{color:var(--grey);}
+
+  /* the shelf: the buffet, and your own */
+  .shelf{display:none; margin:0 0 14px; background:var(--card); border:1px solid var(--sand-line); border-radius:var(--r-card); padding:14px 16px;}
+  .editing .shelf{display:block;}
+  .shelf .row{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 0;}
+  .chip{position:relative; cursor:grab; border:1.5px solid transparent; border-radius:8px; padding:7px 10px; font:600 .8rem/1.2 Karla,sans-serif; max-width:210px;}
+  .chip small{display:block; font-weight:500; color:var(--grey); font-size:.7rem;}
+  .chip .req{display:inline-block; margin-left:6px; font-size:.6rem; letter-spacing:.06em; text-transform:uppercase; background:var(--paper); border-radius:4px; padding:1px 4px; box-shadow:inset 0 0 0 1px var(--sand-line); color:var(--a-red);}
+  .make{border:1.5px dashed var(--sand-line); background:none; color:var(--a-forest); cursor:pointer;}
+  .shelf.over{outline:2px dashed var(--a-red); outline-offset:2px;}
+  .maker{display:none; margin:10px 0 0; gap:8px; flex-wrap:wrap; align-items:end;} .maker.open{display:flex;}
+  .maker > *{flex:0 1 180px;} .maker button{flex:0 0 auto;}
+  .btn{border:0; border-radius:999px; padding:9px 16px; background:var(--a-forest); color:var(--paper); font:700 .86rem Karla,sans-serif; cursor:pointer;}
+
+  /* the grid */
+  .scroller{overflow-x:auto; background:var(--card); border:1px solid var(--sand-line); border-radius:var(--r-card); box-shadow:0 1px 2px var(--shade-near), 0 8px 24px var(--shade-far);}
+  .grid{display:grid; gap:6px; padding:14px;}
+  .grid.across{grid-template-columns:150px repeat(var(--n), minmax(108px, 1fr));}
+  .grid.down{grid-template-columns:repeat(var(--n), minmax(170px, 1fr));}
+  .tick{font:700 .74rem Karla,sans-serif; color:var(--grey); display:flex; flex-direction:column; justify-content:flex-end; padding:0 4px 4px; border-bottom:2px solid var(--sand-line);}
+  .grid.down .tick{align-items:flex-end; justify-content:flex-start; padding:6px 8px 0 0; border-bottom:0; border-right:2px solid var(--sand-line);}
+  .tick small{font-weight:500; color:var(--faint);}
+  .day{display:flex; flex-direction:column; justify-content:center; gap:3px; padding:0 8px; border-right:2px solid var(--sand-line); position:relative;}
+  .grid.down .day{border-right:0; border-bottom:2px solid var(--sand-line); padding:0 4px 6px; justify-content:flex-end;}
+  .day b{font-family:Newsreader,Georgia,serif; font-size:1rem;}
+  .day span.dt{font-size:.74rem; color:var(--grey);}
+  .editing .day{cursor:pointer;} .editing .day:hover b{text-decoration:underline;}
+  .flag{display:inline-flex; align-items:center; gap:4px; width:max-content; font:700 .64rem Karla,sans-serif; border-radius:4px; padding:2px 6px; background:color-mix(in oklch, var(--a-red) 12%, var(--paper)); color:var(--a-red); box-shadow:inset 0 0 0 1px color-mix(in oklch, var(--a-red) 30%, var(--paper));}
+  .flag.re{background:color-mix(in oklch, var(--a-mustard) 18%, var(--paper)); color:var(--ink); box-shadow:inset 0 0 0 1px color-mix(in oklch, var(--a-mustard) 45%, var(--paper));}
+  .flag.hand::after{content:'set by hand'; font-weight:500; color:var(--grey); margin-left:2px;}
+  .editing .flag{cursor:grab;}
+  .day.over{outline:2px dashed var(--a-red); outline-offset:2px; border-radius:6px;}
+  .mod{font-size:.68rem; font-weight:700; color:var(--gold-deep);}
+
+  .cell{height:76px; border-radius:8px; border:1.5px solid transparent; padding:7px 8px; box-sizing:border-box; font-size:.79rem; line-height:1.25; position:relative; overflow:hidden; display:flex; flex-direction:column; gap:3px;}
+  .grid.down .cell{height:62px;}
+  .cell .t{font-weight:600; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .cell .t{-webkit-line-clamp:2;}
+  .cell .tm{font-size:.7rem; font-weight:700; color:color-mix(in oklch, var(--ink) 70%, transparent); margin-top:auto;}
+  .cell .who{position:absolute; top:6px; right:6px; font:700 .62rem Karla,sans-serif; letter-spacing:.04em; background:var(--paper); border-radius:4px; padding:1px 5px; box-shadow:inset 0 0 0 1px var(--sand-line); border:0; color:var(--ink);}
+  .editing .cell .who{cursor:pointer;} .editing .cell .who:hover{box-shadow:inset 0 0 0 1.5px var(--a-forest);}
+  .cell.has-who .t{padding-right:28px;}
+  .cell .me{display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; margin-left:4px; border-radius:6px; background:var(--a-forest); color:var(--paper); font:700 .8rem Karla,sans-serif; vertical-align:1px;}
+  .empty{background:none; border:1.5px dashed var(--row-line);}
+  .gone{background:repeating-linear-gradient(135deg, transparent 0 6px, var(--row-line) 6px 7px); border:1.5px solid var(--row-line); color:var(--grey); font-size:.72rem; font-weight:600; justify-content:center; align-items:center; text-align:center;}
+
+.k-assessor small{color:color-mix(in oklch, var(--paper) 80%, transparent);}
+  .k-assessor .tm{color:color-mix(in oklch, var(--paper) 80%, var(--a-navy));}
+
+
+  .card .asgwrap{overflow-x:auto;}
+
+  /* TILES YOU COULD PICK UP (Ramy, 29 Oct 2026: "more like a 3D tile ... it's a drag and drop ... I want it to look live,
+     not patchy"). Each kind has one colour, --c; the tile is lit from above (lighter top, deeper bottom), stands on a
+     darker edge, and casts a soft shadow in its own colour. It rises under the pointer and sinks when it is picked up. */
+  .k-input{--c:oklch(52% 0.09 155); --on:var(--paper);}
+  .k-tp{--c:oklch(80% 0.085 150);}
+  .k-feedback{--c:oklch(78% 0.09 240);}
+  .k-break{--c:oklch(91% 0.008 260); --on:var(--grey);}
+  .k-lunch{--c:oklch(84% 0.09 75);}
+  .k-plan{--c:oklch(90% 0.09 100);}
+  .k-demo{--c:oklch(76% 0.08 300);}
+  .k-event{--c:oklch(76% 0.04 260);}
+  .k-task{--c:oklch(79% 0.075 15);}
+  .k-assessor{--c:oklch(40% 0.07 265); --on:var(--paper);}
+  .cell[class*=" k-"], .chip[class*=" k-"], .key i[class*="k-"]{
+    background:linear-gradient(180deg, color-mix(in oklch, white 30%, var(--c)) 0%, var(--c) 55%, color-mix(in oklch, black 6%, var(--c)) 100%);
+    border:1px solid color-mix(in oklch, black 14%, var(--c)); border-bottom-width:3px; border-bottom-color:color-mix(in oklch, black 26%, var(--c));
+    color:var(--on, var(--ink));
+    box-shadow:inset 0 1px 0 color-mix(in oklch, white 65%, transparent), inset 0 -1px 0 color-mix(in oklch, black 6%, transparent), 0 2px 3px color-mix(in oklch, black 10%, transparent), 0 10px 18px -10px color-mix(in oklch, var(--c) 90%, black);
+    transition:transform .15s ease, box-shadow .15s ease;}
+  .cell[class*=" k-"] .tm{color:color-mix(in oklch, var(--on, var(--ink)) 72%, transparent);}
+  .k-input .who, .k-assessor .who{background:color-mix(in oklch, white 92%, var(--c));}
+  .chip[class*=" k-"] small{color:color-mix(in oklch, var(--on, var(--ink)) 70%, transparent);}
+  .editing .cell[class*=" k-"]:hover, .chip[class*=" k-"]:hover{transform:translateY(-2px); box-shadow:inset 0 1px 0 color-mix(in oklch, white 65%, transparent), 0 4px 6px color-mix(in oklch, black 12%, transparent), 0 16px 24px -10px color-mix(in oklch, var(--c) 90%, black);}
+  .cell[class*=" k-"]:active, .chip[class*=" k-"]:active{transform:translateY(1px); border-bottom-width:1px; margin-top:2px;}
+  .empty{background:color-mix(in oklch, black 3%, var(--card)); box-shadow:inset 0 2px 4px color-mix(in oklch, black 6%, transparent);}
+  .cell.odd::after{content:''; position:absolute; right:0; bottom:0; border-style:solid; border-width:0 0 12px 12px; border-color:transparent transparent var(--a-mustard) transparent;}
+  .editing .cell:not(.empty):not(.gone){cursor:grab;}
+  .cell.over{outline:2px dashed var(--a-forest) !important; outline-offset:1px;}
+
+  .pop{position:absolute; z-index:20; background:var(--card); border:1px solid var(--sand-line); border-radius:12px; box-shadow:0 10px 30px var(--shade-far); padding:6px; min-width:200px;}
+  .pop button{display:block; width:100%; text-align:left; border:0; background:none; padding:8px 10px; border-radius:8px; font:500 .86rem Karla,sans-serif; color:var(--ink); cursor:pointer;}
+  .pop button:hover{background:var(--sand-deep);} .pop button.on{font-weight:700;}
+  .pop .ph{font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); padding:6px 10px 2px;}
+
+  .checks{display:flex; flex-wrap:wrap; gap:8px 18px; margin:14px 0 0; font-size:.84rem;}
+  .checks span{display:inline-flex; gap:6px; align-items:center;}
+  .checks b{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; padding:2px 6px; border-radius:4px;}
+  .checks b.ok{background:var(--set-forest-tp); color:var(--a-forest);} .checks b.no{background:color-mix(in oklch, var(--a-red) 12%, var(--paper)); color:var(--a-red);}
+  .key{display:flex; flex-wrap:wrap; gap:8px 16px; margin:12px 0 0; font-size:.8rem; color:var(--grey);}
+  .key span{display:inline-flex; align-items:center; gap:6px;} .key i{width:15px; height:15px; border-radius:4px; border:1.5px solid transparent; display:inline-block;}
+  .viewnote{font-size:.86rem; color:var(--grey); margin:0 0 12px;} .editing .viewnote{display:none;}
+  @media(max-width:900px){ .setup{grid-template-columns:1fr;} }
+  @media(max-width:640px){ .wrap{padding:18px 16px 40px;} h1{font-size:1.6rem;} .weeks{margin-left:0;} .grid.across{grid-template-columns:100px repeat(var(--n), 100px);} .cell{height:70px; font-size:.74rem;} .asg input[type=time]{width:118px;} }
+</style>
+</head>
+<body>
+<div class="wrap" id="root">
+  <p class="eyebrow">Mock-up · Timetable</p>
+  <h1 id="title">Week 1</h1>
+  <p class="lede">Connect's timetable, five weeks with Friday off, from Monday 2 November. In edit mode: set the course's shape, who teaches, and when each assignment is due; drag from the shelf; click a day for a late start or an early finish.</p>
+  <div class="bar">
+    <div class="seg" id="mode"><button data-v="view" class="on">View only</button><button data-v="edit">Edit</button></div>
+    <div class="seg" id="lay"><button data-v="across" class="on">Across</button><button data-v="down">Down</button></div>
+    <div class="seg weeks" id="weeks"></div>
+  </div>
+  <p class="viewnote">Locked. This is what tutors and trainees see: every session with its time, deadlines on their days.</p>
+
+  <div class="setup">
+    <section class="card">
+      <h2>The course&rsquo;s shape</h2>
+      <p class="s">A usual teaching day, set once. Lite works out every tile&rsquo;s time from it.</p>
+      <div class="f">
+        <label><span>The day starts</span><input type="time" id="sh_start" value="10:00" step="900"></label>
+        <label><span>Inputs a day</span><select id="sh_inN"><option>1</option><option selected>2</option><option>3</option></select></label>
+        <label><span>Each input</span><select id="sh_inL"><option value="45">45 min</option><option value="60" selected>60 min</option><option value="75">75 min</option><option value="90">90 min</option></select></label>
+        <label><span>Break between</span><select id="sh_br"><option value="0">None</option><option value="15" selected>15 min</option><option value="30">30 min</option></select></label>
+        <label><span>Lunch</span><select id="sh_lu"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option></select></label>
+        <label><span>TP preparation</span><select id="sh_pr"><option value="0">None</option><option value="15" selected>15 min</option><option value="30">30 min</option></select></label>
+        <label><span>Teaching a day</span><select id="sh_tpN"><option>2</option><option selected>3</option><option>4</option></select></label>
+        <label><span>Each TP lesson</span><select id="sh_tpL"><option value="40">40 min</option><option value="45" selected>45 min</option><option value="60">60 min</option></select></label>
+        <label><span>Change-over</span><select id="sh_gap"><option value="0" selected>None</option><option value="15">15 min</option></select></label>
+        <label><span>Lesson planning</span><select id="sh_pl"><option value="0">None</option><option value="45" selected>45 min</option><option value="60">60 min</option></select></label>
+        <label><span>TP feedback</span><select id="sh_fb"><option value="30">30 min</option><option value="45" selected>45 min</option><option value="60">60 min</option></select></label>
+        <div class="fixed"><span class="lab">Teaching practice</span><b>8 TPs, 6 hours</b><small>Cambridge&rsquo;s, fixed</small></div>
+      </div>
+      <p class="sum" id="sum"></p>
+    </section>
+    <div class="side">
+      <section class="card">
+        <h2>Who teaches the inputs</h2>
+        <p class="s">Tutors come from Course admin. Click a tile&rsquo;s initials to change just that one.</p>
+        <div class="tut"><select id="tutMode"><option value="alt">Taking turns, each day</option><option value="split">Diane, then Jordan from a date</option></select><select id="tutFrom"></select></div>
+      </section>
+      <section class="card">
+        <h2>When the assignments are due</h2>
+        <p class="s">Counted in course days from the day its session is on. Move the session and its dates move with it.</p>
+        <div class="asgwrap"><table class="asg" id="asgT"><tr><th></th><th>Due after</th><th>at</th><th>Resubmit after</th><th>at</th></tr></table></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="shelf" id="shelf">
+    <h2>The shelf</h2>
+    <p class="s" style="margin:0;color:var(--grey);font-size:.86rem">Drag a tile onto a day; drag one back here to take it off. <b style="color:var(--a-red)">Required</b> marks what Cambridge asks every course for.</p>
+    <div class="row" id="shelfRow"></div>
+    <div class="maker" id="maker">
+      <label><span class="lab">Name</span><input type="text" id="mkName" value="Consultation: your plan for TP7"></label>
+      <label><span class="lab">Kind</span><select id="mkKind"><option value="task">Assignment or tutorial</option><option value="event">Course event</option><option value="demo">Observation</option><option value="plan">Planning</option><option value="input">Input</option></select></label>
+      <label><span class="lab">Length</span><select id="mkLen"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option><option value="90">90 min</option></select></label>
+      <button class="btn" id="mkAdd">Add to the shelf</button>
+    </div>
+  </section>
+
+  <div class="scroller"><div class="grid across" id="grid"></div></div>
+  <div class="checks" id="checks"></div>
+  <div class="key" id="key"></div>
+</div>
+<script>
+(function(){
+  "use strict";
+  var KINDS = { input:'Input', tp:'Teaching practice', feedback:'TP feedback', break:'Break', lunch:'Lunch', plan:'Planning', demo:'Observation', event:'Course event', task:'Assignment or tutorial', assessor:'Assessor' };
+  var TUT = [['DO','Diane Okonkwo'],['JR','Jordan Reyes']];
+  var NAMES = ['Aiko','Nour','Lucas','Mei'];
+  var ORDER = ['Lesson frameworks','Writing the lesson plan','Receptive skills','Language analysis','PPP','Eliciting and CCQs','Teaching vocabulary','Phonology: sounds','Text-based teaching','Guided discovery vs PPP','Error correction','Observation 1: an experienced teacher','Word and sentence stress','Teaching speaking','Connected speech','Functional language','Teaching productive skills','Guided to less-guided practice','Teaching writing','Syllabus planning: TP7 and TP8','Teaching literacy','Observation 2: an experienced teacher','Teaching exam classes','Observation 3: an experienced teacher','Alternative teaching techniques','Drama in the ELT classroom','Observation 4: an experienced teacher','Life after CELTA'];
+  var ASG = [{ k:'fol', n:'FoL', full:'Focus on the Learner', due:4, dt:'17:00', re:5, rt:'17:00' }, { k:'lrt', n:'LRT', full:'Language Related Tasks', due:4, dt:'17:00', re:5, rt:'17:00' }, { k:'lsrt', n:'LSRT', full:'Language Skills Related Tasks', due:4, dt:'17:00', re:3, rt:'17:00' }, { k:'lfc', n:'LfC', full:'Lessons from the Classroom', due:3, dt:'17:00', re:1, rt:'17:00' }];
+  var TASKS = { '4.2': ['task','Focus on the Learner: the assignment','fol'], '7.2': ['task','Language Related Tasks: the assignment','lrt'], '10.2': ['task','Stage 1 tutorials'], '11.2': ['task','Language Skills Related Tasks: the assignment','lsrt'], '13.2': ['task','Stage 2 tutorials'], '15.1': ['task','Lessons from the Classroom: the assignment','lfc'] };
+  var SHELF = [
+    { k:'task', t:'Focus on the Learner: the assignment', len:60, asg:'fol', req:1 }, { k:'task', t:'Language Related Tasks: the assignment', len:60, asg:'lrt', req:1 },
+    { k:'task', t:'Language Skills Related Tasks: the assignment', len:60, asg:'lsrt', req:1 }, { k:'task', t:'Lessons from the Classroom: the assignment', len:60, asg:'lfc', req:1 },
+    { k:'task', t:'Stage 1 tutorials', len:60, req:1 }, { k:'task', t:'Stage 2 tutorials', len:60, req:1 }, { k:'task', t:'Stage 3 tutorials', len:60 },
+    { k:'assessor', t:'Assessor visit', len:180, req:1 }, { k:'task', t:'Consultation', len:60 },
+    { k:'demo', t:'Observation: an experienced teacher', len:60, req:1 }, { k:'demo', t:'Observation: a filmed lesson, with a task', len:60, req:1 }, { k:'demo', t:'Demonstration lesson', len:60 },
+    { k:'event', t:'Getting to know you', len:45 }, { k:'event', t:'Course review', len:60 }, { k:'plan', t:'Study time', len:60 }
+  ];
+  /* five weeks, Friday off */
+  var DATES = []; (function(){ var d = new Date(2026, 10, 2); while (DATES.length < 20) { if ([1,2,3,4].indexOf(d.getDay()) !== -1) DATES.push(new Date(d)); d.setDate(d.getDate() + 1); } })();
+  var WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function v(id){ var e = document.getElementById(id); return e.type === 'time' ? e.value : +e.value; }
+  function hm(m){ return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+  function mins(t){ var a = t.split(':'); return +a[0] * 60 + +a[1]; }
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+
+  var mode = 'view', lay = 'across', week = 0, BAR = [], CELLS = [], MOD = {}, HAND = {}, drag = null, pop = null;
+  function dayShape(){
+    var t = mins(v('sh_start')), out = [];
+    function add(k, len, gap){ if (len > 0) { out.push({ k: k, s: hm(t), e: hm(t + len) }); t += len; } t += gap || 0; }
+    var n = v('sh_inN'); for (var i = 0; i < n; i++) { add('input', v('sh_inL')); if (i < n - 1 && v('sh_br')) add('break', v('sh_br')); }
+    add('lunch', v('sh_lu')); add('prep', v('sh_pr'));
+    for (var j = 0; j < v('sh_tpN'); j++) add('tp', v('sh_tpL'), v('sh_gap') || (j === 1 ? 15 : 0));
+    add('plan', v('sh_pl'), 15); add('feedback', v('sh_fb'));
+    return out;
+  }
+  function col(s){ var c = 0; for (var i = 0; i < BAR.length; i++) if (BAR[i][0] <= s) c = i; return c; }
+  function who(i){ return document.getElementById('tutMode').value === 'alt' ? TUT[i % 2][0] : (DATES[CUR_DAY] >= DATES[+document.getElementById('tutFrom').value] ? 'JR' : 'DO'); }
+  var CUR_DAY = 0;
+  function build(){
+    var shape = dayShape(); BAR = shape.map(function(x){ return [x.s, x.e]; });
+    var q = ORDER.slice(); CELLS = [];
+    function put(row, x){ var c = col(x.s); while (row[c] && c < BAR.length - 1) c++; row[c] = x; }
+    for (var d = 0; d < 20; d++) {
+      CUR_DAY = d; var row = BAR.map(function(){ return null; }), slot = 0, ti = 0, tp = Math.ceil(d / 2);
+      shape.forEach(function(x){
+        if (x.k === 'input') {
+          slot++;
+          var o;
+          if (d === 0) o = { k:'input', t: slot === 1 ? 'Course introduction' : 'Classroom management' };
+          else if (d === 18) o = { k:'assessor', t: slot === 1 ? 'Assessor visit: teaching practice' : 'Assessor visit: feedback' };
+          else if (d === 19) o = { k:'event', t: slot === 1 ? 'Course review and CELTA 5 checks' : 'End of course' };
+          else { var tk = TASKS[d + '.' + slot]; if (tk) o = { k: tk[0], t: tk[1], asg: tk[2] }; else { var nx = q.shift() || 'Input session'; o = /^Observation/.test(nx) ? { k:'demo', t: nx + ' (film, with a task)' } : { k:'input', t: nx }; } }
+          if (o.k !== 'assessor' && o.k !== 'event') o.by = who(slot - 1 + d);
+          o.s = x.s; o.e = x.e; put(row, o); return;
+        }
+        if (x.k === 'break' || x.k === 'lunch') { put(row, { k: x.k, t: KINDS[x.k], s: x.s, e: x.e }); return; }
+        if (d >= 1 && d <= 16) {
+          if (x.k === 'prep') put(row, { k:'plan', t:'TP preparation', s: x.s, e: x.e });
+          /* who teaches, by letter, and the tutor watching (29 Oct 2026, Ramy: the trainee's name stays, and the tutor watching rides on the tile).
+             Two groups take the days in turn; the tutors swap groups after TP4. */
+          if (x.k === 'tp') { var g = d % 2 ? 0 : 1, tut = (g === 0) === (tp <= 4) ? 'DO' : 'JR'; put(row, { k:'tp', t:'TP' + tp + ' · ' + NAMES[(ti++ + (d % 2 ? 0 : 3)) % NAMES.length], by: tut, s: x.s, e: x.e }); }
+          if (x.k === 'plan') put(row, { k:'plan', t:'Lesson planning', s: x.s, e: x.e });
+          if (x.k === 'feedback') put(row, { k:'feedback', t:'TP feedback', s: x.s, e: x.e });
+        }
+      });
+      var lunchEnd = mins(shape.filter(function(x){ return x.k === 'lunch'; })[0].e);
+      function at(off, len, o){ o.s = hm(lunchEnd + off); o.e = hm(lunchEnd + off + len); put(row, o); }
+      if (d === 0) { at(15, 60, { k:'demo', t:'Demonstration lesson' }); at(90, 45, { k:'event', t:'Getting to know you: your activity' }); at(135, 150, { k:'plan', t:'Lesson planning: TP1' }); }
+      if (d === 17) { at(15, 60, { k:'demo', t:'Observation 5: an experienced teacher (film, with a task)', by:'DO' }); at(90, 90, { k:'task', t:'Tutorials', by:'JR' }); at(195, 90, { k:'task', t:'Consultation: assignments and resubmissions', by:'DO' }); }
+      if (d === 18) { at(15, 90, { k:'task', t:'Tutorials', by:'DO' }); at(120, 165, { k:'task', t:'Consultation: the CELTA 5 and the portfolio', by:'JR' }); }
+      if (d === 19) { at(15, 90, { k:'task', t:'Final tutorials', by:'DO' }); at(120, 165, { k:'task', t:'Consultation: what comes next', by:'JR' }); }
+      CELLS.push(row);
+    }
+    var last = shape[shape.length - 1];
+    document.getElementById('sum').innerHTML = 'A teaching day: <b>' + shape[0].s + ' to ' + last.e + '</b> · ' + v('sh_inN') + ' input' + (v('sh_inN') > 1 ? 's' : '') + ', ' + v('sh_tpN') + ' TP lessons, feedback last. Day one and the last three days keep their own afternoons.';
+  }
+
+  /* deadlines: from the day an assignment's session sits on, in course days, skipping a day off */
+  function flags(){
+    var out = {}; DATES.forEach(function(_, i){ out[i] = []; });
+    var live = []; DATES.forEach(function(_, i){ if (MOD[i] !== 'off') live.push(i); });
+    ASG.forEach(function(a){
+      var outDay = -1; CELLS.forEach(function(row, i){ row.forEach(function(x){ if (x && x.asg === a.k) outDay = i; }); });
+      if (outDay < 0) return;
+      var p = live.indexOf(outDay), dueI = HAND[a.k + ':due'] != null ? HAND[a.k + ':due'] : live[Math.min(p + a.due, live.length - 1)];
+      var pd = live.indexOf(dueI), reI = HAND[a.k + ':re'] != null ? HAND[a.k + ':re'] : live[Math.min(pd + a.re, live.length - 1)];
+      out[dueI].push({ a: a, w:'due', t: a.dt, hand: HAND[a.k + ':due'] != null });
+      out[reI].push({ a: a, w:'re', t: a.rt, hand: HAND[a.k + ':re'] != null });
+    });
+    return out;
+  }
+
+  var grid = document.getElementById('grid');
+  function odd(x, c){ return x.s !== BAR[c][0] || x.e !== BAR[c][1]; }
+  function off(r, c){
+    var m = MOD[r]; if (!m) return '';
+    if (m === 'off') return 'Day off';
+    if (m === 'late' && BAR[c][0] < '11:15') return 'Starts 11:15';
+    if (m === 'early' && BAR[c][0] >= '13:15') return 'Finishes 13:15';
+    if (m === 'notp') { var x = CELLS[r][c]; if (x && (x.k === 'tp' || x.k === 'feedback' || x.t === 'TP preparation' || x.t === 'Lesson planning')) return 'No TP today'; }
+    return '';
+  }
+  function tile(r, c){
+    var x = CELLS[r][c], el = document.createElement('div'), why = off(r, c);
+    el.dataset.r = r; el.dataset.c = c;
+    if (why) { el.className = 'cell gone'; el.textContent = why; return el; }
+    if (!x) el.className = 'cell empty';
+    else {
+      var showT = true;
+      el.className = 'cell k-' + x.k + (x.by ? ' has-who' : '');
+      el.innerHTML = '<span class="t">' + esc(x.t) + (x.me ? ' <span class="me">' + x.me + '</span>' : '') + '</span>' + (x.by ? '<button class="who" type="button">' + x.by + '</button>' : '') + (showT ? '<span class="tm">' + x.s + '–' + x.e + '</span>' : '');
+      el.title = KINDS[x.k] + ': ' + x.t + (x.me ? ', trainee ' + x.me : '') + (x.by ? ', ' + (x.by === 'DO' ? 'Diane Okonkwo' : 'Jordan Reyes') : '') + ', ' + x.s + ' to ' + x.e;
+      if (mode === 'edit' && x.by) el.querySelector('.who').addEventListener('click', function(e){ e.stopPropagation(); x.by = x.by === 'DO' ? 'JR' : 'DO'; render(); });
+    }
+    if (mode === 'edit') {
+      el.draggable = !!x;
+      el.addEventListener('dragstart', function(e){ drag = { from:'cell', r:r, c:c }; e.dataTransfer.setData('text/plain', 'x'); });
+      el.addEventListener('dragover', function(e){ if (drag && drag.from !== 'flag') { e.preventDefault(); el.classList.add('over'); } });
+      el.addEventListener('dragleave', function(){ el.classList.remove('over'); });
+      el.addEventListener('drop', function(e){ e.preventDefault(); if (!drag) return;
+        if (drag.from === 'cell') { var a = CELLS[drag.r][drag.c], b = CELLS[r][c]; CELLS[r][c] = place(a, c); CELLS[drag.r][drag.c] = place(b, drag.c); }
+        else if (drag.from === 'shelf') { var it = SHELF[drag.i], o = { k: it.k, t: it.t, asg: it.asg, s: BAR[c][0], e: hm(mins(BAR[c][0]) + it.len) }; if (it.k !== 'assessor' && it.k !== 'event') o.by = 'DO'; CELLS[r][c] = o; }
+        drag = null; render(); });
+    }
+    return el;
+  }
+  /* a tile moved keeps its length; it starts where it lands */
+  function place(x, c){ if (!x) return null; var o = Object.assign({}, x), len = mins(x.e) - mins(x.s); o.s = BAR[c][0]; o.e = hm(mins(o.s) + len); return o; }
+  function dayCell(r, F){
+    var d = DATES[r], el = document.createElement('div'); el.className = 'day'; el.dataset.r = r;
+    var mod = { late:'Starts 11:15', early:'Finishes 13:15', notp:'No TP today', off:'Day off' }[MOD[r]];
+    el.innerHTML = '<b>' + WD[d.getDay()] + '</b><span class="dt">' + d.getDate() + ' ' + MO[d.getMonth()] + ' · Day ' + (r + 1) + '</span>' + (mod ? '<span class="mod">' + mod + '</span>' : '');
+    F[r].forEach(function(f){
+      var s = document.createElement('span'); s.className = 'flag' + (f.w === 're' ? ' re' : '') + (f.hand ? ' hand' : ''); s.textContent = f.a.n + (f.w === 're' ? ' resubmission ' : ' due ') + f.t;
+      if (mode === 'edit') { s.draggable = true; s.addEventListener('dragstart', function(e){ e.stopPropagation(); drag = { from:'flag', key: f.a.k + ':' + f.w }; e.dataTransfer.setData('text/plain', 'f'); }); }
+      el.appendChild(s);
+    });
+    if (mode === 'edit') {
+      el.addEventListener('click', function(e){ if (e.target.closest('.flag')) return; openPop(el, r); });
+      el.addEventListener('dragover', function(e){ if (drag && drag.from === 'flag') { e.preventDefault(); el.classList.add('over'); } });
+      el.addEventListener('dragleave', function(){ el.classList.remove('over'); });
+      el.addEventListener('drop', function(e){ e.preventDefault(); if (drag && drag.from === 'flag') { HAND[drag.key] = r; drag = null; render(); } });
+    }
+    return el;
+  }
+  function openPop(anchor, r){
+    closePop(); pop = document.createElement('div'); pop.className = 'pop';
+    pop.innerHTML = '<div class="ph">This day only</div>' + [['', 'As the course&rsquo;s shape'], ['late', 'Start later (11:15)'], ['early', 'Finish earlier (13:15)'], ['notp', 'No TP today'], ['off', 'Day off']].map(function(o){ return '<button data-m="' + o[0] + '"' + ((MOD[r] || '') === o[0] ? ' class="on"' : '') + '>' + o[1] + '</button>'; }).join('');
+    var b = anchor.getBoundingClientRect(); pop.style.left = (b.left + window.scrollX + 8) + 'px'; pop.style.top = (b.bottom + window.scrollY - 6) + 'px';
+    document.body.appendChild(pop);
+    pop.addEventListener('click', function(e){ var t = e.target.closest('button'); if (!t) return; if (t.dataset.m) MOD[r] = t.dataset.m; else delete MOD[r]; closePop(); render(); });
+  }
+  function closePop(){ if (pop) { pop.remove(); pop = null; } }
+  document.addEventListener('click', function(e){ if (pop && !e.target.closest('.pop') && !e.target.closest('.day')) closePop(); });
+
+  function render(){
+    closePop();
+    var rows = [week * 4, week * 4 + 1, week * 4 + 2, week * 4 + 3], F = flags();
+    document.getElementById('title').textContent = 'Week ' + (week + 1);
+    grid.innerHTML = ''; grid.className = 'grid ' + lay; grid.style.setProperty('--n', lay === 'across' ? BAR.length : rows.length);
+    document.getElementById('root').classList.toggle('editing', mode === 'edit');
+    function tick(i){ var t = document.createElement('div'); t.className = 'tick'; t.innerHTML = BAR[i][0] + '<small>to ' + BAR[i][1] + '</small>'; return t; }
+    if (lay === 'across') { rows.forEach(function(r){ grid.appendChild(dayCell(r, F)); BAR.forEach(function(_, c){ grid.appendChild(tile(r, c)); }); }); }
+    else { rows.forEach(function(r){ grid.appendChild(dayCell(r, F)); }); BAR.forEach(function(_, c){ rows.forEach(function(r){ grid.appendChild(tile(r, c)); }); }); }
+    checks();
+  }
+  /* what Cambridge asks of every course, said before you lock it */
+  function checks(){
+    var all = []; CELLS.forEach(function(row, r){ if (MOD[r] !== 'off') row.forEach(function(x, c){ if (x && !off(r, c)) all.push(x); }); });
+    var obs = all.filter(function(x){ return x.k === 'demo' && /Observation|Demonstration/.test(x.t); }).reduce(function(a, x){ return a + (mins(x.e) - mins(x.s)); }, 0) / 60;
+    var tps = 0; CELLS.forEach(function(row, r){ if (MOD[r] !== 'off' && MOD[r] !== 'notp' && MOD[r] !== 'early') { if (row.some(function(x){ return x && x.k === 'tp'; })) tps++; } });
+    function has(re){ return all.some(function(x){ return re.test(x.t); }); }
+    var L = [['Observation hours', obs >= 6, obs + ' of 6'], ['Teaching practice days', tps >= 16, tps + ' of 16'], ['Assessor visit', has(/Assessor visit/)], ['Stage 1 tutorials', has(/Stage 1 tutorials/)], ['Stage 2 tutorials', has(/Stage 2 tutorials/)]]
+      .concat(ASG.map(function(a){ return [a.full, all.some(function(x){ return x.asg === a.k; })]; }));
+    document.getElementById('checks').innerHTML = L.map(function(c){ return '<span><b class="' + (c[1] ? 'ok' : 'no') + '">' + (c[1] ? 'In' : 'Missing') + '</b>' + esc(c[0]) + (c[2] ? ' · ' + c[2] : '') + '</span>'; }).join('');
+  }
+
+  /* the cards */
+  document.getElementById('weeks').innerHTML = [0,1,2,3,4].map(function(i){ return '<button data-w="' + i + '"' + (i ? '' : ' class="on"') + '>Week ' + (i + 1) + '</button>'; }).join('');
+  document.getElementById('tutFrom').innerHTML = DATES.map(function(d, i){ return '<option value="' + i + '"' + (i === 10 ? ' selected' : '') + '>from ' + WD[d.getDay()] + ' ' + d.getDate() + ' ' + MO[d.getMonth()] + '</option>'; }).join('');
+  var T = document.getElementById('asgT');
+  ASG.forEach(function(a, i){
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td title="' + a.full + '">' + a.n + '</td><td><input type="number" min="1" max="15" value="' + a.due + '"> <small>days</small></td><td><input type="time" value="' + a.dt + '" step="900"></td><td><input type="number" min="1" max="15" value="' + a.re + '"> <small>days</small></td><td><input type="time" value="' + a.rt + '" step="900"></td>';
+    var f = tr.querySelectorAll('input');
+    f.forEach(function(inp){ inp.addEventListener('change', function(){ a.due = +f[0].value; a.dt = f[1].value; a.re = +f[2].value; a.rt = f[3].value; delete HAND[a.k + ':due']; delete HAND[a.k + ':re']; render(); }); });
+    T.appendChild(tr);
+  });
+  function shelf(){
+    var row = document.getElementById('shelfRow');
+    row.innerHTML = SHELF.map(function(s, i){ return '<div class="chip k-' + s.k + '" draggable="true" data-i="' + i + '">' + esc(s.t) + (s.req ? '<span class="req">Required</span>' : '') + '<small>' + s.len + ' min</small></div>'; }).join('') + '<button class="chip make" type="button" id="mk">+ Make a tile</button>';
+    row.querySelectorAll('[data-i]').forEach(function(ch){ ch.addEventListener('dragstart', function(e){ drag = { from:'shelf', i: +ch.dataset.i }; e.dataTransfer.setData('text/plain', 's'); }); });
+    document.getElementById('mk').addEventListener('click', function(){ document.getElementById('maker').classList.toggle('open'); });
+  }
+  shelf();
+  document.getElementById('mkAdd').addEventListener('click', function(){ var n = document.getElementById('mkName').value.trim(); if (!n) return; SHELF.push({ k: v('mkKind') ? document.getElementById('mkKind').value : 'task', t: n, len: +document.getElementById('mkLen').value }); shelf(); document.getElementById('maker').classList.remove('open'); });
+  var sh = document.getElementById('shelf');
+  sh.addEventListener('dragover', function(e){ if (drag && drag.from === 'cell') { e.preventDefault(); sh.classList.add('over'); } });
+  sh.addEventListener('dragleave', function(){ sh.classList.remove('over'); });
+  sh.addEventListener('drop', function(e){ e.preventDefault(); sh.classList.remove('over'); if (drag && drag.from === 'cell') { CELLS[drag.r][drag.c] = null; drag = null; render(); } });
+
+  function seg(id, set){ document.getElementById(id).addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); }); set(b.dataset.v != null ? b.dataset.v : b.dataset.w); render(); }); }
+  seg('mode', function(x){ mode = x; }); seg('lay', function(x){ lay = x; }); seg('weeks', function(x){ week = +x; });
+  document.querySelectorAll('.setup .f select, .setup .f input, #tutMode, #tutFrom').forEach(function(e){ e.addEventListener('change', function(){ document.getElementById('tutFrom').style.display = document.getElementById('tutMode').value === 'split' ? '' : 'none'; build(); render(); }); });
+  document.getElementById('tutFrom').style.display = 'none';
+  document.getElementById('key').innerHTML = Object.keys(KINDS).map(function(k){ return '<span><i class="k-' + k + '"></i>' + KINDS[k] + '</span>'; }).join('');
+  build(); render();
+})();
+</script>
+</body>
+</html>

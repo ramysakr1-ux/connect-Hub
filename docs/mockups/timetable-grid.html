@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- MOCK-UP, not a page of Lite (Ramy, 29 Oct 2026: "equal sized tiles ... basically an Excel sheet ... a smart Excel
+     sheet ... drag and drop ... view only when it's locked ... the time bar and the days on the side ... time inside
+     the tiles only if it's an exception ... time can sit inside the tile for the editing part"). Week 1 of Connect's
+     timetable, five weeks with Friday off, laid onto a course starting Monday 2 November. Nothing here saves. -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timetable grid — mock-up</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<style>
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:Karla,sans-serif;}
+  .wrap{max-width:1440px; margin:0 auto; padding:28px 24px 60px;}
+  .eyebrow{font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--a-red); margin:0 0 6px;}
+  h1{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:2rem; margin:0 0 6px;}
+  .lede{color:var(--grey); margin:0 0 18px; max-width:760px; line-height:1.5;}
+  .bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:0 0 14px;}
+  .seg{display:inline-flex; background:var(--card); border:1px solid var(--sand-line); border-radius:999px; padding:3px;}
+  .seg button{border:0; background:none; font:600 .86rem Karla,sans-serif; color:var(--grey); padding:7px 14px; border-radius:999px; cursor:pointer;}
+  .seg button.on{background:var(--a-forest); color:var(--paper);}
+  .weeks{margin-left:auto;}
+  .state{font-size:.86rem; color:var(--grey);}
+  .state b{color:var(--ink);}
+
+  /* the grid: equal cells, a time bar on one edge, the days on the other */
+  .scroller{overflow-x:auto; background:var(--card); border:1px solid var(--sand-line); border-radius:var(--r-card); box-shadow:0 1px 2px var(--shade-near), 0 8px 24px var(--shade-far);}
+  .grid{display:grid; gap:6px; padding:14px;}
+  .grid.across{grid-template-columns:132px repeat(var(--n), minmax(112px, 1fr));}
+  .grid.down{grid-template-columns:70px repeat(var(--n), minmax(150px, 1fr));}
+  .tick{font:700 .74rem Karla,sans-serif; color:var(--grey); display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; padding:0 4px 4px; border-bottom:2px solid var(--sand-line);}
+  .grid.down .tick{align-items:flex-end; justify-content:flex-start; padding:6px 8px 0 0; border-bottom:0; border-right:2px solid var(--sand-line);}
+  .tick small{display:block; font-weight:500; color:var(--faint);}
+  .corner{border:0;}
+  .day{display:flex; flex-direction:column; justify-content:center; padding:0 8px; border-right:2px solid var(--sand-line);}
+  .grid.down .day{border-right:0; border-bottom:2px solid var(--sand-line); padding:0 4px 6px; justify-content:flex-end;}
+  .day b{font-family:Newsreader,Georgia,serif; font-size:1.02rem;}
+  .day span{font-size:.76rem; color:var(--grey);}
+
+  .cell{height:78px; border-radius:8px; border:1.5px solid transparent; padding:7px 8px; box-sizing:border-box; font-size:.8rem; line-height:1.25; position:relative; overflow:hidden; display:flex; flex-direction:column; gap:3px;}
+  .grid.down .cell{height:64px;}
+  .cell .t{font-weight:600; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+  .cell .tm{font-size:.7rem; font-weight:700; color:var(--grey); margin-top:auto;}
+  .cell .who{position:absolute; top:6px; right:6px; font:700 .64rem Karla,sans-serif; letter-spacing:.04em; background:var(--paper); border-radius:4px; padding:1px 5px; box-shadow:inset 0 0 0 1px var(--sand-line);}
+  .cell.has-who .t{padding-right:28px;}
+  .empty{background:none; border:1.5px dashed var(--row-line);}
+
+  /* one colour per kind (Ramy: inputs one, TP one, feedback one; break the same every time, lunch the same every time) */
+  .k-input{background:var(--set-forest-in); border-color:var(--set-forest-in);}
+  .k-tp{background:var(--set-forest-tp); border-color:color-mix(in oklch, var(--set-forest-in) 45%, var(--set-forest-tp));}
+  .k-feedback{background:var(--set-ocean-tp); border-color:var(--set-ocean-in);}
+  .k-break{background:var(--sand-deep); border-color:var(--sand-line); color:var(--grey);}
+  .k-lunch{background:color-mix(in oklch, var(--a-mustard) 22%, var(--paper)); border-color:color-mix(in oklch, var(--a-mustard) 45%, var(--paper));}
+  .k-plan{background:color-mix(in oklch, var(--a-lemon) 55%, var(--paper)); border-color:var(--a-lemon);}
+  .k-demo{background:var(--set-plum-tp); border-color:var(--set-plum-in);}
+  .k-event{background:color-mix(in oklch, var(--a-slate) 12%, var(--paper)); border-color:color-mix(in oklch, var(--a-slate) 32%, var(--paper));}
+  .k-task{background:color-mix(in oklch, var(--a-red) 10%, var(--paper)); border-color:color-mix(in oklch, var(--a-red) 28%, var(--paper));}
+
+  /* an exception in the locked view: it says its own time, and the corner is folded */
+  .cell.odd::after{content:''; position:absolute; right:0; bottom:0; border-style:solid; border-width:0 0 12px 12px; border-color:transparent transparent var(--a-mustard) transparent;}
+  .cell.odd .tm{color:var(--gold-deep);}
+
+  /* edit mode */
+  .editing .cell .t, .cell.odd .t{-webkit-line-clamp:2;}
+  .editing .cell:not(.empty){cursor:grab; box-shadow:0 1px 0 var(--shade-near);}
+  .editing .cell:not(.empty):hover{outline:2px solid var(--gold); outline-offset:1px;}
+  .cell.dragging{opacity:.35;}
+  .cell.over{outline:2px dashed var(--a-forest) !important; outline-offset:1px;}
+  .editbar{display:none; margin:0 0 14px; padding:12px 16px; background:var(--card); border:1px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:var(--r-strip); font-size:.88rem; color:var(--grey); line-height:1.5;}
+  .editing .editbar{display:block;}
+
+  .shape{display:none; margin:0 0 14px; background:var(--card); border:1px solid var(--sand-line); border-top:3px solid var(--a-forest); border-radius:var(--r-card); padding:18px 20px;}
+  .editing .shape{display:block;}
+  .shead h2{font-family:Newsreader,Georgia,serif; font-weight:600; font-size:1.25rem; margin:0 0 4px;} .shead p{margin:0 0 14px; color:var(--grey); font-size:.9rem;}
+  .sgrid{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px 16px;}
+  .sgrid label span, .fixed span{display:block; font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 5px;}
+  .sgrid input, .sgrid select{box-sizing:border-box; width:100%; height:42px; padding:0 10px; border:1px solid var(--sand-line); border-radius:10px; background:var(--field); font:500 .95rem Karla,sans-serif; color:var(--ink);}
+  .fixed b{display:block; font-size:.95rem; padding:10px 0 0;} .fixed small{color:var(--faint); font-size:.76rem;}
+  .sfoot{display:flex; flex-wrap:wrap; gap:10px 20px; align-items:center; justify-content:space-between; margin:16px 0 0; padding:12px 0 0; border-top:1px solid var(--row-line); font-size:.88rem; color:var(--grey);}
+  .sfoot b{color:var(--ink);} .lib{display:inline-flex; gap:8px; align-items:center;}
+  .key{display:flex; flex-wrap:wrap; gap:8px 16px; margin:16px 0 0; font-size:.82rem; color:var(--grey);}
+  .key span{display:inline-flex; align-items:center; gap:6px;}
+  .key i{width:16px; height:16px; border-radius:4px; border:1.5px solid transparent; display:inline-block;}
+  .note{margin:18px 0 0; font-size:.86rem; color:var(--grey); line-height:1.5; max-width:820px;}
+  @media(max-width:640px){ .wrap{padding:18px 16px 40px;} h1{font-size:1.6rem;} .weeks{margin-left:0;} .grid.across{grid-template-columns:88px repeat(var(--n), 104px);} .cell{height:66px; font-size:.74rem;} }
+</style>
+</head>
+<body>
+<div class="wrap" id="root">
+  <p class="eyebrow">Mock-up · Timetable</p>
+  <h1>Week 1</h1>
+  <p class="lede">Connect's timetable, five weeks with Friday off, on a course starting Monday 2 November. Every tile is the same size. Switch between the locked view and editing, and between across and down.</p>
+  <div class="bar">
+    <div class="seg" id="mode"><button data-v="view" class="on">View only</button><button data-v="edit">Edit</button></div>
+    <div class="seg" id="lay"><button data-v="across" class="on">Across</button><button data-v="down">Down</button></div>
+    <div class="seg weeks"><button class="on">Week 1</button><button>Week 2</button><button>Week 3</button><button>Week 4</button><button>Week 5</button></div>
+  </div>
+  <div class="editbar">Editing. Each tile shows its own time. Drag a tile onto another to swap them; the times stay with the places, so nothing needs retyping. Lock it when it is right, and everyone sees the view-only timetable.</div>
+  <section class="shape" id="shape">
+    <div class="shead"><h2>The course&rsquo;s shape</h2><p>Set a usual teaching day once. Lite works out every time on the bar and lays the days out. Change a number and the timetable moves with it.</p></div>
+    <div class="sgrid">
+      <label><span>The day starts</span><input type="time" id="sh_start" value="10:00" step="900"></label>
+      <label><span>Input sessions a day</span><select id="sh_inN"><option>1</option><option selected>2</option><option>3</option></select></label>
+      <label><span>Each input session</span><select id="sh_inL"><option value="45">45 min</option><option value="60" selected>60 min</option><option value="75">75 min</option><option value="90">90 min</option></select></label>
+      <label><span>Break between inputs</span><select id="sh_br"><option value="0">None</option><option value="15" selected>15 min</option><option value="20">20 min</option><option value="30">30 min</option></select></label>
+      <label><span>Lunch</span><select id="sh_lu"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option></select></label>
+      <label><span>TP preparation</span><select id="sh_pr"><option value="0">None</option><option value="15" selected>15 min</option><option value="30">30 min</option></select></label>
+      <label><span>Trainees teaching a day</span><select id="sh_tpN"><option>2</option><option selected>3</option><option>4</option></select></label>
+      <label><span>Each TP lesson</span><select id="sh_tpL"><option value="30">30 min</option><option value="40">40 min</option><option value="45" selected>45 min</option><option value="60">60 min</option></select></label>
+      <label><span>Change-over between lessons</span><select id="sh_gap"><option value="0">None</option><option value="15" selected>15 min</option></select></label>
+      <label><span>Lesson planning</span><select id="sh_pl"><option value="0">None</option><option value="45" selected>45 min</option><option value="60">60 min</option></select></label>
+      <label><span>TP feedback</span><select id="sh_fb"><option value="30">30 min</option><option value="45" selected>45 min</option><option value="60">60 min</option></select></label>
+      <div class="fixed"><span>Teaching practice</span><b>8 TPs, 6 hours</b><small>Cambridge&rsquo;s, not changeable</small></div>
+    </div>
+    <div class="sfoot"><span id="sh_sum"></span><label class="lib"><input type="checkbox" checked> Input sessions from Connect&rsquo;s library, in teaching order</label></div>
+  </section>
+  <div class="scroller"><div class="grid across" id="grid"></div></div>
+  <div class="key" id="key"></div>
+  <p class="note">In the view-only timetable the times sit on the bar. A tile carries its own time only when it does not start and end with its column, and its corner is folded in mustard: on day one, the getting-to-know-you activity and lesson planning.</p>
+</div>
+<script>
+(function(){
+  "use strict";
+  /* the course's usual day sets the bar: one column for each place in it */
+  var KINDS = { input:'Input', tp:'Teaching practice', feedback:'TP feedback', break:'Break', lunch:'Lunch', plan:'Planning', demo:'Observation', event:'Course event', task:'Assignment or tutorial' };
+  function v(id){ var e = document.getElementById(id); return e.type === 'time' ? e.value : +e.value; }
+  function hm(m){ return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+  function mins(t){ var a = t.split(':'); return +a[0] * 60 + +a[1]; }
+  /* the usual teaching day, slot by slot, from the shape */
+  function dayShape(){
+    var t = mins(v('sh_start')), out = [];
+    function add(k, len, gapAfter){ if (len > 0) { out.push({ k: k, s: hm(t), e: hm(t + len) }); t += len; } t += gapAfter || 0; }
+    var n = v('sh_inN');
+    for (var i = 0; i < n; i++) { add('input', v('sh_inL')); if (i < n - 1 && v('sh_br')) add('break', v('sh_br')); }
+    add('lunch', v('sh_lu')); add('plan:prep', v('sh_pr'));
+    for (var j = 0; j < v('sh_tpN'); j++) add('tp', v('sh_tpL'), v('sh_gap'));
+    add('plan', v('sh_pl'), v('sh_gap')); add('feedback', v('sh_fb'));
+    return out;
+  }
+  var BAR = [], DAYS = [];
+  var INPUTS = [['Lesson frameworks','DO'],['Writing the lesson plan','JR'],['Receptive skills','JR'],['Language analysis','DO'],['PPP','DO'],['Eliciting and CCQs','JR'],['Teaching vocabulary','DO'],['Phonology: sounds','JR'],['Error correction','DO']];
+  var NAMES = ['Aiko', 'Nour', 'Lucas', 'Mei'];
+  function build(){
+    var shape = dayShape(); BAR = shape.map(function(x){ return [x.s, x.e]; });
+    var q = INPUTS.slice(), dates = [['Tue','3 Nov',1],['Wed','4 Nov',1],['Thu','5 Nov',2]];
+    function teach(tp){ var ti = 0; return shape.map(function(x){
+      if (x.k === 'input') { var it = q.shift() || ['Input session','DO']; return { k:'input', t: it[0], by: it[1], s: x.s, e: x.e }; }
+      if (x.k === 'tp') { return { k:'tp', t: 'TP' + tp + ' · ' + NAMES[ti++ % NAMES.length], s: x.s, e: x.e }; }
+      return { k: x.k.replace(':prep', ''), t: x.k === 'plan:prep' ? 'TP preparation' : x.k === 'plan' ? 'Lesson planning' : KINDS[x.k], s: x.s, e: x.e }; }); }
+    var one = shape.filter(function(x){ return x.k === 'input' || x.k === 'break' || x.k === 'lunch'; }).map(function(x, i){
+      var o = { k: x.k, s: x.s, e: x.e, t: KINDS[x.k] };
+      if (x.k === 'input') { var f = i === 0 ? ['Course introduction','DO'] : ['Classroom management','JR']; o.t = f[0]; o.by = f[1]; }
+      return o; });
+    var lunchEnd = mins(one[one.length - 1].e);
+    one = one.concat([{ s: hm(lunchEnd + 15), e: hm(lunchEnd + 75), k:'demo', t:'Demonstration lesson' }, { s: hm(lunchEnd + 90), e: hm(lunchEnd + 135), k:'event', t:'Getting to know you: your activity' }, { s: hm(lunchEnd + 135), e: hm(lunchEnd + 285), k:'plan', t:'Lesson planning: TP1' }]);
+    DAYS = [{ d:'Mon', n:'2 Nov', x: one }].concat(dates.map(function(d){ return { d: d[0], n: d[1], x: teach(d[2]) }; }));
+    CELLS = DAYS.map(function(day){ var row = BAR.map(function(){ return null; }); day.x.forEach(function(x){ var c = col(x.s); while (row[c] && c < BAR.length - 1) c++; row[c] = x; }); return row; });
+    var last = shape[shape.length - 1];
+    document.getElementById('sh_sum').innerHTML = 'A teaching day: <b>' + shape[0].s + ' to ' + last.e + '</b>, ' + v('sh_inN') + ' input session' + (v('sh_inN') > 1 ? 's' : '') + ' and ' + v('sh_tpN') + ' TP lessons.';
+  }
+  /* each tile goes in the column it starts in (the last bar place at or before its start) */
+  function col(s){ var c = 0; for (var i = 0; i < BAR.length; i++) if (BAR[i][0] <= s) c = i; return c; }
+  var CELLS = [];
+  var mode = 'view', lay = 'across', drag = null;
+  var grid = document.getElementById('grid');
+  function odd(x, c){ return x.s !== BAR[c][0] || x.e !== BAR[c][1]; }
+  function tile(x, r, c){
+    var el = document.createElement('div');
+    if (!x) { el.className = 'cell empty'; }
+    else {
+      var showTime = mode === 'edit' || odd(x, c);
+      el.className = 'cell k-' + x.k + (x.by ? ' has-who' : '') + (mode === 'view' && odd(x, c) ? ' odd' : '');
+      el.innerHTML = '<span class="t"></span>' + (x.by ? '<span class="who"></span>' : '') + (showTime ? '<span class="tm"></span>' : '');
+      el.querySelector('.t').textContent = x.t; if (x.by) el.querySelector('.who').textContent = x.by;
+      if (showTime) el.querySelector('.tm').textContent = x.s + '–' + x.e;
+      el.title = KINDS[x.k] + ': ' + x.t + ', ' + x.s + ' to ' + x.e;
+    }
+    el.dataset.r = r; el.dataset.c = c;
+    if (mode === 'edit') {
+      el.draggable = !!x;
+      el.addEventListener('dragstart', function(){ drag = [r, c]; el.classList.add('dragging'); });
+      el.addEventListener('dragend', function(){ el.classList.remove('dragging'); });
+      el.addEventListener('dragover', function(e){ e.preventDefault(); el.classList.add('over'); });
+      el.addEventListener('dragleave', function(){ el.classList.remove('over'); });
+      el.addEventListener('drop', function(e){
+        e.preventDefault(); if (!drag) return;
+        var a = CELLS[drag[0]][drag[1]], b = CELLS[r][c];
+        /* the content swaps; the times belong to the places */
+        function take(t, s){ if (!t) return null; var o = Object.assign({}, t); o.s = BAR[s][0]; o.e = BAR[s][1]; return o; }
+        CELLS[r][c] = take(a, c); CELLS[drag[0]][drag[1]] = take(b, drag[1]); drag = null; render();
+      });
+    }
+    return el;
+  }
+  function render(){
+    grid.innerHTML = ''; grid.className = 'grid ' + lay; grid.style.setProperty('--n', lay === 'across' ? BAR.length : DAYS.length);
+    document.getElementById('root').classList.toggle('editing', mode === 'edit');
+    var corner = document.createElement('div'); corner.className = 'tick corner'; grid.appendChild(corner);
+    function tick(i){ var t = document.createElement('div'); t.className = 'tick'; t.innerHTML = BAR[i][0] + '<small>to ' + BAR[i][1] + '</small>'; return t; }
+    function day(r){ var d = document.createElement('div'); d.className = 'day'; d.innerHTML = '<b>' + DAYS[r].d + '</b><span>' + DAYS[r].n + (r === 0 ? ' · Day 1' : '') + '</span>'; return d; }
+    if (lay === 'across') {
+      BAR.forEach(function(_, i){ grid.appendChild(tick(i)); });
+      CELLS.forEach(function(row, r){ grid.appendChild(day(r)); row.forEach(function(x, c){ grid.appendChild(tile(x, r, c)); }); });
+    } else {
+      DAYS.forEach(function(_, r){ grid.appendChild(day(r)); });
+      BAR.forEach(function(_, c){ grid.appendChild(tick(c)); CELLS.forEach(function(row, r){ grid.appendChild(tile(row[c], r, c)); }); });
+    }
+  }
+  function seg(id, set){ document.getElementById(id).addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); }); set(b.dataset.v); render(); }); }
+  seg('mode', function(v){ mode = v; }); seg('lay', function(v){ lay = v; });
+  document.getElementById('key').innerHTML = Object.keys(KINDS).map(function(k){ return '<span><i class="k-' + k + '"></i>' + KINDS[k] + '</span>'; }).join('');
+  document.querySelectorAll('#shape input, #shape select').forEach(function(e){ e.addEventListener('change', function(){ build(); render(); }); });
+  build(); render();
+})();
+</script>
+</body>
+</html>
