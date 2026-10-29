@@ -1876,12 +1876,13 @@ function renderCore(){
     const anyDates = dated.some(d => d.date);
     /* WHEN THE NEXT POINTS GO OUT (Ramy, 29 Oct 2026: "Connect is taking care of business, we don't really need to say
        TP points out anymore ... the day they are teaching, they get the new TP points ... or tick a box"). The course
-       chooses on this page (settings.tpOut): after the set's feedback on the day it teaches (the default), the day
-       before the next practice at a set time, or by hand. TP 1 is open from release. */
+       chooses on this page (settings.tpOut): when the set finishes teaching that day (the default), the day
+       before the next practice at a set time, or by hand. TP 1 is open from release. The default opens it when their teaching that day ends. */
     const OUT = SETTINGS.tpOut || {}, tpNow = window.hubNow ? window.hubNow() : Date.now();
     const tpAt = (date, hm) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date || ''), t = /^(\d{1,2}):(\d{2})/.exec(hm || '') || [0, 18, 0]; return m ? new Date(+m[1], +m[2] - 1, +m[3], +t[1], +t[2]).getTime() : Infinity; };
     const tpDayRec = date => (tt.days || []).find(d => d && d.date === date) || null;
-    const tpFbEnd = date => { const d = tpDayRec(date), f = d && (d.sessions || []).filter(x => x.k === 'feedback' || x.k === 'reflect').sort((a, b) => String(b.e).localeCompare(String(a.e)))[0]; return (f && f.e) || '18:00'; };
+    /* when the day's teaching ends (Ramy, 29 Oct 2026: "not after their feedback, after they teach -- sometimes the feedback is on the next day") */
+    const tpFbEnd = date => { const d = tpDayRec(date), f = d && (d.sessions || []).filter(x => x.k === 'tp').sort((a, b) => String(b.e).localeCompare(String(a.e)))[0]; return (f && f.e) || '18:00'; };
     const tpDayBefore = date => { const i = (tt.days || []).findIndex(d => d && d.date === date); return i > 0 ? tt.days[i - 1].date : ''; };
     const tpOpens = tp => {
       if (tp <= 1) return 0;
@@ -2193,7 +2194,7 @@ function tpOutHTML(gs){
     }).join('')).join('')}</div>`;
   return `<section class="tpout"><h2>When the next TP points go out</h2>
     <p class="hint">Each set sees TP 1 once the points are released. After that, Lite opens their next practice on its own, by this rule. Nothing to type on the timetable.</p>
-    <div class="oopts">${opt('after', 'On the day they teach, after their feedback', 'Their next points open when the day’s TP feedback ends.')}
+    <div class="oopts">${opt('after', 'When they finish teaching', 'Their next points open as soon as the day’s last TP lesson ends.')}
     ${opt('eve', 'The day before their next TP', `At <select id="tpOutTime">${['12:00', '14:00', '16:00', '17:00', '18:00', '19:00', '20:00'].map(t => `<option${t === time ? ' selected' : ''}>${t}</option>`).join('')}</select>`)}
     ${opt('hand', 'By hand', 'Send each set its next points yourself.')}</div>${hand}</section>`;
 }
@@ -2204,7 +2205,7 @@ function saveTpOut(next, word){
   SETTINGS.tpOut = cs.tpOut; note = word; render();
 }
 document.addEventListener('change', e => {
-  if (e.target && e.target.name === 'tpOut') saveTpOut({ mode: e.target.value }, 'Saved: the next TP points go out ' + ({ after: 'after the day’s feedback', eve: 'the day before', hand: 'by hand' })[e.target.value] + '.');
+  if (e.target && e.target.name === 'tpOut') saveTpOut({ mode: e.target.value }, 'Saved: the next TP points go out ' + ({ after: 'when they finish teaching', eve: 'the day before', hand: 'by hand' })[e.target.value] + '.');
   if (e.target && e.target.id === 'tpOutTime') saveTpOut({ time: e.target.value }, 'Saved.');
 });
 document.addEventListener('click', e => {

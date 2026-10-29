@@ -1449,8 +1449,27 @@ if (fbBack){
      of a notification. */
   if (!confirmed && !beforeStart) add('Read and sign the two confirmations in your CELTA 5', '20_celta5.html');
   if (!beforeStart && !afterEnd && !tpDone) {
+    /* NEW POINTS ON THE HERO (Ramy, 29 Oct 2026: "they finish teaching, they get the new TP points ... it appears on their
+       hero card"). The same rule as the TP points page (settings.tpOut): when their teaching that day ends (the default),
+       the day before their next TP at a set time, or sent by hand. Said as new for the day after they open. */
+    const NEW_TP = (function(){
+      if (!PTS.released) return 0;
+      const O = (rec('connect_course_settings') || {}).tpOut || {}, now = window.hubNow ? window.hubNow() : Date.now();
+      const dayOf = n => ((myTpDays.find(x => Number(x.tp) === n) || {}).date) || '';
+      const at = (date, hm) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date || ''), t = /^(\d{1,2}):(\d{2})/.exec(hm || '') || [0, 18, 0]; return m ? new Date(+m[1], +m[2] - 1, +m[3], +t[1], +t[2]).getTime() : Infinity; };
+      const lastTpEnd = date => { const d = (TT.days || []).find(x => x && x.date === date), f = d && (d.sessions || []).filter(x => x.k === 'tp').sort((a, b) => String(b.e).localeCompare(String(a.e)))[0]; return (f && f.e) || '18:00'; };
+      const before = date => { const i = (TT.days || []).findIndex(x => x && x.date === date); return i > 0 ? TT.days[i - 1].date : ''; };
+      const opensAt = n => {
+        if (O.mode === 'hand') return Number(((O.sent || {})[(ME.group || '') + '|' + mySetIdx]) || 1) >= n ? 0 : Infinity;
+        if (O.mode === 'eve') { const d = dayOf(n); return d ? at(before(d) || d, O.time || '17:00') : Infinity; }
+        const p = dayOf(n - 1); return p ? at(p, lastTpEnd(p)) : Infinity;
+      };
+      for (let n = tpTotal; n >= 2; n--) { const t = opensAt(n); if (t <= now) return (now - t < 36 * 3600 * 1000 || (O.mode === 'hand' && n > filed + 1)) && (((PTS.points || {})[ME.token] || {})['tp' + n] || {}).aim ? n : 0; }
+      return 0;
+    })();
+    if (NEW_TP && NEW_TP !== HERO_TP) add('New: your TP points for TP ' + NEW_TP + ' are out', '24_tp_points.html');
     /* the TP points first: what they teach, with its pages and its audio */
-    if (NEXT === 'plan' && HERO_TP && PTS.released) add('Your TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
+    if (NEXT === 'plan' && HERO_TP && PTS.released) add((NEW_TP === HERO_TP ? 'New: y' : 'Y') + 'our TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
     if (NEXT === 'plan') add(HERO_TP ? (matOnly(HERO_TP) ? 'Prepare your material for TP ' + HERO_TP + ' and send it to your tutor' : 'Write your lesson plan for TP ' + HERO_TP) : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
     if (NEXT === 'self') add(fbBack ? 'Write your self-evaluation — it opens your feedback' : 'Write your self-evaluation', '2_trainee_self_evaluation.html');
   }
