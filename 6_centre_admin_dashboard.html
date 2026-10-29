@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610291324">
+<link rel="stylesheet" href="hub-tokens.css?v=202610291337">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -626,7 +626,7 @@
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610291324">
+<link rel="stylesheet" href="hub-house.css?v=202610291337">
 </head>
 <body>
 <div class="board">
@@ -1205,19 +1205,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202610291324"></script>
-<script src="hub-store.js?v=202610291324"></script>
-<script src="hub-xlsx.js?v=202610291324"></script>
-<script src="hub-say.js?v=202610291324"></script>
-<script src="agreement-defaults.js?v=202610291324"></script>
-<script src="observation-defaults.js?v=202610291324"></script>
-<script src="hub-shared.js?v=202610291324"></script>
-<script src="hub-rotation.js?v=202610291324"></script>
-<script src="hub-due.js?v=202610291324"></script>
-<script src="hub-sync.js?v=202610291324"></script>
-<script src="hub-notebook.js?v=202610291324"></script>
-<script src="hub-hand.js?v=202610291324"></script>
-<script src="hub-ink.js?v=202610291324"></script>
+<script src="assignment-defaults.js?v=202610291337"></script>
+<script src="hub-store.js?v=202610291337"></script>
+<script src="hub-xlsx.js?v=202610291337"></script>
+<script src="hub-say.js?v=202610291337"></script>
+<script src="agreement-defaults.js?v=202610291337"></script>
+<script src="observation-defaults.js?v=202610291337"></script>
+<script src="hub-shared.js?v=202610291337"></script>
+<script src="hub-rotation.js?v=202610291337"></script>
+<script src="hub-due.js?v=202610291337"></script>
+<script src="hub-sync.js?v=202610291337"></script>
+<script src="hub-notebook.js?v=202610291337"></script>
+<script src="hub-hand.js?v=202610291337"></script>
+<script src="hub-ink.js?v=202610291337"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2194,6 +2194,12 @@ let SHOW_URLS = false;
    (Ramy, 8 Oct 2026: "copy, email, rotate, like we have"). Through the
    center's own mail app, Lite sends nothing itself. The tutor link goes to
    the addresses on Contacts, the assessor link to whoever the center types. */
+/* THE LINK EMAILS (Ramy, 29 Oct 2026: "a bit cold ... we should sign it off"). Signed by the center's team; the PIN
+   paragraph only when the course has PINs on (they apply to the trainees' links and the tutors' one, never the
+   assessor's or a volunteer's). */
+function mailSettings(){ try { return JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { return {}; } }
+function mailDay(iso){ const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }) : ''; }
+function mailSign(cname){ return '\n\nBest wishes,\nThe CELTA team at ' + cname; }
 function roleMail(kind, url){
   const course = (document.getElementById('courseName') || {}).value.trim() || 'the CELTA course';
   const cname = (document.getElementById('centreName') || {}).value.trim() || 'the center';
@@ -2202,10 +2208,21 @@ function roleMail(kind, url){
     let cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
     to = (cs.tutorContacts || []).map(c => c && c.email).filter(Boolean).join(',');
     subject = 'The tutor link for ' + course;
-    body = 'Hello,\n\nHere is the tutor link for ' + course + ' at ' + cname + ':\n' + url + '\n\nIt is one link for the whole training team: everyone opens the same one and lands on the same course. Keep it to the team; anyone who has it can read and change every trainee\u2019s record. If it ever gets out, Course admin can rotate it and every old copy stops working.\n\n';
+    body = 'Hello,\n\nHere is the tutor link for ' + course + ' at ' + cname + ':\n' + url
+      + '\n\nIt\u2019s one link for the whole training team: everyone opens the same one and lands on the same course. From it you\u2019ll reach the timetable, the input sessions, the trainee tracker, and each trainee\u2019s plans, feedback and CELTA 5.'
+      + '\n\nThe first time you open it, type your name at the top. It signs your feedback and your notices.'
+      + (cs.pinLinks ? '\n\nThe link has one PIN for the whole team. Whoever opens it first chooses it, so please agree it among yourselves. If it\u2019s forgotten, Course admin can issue a new link.' : '')
+      + '\n\nPlease keep it within the team: anyone who has it can read and change every trainee\u2019s record. If it ever gets out, Course admin can replace it, and every old copy stops working.'
+      + '\n\nLooking forward to working with you on this course.' + mailSign(cname);
   } else {
-    subject = 'Assessor link for ' + course + ' at ' + cname;
-    body = 'Hello,\n\nHere is your link for the assessment of ' + course + ' at ' + cname + ':\n' + url + '\n\nIt opens the assessor pack: the trainees you are observing, every portfolio, the double-marking record and the course documents. It is read-only, and it works until the end of the last day of the course.\n\n';
+    const cs2 = mailSettings(), visit = mailDay(cs2.visitDate);
+    subject = 'Your assessor link for ' + course + ' at ' + cname;
+    body = 'Hello,\n\nThank you for assessing ' + course + ' at ' + cname + '. Here is your link:\n' + url
+      + (visit ? '\n\nYour visit is on ' + visit + '.' : '')
+      + '\n\nIt opens your assessor pack, laid out as Handbook 14.1 sets it:\n- the trainees you\u2019re observing, first;\n- every candidate portfolio;\n- the grades for the grading meeting;\n- the double-marking record, the attendance registers, the course documents and the assignment briefs.'
+      + '\n\nIt\u2019s read-only, so nothing you open can change a record. It works until the end of the course\u2019s last day.'
+      + '\n\nIf you\u2019d like to see more of the course than the Handbook asks for, there\u2019s a \u201cTake a tour of Lite\u201d section at the end of the pack.'
+      + '\n\nIf anything doesn\u2019t open, reply to this email and we\u2019ll sort it out straight away.' + mailSign(cname);
   }
   return 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
@@ -2326,8 +2343,18 @@ function mailLink(t){
   const S = window.HubStore;
   const course = (document.getElementById('courseName') || {}).value || 'your CELTA course';
   const first = String(t.name || '').trim().split(/\s+/)[0] || '';
+  const cs = mailSettings(), cname = (document.getElementById('centreName') || {}).value.trim() || cs.centreName || 'the center';
+  const start = mailDay(cs.start), today = (window.hubToday && hubToday()) || new Date().toISOString().slice(0, 10), before = /^\d{4}-\d{2}-\d{2}/.test(String(cs.start || '')) && today < String(cs.start).slice(0, 10);
+  const agr = cs.agreement || {}, hasAgr = !!(String(((cs.docs || {}).docAgreement) || '').trim() || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(agr[k] || '').trim()));
+  const waiting = [cs.preCourseConnect ? 'your pre-course task' : '', hasAgr ? 'the course agreement' : ''].filter(Boolean);
   const subject = encodeURIComponent('Your link for ' + course);
-  const body = encodeURIComponent('Hello ' + first + ',\n\nHere is your link for ' + course + ':\n' + S.inviteFor('trainee', t.token) + '\n\nIt is yours alone. Your timetable, your plans, your feedback and your CELTA 5 are all behind it, so keep it where you can find it.\n');
+  const body = encodeURIComponent((first ? 'Hello ' + first + ',' : 'Hello,')
+    + '\n\nWelcome to ' + course + ' at ' + cname + '.' + (before && start ? ' We\u2019re looking forward to meeting you on ' + start + '.' : '')
+    + '\n\nHere is your link to the course on Connect Lite:\n' + S.inviteFor('trainee', t.token)
+    + '\n\nIt is yours alone. Whoever opens it can read your feedback and hand in work in your name, so please keep it to yourself.'
+    + (cs.pinLinks ? '\n\nThe first time you open it, you\u2019ll choose a PIN. Please remember it: you\u2019ll type the same PIN when you open your link on another phone or computer. If you forget it, ask us for a new link.' : '')
+    + (before && waiting.length ? '\n\nOpen it once before day one: ' + waiting.join(' and ') + (waiting.length > 1 ? ' are' : ' is') + ' waiting for you there.' : '')
+    + '\n\nIf anything doesn\u2019t open, just reply to this email.' + mailSign(cname));
   return 'mailto:' + encodeURIComponent(t.email || '') + '?subject=' + subject + '&body=' + body;
 }
 function rosterList(trainees){

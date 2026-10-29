@@ -2260,14 +2260,20 @@ case 'inbox': {
       var viP = 'font:16px/1.55 Arial,Helvetica,sans-serif;color:#232220;margin:0 0 14px';
       var viHtml = '<div style="max-width:520px">'
         + '<p style="' + viP + '">' + (viFirst ? 'Hello ' + viEsc(viFirst) + ',' : 'Hello,') + '</p>'
-        + '<p style="' + viP + '">Thank you for coming to be taught on the CELTA course at ' + viEsc(viCentre) + '.</p>'
-        + '<p style="' + viP + '">Here is your page for the classes: the next one to come to, which days you came, and your certificate at the end.</p>'
+        + '<p style="' + viP + '">Thank you for coming to our English classes at ' + viEsc(viCentre) + '. Your teachers are trainee teachers on our CELTA course, and experienced tutors watch every lesson.</p>'
+        + '<p style="' + viP + '">Here is your page for the classes. On it you\u2019ll find your next class, the days you came, and your certificate at the end. You can also tell us whether you\u2019re coming.</p>'
         + '<p style="margin:22px 0"><a href="' + viLink + '" style="display:inline-block;padding:13px 22px;background:#1E3B2F;color:#ffffff;text-decoration:none;border-radius:10px;font:bold 16px Arial,Helvetica,sans-serif">Open my page</a></p>'
-        + '<p style="' + viP + '"><b>This link is just for you.</b> Open it on your phone before each class.</p>'
+        + '<p style="' + viP + '"><b>This link is just for you.</b> Keep it on your phone, your laptop, or both, and open it before each class.</p>'
         + (viContact ? '<p style="font:14px/1.5 Arial,Helvetica,sans-serif;color:#555;margin:22px 0 0">Questions? Reply to this email and it reaches ' + viEsc(viContact.name || viCentre) + '.</p>' : '')
+        /* signed by the center (Ramy, 29 Oct 2026: "we should sign it off") */
+        + '<p style="' + viP + '">See you in class,<br>The CELTA team at ' + viEsc(viCentre) + '</p>'
         + '</div>';
-      var viText = (viFirst ? 'Hello ' + viFirst + ',' : 'Hello,') + '\n\nThank you for coming to be taught on the CELTA course at ' + viCentre + '.\n\nYour page for the classes: ' + viLink + '\n\nThis link is just for you. Open it on your phone before each class.';
-      var viMsg = { to: viTo, subject: 'Your classes at ' + viCentre, htmlBody: viHtml, body: viText, name: viCentre };
+      var viText = (viFirst ? 'Hello ' + viFirst + ',' : 'Hello,') + '\n\nThank you for coming to our English classes at ' + viCentre + '. Your teachers are trainee teachers on our CELTA course, and experienced tutors watch every lesson.'
+        + '\n\nHere is your page for the classes: ' + viLink + '\nOn it you\u2019ll find your next class, the days you came, and your certificate at the end. You can also tell us whether you\u2019re coming.'
+        + '\n\nThis link is just for you. Keep it on your phone, your laptop, or both, and open it before each class.'
+        + (viContact ? '\n\nQuestions? Reply to this email and it reaches ' + (viContact.name || viCentre) + '.' : '')
+        + '\n\nSee you in class,\nThe CELTA team at ' + viCentre;
+      var viMsg = { to: viTo, subject: 'Your English classes at ' + viCentre, htmlBody: viHtml, body: viText, name: viCentre };
       if (viContact) viMsg.replyTo = viContact.email;
       sendAs_(viMsg);
       var viAt = new Date().toISOString();
