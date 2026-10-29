@@ -350,7 +350,8 @@
   .tgrid.tboard{--note:minmax(150px, 220px);} .tgrid.tboard.down{--note:auto;}
   .tgrid.tboard .dnoteend{align-self:stretch; padding:8px 10px; font-size:0.8rem; line-height:1.45; color:var(--ink-warm); border-left:2px solid var(--sand-line);}
   .tgrid.tboard.down .dnoteend{border-left:0; border-top:2px solid var(--sand-line); min-height:0;}
-  .tgrid.tboard .dnoteend b{display:block; font-size:0.62rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey);}
+  .tgrid.tboard .dnoteend{display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
+  .tgrid.tboard .dnoteend .nt b{display:block; font-size:0.62rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey);}
   .tgrid.tboard .dnoteend:empty{border:0;}
   .tgrid.tboard .dnote{display:inline-block; font-size:0.62rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); padding:1px 7px; border:1px solid var(--sand-line); border-radius:999px; cursor:help;}
   .tgrid.tboard.down{align-items:stretch;}
@@ -1386,16 +1387,19 @@ function weekBoard(w, n){
     return out;
   };
   const maxFlags = Math.max(0, ...w.map(d => flagsOf(d).length));
-  const hasNotes = w.some(d => !d.closed && (d.notes || makeupNote(d.date)));
+  const hasEnd = EDIT || w.some(d => !d.closed && (d.notes || makeupNote(d.date) || flagsOf(d).length));
   const cells = (day, idx) => {
     const d = parse(day.date), isToday = day.date === TODAY;
     const mk = makeupNote(day.date), fl = flagsOf(day);
     /* no notes box on the day (Ramy, 29 Oct 2026: "those notes on top ... I don't like them"): a note shows as text, and is written from the day's ⋯ menu */
     /* a day's note sits at the END of the day (Ramy, 29 Oct 2026: "notes on the right if we're going across, at the bottom if we're going down") */
-    const notes = '', noteEnd = hasNotes ? `<div class="dnoteend">${day.notes ? '<b>Note</b> ' + esc(day.notes) : ''}${mk}</div>` : '';
+    const notes = '';
     const dh = `<div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="${day.closed ? 'Reopen this day' : 'Close this day (a holiday, a snow day)'}"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>${day.closed ? 'No course' : 'Day ' + (idx + 1)}</small>${day.closed ? '' : dayMark(day)}</div>`
-      + (EDIT && !day.closed ? `<div class="dacts">${pinned(day.date) ? '<span class="pin" title="Copying a day’s shape leaves this one alone">Pinned</span>' : ''}<button type="button" class="more" data-menu="${esc(day.date)}" aria-label="Options for this day">⋯</button><button type="button" class="addtile" data-add="${esc(day.date)}" title="A new tile at the end of the day">+ Add a tile</button></div>` : '')
-      + (fl.length ? `<div class="flags">${fl.join('')}</div>` : '') + (day.closed ? '' : notes) + '</div>';
+      + '</div>';
+    /* THE END OF THE DAY (Ramy, 29 Oct 2026: "the notes ... add a tile, LSRT and all this stuff, I want this on the right,
+       and if we're going down, at the bottom"): the deadlines, the note and the day's buttons follow its last tile */
+    const acts = EDIT && !day.closed ? `<div class="dacts">${pinned(day.date) ? '<span class="pin" title="Copying a day’s shape leaves this one alone">Pinned</span>' : ''}<button type="button" class="more" data-menu="${esc(day.date)}" aria-label="Options for this day">⋯</button><button type="button" class="addtile" data-add="${esc(day.date)}" title="A new tile at the end of the day">+ Add a tile</button></div>` : '';
+    const noteEnd = hasEnd ? `<div class="dnoteend">${fl.length ? `<div class="flags">${fl.join('')}</div>` : ''}${day.notes ? '<div class="nt"><b>Note</b> ' + esc(day.notes) + '</div>' : ''}${mk ? '<div class="nt">' + mk + '</div>' : ''}${acts}</div>` : '';
     if (day.closed) return dh + `<div class="closedmsg">${EDIT ? 'Closed · click the date to reopen' : 'No course today'}</div>`;
     /* (the note's place is kept on a closed day too, so the rows still line up) */
     const teachers = teachersOf(day);
@@ -1407,7 +1411,7 @@ function weekBoard(w, n){
       return `<div class="slot${narrow[i] ? ' narrow' : ''}" data-date="${esc(day.date)}" data-i="${i}"></div>`;
     }).join('') + noteEnd;
   };
-  const track = cols.map((c, i) => narrow[i] ? 'var(--slim)' : 'var(--cell)').join(' ') + (hasNotes ? ' var(--note)' : '');
+  const track = cols.map((c, i) => narrow[i] ? 'var(--slim)' : 'var(--cell)').join(' ') + (hasEnd ? ' var(--note)' : '');
   const style = `--ncols:${cols.length};--track:${track};--hh:calc(var(--hh0) + ${maxFlags} * 22px)`;
   return `<div class="tscroll"><div class="tgrid tboard ${across ? 'across' : 'down'}" style="${style}">`
     + w.map(d => `<div class="day${d.date === TODAY ? ' today' : ''}${d.closed ? ' closed' : ''}" id="d-${esc(d.date)}">${cells(d, TT.days.indexOf(d))}</div>`).join('')
