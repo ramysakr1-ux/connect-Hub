@@ -217,7 +217,7 @@
     { k:'task', t:'Language Skills Related Tasks: the assignment', len:60, asg:'lsrt', req:1 }, { k:'task', t:'Lessons from the Classroom: the assignment', len:60, asg:'lfc', req:1 },
     { k:'task', t:'Stage 2 tutorials', len:45, req:1 }, { k:'task', t:'Stage 3 tutorials', len:45 }, { k:'task', t:'Stage 1 progress check', len:45 },
     { k:'assessor', t:'Assessor visit', len:180, req:1 }, { k:'task', t:'Consultation', len:60 },
-    { k:'demo', t:'Observation: an experienced teacher', len:60, req:1 }, { k:'demo', t:'Observation: a filmed lesson, with a task', len:60, req:1 }, { k:'demo', t:'Demonstration lesson', len:60 },
+    { k:'demo', t:'Observation: an experienced teacher', len:60, req:1 }, { k:'demo', t:'Observation: a filmed lesson, with a task', len:60, req:1 }, { k:'demo', t:'Demonstration lesson', len:45 },
     { k:'event', t:'Getting to know you', len:45 }, { k:'event', t:'Course review', len:60 }, { k:'plan', t:'Study time', len:60 }
   ];
   /* five weeks, Friday off */
@@ -286,9 +286,9 @@
         tps.forEach(function(x, i){ put(row, { k:'tp', t:'TP' + p.tp + ' · ' + G[p.g][i % 4], by: tut, s: x.s, e: x.e }); });
         after.forEach(function(x){ put(row, { k: x.k, t: x.k === 'feedback' ? 'TP feedback' : (p.tp >= 7 ? 'Independent planning' : 'Lesson planning'), by: x.k === 'feedback' ? tut : undefined, s: x.s, e: x.e }); });
       } else if (d === 0) {
-        put(row, { k:'demo', t:'Demonstration lesson', s: tps[0].s, e: tps[1].e });
-        put(row, { k:'event', t:'Getting to know you: your activity', s: tps[2].s, e: tps[2].e });
-        after.forEach(function(x){ put(row, { k: x.k === 'feedback' ? 'event' : 'plan', t: x.k === 'feedback' ? 'Demo lesson debrief' : 'Lesson planning: TP1', s: x.s, e: x.e }); });
+        /* two demonstration lessons, 45 minutes each (Ramy, 29 Oct 2026): the first on day one */
+        var D1 = [['demo','Demonstration lesson 1'], ['event','Demo lesson debrief'], ['event','Getting to know you: your activity'], ['plan','Lesson planning: TP1, with your tutor'], ['plan','Lesson planning: TP1']];
+        tps.concat(after).forEach(function(x, i){ put(row, { k: D1[i][0], t: D1[i][1], s: x.s, e: x.e }); });
       } else if (d === 19) {
         /* the last day */
         tps.concat(after).forEach(function(x, i){ var f = [['task','Final tutorials'], ['task','Final tutorials'], ['task','Consultation: the CELTA 5 and the portfolio'], ['task','Consultation: what comes next'], ['event','End of course']][i]; put(row, { k: f[0], t: f[1], by: f[0] === 'task' ? who(i) : undefined, s: x.s, e: x.e }); });
@@ -298,7 +298,8 @@
         /* Ramy, 29 Oct 2026: "week 2 Friday will be tutorials" */
         /* Handbook 10 (pp. 30-31): Stage 2 is the one-to-one tutorial at the halfway point, after TP4, as the trainees swap
            tutors; Stage 3 in the final third, with at least two lessons left (after TP6) */
-        if (d === 9) fill = [['task','Stage 2 tutorials'], ['task','Stage 2 tutorials'], ['task','Language Related Tasks: the assignment','lrt'], ['task','Stage 2 tutorials'], ['task','Stage 2 tutorials']];
+        /* the second demonstration lesson at the change of level, before the Stage 2 tutorials (as on C/18) */
+        if (d === 9) fill = [['demo','Demonstration lesson 2: the new level'], ['task','Stage 2 tutorials'], ['task','Language Related Tasks: the assignment','lrt'], ['task','Stage 2 tutorials'], ['task','Stage 2 tutorials']];
         else if (d === 14) fill = [['demo','Filmed observation, with a task'], ['demo','Filmed observation, with a task'], ['task','Language Skills Related Tasks: the assignment','lsrt'], ['task','Stage 3 tutorials'], ['demo','Filmed observation, with a task']];
         else (extra[d] || []).forEach(function(e){ fill[e[0] === 0 ? 2 : 4] = [e[1], e[2], e[3]]; });
         slots.forEach(function(x, i){ var f = fill[i] || ['task','Consultation']; var o = { k: f[0], t: f[1], s: x.s, e: x.e }; if (f[2]) o.asg = f[2]; if (f[0] !== 'demo') o.by = who(d + i); put(row, o); });
