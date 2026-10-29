@@ -1946,7 +1946,7 @@ case 'inbox': {
     case 'putInterviewAudio': {
       if (!me || tutor || assessor) throw new Error('Trainees only');
       if (!course) throw new Error('This link is not on a course');
-      if (!((courseRead_(course.id, 'settings') || {}).interviewRecording)) throw new Error('Recording is not switched on for this course');
+      if (((courseRead_(course.id, 'settings') || {}).interviewRecording) === false) throw new Error('Recording is not switched on for this course');   /* v181: on unless the center turned it off */
       var iaName = String(req.student || '').trim();
       var iaReg = courseRead_(course.id, 'volunteers') || {};
       var iaStudent = (iaReg.students || []).filter(function (x) { return x && String(x.name || '').trim().toLowerCase() === iaName.toLowerCase(); })[0];
