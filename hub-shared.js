@@ -2331,3 +2331,29 @@ window.hubHeadHTML = function (text, heads) {
   /* a trainee's first page can open before the course's settings arrive */
   document.addEventListener('hub:ready', maybe);
 })();
+
+/* BACK IS BACK (Ramy, 29 Oct 2026: "going back does not take me back to the door I came from ... it takes me back to the
+   dashboard. If I want to go to the dashboard, I'll click on Tutor home. Back is back."). Any link on a page that says
+   Back, or that is the page's back link (a.back, #back, #backLink), goes to the page this one was opened from, when that
+   was a Lite page in this tab; the link's own address stays for a page opened fresh (a new tab, a bookmark, an email). */
+(function () {
+  function sameSite() {
+    try { var r = document.referrer ? new URL(document.referrer) : null; return !!(r && r.origin === location.origin && r.pathname + r.search !== location.pathname + location.search); } catch (e) { return false; }
+  }
+  function isBack(a) {
+    if (!a || a.tagName !== 'A') return false;
+    if (a.id === 'hubAkBack') return false;   /* the assessor's pill goes to the pack, by name */
+    var t = (a.textContent || '').trim();
+    return /^back$/i.test(t) || ((a.classList.contains('back') || a.id === 'back' || a.id === 'backLink') && /^back\b/i.test(t));
+  }
+  /* a back link that names a place ("Back to dashboard") says Back when it goes back, so it never names the wrong place */
+  function relabel() { if (!sameSite()) return; document.querySelectorAll('a.back, a#back, a#backLink').forEach(function (a) { if (a.id !== 'hubAkBack' && /^back to\b/i.test((a.textContent || '').trim())) a.textContent = 'Back'; }); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', relabel); else relabel();
+  setTimeout(relabel, 1500);
+  document.addEventListener('click', function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if (!isBack(a) || !sameSite() || history.length < 2) return;
+    e.preventDefault(); history.back();
+  }, true);
+})();

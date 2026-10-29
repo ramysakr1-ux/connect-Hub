@@ -1439,6 +1439,11 @@ case 'inbox': {
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
         boot.roster = withoutEmails_(rosterWithRecords_(course.id, TUTOR_WRITES), assessor);
+        /* v180 (29 Oct 2026): the trainee's own answers for mixing the groups -- nationality, first language, gender,
+           pronouns -- never reach the assessor. Handbook 12.1 (p. 34): "other identifying information e.g. date of birth,
+           nationality, address etc. is not required and should not be shared"; 12.2 (p. 35): removed from any
+           documentation shared with Cambridge English and the assessor. */
+        if (assessor) boot.roster.forEach(function (t) { if (t && t.records) delete t.records.about; });
       } else if (me) {
         boot.me = { token: me.token, name: me.name, group: me.group, email: me.email || '', records: recordsFor_(course.id, me.token, TRAINEE_READS) };
         /* v129: the notes classmates shared with this trainee's group or with the whole course */
@@ -1467,7 +1472,7 @@ case 'inbox': {
     }
     case 'get': {
       var kind = String(req.kind || '');
-      if (reader) { if (PRIVATE_KINDS[kind]) throw new Error('Not yours to read: ' + kind); return { data: read_(course.id, String(req.token || ''), kind) }; }
+      if (reader) { if (PRIVATE_KINDS[kind] || (assessor && kind === 'about')) throw new Error('Not yours to read: ' + kind); return { data: read_(course.id, String(req.token || ''), kind) }; }
       if (!me) throw new Error('No token');
       if (!TRAINEE_READS[kind]) throw new Error('Not yours to read: ' + kind);
       return { data: read_(course.id, me.token, kind) };
@@ -2533,7 +2538,9 @@ case 'inbox': {
     // ---- roster, tutors and the assessor ----------------------------------
     case 'roster': {
       if (!reader) throw new Error('Tutors only');
-      return { trainees: withoutEmails_(rosterWithRecords_(course.id, TUTOR_WRITES), assessor) };
+      var rl = withoutEmails_(rosterWithRecords_(course.id, TUTOR_WRITES), assessor);
+      if (assessor) rl.forEach(function (t) { if (t && t.records) delete t.records.about; });   /* v180: see boot */
+      return { trainees: rl };
     }
     case 'addTrainee': {
       requireTutor_(tutor);
