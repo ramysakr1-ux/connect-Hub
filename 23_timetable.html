@@ -454,6 +454,8 @@
   .bld .shape .sgrid{display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px 14px; margin:8px 0;}
   .bld .shape label span, .bld .shape .fixed span{display:block; font-size:0.66rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 4px;}
   .bld .shape select, .bld .shape input{box-sizing:border-box; width:100%; height:38px; padding:0 8px; border:1px solid var(--sand-line); border-radius:9px; background:var(--field); font:500 0.9rem 'Karla',sans-serif; color:var(--ink);}
+  .bld .shape .nin{position:relative; display:block; margin:0; font-size:inherit; letter-spacing:0; text-transform:none; font-weight:500; color:inherit;}
+  .bld .shape .nin input{padding-right:40px;} .bld .shape .nin em{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-style:normal; font-size:0.78rem; color:var(--grey);}
   .bld .shape .fixed b{display:block; padding-top:8px;} .bld .shape .fixed small{color:var(--faint); font-size:0.72rem;}
   .bld .shelfalt{margin:0 0 14px;} .bld .shelfalt summary{cursor:pointer; font-weight:700; font-size:0.86rem; color:var(--teal);}
   .swapbar{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; max-width:min(92vw, 760px); padding:11px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:12px; font-size:0.86rem; box-shadow:0 12px 30px -10px oklch(30% 0.04 60 / .45);}
@@ -2362,37 +2364,45 @@ function wireShelf(B){
 /* THE COURSE'S SHAPE (Ramy, 29 Oct 2026, the mock-up he chose: "set a usual teaching day once"; "build it again is still
    the same old view"): the day as numbers, not tiles: when it starts, the inputs and their length, the breaks, the TP
    lessons, lunch, feedback and planning. It writes the same pattern the shelf does, so every day is laid the same way. */
-const SHAPE_DEFAULT = { start: '10:00', inN: 1, inL: 75, br: 15, tpN: 3, tpL: 45, tpBr: 15, lu: 60, fb: 45, pl: 45 };
+const SHAPE_DEFAULT = { start: '10:00', inN: 1, inL: 75, br: 15, tpN: 3, tpL: 45, tpBr: 15, tpBrAt: '2', lu: 60, fb: 45, pl: 45 };
 function patternFromShape(S){
-  const tiles = [];
-  for (let i = 0; i < S.inN; i++) { tiles.push({ k: 'input', len: S.inL }); if (i < S.inN - 1 && S.br) tiles.push({ k: 'break', len: S.br }); }
-  if (S.br) tiles.push({ k: 'break', len: S.br });
-  for (let j = 0; j < S.tpN; j++) { tiles.push({ k: 'tp', len: S.tpL }); if (j === 1 && S.tpBr && S.tpN > 2) tiles.push({ k: 'break', len: S.tpBr }); }
-  if (S.lu) tiles.push({ k: 'lunch', len: S.lu });
-  if (S.fb) tiles.push({ k: 'feedback', len: S.fb });
-  if (S.pl) tiles.push({ k: 'plan', len: S.pl, t: 'Lesson planning' });
+  const tiles = [], n = v => Math.max(0, parseInt(v, 10) || 0);
+  for (let i = 0; i < n(S.inN); i++) { tiles.push({ k: 'input', len: n(S.inL) || 60 }); if (i < n(S.inN) - 1 && n(S.br)) tiles.push({ k: 'break', len: n(S.br) }); }
+  if (n(S.inN) && n(S.br)) tiles.push({ k: 'break', len: n(S.br) });
+  /* the break in the TP: after every lesson, or after one lesson (Ramy, 29 Oct 2026: "maybe 5 and 5, maybe 10 and 10, maybe after the first TP") */
+  for (let j = 1; j <= n(S.tpN); j++) {
+    tiles.push({ k: 'tp', len: n(S.tpL) || 45 });
+    const after = S.tpBrAt === 'each' ? j < n(S.tpN) : String(j) === String(S.tpBrAt) && j < n(S.tpN);
+    if (after && n(S.tpBr)) tiles.push({ k: 'break', len: n(S.tpBr) });
+  }
+  if (n(S.lu)) tiles.push({ k: 'lunch', len: n(S.lu) });
+  if (n(S.fb)) tiles.push({ k: 'feedback', len: n(S.fb) });
+  if (n(S.pl)) tiles.push({ k: 'plan', len: n(S.pl), t: 'Lesson planning' });
   return { start: S.start, lens: Object.assign({}, KIND_LEN), tiles };
 }
+/* every length is typed, in minutes, with the usual ones offered (Ramy, 29 Oct 2026: "a couple in the dropdown, but also
+   your own") */
 function shapeCardHTML(B){
   if (!B.shape) { B.shape = Object.assign({}, SHAPE_DEFAULT); B.pattern = patternFromShape(B.shape); }
-  const S = B.shape, sel = (id, cur, opts) => `<select data-shape="${id}">${opts.map(o => `<option value="${o[0]}"${String(o[0]) === String(cur) ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select>`;
-  const m = v => [v, v >= 60 ? (Math.floor(v / 60) + ' h' + (v % 60 ? ' ' + (v % 60) : '')) : v + ' min'];
+  const S = B.shape;
+  const num = (id, label, sugg, unit, min, max) => `<label><span>${label}</span><span class="nin"><input type="text" inputmode="numeric" data-shape="${id}" value="${esc(S[id])}" list="dl-${id}" maxlength="3"><em>${unit}</em></span><datalist id="dl-${id}">${sugg.map(v => `<option value="${v}">`).join('')}</datalist></label>`;
   const L = layout(B.pattern), end = L.length ? toHM(L[L.length - 1].e) : S.start;
   return `<div class="bsec shape"><h4>1 · The course’s usual day</h4>
     <div class="sgrid">
-      <label><span>The day starts</span><input type="time" data-shape="start" value="${esc(S.start)}" step="900"></label>
-      <label><span>Input sessions a day</span>${sel('inN', S.inN, [[1, '1'], [2, '2']])}</label>
-      <label><span>Each input session</span>${sel('inL', S.inL, [45, 60, 75, 90].map(m))}</label>
-      <label><span>Break after the inputs</span>${sel('br', S.br, [[0, 'None'], m(15), m(20), m(30)])}</label>
-      <label><span>TP lessons a day</span>${sel('tpN', S.tpN, [[2, '2'], [3, '3'], [4, '4']])}</label>
-      <label><span>Each TP lesson</span>${sel('tpL', S.tpL, [40, 45, 60].map(m))}</label>
-      <label><span>Break in the TP</span>${sel('tpBr', S.tpBr, [[0, 'None'], [15, '15 min, after lesson 2']])}</label>
-      <label><span>Lunch</span>${sel('lu', S.lu, [30, 45, 60].map(m))}</label>
-      <label><span>TP feedback</span>${sel('fb', S.fb, [[0, 'None'], m(30), m(45), m(60)])}</label>
-      <label><span>Lesson planning</span>${sel('pl', S.pl, [[0, 'None'], m(45), m(60)])}</label>
+      <label><span>The day starts</span><input type="time" data-shape="start" value="${esc(S.start)}" step="300"></label>
+      ${num('inN', 'Input sessions a day', [0, 1, 2, 3], '', 0, 4)}
+      ${num('inL', 'Each input session', [45, 60, 75, 90, 120], 'min')}
+      ${num('br', 'Break after the inputs', [0, 10, 15, 20, 30], 'min')}
+      ${num('tpN', 'TP lessons a day', [2, 3, 4], '')}
+      ${num('tpL', 'Each TP lesson', [20, 30, 40, 45, 60], 'min')}
+      ${num('tpBr', 'Break in the TP', [0, 5, 10, 15], 'min')}
+      <label><span>The TP break comes</span><select data-shape="tpBrAt">${[['each', 'After every lesson'], ['1', 'After lesson 1'], ['2', 'After lesson 2'], ['3', 'After lesson 3']].map(o => `<option value="${o[0]}"${String(S.tpBrAt) === o[0] ? ' selected' : ''}>${o[1]}</option>`).join('')}</select></label>
+      ${num('lu', 'Lunch', [30, 45, 60, 75, 90], 'min')}
+      ${num('fb', 'TP feedback', [0, 30, 45, 60, 75], 'min')}
+      ${num('pl', 'Lesson planning', [0, 30, 45, 60], 'min')}
       <div class="fixed"><span>Teaching practice</span><b>8 TPs, 6 hours</b><small>Cambridge’s, fixed</small></div>
     </div>
-    <p class="hint">A teaching day: <b>${esc(hubClock(S.start))} to ${esc(hubClock(end))}</b>. Day one, the tutorial days and the last days keep their own shape.</p></div>`;
+    <p class="hint">A teaching day: <b>${esc(hubClock(S.start))} to ${esc(hubClock(end))}</b>. Type any number of minutes, or pick one. Day one, the tutorial days and the last days keep their own shape.</p></div>`;
 }
 function buildPanelHTML(){
   if (!BUILD_OPEN) return '';
@@ -2434,7 +2444,7 @@ function wireBuild(){
   const rd = () => {};   /* the shelf keeps its own state as it is edited */
   wireShelf(B);
   document.querySelectorAll('[data-shape]').forEach(el => el.addEventListener('change', () => {
-    const k = el.dataset.shape; B.shape[k] = k === 'start' ? el.value : +el.value; B.pattern = patternFromShape(B.shape); render();
+    const k = el.dataset.shape; B.shape[k] = (k === 'start' || k === 'tpBrAt') ? el.value : Math.max(0, Math.min(600, parseInt(el.value, 10) || 0)); B.pattern = patternFromShape(B.shape); render();
   }));
   document.querySelectorAll('[data-bday]').forEach(el => el.addEventListener('click', () => { const i = +el.dataset.bday; if (i === 0) return; rd(); B.teach[i] = !B.teach[i]; render(); }));
   document.querySelectorAll('[data-bon]').forEach(el => el.addEventListener('change', () => { rd(); B.sessions[+el.dataset.bon].on = el.checked; render(); }));
