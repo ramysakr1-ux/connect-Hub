@@ -27,7 +27,7 @@ window.InputLib = (function(){
     [/guided practice|less.guided|\bdrill/, 'guided-to-less-guided-practice'],
     [/speaking/, 'teaching-speaking'],
     [/\bexam/, 'teaching-exam-classes'],
-    [/lesson plan/, 'writing-the-lesson-plan'],
+    [/lesson plan|^lp\b/, 'writing-the-lesson-plan'],   /* LP, the timetable's short name (30 Oct 2026) */
     /* the language analysis sheets (28 Oct 2026): Connect's "Language analysis 1", "Analysing language" */
     [/language analysis|analys[iz]ing language|analy[sz]e (the )?language|la sheets?/, 'language-analysis'],
     /* Teaching vocabulary (29 Oct 2026): "Teaching vocabulary", "Vocabulary 1", "Lexis" */
