@@ -151,6 +151,10 @@
   .tv2-seg{position:relative; height:30px; padding:0; border:0; border-radius:5px; background:var(--box); cursor:pointer;
     font:700 10px 'Karla',sans-serif; color:var(--grey); transition:transform .15s ease, background-color .2s;}
   .tv2-seg.wk1{margin-left:0;} .tv2-seg.mon{box-shadow:inset 2px 0 0 var(--sand-line);}
+  .tv2-seg.picked{background:var(--a-mustard) !important; color:var(--ink) !important;}
+  .tgrid.tboard .day > .flash{animation:dayFlash 1.8s ease-out 1;}
+  @keyframes dayFlash{0%{box-shadow:0 0 0 3px var(--a-mustard), 0 0 18px 4px color-mix(in oklch, var(--a-mustard) 60%, transparent);} 100%{box-shadow:0 0 0 0 transparent;}}
+  @media(prefers-reduced-motion:reduce){ .tgrid.tboard .day > .flash{animation:none; outline:3px solid var(--a-mustard);} }
   .tv2-seg.inwk{box-shadow:inset 0 0 0 1.5px color-mix(in oklch, var(--ink) 55%, transparent);}
   .tv2-seg.past{background:var(--a-forest); color:#F0EEE9;}
   .tv2-seg.today{background:var(--a-red); color:#fff; animation:tv2-pulse 2.2s ease-out infinite;}
@@ -1834,7 +1838,7 @@ let GROUPS = [], DUES = {}, OUTS = {}, ROOMS = {}, ZONE = '', STATE = {}, EDIT =
    there's the view-only timetable for the course once it's set"). */
 let PREVIEW = (function(){ try { return sessionStorage.getItem('tt:preview') === '1'; } catch (e) { return false; } })(), SCROLLED = false, SLOTS_OPEN = false;   /* the trainee view is kept for the visit (30 Oct 2026) */
 /* the course studio's own state: the week on show, the input library open or shut and its search, the tutor filter */
-let WEEK = null, LIB_OPEN = false, LIB_Q = '', TFILTER = '', WEEK_OF = {};
+let WEEK = null, LIB_OPEN = false, LIB_Q = '', TFILTER = '', WEEK_OF = {}, PICKED = '';
 
 function render(){
   TPP = null;
@@ -4051,6 +4055,11 @@ function save(word, change){
     /* a day in another week opens that week first */
     if (WEEK_OF[date] != null && WEEK_OF[date] !== WEEK) { WEEK = WEEK_OF[date]; closePop(); render(); return setTimeout(() => jump(date), 80); }
     const el = document.getElementById('d-' + date); if (!el) return;
+    /* the day lights up, so a click always shows where it went (Ramy, 30 Oct 2026: "nothing much happens") */
+    PICKED = date;
+    host.querySelectorAll('.tv2-seg.picked').forEach(b => b.classList.remove('picked'));
+    const sg = host.querySelector('.tv2-seg[data-go="' + date + '"]'); if (sg) sg.classList.add('picked');
+    el.querySelectorAll(':scope > *').forEach(c => { c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); });
     /* on a phone the week is a row of days: bring the day across as well as down */
     if (el.parentElement && el.parentElement.scrollWidth > el.parentElement.clientWidth) el.parentElement.scrollTo({ left: el.offsetLeft - el.parentElement.offsetLeft, behavior: 'smooth' });
     window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: 'smooth' });
@@ -4069,7 +4078,7 @@ function save(word, change){
     const sub = days.length + ' days \u00b7 ' + tps + ' with teaching practice';
     const segs = days.map((d, i) => {
       const dt = new Date(d.date + 'T12:00:00'), mon = dt.getDay() === 1 && i > 0;
-      const cls = ['tv2-seg', d.closed ? 'closed' : '', d.date < TODAY ? 'past' : '', d.date === TODAY ? 'today' : '', mon ? 'mon' : '', WEEK_OF[d.date] === WEEK ? 'inwk' : ''].filter(Boolean).join(' ');
+      const cls = ['tv2-seg', d.closed ? 'closed' : '', d.date < TODAY ? 'past' : '', d.date === TODAY ? 'today' : '', mon ? 'mon' : '', WEEK_OF[d.date] === WEEK ? 'inwk' : '', d.date === PICKED ? 'picked' : ''].filter(Boolean).join(' ');
       const due = (typeof DUES !== 'undefined' && DUES[d.date] && DUES[d.date].length) ? DUES[d.date].map(x => x.title).join(', ') : '';
       const tip = 'Day ' + (i + 1) + ' \u00b7 ' + dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + (d.tp ? ' \u00b7 TP ' + d.tp : '') + (due ? ' \u00b7 ' + due + ' due' : '');
       return '<button type="button" class="' + cls + '" data-go="' + esc(d.date) + '" title="' + esc(tip) + '" aria-label="' + esc(tip) + '">' + (i + 1)
