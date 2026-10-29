@@ -1402,7 +1402,7 @@ function dayHTML(day, B, idx){
 /* DAYS ACROSS OR DAYS DOWN, the reader's own choice (Ramy's design, 29 Oct 2026: "remember each user's preference"); the
    course's setting on Course admin is where a reader starts. 'h' = a day is a row (days down the left). */
 let ORIENT = (function(){ try { return localStorage.getItem('tt:orient') || ''; } catch (e) { return ''; } })();
-const ACROSS = () => (ORIENT || SETTINGS.ttLayout || '') === 'h';
+const ACROSS = () => ORIENT === 'h';   /* Days across (the days along the top) is where every reader starts (Ramy, 30 Oct 2026) */
 /* breaks are on the board too, as narrow tiles (Ramy, 29 Oct 2026: "make the 15-minute break tiles smaller") */
 const spansOf = d => (d.sessions || []).filter(x => toMin(x.s) != null && toMin(x.e) != null).sort(byStart);
 function placeDay(day, cols){
@@ -1992,10 +1992,7 @@ function settingsPanelHTML(){
   const clock = SETTINGS.clock === '24' ? '24-hour · 13:30' : '12-hour · 1:30 PM';
   const tutors = TUTORS.length ? TUTORS.map((n, i) => `<span class="tsw"><i class="tile k-input"></i>${esc(n)}</span>`).join('') : '<span class="hint">No tutors named yet</span>';
   return `<div class="imp"><h3>Timetable settings</h3>
-    <div class="tset"><span class="ml">Layout</span><div class="opts">
-      <label><input type="radio" name="ttLayout" value="v"${h ? '' : ' checked'}${started ? ' disabled' : ''}> Down the page · the days side by side</label>
-      <label><input type="radio" name="ttLayout" value="h"${h ? ' checked' : ''}${started ? ' disabled' : ''}> Across the page · a row for each day</label></div></div>
-    <p class="hint">${started ? 'The course has started, so its timetable stays ' + (h ? 'across' : 'down') + ' the page to the end.' : 'For everyone on the course. It cannot change once the course has started' + (SETTINGS.start ? ' (' + esc(dayName(SETTINGS.start)) + ')' : '') + '.'}</p>
+    <div class="tset"><span class="ml">Layout</span><span>Days across to start; each reader can switch to Days down above the board.</span></div>
     <div class="tset"><span class="ml">Clock</span><span>${esc(clock)}</span></div>
     <div class="tset"><span class="ml">Time zone</span><span>${esc(zone)}</span></div>
     <div class="tset"><span class="ml">Tutors’ colors</span>${tutors}</div>
