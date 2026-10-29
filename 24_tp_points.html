@@ -446,6 +446,13 @@
   .fm-key i{width:4px; height:14px; border-radius:2px;}
   @media(prefers-reduced-motion:reduce){ .tbl select.fm, .fm-pips i{transition:none;} }
   @media print{ .fm-key, .fm-pips{display:none;} .tbl select.fm{border-left-width:1px;} }
+  .tpout{margin:0 0 18px; padding:16px 18px; background:var(--card, var(--paper)); border:1px solid var(--sand-line); border-top:3px solid var(--teal); border-radius:var(--r-card);}
+  .tpout h2{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-size:1.15rem;}
+  .tpout .oopts{display:grid; gap:8px; margin:10px 0 0;}
+  .tpout .oo{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border:1px solid var(--sand-line); border-radius:var(--r-control); cursor:pointer; background:var(--field);}
+  .tpout .oo span{display:flex; flex-direction:column; gap:2px;} .tpout .oo small{font-size:0.78rem; color:var(--grey);}
+  .tpout .oo select{font:inherit; font-size:0.8rem; padding:2px 6px; border:1px solid var(--sand-line); border-radius:6px; background:var(--paper);}
+  .tpout .ohand{display:grid; gap:6px; margin:10px 0 0;} .tpout .orow{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:0.86rem;} .tpout .orow span{color:var(--grey);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610291700">
 <style>
@@ -1867,8 +1874,23 @@ function renderCore(){
     const todayISO = (window.hubToday ? window.hubToday() : (SETTINGS.demoToday || new Date().toISOString().slice(0, 10)));
     const dated = Array.from({ length: TPS }, (_, i) => i + 1).map(tp => ({ tp: tp, date: dayFor(tp) }));
     const anyDates = dated.some(d => d.date);
-    const upcoming = dated.filter(d => d.date && d.date >= todayISO).map(d => d.tp);
-    const NEXT = upcoming.length ? upcoming[0] : (anyDates ? TPS : 0);
+    /* WHEN THE NEXT POINTS GO OUT (Ramy, 29 Oct 2026: "Connect is taking care of business, we don't really need to say
+       TP points out anymore ... the day they are teaching, they get the new TP points ... or tick a box"). The course
+       chooses on this page (settings.tpOut): after the set's feedback on the day it teaches (the default), the day
+       before the next practice at a set time, or by hand. TP 1 is open from release. */
+    const OUT = SETTINGS.tpOut || {}, tpNow = window.hubNow ? window.hubNow() : Date.now();
+    const tpAt = (date, hm) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date || ''), t = /^(\d{1,2}):(\d{2})/.exec(hm || '') || [0, 18, 0]; return m ? new Date(+m[1], +m[2] - 1, +m[3], +t[1], +t[2]).getTime() : Infinity; };
+    const tpDayRec = date => (tt.days || []).find(d => d && d.date === date) || null;
+    const tpFbEnd = date => { const d = tpDayRec(date), f = d && (d.sessions || []).filter(x => x.k === 'feedback' || x.k === 'reflect').sort((a, b) => String(b.e).localeCompare(String(a.e)))[0]; return (f && f.e) || '18:00'; };
+    const tpDayBefore = date => { const i = (tt.days || []).findIndex(d => d && d.date === date); return i > 0 ? tt.days[i - 1].date : ''; };
+    const tpOpens = tp => {
+      if (tp <= 1) return 0;
+      if (OUT.mode === 'hand') return (Number(((OUT.sent || {})[(me.group || '') + '|' + mySetIndex]) || 1) >= tp) ? 0 : Infinity;
+      if (OUT.mode === 'eve') { const d = dayFor(tp); return d ? tpAt(tpDayBefore(d) || d, OUT.time || '17:00') : Infinity; }
+      const prev = dayFor(tp - 1); return prev ? tpAt(prev, tpFbEnd(prev)) : Infinity;
+    };
+    const openUpTo = Array.from({ length: TPS }, (_, i) => i + 1).filter(tp => tpOpens(tp) <= tpNow).pop() || 1;
+    const NEXT = anyDates ? openUpTo : 0;
     /* A missed practice stays open until its make-up day has gone by: it is
        still theirs to teach, and it comes before the next one. */
     const myMissed = tp => { const c = ((rows[me.token] || {})['tp' + tp]) || {}; return c.missed ? (c.makeup || {}) : null; };
@@ -2043,7 +2065,7 @@ function renderCore(){
   }
   BUILT = true;
 
-  app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Rebuild</button><span class="status">${esc(note)}</span></div>` + gs.map(g => {
+  app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Rebuild</button><span class="status">${esc(note)}</span></div>` + tpOutHTML(gs) + gs.map(g => {
     const rows = (P.groups || {})[g.group] || {};
     const lettered = R.lettersFor(g.people);
     const sets = R.setsFor(g.people);
@@ -2158,6 +2180,39 @@ function renderCore(){
     persist(el.dataset.on === '1' ? 'Released' : 'Taken back');
   }));
 }
+
+/* WHEN THE NEXT TP POINTS GO OUT (Ramy, 29 Oct 2026): one card, the course's own rule, saved in settings.tpOut so a
+   trainee's page reads it. No more "TP points out" typed on the timetable. */
+function tpOutHTML(gs){
+  const O = SETTINGS.tpOut || {}, mode = O.mode || 'after', time = O.time || '17:00';
+  const opt = (v, label, sub) => `<label class="oo"><input type="radio" name="tpOut" value="${v}"${mode === v ? ' checked' : ''}> <span><b>${label}</b><small>${sub}</small></span></label>`;
+  const hand = mode !== 'hand' ? '' : `<div class="ohand">${gs.map(g => R.setsFor(g.people).map((st, i) => {
+      if (!st.length) return '';
+      const k = (g.group || '') + '|' + i, upto = Number(((O.sent || {})[k]) || 1);
+      return `<div class="orow"><b>${esc(R.setName(st))}</b><span>Group ${esc(g.group || '—')} · they have up to TP ${upto}</span>${upto < TPS ? `<button class="btn quiet" data-send="${esc(k)}">Send TP ${upto + 1} now</button>` : '<span class="chip on">All sent</span>'}</div>`;
+    }).join('')).join('')}</div>`;
+  return `<section class="tpout"><h2>When the next TP points go out</h2>
+    <p class="hint">Each set sees TP 1 once the points are released. After that, Lite opens their next practice on its own, by this rule. Nothing to type on the timetable.</p>
+    <div class="oopts">${opt('after', 'On the day they teach, after their feedback', 'Their next points open when the day’s TP feedback ends.')}
+    ${opt('eve', 'The day before their next TP', `At <select id="tpOutTime">${['12:00', '14:00', '16:00', '17:00', '18:00', '19:00', '20:00'].map(t => `<option${t === time ? ' selected' : ''}>${t}</option>`).join('')}</select>`)}
+    ${opt('hand', 'By hand', 'Send each set its next points yourself.')}</div>${hand}</section>`;
+}
+function saveTpOut(next, word){
+  const cs = rec('connect_course_settings') || {};
+  cs.tpOut = Object.assign({}, cs.tpOut || {}, next);
+  try { localStorage.setItem('connect_course_settings', JSON.stringify(cs)); } catch (e) { note = 'Not saved — ' + ((e && e.message) || e); render(); return; }
+  SETTINGS.tpOut = cs.tpOut; note = word; render();
+}
+document.addEventListener('change', e => {
+  if (e.target && e.target.name === 'tpOut') saveTpOut({ mode: e.target.value }, 'Saved: the next TP points go out ' + ({ after: 'after the day’s feedback', eve: 'the day before', hand: 'by hand' })[e.target.value] + '.');
+  if (e.target && e.target.id === 'tpOutTime') saveTpOut({ time: e.target.value }, 'Saved.');
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-send]'); if (!b) return;
+  const O = SETTINGS.tpOut || {}, sent = Object.assign({}, O.sent || {}), k = b.dataset.send;
+  sent[k] = Number(sent[k] || 1) + 1;
+  saveTpOut({ sent }, 'Sent: TP ' + sent[k] + ' to ' + (b.closest('.orow').querySelector('b') || {}).textContent + '.');
+});
 
 var BUILT = false, TYPES_ONLY = false;   // the rotation is dealt; a tutor chose to deal lesson types without a set
 /* THE START, IN ORDER (Ramy, 28 Oct 2026: "why would I build a rotation now? I haven't chosen a set yet ... write a set,
