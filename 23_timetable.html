@@ -323,6 +323,96 @@
   .dropcell.shift{border-color:var(--gold);} .dropcell.block{border-color:var(--brick);}
   @media (max-width:760px){ .tgrid.across{display:block; --dcol:84px; overflow-x:visible; scroll-snap-type:none; padding-bottom:0;} }
   @media print{ .tscroll{overflow:visible; border-color:#bbb;} .tgrid.across{min-width:0;} .tgrid.across .dh{position:static;} .tgrid.across .hrow{break-inside:avoid; page-break-inside:avoid;} }
+  /* ---- THE BOARD, ACROSS OR DOWN (Ramy, 29 Oct 2026, from the mock-up he chose: docs/mockups/timetable-whole.html) ----
+     Equal tiles, each with its own time, like a spreadsheet that drags. Across, a day is a row; down, a day is a column,
+     a little wider than an across tile but never stretched. A 15-minute slot is narrow. */
+  /* ONE TILE SIZE, ACROSS AND DOWN (Ramy, 29 Oct 2026: "remember, we want them to be the same size"): --tw by --th */
+  .tgrid.tboard{--tw:128px; --th:84px; --cell:var(--tw); --slim:58px; --dcol:168px; --hh0:58px; display:grid; gap:6px; padding:12px; min-width:0;}
+  .tgrid.tboard.across{grid-template-columns:max-content; justify-content:start;}
+  .tgrid.tboard.across > .day{display:grid; grid-template-columns:var(--dcol) var(--track); gap:6px; align-items:stretch; padding:0; border:0; border-radius:0; background:none; overflow:visible;}
+  /* down: one grid, a day a column; the day's own box steps aside (display:contents) so every day's header shares one row
+     and every slot lines up across the week, however many deadlines a day carries */
+  .tgrid.tboard.down{--cell:var(--th); --slim:36px; grid-auto-flow:column; grid-template-rows:auto var(--track); grid-auto-columns:var(--tw); justify-content:start;}
+  .tgrid.tboard.down > .day{display:contents;}
+  .tgrid.tboard .dh{position:sticky; left:0; z-index:4; height:auto; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:4px; padding:4px 8px; background:var(--surface); border:0; box-shadow:none;}
+  .tgrid.tboard.across .dh{border-right:2px solid var(--sand-line);}
+  .tgrid.tboard.down .dh{position:static; border-bottom:2px solid var(--sand-line); justify-content:flex-end;}
+  .tgrid.tboard .dh .dt{flex:none; line-height:1.2;}
+  .tgrid.tboard .dh .dow{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1rem;}
+  .tgrid.tboard .dh small{display:block; font-size:0.6rem; letter-spacing:.08em; text-transform:uppercase; font-weight:700; color:var(--faint); margin-top:1px;}
+  .tgrid.tboard .day.today .dh{box-shadow:inset 3px 0 0 var(--gold);}
+  .tgrid.tboard.down .day.today .dh{box-shadow:inset 0 -3px 0 var(--gold);}
+  .tgrid.tboard .dacts{display:flex; gap:4px; align-items:center; flex-wrap:wrap;}
+  .tgrid.tboard .addtile{width:auto; margin:0; padding:3px 8px;}
+  .tgrid.tboard .flags{display:flex; flex-direction:column; gap:3px; align-items:flex-start;}
+  .tgrid.tboard .flags .due{position:static; display:inline-block; width:auto; max-width:100%; height:auto; line-height:1.35; padding:2px 7px; white-space:normal; text-transform:none; letter-spacing:0; font-size:0.66rem;}
+  .tgrid.tboard .dnote{font-size:0.7rem; color:var(--grey); line-height:1.4;}
+  .tgrid.tboard input.dnote{width:100%; box-sizing:border-box; font:inherit; font-size:0.72rem; padding:3px 6px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
+  .tgrid.tboard .closedmsg{grid-column:2 / -1; grid-row:auto; align-self:stretch; display:flex; align-items:center; justify-content:center; padding:14px; border-radius:8px; text-align:center; color:var(--grey);
+                          background:repeating-linear-gradient(135deg, oklch(92% 0.012 80) 0 6px, oklch(95% 0.01 80) 6px 12px);}
+  .tgrid.tboard.down .closedmsg{grid-column:auto; grid-row:2 / span var(--ncols);}
+  .tgrid.tboard .slot{border-radius:8px; border:1.5px dashed var(--row-line); background:color-mix(in oklch, black 3%, var(--surface)); box-shadow:inset 0 2px 4px color-mix(in oklch, black 6%, transparent); min-height:0;}
+  /* THE TILES YOU COULD PICK UP (Ramy, 29 Oct 2026: "more like a 3D tile ... it's a drag and drop ... live, not patchy"):
+     one colour per kind, lit from above, standing on a darker edge, a soft shadow in its own colour */
+  html{--h:155;} html[data-tset="ocean"]{--h:235;} html[data-tset="plum"]{--h:305;}
+  .tgrid.tboard.across > .day{align-items:start;}
+  .tgrid.tboard.across .tile, .tgrid.tboard.across .slot{height:var(--th);}
+  /* the reader's own time in brass, words only (Ramy, 29 Oct 2026: "lose the highlight ... light, brassy ... it's not a Christmas tree") */
+  .tgrid.tboard .tile .tm .lt{display:block; color:oklch(50% 0.1 78); font-weight:700; white-space:nowrap;}
+  .tgrid.tboard .tile.k-input .tm .lt, .tgrid.tboard .tile.k-assessor .tm .lt, .tgrid.tboard .tile.k-tp.mine .tm .lt{color:oklch(88% 0.1 90) !important;}   /* hub-house.css sets .k-input .tm .lt to ink with !important */
+  .ltkey{color:oklch(50% 0.1 78); font-weight:700;}
+  .tgrid.tboard .tile.twoclock .tm .ct{opacity:.4; font-weight:500;}
+  .tgrid.tboard .tile.twoclock .tm .lt{font-size:0.76rem;}
+  /* THE ROOM IS ON, THE TILE IS LIT (Ramy, 29 Oct 2026: "light should be on when the room is on"): from fifteen minutes before
+     until it ends, when Join shows, the tile glows and says Live */
+  .tgrid.tboard .tile.joinable{outline:2px solid oklch(80% 0.17 75); outline-offset:2px; animation:roomOn 2.4s ease-in-out infinite;}
+  .tgrid.tboard .tile.joinable::before{content:'Live'; position:absolute; top:6px; right:6px; padding:1px 6px; border-radius:999px; background:oklch(80% 0.17 75); color:oklch(25% 0.04 60); font:700 0.58rem 'Karla',sans-serif; letter-spacing:.08em; text-transform:uppercase;}
+  @keyframes roomOn{0%,100%{box-shadow:0 0 0 0 oklch(80% 0.17 75 / .0), 0 10px 18px -10px color-mix(in oklch, var(--c) 90%, black);} 50%{box-shadow:0 0 18px 4px oklch(80% 0.17 75 / .55), 0 10px 18px -10px color-mix(in oklch, var(--c) 90%, black);}}
+  @media(prefers-reduced-motion:reduce){ .tgrid.tboard .tile.joinable{animation:none;} } .tgrid.tboard .tile.narrow .tm .lt, .tgrid.tboard .tile.narrow .rm, .tgrid.tboard .tile.narrow .join{display:none;}
+  .tgrid.tboard .tile{position:relative; left:auto; right:auto; top:auto; height:auto; min-height:0; box-sizing:border-box; padding:7px 8px; display:flex; flex-direction:column; gap:3px; font-size:0.76rem; overflow:hidden;
+    --c:oklch(85% 0.03 80);
+    background:linear-gradient(180deg, color-mix(in oklch, white 30%, var(--c)) 0%, var(--c) 55%, color-mix(in oklch, black 6%, var(--c)) 100%);
+    border:1px solid color-mix(in oklch, black 14%, var(--c)); border-bottom-width:3px; border-bottom-color:color-mix(in oklch, black 26%, var(--c)); border-radius:8px;
+    color:var(--on, var(--ink));
+    box-shadow:inset 0 1px 0 color-mix(in oklch, white 65%, transparent), 0 2px 3px color-mix(in oklch, black 10%, transparent), 0 10px 18px -10px color-mix(in oklch, var(--c) 90%, black);
+    transition:transform .15s ease, box-shadow .15s ease, opacity .4s ease;}
+  .tgrid.tboard .tile .tt{font-weight:700; line-height:1.22; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:normal;}
+  .tgrid.tboard .tile .tm{margin-top:auto; font-size:0.66rem; font-weight:700; color:color-mix(in oklch, var(--on, var(--ink)) 72%, transparent);}
+  .tgrid.tboard .tile.odd::after{content:''; position:absolute; right:0; bottom:0; border-style:solid; border-width:0 0 11px 11px; border-color:transparent transparent var(--a-mustard) transparent;}
+  .tgrid.tboard .tile.narrow{padding:6px 4px; align-items:center; text-align:center; font-size:0.66rem;}
+  .tgrid.tboard .tile.narrow .tt{font-weight:600;}
+  .tgrid.tboard.down .tile.narrow{flex-direction:row; justify-content:space-between; align-items:center; padding:0 9px; text-align:left;}
+  .tgrid.tboard.down .tile.narrow .tm{margin:0;}
+  body.editing .tgrid.tboard .tile:hover{transform:translateY(-2px); z-index:3; box-shadow:inset 0 1px 0 color-mix(in oklch, white 65%, transparent), 0 4px 6px color-mix(in oklch, black 12%, transparent), 0 16px 24px -10px color-mix(in oklch, var(--c) 90%, black);}
+  body.editing .tgrid.tboard .tile:active{transform:translateY(1px);}
+  .tgrid.tboard .k-input{--c:oklch(52% 0.09 var(--h)); --on:var(--paper);}
+  .tgrid.tboard .k-input.tut-1{--c:oklch(50% 0.08 calc(var(--h) + 70));} .tgrid.tboard .k-input.tut-2{--c:oklch(50% 0.09 calc(var(--h) + 150));} .tgrid.tboard .k-input.tut-3{--c:oklch(55% 0.1 calc(var(--h) + 230));}
+  .tgrid.tboard .k-input .who.tut{background:color-mix(in oklch, white 92%, var(--c)); color:var(--ink);}
+  .tgrid.tboard .k-tp{--c:oklch(81% 0.085 var(--h));}
+  .tgrid.tboard .k-tp.mine{--c:oklch(30% 0.02 80); --on:#F0EEE9;}
+  .tgrid.tboard .k-feedback, .tgrid.tboard .k-reflect{--c:oklch(79% 0.09 240); border-width:1px; border-bottom-width:3px;}
+  .tgrid.tboard .k-break{--c:oklch(91% 0.008 260); --on:var(--grey);}
+  .tgrid.tboard .k-lunch{--c:oklch(85% 0.09 75);}
+  .tgrid.tboard .k-break .tt, .tgrid.tboard .k-lunch .tt{font-style:normal;}
+  .tgrid.tboard .k-lunch .tm, .tgrid.tboard .k-break .tm{display:block;}
+  .tgrid.tboard .k-plan{--c:oklch(91% 0.09 100);}
+  .tgrid.tboard .k-demo{--c:oklch(77% 0.08 300);}
+  .tgrid.tboard .k-event{--c:oklch(78% 0.04 260);}
+  .tgrid.tboard .k-task{--c:oklch(80% 0.075 15);}
+  .tgrid.tboard .k-assessor{--c:oklch(40% 0.07 265); --on:var(--paper);}
+  .tgrid.tboard .tile.empty{padding:7px 8px; border-radius:8px; font-size:0.76rem; line-height:inherit;}
+  .tgrid.tboard .tile.empty .tt{font-style:italic; opacity:.7;}
+  .tgrid.tboard .dropon{outline:2px dashed var(--teal); outline-offset:2px;}
+  .tgrid.tboard .dropon.drop-shift{outline-color:var(--gold);} .tgrid.tboard .dropon.drop-block{outline-color:var(--brick);}
+  .tgrid.tboard .drophint{position:static; margin-top:4px; max-width:100%;}
+  .tkey i.tile{position:static; display:inline-block; width:14px; height:14px; padding:0; border-radius:4px; vertical-align:-2px; --c:oklch(85% 0.03 80); background:var(--c); border:1px solid color-mix(in oklch, black 14%, var(--c)); border-bottom-width:2px;}
+  .tkey i.k-input{--c:oklch(52% 0.09 var(--h));} .tkey i.k-tp{--c:oklch(81% 0.085 var(--h));} .tkey i.k-feedback{--c:oklch(79% 0.09 240);} .tkey i.k-lunch{--c:oklch(85% 0.09 75);}
+  .tkey i.k-plan{--c:oklch(91% 0.09 100);} .tkey i.k-demo{--c:oklch(77% 0.08 300);} .tkey i.k-event{--c:oklch(78% 0.04 260);} .tkey i.k-task{--c:oklch(80% 0.075 15);} .tkey i.k-assessor{--c:oklch(40% 0.07 265);} .tkey i.k-break{--c:oklch(91% 0.008 260);}
+  @media (max-width:760px){ .tgrid.tboard{--dcol:96px; --tw:118px; --th:88px;} .tgrid.tboard .tile.twoclock .tm .ct{display:none;} .tgrid.tboard .flags .due{font-size:0.62rem;} }
+  @media print{ .tgrid.tboard .tile{box-shadow:none; background:var(--c);} .tgrid.tboard .dh{position:static;} }
+  .swapbar{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; max-width:min(92vw, 760px); padding:11px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:12px; font-size:0.86rem; box-shadow:0 12px 30px -10px oklch(30% 0.04 60 / .45);}
+  .swapbar[hidden]{display:none;}
+  .swapbar button{border:0; background:none; padding:0; font:700 0.86rem 'Karla',sans-serif; color:var(--teal); text-decoration:underline; cursor:pointer;}
   /* ---- stage 2: drop colors, draft, checks, closed days ----------------- */
   .tgrid .day.drop-clean .body{background:color-mix(in oklch, var(--teal) 7%, transparent);} .tgrid .day.drop-clean{border-color:var(--teal-lifted);}
   .tgrid .day.drop-shift .body{background:oklch(95.5% 0.05 85 / .8);} .tgrid .day.drop-shift{border-color:var(--gold);}
@@ -428,7 +518,7 @@
   .ttmenu hr{border:0; border-top:1px solid var(--sand-line); margin:6px 4px;}
   /* a phone: a week is a row of days to swipe through */
   @media (max-width:760px){
-    .tgrid{display:grid; grid-template-columns:none !important; grid-auto-flow:column; grid-auto-columns:86%; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:6px;}
+    .tgrid:not(.tboard){display:grid; grid-template-columns:none !important; grid-auto-flow:column; grid-auto-columns:86%; overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:6px;}
     .tgrid .ruler{display:none;}
     .tgrid .day{scroll-snap-align:start;}
   }
@@ -773,7 +863,7 @@ function dues(){
       (out[iso] = out[iso] || []).push({ key: k, due: when, title, past: iso < TODAY, missing, total, fixed,
         who: (who || []).map(tr => ({ token: tr.id || tr.token, group: tr.group })) });
     };
-    const title = a.title || k.toUpperCase();
+    const title = asgShort(k, a.title);
     /* A FIXED RESUBMISSION DATE (resubDueAt, 10 Oct 2026). Classroom gives
        C/18 one closing time for every LSRT resubmission, so the timetable
        shows it: to a tutor always, as the course's date, counting who still
@@ -784,10 +874,10 @@ function dues(){
       const sentBack = sub => owes(sub) || !!(sub && (sub.stage === 'resubmitted' || sub.usedResubmission));
       if (IS_TRAINEE) {
         const meRow = people.find(tr => (tr.id || tr.token) === me.token);
-        if (owes(meRow ? subOf(meRow) : (rec('connect_assignment_submissions_v1') || {})[k])) push(a.resubDueAt, title + ' resubmission', 1, 1, true);
+        if (owes(meRow ? subOf(meRow) : (rec('connect_assignment_submissions_v1') || {})[k])) push(a.resubDueAt, title + ' resub', 1, 1, true);
       } else {
         const back = people.filter(tr => sentBack(subOf(tr)));
-        push(a.resubDueAt, title + ' resubmissions', back.filter(tr => owes(subOf(tr))).length, back.length, true, []);
+        push(a.resubDueAt, title + ' resub', back.filter(tr => owes(subOf(tr))).length, back.length, true, []);
       }
     }
     if (IS_TRAINEE) {
@@ -843,9 +933,12 @@ function outs(){
   });
   return out;
 }
+/* SHORT NAMES ON THE FLAGS (Ramy, 29 Oct 2026: "use acronyms ... LRT out, LRT in ... resubs in, keep it short") */
+const ASG_SHORT = { fol: 'FoL', lrt: 'LRT', lsrt: 'LSRT', lfc: 'LfC', a5: 'A5' };
+const asgShort = (k, title) => ASG_SHORT[String(k).toLowerCase()] || title || String(k).toUpperCase();
 function outFlag(o, style){
   const local = window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '';
-  return `<div class="due out${o.col != null ? ' by-' + o.col : ''}"${style ? ` style="${style}"` : ''} title="${esc(o.title + ' goes out' + (o.by ? ' · set by ' + o.by : ''))}">${esc(o.title)} out${local ? ' · ' + esc(hubClock(local)) : ''}</div>`;   // the tutor is the color, not a name (Ramy); named in the tooltip
+  return `<div class="due out${o.col != null ? ' by-' + o.col : ''}"${style ? ` style="${style}"` : ''} title="${esc(o.title + ' goes out' + (o.by ? ' · set by ' + o.by : ''))}">${esc(asgShort(o.key, o.title))} out${local ? ' · ' + esc(hubClock(local)) : ''}</div>`;   // the tutor is the color, not a name (Ramy); named in the tooltip
 }
 
 /* The skeleton: every weekday from the start to the end, with the teaching
@@ -1078,9 +1171,16 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
      says its own only when it runs differently (Ramy, 10 Oct 2026: "we don't
      need to write the time inside the tiles unless they're different"). */
   if (place) {
-    const own = place.exact ? '' : esc(hubClockRange(x.s, x.e));
-    const tm = own || ls || joinHTML ? `<div class="tm">${own ? '<span class="own">' + own + '</span>' : ''}${ls ? ' <span class="lt">' + esc(ls) + ' your time</span>' : ''}${joinHTML}</div>` : '';
-    return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="grid-column:${place.a + 2} / ${place.b + 3};grid-row:${place.row}" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
+    /* every tile says its own time (Ramy, 29 Oct 2026: "the tiles should just carry the time, all the way, and we lose
+       the time bar"); a tile that runs differently from its slot is marked, so it reads as the odd one */
+    if (place.narrow) cls.push('narrow');
+    if (!place.exact) cls.push('odd');
+    if (x.k === 'input' && x.by !== undefined && x.by !== '' && x.by !== null) cls.push('tut-' + (+x.by % 4));
+    /* the reader's own time is a colour, not words (Ramy, 29 Oct 2026: "you don't have to say your time ... this colour is their time") */
+    /* with a second clock the course's own time is a watermark and the reader's is the one to read (Ramy, 29 Oct 2026) */
+    if (lt) cls.push('twoclock');
+    const tm = `<div class="tm"><span class="ct">${esc(place.narrow && place.across ? hubClock(x.s) : hubClockRange(x.s, x.e))}</span>${lt ? ' <span class="lt" title="Your time">' + esc(lt) + '</span>' : ''}${joinHTML}</div>`;
+    return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-i="${place.i}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
       + `<div class="tt">${title}</div>${tm}</div>`;
   }
   return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
@@ -1158,7 +1258,8 @@ function dayHTML(day, B, idx){
    is ever left off the board. A session sits in the columns it mostly fills;
    one that runs differently from its column says its own time. */
 const ACROSS = () => SETTINGS.ttLayout === 'h';
-const spansOf = d => (d.sessions || []).filter(x => x.k !== 'break' && toMin(x.s) != null && toMin(x.e) != null).sort(byStart);
+/* breaks are on the board too, as narrow tiles (Ramy, 29 Oct 2026: "make the 15-minute break tiles smaller") */
+const spansOf = d => (d.sessions || []).filter(x => toMin(x.s) != null && toMin(x.e) != null).sort(byStart);
 function placeDay(day, cols){
   const used = new Set(), at = [], miss = [];
   spansOf(day).forEach(x => {
@@ -1169,8 +1270,10 @@ function placeDay(day, cols){
       return ov > 0 && (ov >= (b - a) / 2 || ov >= (e - s) / 2);
     });
     if (!hit.length) { miss.push(x); return; }
-    const a = hit[0]; let b = a; while (hit.indexOf(b + 1) !== -1) b++;
-    for (let i = a; i <= b; i++) used.add(i);
+    /* EVERY TILE ONE SLOT (Ramy, 29 Oct 2026: "equal sized tiles ... basically an Excel sheet"): a session that runs
+       longer than its slot still takes one, and says its own times */
+    const a = hit[0], b = a;
+    used.add(a);
     at.push({ x, a, b, exact: toMin(cols[a].s) === s && toMin(cols[b].e) === e });
   });
   return { at, miss };
@@ -1197,43 +1300,51 @@ function colAt(m, cols){
   if (i === -1) { cols.forEach((c, k) => { if (toMin(c.s) <= m) i = k; }); }
   return Math.max(0, i);
 }
-function weekAcross(w, n){
-  const cols = weekCols(w);
+/* THE BOARD, ACROSS OR DOWN (Ramy, 29 Oct 2026: "the same view ... across or down, it's just a question of are we going
+   sideways or are we going vertical"). One grid of equal tiles, each carrying its own time; across, a day is a row and
+   its slots are columns; down, a day is a column and its slots are rows. A 15-minute slot is a narrow tile. Deadlines
+   and the assignments going out sit with the day's name. Every place on the grid, filled or not, carries its date and
+   its slot (data-date, data-i), which is how a drop finds where it lands. */
+let WEEKCOLS = {};
+function weekBoard(w, n){
+  const across = ACROSS(), cols = weekCols(w);
+  w.forEach(d => { WEEKCOLS[d.date] = cols; });
   const places = new Map(w.map(d => [d, d.closed ? { at: [], miss: [] } : placeDay(d, cols)]));
-  /* a column only lunch ever fills is a narrow one (Ramy: "we could make lunch smaller") */
-  const narrow = cols.map((c, i) => { let any = false, other = false; places.forEach(p => p.at.forEach(t => { if (i >= t.a && i <= t.b) { any = true; if (t.x.k !== 'lunch') other = true; } })); return any && !other; });
-  const tpl = 'var(--dcol) ' + cols.map((c, i) => narrow[i] ? 'minmax(64px,.55fr)' : 'minmax(104px,1fr)').join(' ');
-  const head = `<div class="hrow thead" style="grid-template-columns:${tpl}"><div class="dh"></div>${cols.map(c => `<div class="ch" data-s="${esc(c.s)}" data-e="${esc(c.e)}"><b>${esc(hubClock(c.s))}</b><wbr><span>–${esc(hubClock(c.e))}</span></div>`).join('')}</div>`;
-  return `<div class="tscroll"><div class="tgrid across" style="--ncols:${cols.length}">${head}${w.map(d => rowAcross(d, cols, tpl, places.get(d), TT.days.indexOf(d))).join('')}</div></div>`;
-}
-function rowAcross(day, cols, tpl, place, idx){
-  const d = parse(day.date), isToday = day.date === TODAY;
-  const dh = `<div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="${day.closed ? 'Reopen this day' : 'Close this day (a holiday, a snow day)'}"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>${day.closed ? 'No course' : 'Day ' + (idx + 1)}</small>${day.closed ? '' : dayMark(day)}</div>`
-    + (EDIT && !day.closed ? `<div class="dacts">${pinned(day.date) ? '<span class="pin" title="Copying a day’s shape leaves this one alone">Pinned</span>' : ''}<button type="button" class="more" data-menu="${esc(day.date)}" aria-label="Options for this day">⋯</button><button type="button" class="addtile" data-add="${esc(day.date)}" title="A new tile at the end of the day">+ Add a tile</button></div>` : '') + '</div>';
-  if (day.closed) return `<div class="hrow day closed" id="d-${esc(day.date)}" style="grid-template-columns:${tpl}">${dh}<div class="closedmsg" style="grid-column:2 / -1">${EDIT ? 'Closed · click the date to reopen' : 'No course today'}</div></div>`;
-  const dues = DUES[day.date] || [];
-  const byCol = {};
-  dues.forEach(x => {
-    const local = window.HubDue && x.due ? HubDue.toLocalInput(x.due).slice(11, 16) : '';
-    const late = x.past && x.missing;
-    const body = `${esc(x.title)} due${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
-    const c = colAt(toMin(local) == null ? 0 : toMin(local), cols);
-    (byCol[c] = byCol[c] || []).push((EDIT && !x.fixed) ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" title="Move this deadline">${body}</button>` : `<div class="due${late ? ' late' : ''}">${body}</div>`);
-  });
-  (OUTS[day.date] || []).forEach(o => {
-    const c = colAt(toMin(window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '') || 0, cols);
-    (byCol[c] = byCol[c] || []).unshift(outFlag(o));
-  });
-  const flagRow = Object.keys(byCol).length ? 1 : 0, tileRow = flagRow + 1;
-  const flags = Object.keys(byCol).map(c => `<div class="flags${+c === cols.length - 1 ? ' end' : ''}" style="grid-column:${+c + 2} / -1;grid-row:1">${byCol[c].join('')}</div>`).join('');
-  const teachers = teachersOf(day);
-  const tps = (day.sessions || []).filter(x => x.k === 'tp').sort(byStart);
-  const tiles = place.at.map(t => tileHTML(day, t.x, null, tps.indexOf(t.x), teachers, { a: t.a, b: t.b, exact: t.exact, row: tileRow })).join('');
-  const mk = makeupNote(day.date);
-  const notes = EDIT
-    ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}"><input type="text" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes">${mk}</div>`
-    : ((day.notes || mk) ? `<div class="notes" style="grid-column:2 / -1;grid-row:${tileRow + 1}">${esc(day.notes || '')}${mk}</div>` : '');
-  return `<div class="hrow day${isToday ? ' today' : ''}" id="d-${esc(day.date)}" style="grid-template-columns:${tpl}">${dh.replace('<div class="dh">', `<div class="dh" style="grid-row:1 / span ${tileRow + 1}">`)}${flags}${tiles}${notes}</div>`;
+  const narrow = cols.map(c => toMin(c.e) - toMin(c.s) <= 15);
+  const flagsOf = day => {
+    const out = [];
+    (OUTS[day.date] || []).forEach(o => out.push(outFlag(o)));
+    (DUES[day.date] || []).forEach(x => {
+      const local = window.HubDue && x.due ? HubDue.toLocalInput(x.due).slice(11, 16) : '';
+      const late = x.past && x.missing;
+      const body = `${esc(x.title)} in${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
+      out.push((EDIT && !x.fixed) ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" title="Move this deadline">${body}</button>` : `<div class="due${late ? ' late' : ''}">${body}</div>`);
+    });
+    return out;
+  };
+  const maxFlags = Math.max(0, ...w.map(d => flagsOf(d).length));
+  const cells = (day, idx) => {
+    const d = parse(day.date), isToday = day.date === TODAY;
+    const mk = makeupNote(day.date), fl = flagsOf(day);
+    const notes = EDIT ? `<input type="text" class="dnote" data-date="${esc(day.date)}" data-f="notes" value="${esc(day.notes || '')}" placeholder="Notes">` : ((day.notes || mk) ? `<div class="dnote">${esc(day.notes || '')}${mk}</div>` : '');
+    const dh = `<div class="dh"><div class="dt"${EDIT ? ` data-close="${esc(day.date)}" title="${day.closed ? 'Reopen this day' : 'Close this day (a holiday, a snow day)'}"` : ''}><span class="dow">${DOW[d.getDay()]}</span> <span class="dm">${dm(d)}${isToday ? ' · today' : ''}</span><small>${day.closed ? 'No course' : 'Day ' + (idx + 1)}</small>${day.closed ? '' : dayMark(day)}</div>`
+      + (EDIT && !day.closed ? `<div class="dacts">${pinned(day.date) ? '<span class="pin" title="Copying a day’s shape leaves this one alone">Pinned</span>' : ''}<button type="button" class="more" data-menu="${esc(day.date)}" aria-label="Options for this day">⋯</button><button type="button" class="addtile" data-add="${esc(day.date)}" title="A new tile at the end of the day">+ Add a tile</button></div>` : '')
+      + (fl.length ? `<div class="flags">${fl.join('')}</div>` : '') + (day.closed ? '' : notes) + '</div>';
+    if (day.closed) return dh + `<div class="closedmsg">${EDIT ? 'Closed · click the date to reopen' : 'No course today'}</div>`;
+    const teachers = teachersOf(day);
+    const tps = (day.sessions || []).filter(x => x.k === 'tp').sort(byStart);
+    const byCol = new Map(places.get(day).at.map(t => [t.a, t]));
+    return dh + cols.map((c, i) => {
+      const t = byCol.get(i);
+      if (t) return tileHTML(day, t.x, null, tps.indexOf(t.x), teachers, { i, exact: t.exact, narrow: narrow[i], across });
+      return `<div class="slot${narrow[i] ? ' narrow' : ''}" data-date="${esc(day.date)}" data-i="${i}"></div>`;
+    }).join('');
+  };
+  const track = cols.map((c, i) => narrow[i] ? 'var(--slim)' : 'var(--cell)').join(' ');
+  const style = `--ncols:${cols.length};--track:${track};--hh:calc(var(--hh0) + ${maxFlags} * 22px)`;
+  return `<div class="tscroll"><div class="tgrid tboard ${across ? 'across' : 'down'}" style="${style}">`
+    + w.map(d => `<div class="day${d.date === TODAY ? ' today' : ''}${d.closed ? ' closed' : ''}" id="d-${esc(d.date)}">${cells(d, TT.days.indexOf(d))}</div>`).join('')
+    + `</div></div>`;
 }
 
 /* LIVE COLOR. Ramy, 29 Sep 2026: "this timetable is alive, so color should
@@ -1463,7 +1574,7 @@ function zoneLine(){
      tells them apart is the color (Ramy, 30 Sep 2026). So the sentence names
      the color, and the word "green" is itself green, which is the only way a
      sentence about a color is worth reading. */
-  return `<p class="zone">Times are the course\u2019s own clock in <b>${esc(window.hubZoneName(ZONE))}</b>. The <b class="ingreen">green</b> time beside each, marked <b class="ingreen">your time</b>, is when it starts for you in <b>${esc(window.hubZoneName(reader))}</b>.</p>`;
+  return `<p class="zone">The time in <span class="ltkey">brass</span> on each tile is yours, in <b>${esc(window.hubZoneName(reader))}</b>. The faint one is the course\u2019s own clock, in <b>${esc(window.hubZoneName(ZONE))}</b>.</p>`;
 }
 
 /* "45 min" from a slot's own two times, so changing a time changes the label
@@ -1553,7 +1664,7 @@ function render(){
       <button class="btn quiet" id="importOpen">Import from a sheet</button>
       <span class="status">${esc(note)}</span></div>
       ${pub ? statusHTML() : '<p class="legend" style="margin:0 0 14px">Only tutors can see it until you set it.</p>'}${checksHTML()}`
-      + (EDIT ? `<p class="legend" style="margin:-8px 0 14px">${ACROSS() ? 'Drag a tile to another slot or day to move it. Click a tile to change it, its times too.' : 'Drag a tile to move it, or its bottom edge to change its length. Click a tile to change it.'} ⋯ on a day copies its shape to other days.</p>` : '')
+      + (EDIT ? `<p class="legend" style="margin:-8px 0 14px">Drag a tile onto another to swap them, or into an empty place to move it. Click a tile to change it: its name, who teaches it, its times. ⋯ on a day copies its shape to other days.</p>` : '')
       + (PREVIEW ? '' : asgDatesHTML() + moveHTML() + buildPanelHTML() + settingsPanelHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
@@ -1578,12 +1689,10 @@ function render(){
   for (let m = Math.ceil(B.from / 60) * 60; m <= B.to; m += 60) ruler += `<span style="top:${(m - B.from) * PXM}px">${esc(hubClock(toHM(m)).replace(':00', ''))}</span>`;
   const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input' && x.by !== undefined && x.by !== '' && TUTORS[+x.by]) used.add(+x.by); }));
   Object.values(OUTS || {}).forEach(list => list.forEach(o => { const i = TUTORS.indexOf(o.by); if (i !== -1) used.add(i); }));
-  const key = `<div class="tkey"><span><i class="tile k-input"></i>Input sessions, with the tutor’s initials</span><span><i class="tile k-tp"></i>Teaching practice, demos &amp; observations</span><span><i class="tile k-plan"></i>Lesson planning</span><span><i class="tile k-feedback"></i>Feedback &amp; self-evaluation</span><span><i class="tile k-assessor"></i>Assessor</span><span><i class="tile k-lunch"></i>Lunch &amp; breaks</span><span><i class="tile k-event"></i>Everything else</span><span><i class="due"></i>A deadline</span></div>`;
+  const key = `<div class="tkey"><span><i class="tile k-input"></i>Input sessions, in each tutor’s shade, with their initials</span><span><i class="tile k-tp"></i>Teaching practice</span><span><i class="tile k-feedback"></i>TP feedback</span><span><i class="tile k-plan"></i>Planning</span><span><i class="tile k-demo"></i>Demo lessons &amp; observations</span><span><i class="tile k-task"></i>Assignments &amp; tutorials</span><span><i class="tile k-assessor"></i>Assessor</span><span><i class="tile k-lunch"></i>Lunch</span><span><i class="tile k-break"></i>Breaks</span><span><i class="tile k-event"></i>Everything else</span><span><i class="due"></i>A deadline</span></div>`;
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + roomsStrip() + key + weeks.map((w, i) => {
     const a = parse(w[0].date), b = parse(w[w.length-1].date);
-    if (ACROSS()) return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}${weekAcross(w, i)}</section>`;
-    return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}
-      <div class="tgrid" style="grid-template-columns:var(--gutter) repeat(${w.length}, minmax(0,1fr))"><div class="ruler" style="height:${H}px">${ruler}</div>${w.map(d => dayHTML(d, B, TT.days.indexOf(d))).join('')}</div></section>`;
+    return `<section class="wk"><h2>Week ${i+1} <small>${dm(a)} – ${dm(b)}</small></h2>${changeNote(w)}${weekBoard(w, i)}</section>`;
   }).join('') + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
   if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; render(); });
   if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); });
@@ -1623,7 +1732,7 @@ function render(){
     if (t) {
       /* A phone shows a week as a row of days to swipe through: land on
          today's column as well as its week. */
-      if (t.parentElement && !ACROSS()) t.parentElement.scrollLeft = t.offsetLeft - t.parentElement.offsetLeft;
+      const sc = t.closest('.tscroll'); if (sc && !ACROSS()) sc.scrollLeft = Math.max(0, t.offsetLeft - 8);
       const land = () => {
         const head = document.querySelector('.wk h2');
         const off = head ? head.offsetHeight + 8 : 0;
@@ -1790,9 +1899,8 @@ const LIB_SESSIONS = [
    days, one teaching set a day), then a day of input and planning, the assessor's visit and the last day. Two input
    sessions each morning in the library's teaching order, the tutors taking turns; the assignment sessions and the
    Stage 1 and 2 tutorials in their places. Laid onto the course's own dates and weekdays, then changed like any other. */
+/* Connect's timetable is four weeks, Monday to Friday (Ramy, 29 Oct 2026: "this is a four-week timetable") */
 const CX_SHAPES = [
-  ['five_fri', 'Five weeks, Friday off', [1, 2, 3, 4]],
-  ['five_wed', 'Five weeks, Wednesday off', [1, 2, 4, 5]],
   ['four', 'Four weeks, Monday to Friday', [1, 2, 3, 4, 5]]
 ];
 const CX_ORDER = ['Lesson frameworks', 'Writing the lesson plan', 'Receptive skills', 'Language analysis', 'PPP', 'Eliciting and CCQs', 'Teaching vocabulary',
@@ -1801,34 +1909,41 @@ const CX_ORDER = ['Lesson frameworks', 'Writing the lesson plan', 'Receptive ski
   'Teaching literacy', 'Observation 2: an experienced teacher', 'Teaching exam classes', 'Observation 3: an experienced teacher', 'Alternative teaching techniques', 'Drama in the ELT classroom',
   'Observation 4: an experienced teacher', 'Life after CELTA'];
 /* the second morning slot of these days (or the first, where said) is a task, not an input session */
-const CX_TASKS = { '4.2': 'Focus on the Learner: the assignment', '7.2': 'Language Related Tasks: the assignment', '10.2': 'Stage 1 tutorials',
-  '11.2': 'Language Skills Related Tasks: the assignment', '13.2': 'Stage 2 tutorials', '15.1': 'Lessons from the Classroom: the assignment' };
+const CX_TASKS = { '4.2': 'FoL: the assignment', '7.2': 'LRT: the assignment', '10.2': 'Stage 1 tutorials',
+  '11.2': 'LSRT: the assignment', '13.2': 'Stage 2 tutorials', '15.1': 'LfC: the assignment' };
+/* CONNECT'S DAY (Ramy, 29 Oct 2026): "everything is 45 minutes, except input sessions, one hour fifteen; short breaks fifteen
+   minutes; lunch sixty; three TPs a day; forty-five minute feedback, forty-five minute lesson planning; we start at 10 with an
+   input session ... TP at 11:30". Twenty days: day one opens the course with the first demonstration lesson; no TP on the
+   Fridays of weeks 2 and 3 ("only 2 Fridays off"): week 2's is the second demonstration lesson at the change of level and
+   the Stage 2 tutorials, after TP4 (Handbook 10, pp. 30-31); week 3's the filmed observations and the Stage 3 tutorials,
+   after TP6, two lessons left; two more filmed observations in input slots, so the course has its six hours; TP8 ends on
+   the last Thursday; the last Friday closes the course. The assignments go out on the days below (CX_ASG in cxApply). */
+const CX_DAY = [['10:00', '11:15'], ['11:15', '11:30'], ['11:30', '12:15'], ['12:15', '13:00'], ['13:00', '13:15'], ['13:15', '14:00'], ['14:00', '15:00'], ['15:00', '15:45'], ['15:45', '16:30']];
 function cxDays(){
   const two = (String(SETTINGS.tutorNames || '').split(/[,\n;]+/).filter(x => x.trim()).length) > 1;
-  const by = k => (two ? k : 0);
-  const morning = (a, b) => [
-    Object.assign({ s: '10:00', e: '11:00' }, a),
-    { s: '11:00', e: '11:15', k: 'break', t: 'Break' },
-    Object.assign({ s: '11:15', e: '12:15' }, b),
-    { s: '12:15', e: '13:15', k: 'lunch', t: 'Lunch' }];
-  const order = CX_ORDER.slice(), days = [];
-  /* an observation of an experienced teacher (Cambridge's six hours, syllabus p. 3) is a filmed lesson watched with its task: a demo tile */
-  const slot = (d, n) => { const t = CX_TASKS[d + '.' + n]; if (t) return { k: 'task', t, by: by(n - 1) }; const x = order.shift(); return /^Observation/.test(x) ? { k: 'demo', t: x + ' (film, with a task)', by: by(n - 1) } : { k: 'input', t: x, by: by(n - 1) }; };
-  days.push({ sessions: morning({ k: 'input', t: 'Course introduction', by: by(0) }, { k: 'input', t: 'Classroom management', by: by(1) }).concat([
-    { s: '13:30', e: '14:30', k: 'demo', t: 'Demonstration lesson' }, { s: '14:45', e: '15:30', k: 'event', t: 'Getting to know you: your activity' },
-    { s: '15:30', e: '18:00', k: 'plan', t: 'Lesson planning: TP1' }]) });
-  for (let d = 1; d <= 16; d++) days.push({ tp: Math.ceil(d / 2), setIndex: (d - 1) % 2, sessions: morning(slot(d, 1), slot(d, 2)).concat([
-    { s: '13:15', e: '13:30', k: 'plan', t: 'TP preparation' }, { s: '13:30', e: '14:15', k: 'tp' }, { s: '14:15', e: '15:00', k: 'tp' }, { s: '15:15', e: '16:00', k: 'tp' },
-    { s: '16:15', e: '17:00', k: 'plan', t: 'Lesson planning' }, { s: '17:15', e: '18:00', k: 'feedback', t: 'TP feedback', room: 'Feedback and tutorials' }]) });
-  /* the three days after TP 8: no teaching practice, and not study days (Ramy, 28 Oct 2026; Handbook 3.6 allows one study
-     day only, for a national holiday). Contact time to the end: a fifth observation, tutorials and consultation, so the
-     twenty days reach Cambridge's 120 contact hours (syllabus p. 3). */
-  days.push({ sessions: morning(slot(17, 1), slot(17, 2)).concat([{ s: '13:30', e: '14:30', k: 'demo', t: 'Observation 5: an experienced teacher (film, with a task)', by: by(0) },
-    { s: '14:45', e: '16:15', k: 'task', t: 'Tutorials', by: by(1) }, { s: '16:30', e: '18:00', k: 'task', t: 'Consultation: assignments and resubmissions', by: by(0) }]) });
-  days.push({ sessions: morning({ k: 'assessor', t: 'Assessor visit: teaching practice', by: by(0) }, { k: 'assessor', t: 'Assessor visit: feedback', by: by(1) }).concat([
-    { s: '13:30', e: '15:00', k: 'task', t: 'Tutorials', by: by(0) }, { s: '15:15', e: '18:00', k: 'task', t: 'Consultation: the CELTA 5 and the portfolio', by: by(1) }]) });
-  days.push({ sessions: morning({ k: 'event', t: 'Course review and CELTA 5 checks', by: by(0) }, { k: 'event', t: 'End of course', by: by(1) }).concat([
-    { s: '13:30', e: '15:00', k: 'task', t: 'Final tutorials', by: by(0) }, { s: '15:15', e: '18:00', k: 'task', t: 'Consultation: what comes next', by: by(1) }]) });
+  const by = k => (two ? k % 2 : 0);
+  const order = CX_ORDER.filter(x => !/^Observation/.test(x)), days = [];
+  /* a day from nine tiles: [kind, title, tutor?] for the input, the three TP places, and the two after lunch */
+  const lay = (input, t1, t2, t3, f1, f2) => {
+    const T = [input, ['break', 'Break'], t1, t2, ['break', 'Break'], t3, ['lunch', 'Lunch'], f1, f2];
+    return T.map((x, i) => { const o = { s: CX_DAY[i][0], e: CX_DAY[i][1], k: x[0] }; if (x[1]) o.t = x[1]; if (x[2] !== undefined) o.by = x[2]; if (x[0] === 'tp' || x[0] === 'input') o.room = x[0] === 'tp' ? 'Teaching practice' : 'Input'; return o; });
+  };
+  const nextInput = d => ['input', order.shift() || 'Input session', by(d)];
+  const SPECIAL = {
+    0: () => lay(['input', 'Course introduction', by(0)], ['demo', 'Demonstration lesson 1'], ['event', 'Demo lesson debrief'], ['event', 'Getting to know you: your activity'], ['plan', 'Lesson planning: TP1, with your tutor'], ['plan', 'Lesson planning: TP1']),
+    9: () => lay(nextInput(9), ['demo', 'Demonstration lesson 2: the new level'], ['task', 'Stage 2 tutorials', by(1)], ['task', 'LRT: the assignment', by(0)], ['task', 'Stage 2 tutorials', by(1)], ['task', 'Stage 2 tutorials', by(0)]),
+    14: () => lay(nextInput(14), ['demo', 'Filmed observation, with a task'], ['demo', 'Filmed observation, with a task'], ['task', 'LSRT: the assignment', by(1)], ['task', 'Stage 3 tutorials', by(0)], ['demo', 'Filmed observation, with a task']),
+    19: () => lay(['event', 'Course review and CELTA 5 checks'], ['task', 'Final tutorials', by(0)], ['task', 'Final tutorials', by(1)], ['task', 'Consultation: the CELTA 5 and the portfolio', by(0)], ['task', 'Consultation: what comes next', by(1)], ['event', 'End of course'])
+  };
+  const INPUT_AT = { 3: ['demo', 'Observation 1: filmed, with a task'], 4: ['task', 'FoL: the assignment', 0], 12: ['task', 'LfC: the assignment', 1], 13: ['demo', 'Observation 2: filmed, with a task'], 17: ['assessor', 'Assessor visit'] };
+  let n = 0;
+  for (let d = 0; d < 20; d++) {
+    if (SPECIAL[d]) { days.push({ sessions: SPECIAL[d]() }); continue; }
+    const tp = Math.floor(n / 2) + 1, set = n % 2; n++;
+    const inp = INPUT_AT[d] ? INPUT_AT[d].slice() : nextInput(d);
+    if (inp[0] === 'task' && inp[2] !== undefined) inp[2] = by(inp[2]);
+    days.push({ tp, setIndex: set, sessions: lay(inp, ['tp'], ['tp'], ['tp'], ['feedback', 'TP feedback'], ['plan', tp >= 7 ? 'Independent planning' : 'Lesson planning']) });
+  }
   days.forEach(day => day.sessions.forEach((x, i) => { x.id = (x.k || 'x') + (i + 1); if (x.by === undefined) delete x.by; }));
   return days;
 }
@@ -1838,7 +1953,7 @@ function cxDates(meets){
   const out = []; for (let d = new Date(s); out.length < 20 && out.length < 400; d.setDate(d.getDate() + 1)) if (meets.indexOf(d.getDay()) !== -1) out.push(ymd(d));
   return out;
 }
-let CX_SHAPE = 'five_fri';
+let CX_SHAPE = 'four';
 function cxApply(){
   const shape = CX_SHAPES.find(x => x[0] === CX_SHAPE) || CX_SHAPES[0], dates = cxDates(shape[2]);
   if (dates.length < 20) { note = 'Set the course start date on Course admin first.'; render(); return; }
@@ -1850,9 +1965,10 @@ function cxApply(){
   const inputs = days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input').length, 0);
   /* and its assignment dates (29 Oct 2026): opens with its session, due five teaching days later at 5 pm, a resubmission
      five days after that (Lessons from the Classroom: due day 19, resubmission on the last day) */
-  const CX_ASG = { fol: ['4.2', 9, 14], lrt: ['7.2', 12, 17], lsrt: ['11.2', 16, 19], lfc: ['15.1', 19, 20] };
-  Object.keys(CX_ASG).forEach(k => { const [slot, due, resub] = CX_ASG[k], [d, n] = slot.split('.').map(Number);
-    setAsgDate(k, 'open', dates[d - 1] + 'T' + (n === 1 ? '10:00' : '11:15'));
+  /* [day it goes out (1-based), time, due day, resubmission day]; no resubmission on the last two days (his C/18 rule) */
+  const CX_ASG = { fol: [5, '10:00', 10, 15], lrt: [10, '13:15', 15, 17], lsrt: [15, '13:15', 17, 18], lfc: [13, '10:00', 17, 18] };
+  Object.keys(CX_ASG).forEach(k => { const [d, at, due, resub] = CX_ASG[k];
+    setAsgDate(k, 'open', dates[d - 1] + 'T' + at);
     setAsgDate(k, 'due', dates[due - 1] + 'T17:00');
     setAsgDate(k, 'resub', dates[resub - 1] + 'T17:00'); });
   save('Built', { text: 'Connect’s timetable (' + shape[1] + '): 20 days, 16 with teaching practice, ' + inputs + ' input sessions' });
@@ -1863,7 +1979,7 @@ function cxApply(){
 /* the empty timetable: three ways to start, as everywhere else (Connect's, your own from a sheet, or built) */
 function startCardsHTML(noDates){
   return `<div class="ttstart">
-    <div class="tcard cx"><b>Connect’s timetable</b><span>Twenty days, ready to teach: the input sessions in teaching order with the tutors’ turns, teaching practice, feedback, the assignment sessions and the tutorials. Laid onto your course’s dates, then yours to change.</span>
+    <div class="tcard cx"><b>Connect’s timetable</b><span>Four weeks, ready to teach. An input session at 10:00, three TP lessons from 11:30, lunch, feedback and planning; demonstration lessons, the Stage 2 and Stage 3 tutorials, the filmed observations and the assignment sessions in their places. Laid onto your course’s dates, then yours to change.</span>
       <div class="cxshapes">${CX_SHAPES.map(([k, l]) => `<label><input type="radio" name="cxShape" value="${k}"${CX_SHAPE === k ? ' checked' : ''}> ${esc(l)}</label>`).join('')}</div>
       <button class="btn primary" id="cxUse"${noDates ? ' disabled' : ''}>Use Connect’s timetable</button></div>
     <div class="tcard"><b>Import yours from a sheet</b><span>A Google Sheet, an Excel or Word file, or rows pasted in: one row a day. Connect lays it onto your dates.</span><button class="btn quiet" id="importOpen"${noDates ? ' disabled' : ''}>Import from a sheet</button></div>
@@ -2433,11 +2549,13 @@ function placeTiles(day){
     const tm = el.querySelector('.tm'); if (tm) tm.textContent = hubClockRange(x.s, x.e);
   });
 }
-function clearTints(){ document.querySelectorAll('.tgrid .day').forEach(el => { el.classList.remove('drop-clean', 'drop-shift', 'drop-block', 'drop-swap', 'drop-hover'); el.querySelectorAll('.drophint, .dropcell').forEach(h => h.remove()); }); }
+function clearTints(){ document.querySelectorAll('.tgrid .day').forEach(el => { el.classList.remove('drop-clean', 'drop-shift', 'drop-block', 'drop-swap', 'drop-hover'); el.querySelectorAll('.drophint, .dropcell').forEach(h => h.remove()); }); document.querySelectorAll('.tgrid .dropon').forEach(el => el.classList.remove('dropon', 'drop-clean', 'drop-shift', 'drop-block', 'drop-swap')); }
 function dayUnder(x, y){
   const els = document.elementsFromPoint(x, y);
   const col = els.find(el => el.classList && el.classList.contains('day') && el.id && el.id.indexOf('d-') === 0);
-  return col ? col.id.slice(2) : '';
+  if (col) return col.id.slice(2);
+  const cell = els.find(el => el.dataset && el.dataset.date && el.closest && el.closest('.tgrid'));
+  return cell ? cell.dataset.date : '';
 }
 /* Across, a drop lands in a slot: the column under the pointer, read off the
    week's own headings. A tile one slot wide takes that slot's times; a wider
@@ -2512,33 +2630,21 @@ function wireBoard(){
       DRAG.target = sw.kind === 'swap' ? { date: over.dataset.date, swap: over.dataset.id, r: sw } : { date: over.dataset.date, r: sw };
       return;
     }
-    if (ACROSS()) {
-      DRAG.ghost.style.left = (e.clientX - DRAG.grabX) + 'px'; DRAG.ghost.style.top = (e.clientY - DRAG.grab) + 'px';
-      clearTints();
-      const slot = col ? slotUnder(col, e.clientX, Object.assign({ _date: DRAG.day.date }, DRAG.x)) : null;
-      if (!slot) { DRAG.target = null; return; }
-      const tm = DRAG.ghost.querySelector('.tm') || DRAG.ghost.appendChild(Object.assign(document.createElement('div'), { className: 'tm' }));
-      tm.textContent = hubClockRange(toHM(slot.start), toHM(slot.end));
-      col.closest('.tgrid').querySelectorAll('.day').forEach(c => { const d = dayOfDate(c.id.slice(2)); if (!d) return; const r = evaluate(DRAG.x, DRAG.day, d, slot.start, slot.end); if (!(d === DRAG.day && r.kind === 'clean' && slot.start === DRAG.s && slot.end === DRAG.e)) c.classList.add('drop-' + r.kind); });
-      const d = dayOfDate(date), r = evaluate(DRAG.x, DRAG.day, d, slot.start, slot.end);
-      col.classList.add('drop-hover'); hint(col, r);
-      const hr = slot.head.getBoundingClientRect(), rr = col.getBoundingClientRect();
-      const cell = document.createElement('div'); cell.className = 'dropcell ' + r.kind;
-      cell.style.left = (hr.left - rr.left) + 'px'; cell.style.width = hr.width + 'px'; col.appendChild(cell);
-      DRAG.target = { date, start: slot.start, end: slot.end, r };
-      return;
-    }
-    let start = DRAG.s;
-    if (col) {
-      start = Math.max(6 * 60, Math.min(23 * 60 - (DRAG.e - DRAG.s), startFor(col, e.clientY, DRAG.grab)));
-      const br = col.querySelector('.body').getBoundingClientRect();
-      DRAG.ghost.style.left = (br.left) + 'px'; DRAG.ghost.style.width = br.width + 'px';
-      DRAG.ghost.style.top = (br.top + (start - (+col.querySelector('.body').dataset.start || 0)) * PXM) + 'px';
-    } else { DRAG.ghost.style.left = (e.clientX - DRAG.grabX) + 'px'; DRAG.ghost.style.top = (e.clientY - DRAG.grab) + 'px'; }
-    const tm = DRAG.ghost.querySelector('.tm'); if (tm) tm.textContent = hubClockRange(toHM(start), toHM(start + DRAG.e - DRAG.s));
+    /* the place under the pointer: an empty slot, or a tile's own slot (both carry data-date and data-i) */
+    DRAG.ghost.style.left = (e.clientX - DRAG.grabX) + 'px'; DRAG.ghost.style.top = (e.clientY - DRAG.grab) + 'px';
     clearTints();
-    document.querySelectorAll('.tgrid .day').forEach(c => { const d = dayOfDate(c.id.slice(2)); if (!d) return; const r = evaluate(DRAG.x, DRAG.day, d, start); if (!(d === DRAG.day && r.kind === 'clean' && start === DRAG.s)) c.classList.add('drop-' + r.kind); });
-    if (col) { const d = dayOfDate(date); const r = evaluate(DRAG.x, DRAG.day, d, start); col.classList.add('drop-hover'); hint(col, r); DRAG.target = { date, start, r }; } else DRAG.target = null;
+    const cell = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.dataset && el.dataset.i != null && el.dataset.date && !el.classList.contains('ghost'));
+    const cols = cell && WEEKCOLS[cell.dataset.date], c = cols && cols[+cell.dataset.i];
+    if (!c) { DRAG.target = null; return; }
+    const d = dayOfDate(cell.dataset.date); if (!d) { DRAG.target = null; return; }
+    const len = DRAG.e - DRAG.s, start = toMin(c.s), end = (toMin(c.e) - toMin(c.s) === len || cell.classList.contains('slot')) ? toMin(c.e) : start + len;
+    const tm = DRAG.ghost.querySelector('.tm') || DRAG.ghost.appendChild(Object.assign(document.createElement('div'), { className: 'tm' }));
+    tm.textContent = hubClockRange(toHM(start), toHM(end));
+    const r = evaluate(DRAG.x, DRAG.day, d, start, end);
+    const dayEl = document.getElementById('d-' + cell.dataset.date);
+    if (dayEl) { dayEl.classList.add('drop-hover'); hint(dayEl, r); }
+    cell.classList.add('dropon', 'drop-' + r.kind);
+    DRAG.target = { date: cell.dataset.date, start, end, r };
   });
   document.addEventListener('pointerup', e => {
     if (!DRAG) return;
@@ -2570,7 +2676,12 @@ function wireBoard(){
       if (to !== was.day) { was.day.sessions = was.day.sessions.filter(s => s !== x).concat([o]); to.sessions = to.sessions.filter(s => s !== o).concat([x]); }
       was.day.sessions.sort(byStart); to.sessions.sort(byStart);
       save('Swapped', { text: '“' + tileName(x, to) + '” and “' + tileName(o, was.day) + '” swapped places' + (to !== was.day ? ' between ' + dayName(was.day.date) + ' and ' + dayName(to.date) : ' on ' + dayName(to.date)), effects: [] });
-      render(); return;
+      render();
+      /* TWO TUTORS' SESSIONS SWAPPED (Ramy, 29 Oct 2026: "sometimes change the input but leave the trainer, and sometimes
+         change the trainers and the input"): each session went with its tutor; one click keeps each tutor on their own
+         slot instead, so their initials and shade follow, or puts both back */
+      if (x.k === 'input' && o.k === 'input' && x.by != null && o.by != null && String(x.by) !== String(o.by)) swapOffer(x, o, was.before);
+      return;
     }
     const to = dayOfDate(t.date), x = was.day.sessions.find(s => s.id === was.x.id);
     const len = toMin(x.e) - toMin(x.s);
@@ -2602,9 +2713,22 @@ function wireBoard(){
     if (EDIT && (e.metaKey || e.ctrlKey) && e.key === 'z' && !e.target.closest('input, textarea, select')) { e.preventDefault(); undo(); }
   });
 }
+function swapOffer(x, o, before){
+  let bar = $('swapbar');
+  if (!bar) { bar = document.createElement('div'); bar.id = 'swapbar'; bar.className = 'swapbar'; document.body.appendChild(bar); }
+  const who = n => TUTORS[+n] || '';
+  bar.innerHTML = `<span><b>Swapped</b> ${esc(x.t || 'Input')} (${esc(who(x.by))}) and ${esc(o.t || 'Input')} (${esc(who(o.by))}). Each kept its tutor.</span><button type="button" data-a="keep">Keep each tutor on their slot instead</button><button type="button" data-a="undo">Undo</button>`;
+  bar.hidden = false; clearTimeout(swapOffer.t); swapOffer.t = setTimeout(() => { bar.hidden = true; }, 12000);
+  bar.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.a === 'keep') { const t = x.by; x.by = o.by; o.by = t; save('Tutors kept their slots', { text: who(x.by) + ' and ' + who(o.by) + ' kept their slots; the sessions swapped' }); bar.innerHTML = '<span><b>Done.</b> The sessions swapped; each tutor kept their slot.</span>'; }
+    if (b.dataset.a === 'undo') { undo(); bar.innerHTML = '<span>Put back as it was.</span>'; }
+    clearTimeout(swapOffer.t); swapOffer.t = setTimeout(() => { bar.hidden = true; }, 3000); render();
+  };
+}
 function hint(col, r){
   if (r.kind === 'clean') return;
-  const body = col.querySelector('.body') || (ACROSS() ? col : null); if (!body) return;
+  const body = col.querySelector('.dh') || col; if (!body) return;
   const h = document.createElement('div'); h.className = 'drophint ' + r.kind;
   h.textContent = r.kind === 'block' ? r.why : (r.effects || []).slice(0, 3).join(' · ') + ((r.effects || []).length > 3 ? ' · …' : '');
   body.appendChild(h);
