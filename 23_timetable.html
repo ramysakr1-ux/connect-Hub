@@ -690,11 +690,20 @@
   .tgrid.tboard .tlab{display:flex; align-items:center; justify-content:center; text-align:center; font-size:0.86rem; font-weight:700; color:var(--ink); white-space:nowrap; padding:4px; font-variant-numeric:tabular-nums;}
   .tgrid.tboard.across .tlab{height:auto; align-items:flex-end; padding-bottom:6px;}
   .tgrid.tboard.down .tlab{justify-content:flex-end; padding-right:8px;}
+  .tgrid.tboard .tlab.two{flex-direction:column; gap:2px; white-space:normal;} .tgrid.tboard .tlab .lt{color:oklch(50% 0.1 78); font-weight:700;} .tgrid.tboard .tlab .ct{color:var(--grey); font-weight:500; font-size:0.72rem; opacity:.7;}
   .tgrid.tboard .tlab.narrow{font-weight:600; font-size:0.74rem; color:var(--grey);}
+  /* a break shows the same clock as every other tile: the reader's own when it differs (30 Oct 2026) */
+  .tgrid.tboard .tile.narrow.twoclock .tm .ct{display:none;} .tgrid.tboard .tile.narrow.twoclock .tm .lt{display:block !important; font-size:0.72rem; white-space:normal;}
+  .tgrid.tboard .tile:focus-visible, .tgrid.tboard .slot:focus-visible{outline:3px solid var(--teal); outline-offset:2px;}
   body.editing .tgrid.tboard .slot{cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--faint); font-size:0.74rem; font-weight:600;}
   body.editing .tgrid.tboard .slot:hover{color:var(--ink); border-color:var(--ink);}
   body.editing .tgrid.tboard .slot::after{content:'+ Session';}
   body.editing .tgrid.tboard .slot.narrow::after{content:'+';}
+  .tgrid.tboard .cont{--c:oklch(92% 0.02 80); border-radius:8px; padding:8px 10px; display:flex; flex-direction:column; justify-content:center; gap:2px; font-size:0.78rem; color:var(--ink);
+    background:repeating-linear-gradient(135deg, color-mix(in oklch, white 35%, var(--c)) 0 8px, color-mix(in oklch, white 50%, var(--c)) 8px 16px); border:1px dashed color-mix(in oklch, black 18%, var(--c)); opacity:.85;}
+  .tgrid.tboard .cont span{font-weight:700;} .tgrid.tboard .cont small{color:var(--grey);}
+  .tgrid.tboard .cont.k-input{--c:oklch(91% 0.045 245);} .tgrid.tboard .cont.k-tp{--c:oklch(91% 0.05 145);} .tgrid.tboard .cont.k-feedback{--c:oklch(92% 0.05 55);} .tgrid.tboard .cont.k-plan{--c:oklch(90% 0.05 300);}
+  .tgrid.tboard .cont.k-demo{--c:oklch(91% 0.05 190);} .tgrid.tboard .cont.k-event{--c:oklch(91% 0.04 5);} .tgrid.tboard .cont.k-task{--c:oklch(92% 0.06 85);} .tgrid.tboard .cont.k-assessor{--c:oklch(87% 0.06 330);} .tgrid.tboard .cont.k-reflect{--c:oklch(92% 0.018 285);}
   .tgrid.tboard .slot.libover{outline:2px dashed var(--teal); outline-offset:2px;}
   .tgrid.tboard .tile.faded{opacity:.22;}
   body:not(.editing) .tgrid.tboard .tile{cursor:pointer;}
@@ -1310,7 +1319,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     if (lt) cls.push('twoclock');
     const bk = bookLine(day, x); if (bk) cls.push('bookable');
     const tm = `<div class="tm"><span class="ct">${place.narrow && place.across ? esc(hubClock(x.s)) + '<br>' + esc(hubClock(x.e)) : esc(hubClockRange(x.s, x.e))}</span>${lt ? ' <span class="lt" title="Your time">' + esc(lt) + '</span>' : ''}${joinHTML}</div>`;
-    return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-i="${place.i}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
+    return `<div class="${cls.join(' ')}" tabindex="0" role="button" aria-label="${esc(tip + (lt ? ', ' + lt + ' your time' : ''))}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-i="${place.i}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
       + `<div class="tt">${title}</div>${bk}${tm}</div>`;
   }
   return `<div class="${cls.join(' ')}" data-id="${esc(x.id)}" data-date="${esc(day.date)}" data-from="${esc(x.s)}" data-to="${esc(x.e)}" style="top:${top}px;height:${h}px" title="${esc(tip + (lt ? ' · ' + lt + ' your time' : ''))}">`
@@ -1320,7 +1329,10 @@ function localRange(date, from, to){
   if (!ZONE || !window.hubTimeFor) return '';
   const a = hubTimeFor(date, from, ZONE); if (!a || !a.differs) return '';
   const z = hubTimeFor(date, to, ZONE);
-  return hubClockRange(a.local, (z && z.local) || '');
+  /* past midnight for the reader: say which day (30 Oct 2026) */
+  const shift = (a.dayShift || (z && z.dayShift)) ? (a.dayShift || z.dayShift) : 0;
+  const when = shift ? ' ' + (shift > 0 ? 'next day' : 'day before') : '';
+  return hubClockRange(a.local, (z && z.local) || '') + when;
 }
 function localStart(date, from){
   const a = (ZONE && window.hubTimeFor) ? hubTimeFor(date, from, ZONE) : null;
@@ -1490,13 +1502,19 @@ function weekBoard(w, n){
     return dh + cols.map((c, i) => {
       const t = byCol.get(i);
       if (t) return tileHTML(day, t.x, null, tps.indexOf(t.x), teachers, { i, exact: t.exact, narrow: narrow[i], across });
-      return `<div class="slot${narrow[i] ? ' narrow' : ''}" data-date="${esc(day.date)}" data-i="${i}"></div>`;
+      /* a longer session runs through this slot (30 Oct 2026: "long sessions look shorter than they are"): the slot carries
+         its colour and says so, and is not an empty place */
+      const runs = places.get(day).at.find(t => toMin(t.x.s) < toMin(c.e) && toMin(t.x.e) > toMin(c.s) && t.a !== i);
+      if (runs) return `<div class="cont k-${esc(runs.x.k)}" data-date="${esc(day.date)}" data-cont="${esc(runs.x.id)}"><span>${esc(runs.x.k === 'tp' ? 'TP ' + (day.tp || '') : (runs.x.t || KIND_LABEL[runs.x.k] || ''))}</span><small>continues until ${esc(localStart(day.date, runs.x.e) || hubClock(runs.x.e))}</small></div>`;
+      return `<div class="slot${narrow[i] ? ' narrow' : ''}" data-date="${esc(day.date)}" data-i="${i}"${EDIT ? ` tabindex="0" role="button" aria-label="Add a session on ${esc(dayName(day.date))}, ${esc(hubClockRange(c.s, c.e))}"` : ''}></div>`;
     }).join('') + noteEnd;
   };
   const track = cols.map((c, i) => narrow[i] ? 'var(--slim)' : 'var(--cell)').join(' ') + (hasEnd ? ' var(--note)' : '');
   const style = `--ncols:${cols.length};--track:${track};--hh:calc(var(--hh0) + ${maxFlags} * 22px)`;
   /* the times written once, down the left or across the top (Ramy's design, 29 Oct 2026: "chronological times at the left") */
-  const axis = `<div class="day timeaxis" aria-hidden="true"><div class="dh"><div class="dt">Time</div></div>${cols.map((c, i) => `<div class="tlab${narrow[i] ? ' narrow' : ''}">${narrow[i] && across ? esc(hubClock(c.s)) + '<br>' + esc(hubClock(c.e)) : esc(hubClockRange(c.s, c.e))}</div>`).join('')}${hasEnd ? '<div class="tlab">End of the day</div>' : ''}</div>`;
+  /* in the reader's own time when it differs, as on the tiles, with the course's beneath (30 Oct 2026: "use the same timezone presentation throughout") */
+  const d0 = (w.find(d => !d.closed) || w[0] || {}).date;
+  const axis = `<div class="day timeaxis" aria-hidden="true"><div class="dh"><div class="dt">Time</div></div>${cols.map((c, i) => { const lr = d0 ? localRange(d0, c.s, c.e) : ''; const own = narrow[i] && across && !lr ? esc(hubClock(c.s)) + '<br>' + esc(hubClock(c.e)) : esc(lr || hubClockRange(c.s, c.e)); return `<div class="tlab${narrow[i] ? ' narrow' : ''}${lr ? ' two' : ''}">${lr ? '<span class="lt">' + own + '</span><span class="ct">' + esc(hubClockRange(c.s, c.e)) + '</span>' : own}</div>`; }).join('')}${hasEnd ? '<div class="tlab">End of the day</div>' : ''}</div>`;
   return `<div class="tscroll"><div class="tgrid tboard ${across ? 'across' : 'down'}" style="${style}">` + axis
     + w.map(d => `<div class="day${d.date === TODAY ? ' today' : ''}${d.closed ? ' closed' : ''}" id="d-${esc(d.date)}">${cells(d, TT.days.indexOf(d))}</div>`).join('')
     + `</div></div>`;
@@ -1786,7 +1804,7 @@ let GROUPS = [], DUES = {}, OUTS = {}, ROOMS = {}, ZONE = '', STATE = {}, EDIT =
    they only ever see input boxes and can never check what they have
    published (Ramy, 29 Sep 2026: "there's the course admin view, and then
    there's the view-only timetable for the course once it's set"). */
-let PREVIEW = false, SCROLLED = false, SLOTS_OPEN = false;
+let PREVIEW = (function(){ try { return sessionStorage.getItem('tt:preview') === '1'; } catch (e) { return false; } })(), SCROLLED = false, SLOTS_OPEN = false;   /* the trainee view is kept for the visit (30 Oct 2026) */
 /* the course studio's own state: the week on show, the input library open or shut and its search, the tutor filter */
 let WEEK = null, LIB_OPEN = false, LIB_Q = '', TFILTER = '';
 
@@ -1899,7 +1917,7 @@ function render(){
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + tabs + tool + roomsStrip() + gsw
     + `<div class="slayout${lib ? ' libopen' : ''}">${lib}<div>${weekBoard(w, WEEK)}${key}</div></div>`
     + keyLine() + `<p class="legend">Teaching practice runs the same number on two days, one teaching set each: the letters name the trainees teaching that day. ${GROUPS.map(g => 'Group ' + esc(g.group || '—') + ': ' + g.sets.map(R.setName).filter(Boolean).join(' and ')).join('. ')}.</p>`;
-  if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; closePop(); render(); });
+  if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; try { sessionStorage.setItem('tt:preview', PREVIEW ? '1' : ''); } catch (e) {} closePop(); render(); });
   wireStudio(weeks);
   if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); });
   /* One press hid the timetable from every candidate (9 Oct 2026): it asks. */
@@ -3054,6 +3072,8 @@ document.addEventListener('click', e => {
     const day = TT.days.find(d => d.date >= TODAY && !d.closed) || TT.days.find(d => !d.closed); if (!day) return;
     const s = freeAfter(day); newSession(day.date, toHM(s), toHM(Math.min(23 * 60, s + 75)), lib.dataset.lib); return;
   }
+  const cont = e.target.closest('.tgrid.tboard .cont[data-cont]');
+  if (cont) { if (EDIT) openTile(cont.dataset.date, cont.dataset.cont); else openDetails(cont.dataset.date, cont.dataset.cont); return; }
   if (EDIT) {
     const slot = e.target.closest('.tgrid.tboard .slot[data-date]');
     if (slot) { const c = (WEEKCOLS[slot.dataset.date] || [])[+slot.dataset.i]; if (c) newSession(slot.dataset.date, c.s, c.e, ''); }
@@ -3062,6 +3082,17 @@ document.addEventListener('click', e => {
   const t = e.target.closest('.tgrid.tboard .tile[data-id]');
   if (!t || e.target.closest('a') || t.classList.contains('bookable')) return;
   openDetails(t.dataset.date, t.dataset.id);
+});
+/* the keyboard (30 Oct 2026): Tab reaches every session and every empty place; Enter or Space opens it */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest && e.target.closest('.tgrid.tboard .tile[data-id], .tgrid.tboard .slot[data-date]');
+  if (!el || el !== e.target) return;
+  e.preventDefault();
+  if (el.classList.contains('slot')) { if (!EDIT) return; const c = (WEEKCOLS[el.dataset.date] || [])[+el.dataset.i]; if (c) newSession(el.dataset.date, c.s, c.e, ''); return; }
+  if (EDIT) openTile(el.dataset.date, el.dataset.id);
+  else if (el.classList.contains('bookable')) openBooking(el.dataset.date, el.dataset.id);
+  else openDetails(el.dataset.date, el.dataset.id);
 });
 /* a library session dragged onto an empty place takes that place's times */
 document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-lib]'); if (b) { e.dataTransfer.setData('text/plain', b.dataset.lib); e.dataTransfer.effectAllowed = 'copy'; } });
@@ -3322,7 +3353,10 @@ function closePop(){
       if (String(was.x.by) !== String(x.by)) what.push(TUTORS[+x.by] ? 'taught by ' + TUTORS[+x.by] : 'no tutor named');
       if (was.tp !== day.tp || was.set !== day.setIndex) what.push('TP ' + (day.tp || '—'));
       if (x.url === 'https://') delete x.url;
-      if ((was.x.room || '') !== (x.room || '') || (was.x.url || '') !== (x.url || '')) what.push(x.url ? 'joins its own link' : x.room ? 'in the ' + x.room + ' room' : 'in the usual room');
+      if ((was.x.url || '') !== (x.url || '')) what.push(x.url ? 'has a link of its own' : 'link removed');
+      else if ((was.x.room || '') !== (x.room || '')) what.push(x.room ? 'in the ' + x.room + ' room' : 'in the usual room');
+      if ((was.x.d || '') !== (x.d || '')) what.push(x.d ? 'preparation changed' : 'preparation removed');
+      if ((was.x.g || '') !== (x.g || '')) what.push(x.g ? 'for Group ' + x.g : 'for the whole course');
       /* locking is the tutors' own tool, like pinning: not news for the course */
       if (!what.length) { save('Saved'); render(); document.querySelectorAll('.ttpop, .ttmenu').forEach(el => { el.hidden = true; }); return; }
       CHANGES.push({ at: new Date().toISOString(), key: 'tile:' + o.id, text: '“' + tileName(was.x, day) + '” on ' + dayName(o.date) + ': ' + what.join(', ') });
@@ -3404,7 +3438,7 @@ function openTile(date, id, fresh){
     if (isNew) { x = Object.assign({}, x0); }
     else OPEN_TILE = { date: to.date, id: x.id, before: JSON.stringify({ x: clone(x), tp: to === from ? from.tp : to.tp, set: to === from ? from.setIndex : to.setIndex }) };
     x.k = k; x.s = toHM(s0); x.e = toHM(e0);
-    if (k === 'tp') { delete x.t; x.room = 'Teaching practice'; } else { if (t) x.t = t; else delete x.t; if (x.room === 'Teaching practice') delete x.room; if (k === 'input' && !x.room) x.room = 'Input'; }
+    if (k === 'tp') { delete x.t; x.room = 'Teaching practice'; } else { if (t) x.t = t; else delete x.t; if (x.room === 'Teaching practice') delete x.room; }
     if (byN === '') delete x.by; else x.by = +byN;
     if (g) x.g = g; else delete x.g;
     const d = v('d').trim(); if (d) x.d = d; else delete x.d;

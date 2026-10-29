@@ -77,6 +77,12 @@
     out.push({ date: iso(fri), label: 'Friday before · ' + short(iso(fri)) });
     var tt = rd('connect_timetable_v1') || {}, byDate = {};
     (tt.days || []).forEach(function(d){ if (d && d.date) byDate[d.date] = d; });
+    /* the course's own days, numbered as the timetable numbers them (30 Oct 2026: Day 17 on the timetable was Day 21 here,
+       because this counted every weekday and the course meets Monday to Thursday) */
+    if ((tt.days || []).length) {
+      tt.days.forEach(function(t, i){ if (t && t.date) out.push({ date: t.date, label: 'Day ' + (i + 1) + ' · ' + short(t.date) + (t.tp ? ' · TP' + t.tp : '') }); });
+      return out;
+    }
     var n = 0;
     for (var d = new Date(st); d <= en; d.setDate(d.getDate() + 1)) {
       if (d.getDay() === 0 || d.getDay() === 6) continue;
@@ -431,7 +437,7 @@
     + '.hp-typing{outline:2px solid var(--a-mustard) !important; outline-offset:2px;}'
     + 'body.hp-on{padding-top:52px;}'
     + '@media print{ .hp-bar, #hpSay{display:none !important;} body.hp-on{padding-top:0;} }'
-    + '@media (max-width:640px){ .hp-bar{top:auto; bottom:84px; border-radius:16px;} body.hp-on{padding-top:0;} #hpSay{top:auto; bottom:150px;} }';
+    + '@media (max-width:640px){ .hp-bar{top:auto; bottom:84px; border-radius:999px; flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; width:calc(100vw - 24px); scrollbar-width:none;} .hp-bar::-webkit-scrollbar{display:none;} .hp-bar > *{flex:0 0 auto;} .hp-bar .hp-tag{display:none;} body.hp-on{padding-top:0; padding-bottom:150px;} #hpSay{top:auto; bottom:142px;} }';   /* one row on a phone, and room under the page so nothing stays behind it (30 Oct 2026) */
   function paint(){
     var bar = $('hpBar'); if (!bar) return;
     var c = cs(), today = c.presentToday, ds = days(), tr = trainees(), who = localStorage.getItem('hub:present:who') || '';

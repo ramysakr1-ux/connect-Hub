@@ -1491,6 +1491,9 @@ window.hubIsReference = function(s){
       var hh = (parts.find(function(x){ return x.type === 'hour'; }) || {}).value, mi = (parts.find(function(x){ return x.type === 'minute'; }) || {}).value;
       if (!hh || !mi) return out;
       local = hh + ':' + mi;
+      /* the reader's own date, when their clock has crossed midnight from the course's (30 Oct 2026) */
+      var dp = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: reader }).format(new Date(inst));
+      if (dp && dp !== String(dateISO).slice(0, 10)) { out.localDate = dp; out.dayShift = dp > String(dateISO).slice(0, 10) ? 1 : -1; }
     } catch (e) { return out; }
     var pad = function(x){ var m = String(x).match(/^(\d{1,2}):(\d{2})/); return m ? (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2] : String(x); };
     out.local = local;
