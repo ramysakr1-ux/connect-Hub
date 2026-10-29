@@ -811,8 +811,29 @@
   if (cached) {
     // Instant: the page runs from this browser's copy; the course is checked behind it.
     exposeMeta(); rebuildSnapshot(); start();
+    /* THE VERSION FIRST (v179, 29 Oct 2026; Ramy: "it's been a little bit slow"). The whole course is 2.5 MB and
+       4 to 6 seconds to boot; its version is a few bytes. A page opened within a minute of the last check does not
+       ask at all; otherwise it asks for the version, and boots only when the course has moved since this copy. */
+    var V0 = S.verGet ? S.verGet() : null, CRED = S.cred ? S.cred() : '';
+    var settledQuietly = function(){
+      try { localStorage.setItem('hub:booted', identity); } catch (e) {}
+      afterBoot();
+      status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
+    };
+    var sameCopy = !!(V0 && V0.cred === CRED && V0.v && !Object.keys(held).length);
+    if (sameCopy && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
     status('Checking the course\u2026', 'busy');
-    bootWithRetries().then(function(boot){
+    (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(err){ if (err && err.refused) throw err; return false; }) : Promise.resolve(false)).then(function(fresh){
+      if (fresh) { if (S.verPut) S.verPut({ cred: CRED, v: V0.v, at: Date.now() }); settledQuietly(); return; }
+      return fullBoot();
+    }).catch(function(err){
+      if (err && err.refused) { if (err.pin) { pinRefused(err); return; } gate(err.message); return; }
+      status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
+    });
+    return;
+    function fullBoot(){
+    return bootWithRetries().then(function(boot){
+      if (boot && boot.__ver && S.verPut) S.verPut({ cred: CRED, v: boot.__ver, at: Date.now() });
       var p = plan(boot);
       if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
       var untouched = Object.keys(p).every(function(k){ return !dirty[k]; });
@@ -840,6 +861,7 @@
       if (err && err.refused) { if (err.pin) { pinRefused(err); return; } gate(err.message); return; }
       status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
     });
+    }
     return;
   }
 
@@ -867,6 +889,7 @@
   } catch (e) { cover = null; }
   var uncover = function(){ if (!cover) return; var c = cover; cover = null; c.style.opacity = '0'; setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 260); };
   bootWithRetries().then(function(boot){
+    if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() });
     var p = plan(boot);
     if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
     apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); exposeMeta(); rebuildSnapshot();

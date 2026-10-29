@@ -287,12 +287,67 @@ function installReminderTrigger() {
 function doPost(e) {
   var req;
   try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return json_({ ok: false, error: 'Bad JSON' }); }
+  IN_REQUEST_ = true; CHANGED_ = {}; REQ_COURSE_ = null; REQ_VER_ = '';
   try {
     var out = handle_(req);
-    return json_({ ok: true, result: out });
+    var res = { ok: true, result: out };
+    /* THE COURSE'S VERSION (v179, 29 Oct 2026; Ramy: "it's been a little bit slow"). Every answer about a course
+       carries its version: a read says which version it read, a write what it moved the version from and to, so
+       the browser that wrote can keep its copy current without booting again. See versionStamp_. */
+    try { var vr = settleVersions_(String(req.op || '')); if (vr) res.ver = vr; } catch (ve) {}
+    return json_(res);
   } catch (err) {
+    try { settleVersions_(''); } catch (ve2) {}
     return json_({ ok: false, error: String(err && err.message || err) });
-  }
+  } finally { IN_REQUEST_ = false; }
+}
+
+/* ---- THE COURSE'S VERSION (v179, 29 Oct 2026) ---------------------------------------------------------------
+   A boot sends the whole course, 2.5 MB on the demo, 4 to 6 seconds, and every page booted on every open. Now a
+   page asks for the version first (a few bytes) and boots only when it has moved. The version is a script
+   property per course, moved by anything that changes the course: every op that is not a known read, and every
+   low-level write wherever it comes from (a timed job, an owner's op, a read that happens to write). Moving it
+   too often costs a boot; never moving it would be the bug, so the list below names the READS and everything
+   else counts as a change. The course's own day is part of the version, so a page whose content follows the
+   date (a demo clock, released points) boots once the day turns. */
+var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '';
+var READ_OPS_ = { ping: 1, boot: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
+  questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1 };
+function verKey_(id) { return 'ver:' + id; }
+function versionStamp_(id) {
+  var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
+  var day = '';
+  try { var st = courseRead_(id, 'settings') || {}; day = courseDay_(st) || Utilities.formatDate(new Date(), st.timeZone || 'Europe/London', 'yyyy-MM-dd'); } catch (e) {}
+  return v + '|' + day;
+}
+function bumpVersion_(id) {
+  var props = PropertiesService.getScriptProperties();
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    var before = props.getProperty(verKey_(id)) || '0';
+    var after = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    props.setProperty(verKey_(id), after);
+    return { before: before, after: after };
+  } finally { lock.releaseLock(); }
+}
+/* Called by every low-level writer: inside a request the bump waits for the end of it (one bump a request); a timed
+   job bumps at once. */
+function markChanged_(id) { if (!id) return; if (IN_REQUEST_) { CHANGED_[String(id)] = 1; return; }
+  /* outside a request (a timed job) the writer may already hold the script lock, which is not re-entrant: the stamp
+     is written without it, which is safe for a random stamp */
+  try { PropertiesService.getScriptProperties().setProperty(verKey_(String(id)), Date.now().toString(36) + Math.random().toString(36).slice(2, 6)); } catch (e) {} }
+function settleVersions_(op) {
+  var cid = REQ_COURSE_ ? String(REQ_COURSE_.id) : '';
+  if (cid && op && !READ_OPS_[op]) CHANGED_[cid] = 1;
+  var out = null;
+  Object.keys(CHANGED_).forEach(function (id) {
+    var b = bumpVersion_(id);
+    if (id === cid) { var day = REQ_VER_.split('|')[1] || ''; out = { before: b.before + '|' + day, after: b.after + '|' + day }; }
+  });
+  CHANGED_ = {};
+  if (!out && cid && REQ_VER_) out = { at: REQ_VER_ };
+  return out;
 }
 
 function json_(obj) {
@@ -318,7 +373,7 @@ function handle_(req) {
 
   // A request carrying the assessor key never writes, even with a trainee's
   // token alongside it: the link is read-only by definition.
-  if (assessor && !/^(ping|boot|me|get|course|roster|celta5Assets|audio)$/.test(op)) throw new Error('The assessor link is read-only');
+  if (assessor && !/^(ping|boot|version|me|get|course|roster|celta5Assets|audio)$/.test(op)) throw new Error('The assessor link is read-only');
 
   // A VOLUNTEER STUDENT'S OWN LINK (30 Sep 2026). The token carries its
   // course -- "c5-<20 hex>" -- so nothing has to be scanned and the random
@@ -342,7 +397,7 @@ function handle_(req) {
   /* v56 adds two more: answering a reminder (volunteerReply) and turning the
      mail off or on (volunteerNotify). Still their own row, still nothing else. */
   /* v136: volunteerCards reads the language of their own level's lessons, and nothing of a trainee's (see the op). */
-  if (vol && op !== 'boot' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards') throw new Error('This link only opens your own page');
+  if (vol && op !== 'boot' && op !== 'version' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards') throw new Error('This link only opens your own page');
   // A trainee's token names their course, and it must agree with any key sent.
   var me = null;
   if (req.token) {
@@ -396,6 +451,11 @@ function handle_(req) {
       throw new Error('PIN needed');
     }
   }
+
+  /* the version as it stood before this op ran: a read answers with it, so anything written during the read is
+     newer than what it reports and the next check boots */
+  if (course) { REQ_COURSE_ = course; try { REQ_VER_ = versionStamp_(course.id); } catch (e) { REQ_VER_ = ''; } }
+  if (op === 'version') { if (!course) throw new Error('This link is not on a course'); return { ver: REQ_VER_ }; }
 
   switch (op) {
     case 'ping': return { tutor: tutor, assessor: assessor, owner: owner, time: new Date().toISOString() };
@@ -2993,6 +3053,7 @@ function recordsFor_(courseId, token, kinds) {
   return finishBucket_(out);
 }
 function write_(courseId, token, kind, data) {
+  markChanged_(courseId);
   if (kind === 'tpHistory') return writeHistory_(courseId, token, data);
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -3442,6 +3503,7 @@ function tpPointsFor_(p, reader, me) {
   return { released: true, group: grp, points: mine, sets: sets, me: me.token, level: level };
 }
 function courseWriteRaw_(courseId, kind, data) {
+  markChanged_(courseId);
   var sh = sheet_(SHEET_COURSE);
   var json = JSON.stringify(data == null ? null : data);
   /* One cell while it fits, several when it does not. A row this write does
@@ -3529,6 +3591,7 @@ function historyFromRows_(rows, courseId, token) {
 // entry it does send replaces the row for that TP alone. One read of the
 // sheet, one write per TP that changed, one append for the new ones.
 function writeHistory_(courseId, token, data) {
+  markChanged_(courseId);
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {

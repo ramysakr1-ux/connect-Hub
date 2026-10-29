@@ -93,7 +93,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "What is the context of this lesson? Is it appropriate for the TL / sub-skill being practiced?",
         "Is the context the same as or different from the other two lessons? Is this logical?",
         "Did the teacher set the context at the beginning of the lesson? How? Was it effective? Why / why not?",
-        "Make a few comments on the lead-in. Too long? Too short? T-centred? S-centred? Engaging? Relevant?",
+        "Make a few comments on the lead-in. Too long? Too short? T-centered? S-centered? Engaging? Relevant?",
         "Did all of the materials maintain the same context? How?",
         "Did the teacher exploit or extend the context throughout the lesson? How?",
         "Did the teacher connect the context to the students’ cultures or interests? Was it necessary?",
@@ -116,7 +116,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
         "Is the form clarified?",
         "Is the form elicited? Is it clearly labeled on the board?",
         "Is the pronunciation clarified? Which features? How?",
-        "Was the clarification mostly T-centred or S-centred? Can you account for this?",
+        "Was the clarification mostly T-centered or S-centered? Can you account for this?",
         "In your opinion, did the learners know any of the target language before the lesson? Has the teacher handled this appropriately?"
       ],
       "shape": "grid"

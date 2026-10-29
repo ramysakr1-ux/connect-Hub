@@ -83,8 +83,11 @@ window.HubStore = (function(){
      see hub-sync.js. These are the calls that only read; anything else on a
      demo is answered here and never sent -- no email, no upload, no roster
      change. feedback and report are the visitor's own note to Lite's maker. */
-  var READS = { tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1 };
+  var READS = { version:1, tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1 };
   function isDemo(){ if (window.HUB_DEMO != null) return !!window.HUB_DEMO; try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
+  function cred(){ return key() || akey() || vtoken() || token() || ''; }
+  function verGet(){ try { return JSON.parse(localStorage.getItem('hub:ver') || 'null'); } catch (e) { return null; } }
+  function verPut(o){ try { localStorage.setItem('hub:ver', JSON.stringify(o)); } catch (e) {} }
   async function call(body, timeoutMs){
     var payload = Object.assign({}, body);
     if (!payload.owner && !READS[payload.op] && isDemo()) return { demo: true, saved: true };
@@ -136,6 +139,17 @@ window.HubStore = (function(){
     // must not be treated alike: a refused credential means the link is dead,
     // a transport failure means try again later. `transient` already marks the
     // second; this marks the first.
+    /* THE COURSE'S VERSION (v179, 29 Oct 2026). A boot says which version it read; a write says what it moved the
+       version from and to. When this browser's copy was that "from", its own write cannot have made it stale: it
+       takes the "to" and the next page needs no boot. Anyone else's write leaves the copy behind, and the next page
+       boots. */
+    if (out && out.ok && out.ver) {
+      try {
+        var V = verGet();
+        if (out.ver.at && payload.op === 'boot' && out.result && typeof out.result === 'object') out.result.__ver = out.ver.at;
+        if (out.ver.before && V && V.cred === cred() && V.v === out.ver.before) verPut({ cred: V.cred, v: out.ver.after, at: V.at });
+      } catch (e) {}
+    }
     if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; refusal.pin = /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')); throw refusal; }
     return out.result;
   }
@@ -159,6 +173,9 @@ window.HubStore = (function(){
     isTutor: function(){ return !!key(); }, isAssessor: function(){ return !!akey() && !key(); }, isTrainee: function(){ return !!token() && !key() && !akey(); },
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
+    /* the course's version, a few bytes, and this browser's note of the version its copy holds */
+    version: function(){ return call({ op: 'version', token: token() || undefined }, 20000); },
+    cred: cred, verGet: verGet, verPut: verPut,
     /* THE BOOT GETS A MINUTE (11 Oct 2026). The library course carries thirteen
        sets -- 1.5 MB -- and the store takes about thirty seconds to send it, so
        the 20-second limit aborted every try and the page sat on "Checking your
