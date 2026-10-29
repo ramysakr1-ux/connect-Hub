@@ -78,6 +78,7 @@ const ROOMS = {
      bank are the course's pages -- a trainee's to use, a tutor's and the
      assessor's to read, never a volunteer's. */
   '30_precourse_key.html':           { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  '39_reading.html':                 { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '31_getting_to_know_you.html':     { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '32_last_page.html':              { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '33_course_feedback.html':        { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
