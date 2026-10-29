@@ -2401,6 +2401,8 @@ function buildDays(B){
   const slots = shape.filter(sl => sl.role !== 'block').map(sl => ({ key: sl.role || sl.k, from: hm(sl.s), to: hm(sl.e), kind: sl.k === 'lunch' ? 'break' : sl.k || (sl.role === 'fb' ? 'feedback' : 'input'), label: sl.k === 'lunch' ? 'Lunch' : sl.k === 'break' ? 'Break' : sl.role === 'fb' ? 'TP feedback' : sl.role === 'other' ? (sl.t || '') : 'Input', room: sl.role && sl.role !== 'fb' && sl.role !== 'other' ? 'Input' : undefined }));
   let tpn = 0; shape.filter(sl => sl.role === 'block').forEach(blk => blk.tps.forEach(a => slots.push({ key: 'tp' + (++tpn), from: hm(a[0]), to: hm(a[1]), kind: 'tp', label: 'Teaching practice', room: roomTP })));
   slots.sort((a, b) => toMin(a.from) - toMin(b.from));
+  /* lesson planning and guided lesson planning are input sessions (Ramy, 30 Oct 2026: "it's just like an input session") */
+  days.forEach(d => d.sessions.forEach(x => { if (x.k === 'plan') { x.k = 'input'; x.room = 'Input'; } }));
   return { days, slots, teachDays: teachIdx.length, left: queue.length };
 }
 function shelfHTML(B){
@@ -2891,7 +2893,9 @@ const normT = t => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').tri
 /* the library page a tile names: its own title, or the library's words for it */
 function libPageFor(t){
   const n = normT(t); if (!n) return '';
-  const hit = STUDIO_LIB.concat(LIB_SESSIONS).find(x => normT(x[1]) === n || n.indexOf(normT(x[1])) !== -1);
+  /* its own title first, then the longest library title inside it ("Guided discovery vs PPP" is not "PPP", 30 Oct 2026) */
+  const all = STUDIO_LIB.concat(LIB_SESSIONS);
+  const hit = all.find(x => normT(x[1]) === n) || all.filter(x => n.indexOf(normT(x[1])) !== -1).sort((a, b) => normT(b[1]).length - normT(a[1]).length)[0];
   return hit ? 'input-sessions/' + hit[0] + '/' : '';
 }
 function libListHTML(){
