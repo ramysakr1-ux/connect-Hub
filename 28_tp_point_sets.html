@@ -616,7 +616,7 @@ function libraryPanel(){
         const ed = r.book.slice(title.length).replace(/^,\s*/, '');
         const had = froms.has(r.id) || books.has(title.toLowerCase());
         return `<article class="libcard">
-          <span class="lv">${esc(bookLevel(r.book, r.level).printed)}</span>
+          <span class="lv">${esc(bookLevel(r.book, r.level).shelf)}</span>
           <b>${esc(title)}</b>
           ${ed ? `<p class="ed">${esc(ed)}</p>` : ''}
           ${r.by ? `<p class="by">Contributed by ${esc(r.by)}</p>` : ''}
@@ -650,8 +650,8 @@ function libraryPanel(){
 const levelKey = l => String(l || '').split('(')[0].trim() || 'No level';
 /* THE LEVEL IS THE BOOK'S (Ramy, 30 Oct 2026: "we should go with what's written on the book ... categorize them. And the book will
    tell us where it lives"). Publishers disagree about pre-intermediate -- A2+, A2+/B1, B1 -- so the shelf showed seven levels for five.
-   Now each set shows the level its book prints on the cover (Speakout A1, Roadmap A2+, Empower B1 Pre-intermediate), and the book
-   files itself on one of five shelves: a level word on the cover decides, else its code. The set's own level field is untouched:
+   Each book files itself on one of the platform's level names (hub-shared.js HUB_LEVELS), read off its cover: a level word
+   decides, else its code; and that name is what the library shows (Ramy, the same evening: "go with those levels"). The set's own level field is untouched:
    it is what matches a volunteer's level to the lessons for homework. */
 const SHELVES = ['Beginner', 'Elementary', 'Pre-intermediate', 'Intermediate', 'Upper-intermediate', 'Advanced'];
 const CODE_SHELF = { 'A1': 'Beginner', 'A2': 'Elementary', 'A2+': 'Pre-intermediate', 'B1': 'Intermediate', 'B1+': 'Intermediate', 'B2': 'Upper-intermediate', 'B2+': 'Upper-intermediate', 'C1': 'Advanced' };
@@ -760,7 +760,7 @@ function render(){
   const ids = Object.keys(LIB);
   const gnames = groupNames();
   const tabs = `<div class="settabs">${ids.map(id => `<button type="button" class="settab${id === CUR ? ' on' : ''}" data-set="${id}">${esc(LIB[id].name || LIB[id].book || 'Untitled set')}${
-      LIB[id].level || LIB[id].book ? `<i>${esc(bookLevel(LIB[id].book, LIB[id].level).printed)}</i>` : ''}</button>`).join('')}
+      LIB[id].level || LIB[id].book ? `<i>${esc(window.hubLevelShort ? hubLevelShort(bookLevel(LIB[id].book, LIB[id].level).shelf) : bookLevel(LIB[id].book, LIB[id].level).shelf)}</i>` : ''}</button>`).join('')}
     <button type="button" class="settab add" id="addlib">Add one of Connect’s sets</button>
     <button type="button" class="settab add" id="addset">Write your own set</button></div>`;
   const usedBy = !gnames.length ? '' : `<div class="row"><label class="lab">Taught by</label><div class="groupsel">${
@@ -775,11 +775,12 @@ function render(){
     ${libraryPanel()}
     ${offerPanel()}
     <div class="head">
-      <h2 class="hband">${esc(S.name || S.book || 'Untitled set')}${S.level || S.book ? `<span class="lv">${esc(bookLevel(S.book, S.level).printed)}</span>` : ''}</h2>
+      <h2 class="hband">${esc(S.name || S.book || 'Untitled set')}${S.level || S.book ? `<span class="lv">${esc(bookLevel(S.book, S.level).shelf)}</span>` : ''}</h2>
       <div class="row"><label class="lab" for="setname">This set is</label><input id="setname" value="${esc(S.name || '')}" placeholder="Jordan’s group · Language Hub Elementary">${Object.keys(LIB).length > 1 && !written(S) ? '<button type="button" class="btn quiet sm" id="dropset" style="margin-left:10px">Remove this set</button>' : ''}</div>
       ${usedBy}
       <div class="row"><label class="lab" for="book">Coursebook</label><input id="book" value="${esc(S.book || '')}" placeholder="Language Hub Elementary"></div>
-      <div class="row"><label class="lab" for="level">Level</label><input id="level" value="${esc(S.level || '')}" placeholder="A2 (elementary)"></div>
+      <div class="row"><label class="lab" for="level">Level</label><select id="level">${(() => { const cur = bookLevel(S.book, S.level).shelf, opts = (window.HUB_LEVELS || []).map(([c, n]) => [c + ' (' + n.toLowerCase() + ')', n]);
+        return '<option value="">Choose a level</option>' + opts.map(([v, n]) => `<option value="${esc(v)}"${S.level && n === cur ? ' selected' : ''}>${esc(n)}</option>`).join(''); })()}</select></div>
       <div class="row"><label class="lab" for="url">Link to the book</label><div><input id="url" type="url" value="${esc(S.url || '')}" placeholder="https://… wherever the book lives"><p class="hint">Every slot&rsquo;s card links here, so the link is written once. The page number in a slot opens a direct PDF address at that page.</p></div></div>
       <div class="row"><label class="lab" for="audiourl">Link to the audio</label><div><input id="audiourl" type="url" value="${esc(S.audioUrl || '')}" placeholder="https://\u2026 the folder your class audio lives in"><p class="hint">Where this book&rsquo;s recordings live &mdash; a Drive folder, the publisher&rsquo;s page, wherever. A slot that names a track without carrying the file points here, so the track number leads somewhere. Written once, like the book.</p></div></div>
       <div class="row"><label class="lab" for="sources">How to source it</label><div><textarea id="sources" rows="3" placeholder="Maggs, P. &amp; Smith, C. (2019) Language Hub Elementary Student&rsquo;s Book. Macmillan.&#10;Pathare, G. (2019) Language Hub Elementary Teacher&rsquo;s Book. Macmillan.&#10;One reference per line">${esc(S.sources || '')}</textarea><p class="hint">The references for this book, written correctly. They appear on the card for the first two TPs only, taken apart so the trainee can see which part is which &mdash; after that they write their own.</p></div></div>

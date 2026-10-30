@@ -923,7 +923,7 @@ function setBar(){
     const s = lib[id];
     const written = sess.filter(x => { const ses = (s.sessions || {})[x]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }).length;
     const using = gs.filter(g => setIdFor(g.group) === id).map(g => g.group);
-    return `<span class="setchip"><b>${esc(setName(s))}</b>${s.level ? ' · ' + esc(s.level) : ''}
+    return `<span class="setchip"><b>${esc(setName(s))}</b>${s.level && !(window.hubLevelName && String(setName(s)).toLowerCase().indexOf(hubLevelName(s.level).toLowerCase()) !== -1) ? ' · ' + esc(window.hubLevelShort ? hubLevelShort(s.level) : s.level) : ''}
       <i>${written} of ${sess.length} sessions${using.length ? ' · group ' + using.map(esc).join(', ') : ' · no group yet'}</i></span>`;
   }).join('');
   /* THE BUTTON HAS TO ANSWER. Ramy, 4 Oct 2026: "when you click apply it
@@ -2100,7 +2100,7 @@ function renderCore(){
            The choice lived only on the sets page, under Taught by; now each group's card says it, and changes it, here. */
         const lib = library(), ids = Object.keys(lib); if (ids.length < 2) return '';
         const cur = setIdFor(g.group);
-        return `<p class="bookrow"><label>Teaches from <select data-book="${esc(g.group)}">${ids.map(id => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(setName(lib[id]))}${lib[id].level ? ' · ' + esc(lib[id].level) : ''}</option>`).join('')}</select></label><span class="status">Apply it afterwards to deal this book's lessons.</span></p>`; })()}
+        return `<p class="bookrow"><label>Teaches from <select data-book="${esc(g.group)}">${ids.map(id => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(setName(lib[id]))}${lib[id].level ? ' · ' + esc(window.hubLevelName ? hubLevelName(lib[id].level) : lib[id].level) : ''}</option>`).join('')}</select></label><span class="status">Apply it afterwards to deal this book's lessons.</span></p>`; })()}
       <div class="relbar">${on
         ? `<span class="chip on">Released</span><button class="btn quiet" data-rel="${esc(g.group)}" data-on="0">Take it back</button><span class="status">The trainees can see their own points.</span>`
         : `<span class="chip">Not released</span><button class="btn" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button><span class="status">Only tutors can see it until it is released.</span>`}</div>

@@ -480,7 +480,7 @@ function tpRows(){
   Object.keys(hist).sort((a,b) => a-b).forEach(n => {
     const fb = hist[n], f = (fb.state && fb.state.f) || {};
     const g = T.HUB_GRADE ? T.HUB_GRADE[String(f.fGrade || '').trim()] : '';
-    out.push([`TP${n}`, f.fDate ? when(f.fDate) : '', f.fTime ? f.fTime + ' min' : '', f.fLevel || '', f.fStudents || '', f.fMain || '', G_WORD[g] || (f.fGrade || ''), f.fTutor || '']);
+    out.push([`TP${n}`, f.fDate ? when(f.fDate) : '', f.fTime ? f.fTime + ' min' : '', (window.hubLevelName ? hubLevelName(f.fLevel || '') : f.fLevel || ''), f.fStudents || '', f.fMain || '', G_WORD[g] || (f.fGrade || ''), f.fTutor || '']);
   });
   return out;
 }
@@ -499,7 +499,7 @@ function dayOnly(v){
 function obsRows(){
   const w = who.tr.observations || {}; const out = [];
   window.hubObservationSet().all.forEach(k => { const r = w[k]; if (!r || !r.turnedInAt) return; const a = r.a || {};
-    out.push([k.startsWith('filmed') ? 'Filmed' : 'Live', dayOnly(a.hDate), obsLength(k, a), a.hLevel || '', a.hLearners || '', a.hLesson || '', a.hSigned || '', when(r.turnedInAt)]); });
+    out.push([k.startsWith('filmed') ? 'Filmed' : 'Live', dayOnly(a.hDate), obsLength(k, a), (window.hubLevelName ? hubLevelName(a.hLevel || '') : a.hLevel || ''), a.hLearners || '', a.hLesson || '', a.hSigned || '', when(r.turnedInAt)]); });
   return out;
 }
 /* Cambridge's own Record of Assessment of Written Assignments (July 2023,
@@ -849,10 +849,10 @@ function bookletInput(){
        standard" / "Not to standard"; a bare code typed by hand is widened. */
     const g = String(f.fGrade || ''); const code = /above|^S\+$/i.test(g) ? 'Above standard' : /not|^N$/i.test(g) ? 'Not to standard' : /standard|^S$/i.test(g) ? 'To standard' : g;
     const initials = String(f.fTutor || '').split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('');
-    return { date: f.fDate ? shortDate(f.fDate) : '', lengthMinutes: f.fTime ? Number(f.fTime) || null : null, level: f.fLevel || null, learnerCount: f.fStudents ? Number(String(f.fStudents).replace(/\D/g, '')) || null : null, lessonFocus: focus, tutorAssessment: code || null, tutorInitials: initials || null }; });
+    return { date: f.fDate ? shortDate(f.fDate) : '', lengthMinutes: f.fTime ? Number(f.fTime) || null : null, level: f.fLevel ? (window.hubLevelName ? hubLevelName(f.fLevel) : f.fLevel) : null, learnerCount: f.fStudents ? Number(String(f.fStudents).replace(/\D/g, '')) || null : null, lessonFocus: focus, tutorAssessment: code || null, tutorInitials: initials || null }; });
   const w = who.tr.observations || {};
   const observations = window.hubObservationSet().all.filter(k => w[k] && w[k].turnedInAt).map(k => { const a = w[k].a || {};
-    return { date: a.hDate || '', lengthMinutes: obsLength(k, a) ? Number(String(obsLength(k, a)).replace(/\D/g, '')) || null : null, level: a.hLevel || null,
+    return { date: a.hDate || '', lengthMinutes: obsLength(k, a) ? Number(String(obsLength(k, a)).replace(/\D/g, '')) || null : null, level: a.hLevel ? (window.hubLevelName ? hubLevelName(a.hLevel) : a.hLevel) : null,
              learnersPresent: a.hLearners ? Number(String(a.hLearners).replace(/\D/g, '')) || null : null,
              observedTeacherSignature: a.hSigned || null,
              lessonFocus: (k.startsWith('filmed') ? 'Filmed: ' : 'Live: ') + (a.hLesson || '') }; });

@@ -211,6 +211,10 @@ function teachingDays(){
 const students = () => (REG && Array.isArray(REG.students)) ? REG.students : [];
 const A = window.hubAttendance;
 const LEVELS = ['A1','A2','A2+','B1','B2','C1','C2'];
+/* Shown as the platform's level names (Ramy, 30 Oct 2026); the code stays on the record, because the hours and the homework count on it. */
+const LV = l => (window.hubLevelName ? hubLevelName(l) : l);
+const LEVEL_OPTS = (window.HUB_LEVELS || LEVELS.map(l => [l, l])).map(x => x[0]);
+const codeOf = v => { const t = String(v || '').trim(); if (LEVELS.includes(t.toUpperCase())) return t.toUpperCase(); const n = LV(t); return (LEVEL_OPTS.find(c => LV(c) === n) || ''); };
 
 /* A register written before the three tiers existed held `here: [dates]`,
    which meant "in the room". They become marks of 'present', so nothing a
@@ -319,8 +323,8 @@ function render(){
     return `<div class="who">
       <div>
         <div class="nm">${esc(st.name)}${IS_TUTOR
-          ? `<span class="lvl"><select data-lvl="${i}"><option value="">Level</option>${LEVELS.map(l => `<option value="${l}"${st.level === l ? ' selected' : ''}>${l}</option>`).join('')}</select></span>`
-          : (st.level ? '<span class="lvltag">' + esc(st.level) + '</span>' : '')}${IS_TUTOR
+          ? `<span class="lvl"><select data-lvl="${i}"><option value="">Level</option>${LEVEL_OPTS.concat(st.level && !LEVEL_OPTS.includes(st.level) ? [st.level] : []).map(l => `<option value="${l}"${st.level === l ? ' selected' : ''}>${esc(LV(l))}</option>`).join('')}</select></span>`
+          : (st.level ? '<span class="lvltag">' + esc(LV(st.level)) + '</span>' : '')}${IS_TUTOR
           ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at this level at the center, before this course"><small>h at this level before</small></span>`
           : (st.carried ? '<small>' + esc(st.carried) + ' h at this level before this course</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
         ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Their email">${st.token ? `<button type="button" class="btn sm" data-invite="${i}">${st.invited ? 'Send again' : 'Send the invitation'}</button>` : ''}${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}${st.invited ? `<small class="invited">Invitation sent ${dm(String(st.invited).slice(0, 10))}</small>` : ''}</div>` : ''}
@@ -415,7 +419,7 @@ function addNames(rows){
     const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(x || '').trim());
     const email = col.email != null ? String(r[col.email] || '').trim() : (r.find(isMail) || '');
     const note = col.note >= 0 ? String(r[col.note] || '').trim() : '';
-    REG.students.push({ name, note: isMail(note) ? '' : note, email: isMail(email) ? email : '', marks: {}, level: LEVELS.includes(lvl) ? lvl : '', token: mintToken(), added: TODAY });
+    REG.students.push({ name, note: isMail(note) ? '' : note, email: isMail(email) ? email : '', marks: {}, level: codeOf(lvl), token: mintToken(), added: TODAY });
     added++;
   });
   REG.students.sort((a, b) => a.name.localeCompare(b.name));
@@ -577,15 +581,15 @@ function wire(){
     const was = st.level || '', now = el.value;
     if (was && now && was !== now) {
       const ok = window.confirmModal
-        ? await window.confirmModal('Move ' + st.name + ' from ' + was + ' to ' + now + '? Their count at ' + now + ' starts today; the hours at ' + was + ' stay on their record.', 'Move to ' + now)
-        : confirm('Move ' + st.name + ' from ' + was + ' to ' + now + '?');
+        ? await window.confirmModal('Move ' + st.name + ' from ' + LV(was) + ' to ' + LV(now) + '? Their count at ' + LV(now) + ' starts today; the hours at ' + LV(was) + ' stay on their record.', 'Move to ' + LV(now))
+        : confirm('Move ' + st.name + ' from ' + LV(was) + ' to ' + LV(now) + '?');
       if (!ok) { el.value = was; return; }
       st.levels = (st.levels || []).concat([{ level: was, until: TODAY, carried: st.carried || 0 }]);
       st.levelFrom = TODAY;
       delete st.carried;
     }
     st.level = now;
-    persist(now ? 'Level ' + now + (was && was !== now ? ', from today' : '') : 'Level cleared');
+    persist(now ? LV(now) + (was && was !== now ? ', from today' : '') : 'Level cleared');
   }));
 }
 

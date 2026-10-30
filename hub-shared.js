@@ -900,6 +900,29 @@ window.hubGtkyPlan = function(settings, tt){
    HH:MM either way; this is only how they read. 12-hour: "9:05 AM", "1:30 PM",
    and a range shares its AM or PM when both ends are in the same half:
    "1:30–2:15 PM". 24-hour: "09:05", "13:30", "13:30–14:15". */
+/* THE LEVELS (Ramy, 30 Oct 2026: "since the books can't really seem to agree we're just gonna have to go with those levels
+   ... this change should apply everywhere"). Every level on the platform reads as one of six names. Underneath, one code each
+   stays where something counts on it: a volunteer's hours (Beginner and Elementary 100, the rest 200) and the store's match of
+   a volunteer's level to the lessons for homework. hubLevelName reads anything ever saved -- a name, a code, "A1/A2",
+   "A2+/B1 (pre-intermediate)" -- and gives the name; HUB_LEVELS is the list a form offers, code first. */
+window.HUB_LEVELS = [['A1', 'Beginner'], ['A2', 'Elementary'], ['A2+', 'Pre-intermediate'], ['B1', 'Intermediate'], ['B2', 'Upper-intermediate'], ['C1', 'Advanced']];
+window.hubLevelName = function(v){
+  var s = String(v == null ? '' : v).trim(); if (!s) return '';
+  var low = s.toLowerCase();
+  if (/pre[- ]?int/.test(low)) return 'Pre-intermediate';
+  if (/upper[- ]?int/.test(low)) return 'Upper-intermediate';
+  if (/\bintermediate/.test(low)) return 'Intermediate';
+  if (/elementary/.test(low)) return 'Elementary';
+  if (/beginner|starter/.test(low)) return 'Beginner';
+  if (/advanced|proficien/.test(low)) return 'Advanced';
+  var codes = s.toUpperCase().match(/[ABC][12]\+?/g); if (!codes) return s;
+  if (codes.length === 2 && /^A2\+?$/.test(codes[0]) && codes[1] === 'B1') return 'Pre-intermediate';   /* A2/B1 is between: pre-intermediate */
+  var map = { 'A1': 'Beginner', 'A2': 'Elementary', 'A2+': 'Pre-intermediate', 'B1': 'Intermediate', 'B1+': 'Intermediate', 'B2': 'Upper-intermediate', 'B2+': 'Upper-intermediate', 'C1': 'Advanced', 'C2': 'Advanced' };
+  var out = []; codes.forEach(function(c){ var n = map[c]; if (n && out.indexOf(n) === -1) out.push(n); });
+  return out.join('/') || s;
+};
+/* where a full name will not fit (Ramy, 30 Oct 2026: "use abbreviation like pre-int, upper-int ... and if you can, the full wording") */
+window.hubLevelShort = function(v){ var n = window.hubLevelName(v); return n.replace(/Pre-intermediate/g, 'Pre-int').replace(/Upper-intermediate/g, 'Upper-int').replace(/(^|\/)Intermediate/g, '$1Int'); };
 window.hubClockIs24 = function(){
   try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return String(cs.clock || '') === '24'; }
   catch (e) { return false; }

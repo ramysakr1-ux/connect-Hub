@@ -567,10 +567,10 @@
       <div class="field"><label for="fTP">TP #</label><input id="fTP" type="text" placeholder="e.g. TP4"></div>
       <div class="field"><label for="fDate">Date</label><input id="fDate" type="date"></div>
       <div class="field"><label for="fLevel">Level</label>
-        <input id="fLevel" type="text" list="cefrLevels" placeholder="e.g. B1"></div>
+        <input id="fLevel" type="text" list="cefrLevels" placeholder="e.g. Elementary"></div>
       <datalist id="cefrLevels">
-        <option>A1</option><option>A1/A2</option><option>A2</option><option>A2/B1</option>
-        <option>B1</option><option>B1/B2</option><option>B2</option><option>B2/C1</option>
+        <option>Beginner</option><option>Elementary</option><option>Pre-intermediate</option>
+        <option>Intermediate</option><option>Upper-intermediate</option><option>Advanced</option>
       </datalist>
       <div class="field"><label for="fTime">Time (minutes)</label><input id="fTime" type="text" placeholder="45"></div>
       <div class="field"><label for="fStudents">Students present</label><input id="fStudents" type="text" placeholder="e.g. 8"></div>
@@ -1331,7 +1331,7 @@ function prefill(d){
   const m=d.meta||{};
   if(!$('fTP').value) $('fTP').value=m.tp||'';
   if(!$('fDate').value) $('fDate').value=m.date||'';
-  if(!$('fLevel').value) $('fLevel').value=m.level||'';
+  if(!$('fLevel').value) $('fLevel').value=(window.hubLevelName ? hubLevelName(m.level) : m.level)||'';
   if(!$('fTime').value) $('fTime').value=m.length||'';
 }
 function showSeen(d){
@@ -1356,7 +1356,7 @@ function showSeen(d){
     if(!list&&!acts) return '';
     return (acts?`<div class="mats-acts">${acts}</div>`:'')+list;
   };
-  const metaBits=[m.level, m.length?m.length+' min':'', m.framework].filter(Boolean);
+  const metaBits=[(window.hubLevelName ? hubLevelName(m.level) : m.level), m.length?m.length+' min':'', m.framework].filter(Boolean);
   let html=(metaBits.length?`<p class="seen-meta">${metaBits.map(esc).join(' \u00b7 ')}</p>`:'')+`<dl>
     ${cell('main','Main aims',p.main&&bulletsHTML(p.main))}
     ${cell('','Subsidiary aims',p.sub&&bulletsHTML(p.sub))}
@@ -1536,7 +1536,7 @@ function feedbackHTML(d){
                     : d.grade==='Not to standard' ? '#A33227' : '#000';
   const band=detailBand([
     ['Tutor',d.tutor],['TP',d.tp],['Date',niceDate(d.date)],
-    ['Level',d.level],['Time',d.time?d.time+' min':''],['Students present',d.students]
+    ['Level',(window.hubLevelName ? hubLevelName(d.level) : d.level)],['Time',d.time?d.time+' min':''],['Students present',d.students]
   ]);
   const aims=[
     d.main&&`<strong style="color:#1E6B63;">Main aim:</strong> ${esc(d.main)}`,
@@ -1603,7 +1603,7 @@ function traineeHTML(d, selfComment, tc, laComment){
   const tv=s=>{ const n=(s||'').match(/\d+(?:[.,]\d+)?/g); return n?Math.max(...n.map(x=>parseFloat(x.replace(',','.')))):0; };
   let total=0; (p.rows||[]).forEach(r=>{ total+=tv(r.time); });
   const band=detailBand([
-    ['Name',m.name],['TP',m.tp],['Level',m.level],['Date',niceDate(m.date)],
+    ['Name',m.name],['TP',m.tp],['Level',(window.hubLevelName ? hubLevelName(m.level) : m.level)],['Date',niceDate(m.date)],
     ['Length',m.length?m.length+' min':'']
   ]);
 

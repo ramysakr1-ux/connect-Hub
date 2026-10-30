@@ -198,13 +198,14 @@ function render(){
      hours of level whatever"): carried in at the level, plus this course's
      days since the student moved up to it. */
   const level = String(who.level || '').trim();
+  const levelName = window.hubLevelName ? hubLevelName(level) : level;   /* the code counts the hours; the name is what is printed (30 Oct 2026) */
   const marksL = A.atLevel(marks, who.levelFrom);
   const rL = who.levelFrom ? A.record(marksL, days, tpSlots.length, LESSON_MIN, CD.perDay) : r;
   const cert = A.certificate(rL.hours, A.hoursForLevel(level, SETTINGS), tpSlots.length, LESSON_MIN, who.carried);
   const doneOn = A.completedOn(marksL, days, tpSlots.length, LESSON_MIN, who.carried, cert.target, CD.perDay);
 
   if (!cert.earned && !IS_TUTOR) {
-    app.innerHTML = `<div class="empty"><b>Not quite yet.</b><br>Your certificate comes when you complete ${fmtH(cert.target)} hours${level ? ' at ' + esc(level) : ''}. You have ${fmtH(cert.total)} so far, so that is <b>${cert.classesLeft} more ${cert.classesLeft === 1 ? 'class' : 'classes'}</b>. It will appear here on its own.</div>`;
+    app.innerHTML = `<div class="empty"><b>Not quite yet.</b><br>Your certificate comes when you complete ${fmtH(cert.target)} hours${level ? ' at ' + esc(levelName) + ' level' : ''}. You have ${fmtH(cert.total)} so far, so that is <b>${cert.classesLeft} more ${cert.classesLeft === 1 ? 'class' : 'classes'}</b>. It will appear here on its own.</div>`;
     return;
   }
 
@@ -251,10 +252,10 @@ function render(){
         <!-- NO HOURS ON THE CERTIFICATE (Ramy, 8 Oct 2026): the 160 is the
              center's rule for when it is earned, not a thing the student is
              handed. It certifies the level, and says who taught them. -->
-        <p class="body">has completed ${level ? 'level <b>' + esc(level) + '</b> in English' : 'a level of English'} as a volunteer student${cname ? ' at ' + esc(cname) : ''},
+        <p class="body">has completed ${level ? 'the <b>' + esc(levelName) + '</b> level of English' : 'a level of English'} as a volunteer student${cname ? ' at ' + esc(cname) : ''},
           in lessons taught by teachers in training, whose learning depended on people
           willing to come and be taught. The last of these lessons were on ${esc(course || 'the course')}${span ? ', ' + esc(span) : ''}.</p>
-        ${level ? `<div class="facts"><span class="fact"><span class="n">${esc(level)}</span><span class="l">Level completed</span></span></div>` : ''}
+        ${level ? `<div class="facts"><span class="fact"><span class="n">${esc(levelName)}</span><span class="l">Level completed</span></span></div>` : ''}
         <div class="sign">
           <span class="slot${cname ? ' has-for' : ''}">${inkHTML}<span class="line"></span><span class="l">${sg ? esc(sg.name) + (sg.role ? ', ' + esc(sg.role) : '') : 'Signed for the center'}</span>${cname ? `<span class="for">for ${esc(cname)}</span>` : ''}</span>
           <span class="slot">${dateHTML}<span class="line"></span><span class="l">Date</span></span>

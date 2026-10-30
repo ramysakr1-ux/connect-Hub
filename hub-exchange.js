@@ -85,7 +85,7 @@
     var md = [];
     md.push('# Lesson plan — ' + (m.name || 'trainee') + ', ' + (m.tp || 'TP'));
     var meta = [];
-    if (m.level) meta.push('Level: ' + m.level);
+    if (m.level) meta.push('Level: ' + (window.hubLevelName ? hubLevelName(m.level) : m.level));
     if (m.date) meta.push('Date: ' + m.date);
     if (m.length) meta.push('Length: ' + m.length + ' min');
     if (m.framework) meta.push('Shape: ' + m.framework);
@@ -164,7 +164,7 @@
     var o = [];
     o.push('<h1>Lesson plan: ' + h(m.name || 'trainee') + ', ' + h(m.tp ? (/^TP/i.test(m.tp) ? m.tp : 'TP' + m.tp) : 'TP') + '</h1>');
     var meta = [];
-    if (m.level) meta.push(['Level', h(m.level)]); if (m.date) meta.push(['Date', h(m.date)]);
+    if (m.level) meta.push(['Level', h((window.hubLevelName ? hubLevelName(m.level) : m.level))]); if (m.date) meta.push(['Date', h(m.date)]);
     if (m.length) meta.push(['Length', h(m.length) + ' min']); if (m.framework) meta.push(['Lesson shape', h(m.framework)]);
     if (meta.length) o.push(table(meta.map(function(x){ return x[0]; }), [meta.map(function(x){ return x[1]; })]));
     var aims = [['Main aim', p.main], ['Subsidiary aim', p.sub], ['Personal aim', p.pers]].filter(function(x){ return lines(x[1]).length; });
