@@ -471,7 +471,7 @@
         <option>Intermediate</option><option>Upper-intermediate</option><option>Advanced</option>
       </datalist>
       <div class="field"><label for="fDate">Date</label><input id="fDate" type="date"><small id="fDateFromTt" class="fromtt"></small></div>
-      <div class="field"><label for="fLength">Lesson length (min)</label><input id="fLength" type="number" min="0" step="5" placeholder="45"></div>
+      <div class="field"><label for="fLength">Lesson length (min)</label><input id="fLength" type="number" min="0" step="5" placeholder="45"><small id="fLengthFromTt" class="fromtt"></small></div>
     </div>
   </div>
 
@@ -1727,6 +1727,7 @@ function tpNumberOf(text){
 
 /* Fill the date in when the practice number is known and the box is empty. */
 function fillDateFromTimetable(){
+  fillLengthFromTimetable();
   var dateEl = document.getElementById('fDate'), tpEl = document.getElementById('fTP');
   if (!dateEl || !tpEl || dateEl.value) return;
   var iso = timetableDateFor(tpNumberOf(tpEl.value));
@@ -1734,6 +1735,21 @@ function fillDateFromTimetable(){
   dateEl.value = iso;
   var hint = document.getElementById('fDateFromTt');
   if (hint) hint.textContent = 'From the timetable. Change it if the lesson moved.';
+}
+
+/* THE LENGTH COMES FROM THE TIMETABLE TOO (30 Oct 2026, the specification's R09: "read plan duration from the timetable
+   event"). hubTpLength reads the published timetable's TP slot, else the course's lengths on TP points. Only an empty box
+   is filled, and the trainee can change it, as the date. */
+function fillLengthFromTimetable(){
+  var el = document.getElementById('fLength'), tpEl = document.getElementById('fTP');
+  if (!el || !tpEl || el.value || !window.hubTpLength) return;
+  var n = tpNumberOf(tpEl.value); if (!n) return;
+  var P = null; try { P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null'); } catch (e) {}
+  var L = hubTpLength(n, P, null);
+  if (!L || L.from === 'default' || !L.min) return;
+  el.value = L.min; el.dispatchEvent(new Event('input'));
+  var hint = document.getElementById('fLengthFromTt');
+  if (hint) hint.textContent = L.from === 'timetable' ? 'From the timetable. Change it if the lesson changed.' : 'The course’s length for TP ' + n + '.';
 }
 
 /* Typing the practice number is the moment the date becomes knowable, so it

@@ -505,6 +505,7 @@
   @media(prefers-reduced-motion:reduce){ a.dv6-chip{transition:none;} }
   @media(max-width:560px){ .welcome.join{padding:24px 18px 20px;} .welcome.join .wname{transform:none;} .dv6-date{flex-basis:100%;} }
   @media print{ .dv6-brief{display:none;} }
+  .st .waited{display:block; font-size:0.74rem; font-weight:500; color:var(--grey); margin-top:2px;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610302306">
 </head>
@@ -681,6 +682,19 @@ const A_STATE={
 };
 
 let TAB='tp', FILTER=null;
+/* HOW LONG IT HAS WAITED (30 Oct 2026, the specification's R17: "order tutor work by time waiting inside each meaningful
+   group"). A self-evaluation turned in, or an assignment (re)submitted, carries its time; what waits for the tutor shows
+   how long, and inside a group the oldest comes first. */
+const waitedSince = (tr, key) => { if (!key) { const se = tr.tp && tr.tp.selfeval; return (se && se.turnedInAt) || ''; }
+  const sub = (tr.assignments || {})[key]; return sub ? (sub.stage === 'resubmitted' ? sub.sub2At : sub.sub1At) || '' : ''; };
+function waitedFor(iso){
+  const t = stampOf(iso); if (!(t > 0)) return '';
+  const h = Math.max(0, ((window.hubNow ? hubNow() : Date.now()) - t) / 36e5);   /* the course's clock, so a demo's day reads right */
+  return h < 1 ? 'waiting under an hour' : h < 24 ? 'waiting ' + Math.floor(h) + (Math.floor(h) === 1 ? ' hour' : ' hours') : 'waiting ' + Math.floor(h / 24) + (Math.floor(h / 24) === 1 ? ' day' : ' days');
+}
+/* a stamp may be an ISO string or a number of milliseconds */
+const stampOf = x => typeof x === 'number' ? x : (x ? Date.parse(x) : NaN);
+const oldestFirst = (a, b) => (stampOf(a) || Infinity) - (stampOf(b) || Infinity);
 
 function people(){
   /* A, B, C, D, E, F within each group, not alphabetical (Ramy, 21 Oct 2026) */
@@ -815,11 +829,11 @@ function paintRows(){
   if (TAB==='tp'){
     const cols='1.5fr 0.5fr 1.3fr auto';
     /* What needs the tutor first, then the rest in name order -- nothing hidden. */
-    let rows=list.map(tr=>({tr, s:tpState(tr)})).sort((a,b)=>(b.s.act?1:0)-(a.s.act?1:0));
+    let rows=list.map(tr=>({tr, s:tpState(tr)})).sort((a,b)=>(b.s.act?1:0)-(a.s.act?1:0) || (a.s.act ? oldestFirst(waitedSince(a.tr), waitedSince(b.tr)) : 0));
     const tpRow = ({tr,s}) => row(cols,
         `<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div>
          <div class="mid">${esc(tpNumberOf(tr))}</div>
-         <div class="st ${s.tone}">${esc(s.label)}</div>
+         <div class="st ${s.tone}">${esc(s.label)}${s.act && waitedFor(waitedSince(tr)) ? `<small class="waited">${esc(waitedFor(waitedSince(tr)))}</small>` : ''}</div>
          ${action(s.act?'Write feedback':s.label==='Returned'?'View feedback':'Open', s.act,
            '3_tutor_feedback.html?trainee='+encodeURIComponent(tr.id))}`);
     host.innerHTML =
@@ -857,11 +871,11 @@ function paintRows(){
       const waiting=rows.filter(r=>r.s.act).length, back=rows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length, closed=rows.filter(r=>r.stage==='closed').length, none=rows.filter(r=>r.stage==='none').length;
       const bits=[waiting?`<b class="brick">${waiting} waiting to be marked</b>`:'', back?`${back} back with ${back===1?'a trainee':'trainees'}`:'', closed?`${closed} closed`:'', none?`${none} not submitted`:''].filter(Boolean).join(' · ');
       const isOpen=key===open;
-      const body=!isOpen?'':byGroup(rows.sort((a,b)=>rank(a)-rank(b)), r=>r.tr.group).map(([g,rs])=>groupHead(g, rs.length)+rs.map(r=>{
+      const body=!isOpen?'':byGroup(rows.sort((a,b)=>rank(a)-rank(b) || (a.s.act ? oldestFirst(waitedSince(a.tr,key), waitedSince(b.tr,key)) : 0)), r=>r.tr.group).map(([g,rs])=>groupHead(g, rs.length)+rs.map(r=>{
         const closedOne=r.stage==='closed';
         const href=(closedOne?'11_assignment_record.html':'10_tutor_assignment_marking.html')+'?trainee='+encodeURIComponent(r.tr.id)+'&a='+key;
         return row(cols, `<div class="nm">${hubAvatar(r.tr.name)}${esc(r.tr.name)}</div>
-           <div class="st ${r.s.tone}${r.stage==='none'?' faint':''}">${esc(r.s.label)}</div>
+           <div class="st ${r.s.tone}${r.stage==='none'?' faint':''}">${esc(r.s.label)}${r.s.act && waitedFor(waitedSince(r.tr,key)) ? `<small class="waited">${esc(waitedFor(waitedSince(r.tr,key)))}</small>` : ''}</div>
            ${r.stage==='none'?'<div class="act"></div>':action(r.s.act?'Mark':closedOne?'Open the record':'Open', r.s.act, href)}`);
       }).join('')).join('');
       return `<div class="asec${isOpen?' open':''}"><button type="button" class="ahead" data-asg="${key}"><span class="code">${esc(ASSIGN_NAMES[key]||key)}</span><span class="full">${esc((ASSIGN_FULL[key]||key).replace(/^[A-Z0-9]+ — /,''))}</span><span class="bits">${bits}</span><span class="caret">${isOpen?'&#9662;':'&#9656;'}</span></button>${isOpen?`<div class="abody"><div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div>Status</div><div></div></div>${body}</div>`:''}</div>`;

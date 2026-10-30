@@ -164,6 +164,11 @@
   .std-warn{margin:0 0 12px; padding:9px 12px; border-left:3px solid var(--tone-stuck, var(--brick)); background:var(--paper); font-size:0.8rem; line-height:1.5;}
   .std-warn ul{margin:4px 0 0; padding-left:18px;}
   .st .st-aim{margin-top:5px; font-size:0.8rem; font-style:italic;}
+  .tick{display:flex; gap:10px; align-items:flex-start; font-size:0.86rem; margin:12px 0 0; line-height:1.45;} .tick input{margin-top:3px;}
+  .offered{display:grid; gap:6px; padding:12px 14px; border-radius:var(--r-strip); background:var(--a-mint-wash); border:1px solid var(--a-mint); font-size:0.86rem;}
+  .offered span{color:var(--grey);} .offered ol{display:flex; flex-wrap:wrap; gap:6px; list-style:none; margin:4px 0 0; padding:0;}
+  .offered li{font-size:0.74rem; font-weight:700; padding:4px 10px; border-radius:99px; background:var(--paper); color:var(--grey); border:1px solid var(--sand-line);}
+  .offered li.done{color:var(--a-forest); border-color:var(--a-mint);} .offered li.now{background:var(--a-forest); color:var(--paper); border-color:var(--a-forest);}
   .libwarn{font-size:0.8rem; color:var(--ink); background:color-mix(in oklch, var(--a-lemon) 32%, var(--paper));
     border:1px solid color-mix(in oklch, var(--a-mustard) 55%, var(--paper)); border-radius:var(--r-strip); padding:10px 12px; margin:11px 0 0;}
   .groupsel{display:flex; flex-wrap:wrap; gap:8px;}
@@ -485,7 +490,7 @@ const isConnects = x => !!x && !x.own && (!!x.from || (Array.isArray(CAT) && CAT
 const LIB_CATALOGUE = 'library/catalogue.json';
 const LIB_MASTER = 'library/tp-point-sets.json';
 let CAT = null, SHOWLIB = false, LVL = '', LIBNOTE = '', TAKING = '';
-let SHOWOFFER = false, OFFERBY = '', SENDING = false;
+let SHOWOFFER = false, OFFERBY = '', SENDING = false, OFFEROWN = false, OFFERREV = false;
 
 /* OFFERING A SET TO THE TP POINTS LIBRARY. Ramy, 5 Oct 2026: it is open to everyone,
    contributed to or not, and contributing buys a credit line -- "Contributed
@@ -526,6 +531,11 @@ function offerFile(){
     };
   });
   out.covers = { pages: pages, tracks: tracks, days: days };
+  /* THE CONFIRMATION TRAVELS WITH THE SET (30 Oct 2026, the specification's R25): the two boxes ticked on the Offer screen,
+     who ticked them and when, so the file Connect reads says it was confirmed. */
+  out.attest = { own: OFFEROWN, review: OFFERREV, by: OFFERBY.trim(), at: new Date().toISOString(),
+                 words: ['These lessons are our own work: no procedure copied from a publisher, and no scans or recordings.',
+                         'Connect may edit, ask about, decline or publish it, credited as above.'] };
   return out;
 }
 
@@ -543,7 +553,9 @@ async function contributeSet(){
     await HubStore.call({ op: 'contribute', set: out, by: out.by,
       centre: (SETTINGS.centreName || '') + (SETTINGS.centreNumber ? ' (' + SETTINGS.centreNumber + ')' : '') });
     SENDING = false; SHOWOFFER = false;
-    note = 'Sent to Connect, credited to ' + out.by + '. We read every one and write back.';
+    S.offered = { at: new Date().toISOString().slice(0, 10), by: out.by, status: 'Sent' };
+    persist('Sent to Connect, credited to ' + out.by + '.');
+    return;
   } catch (e) {
     SENDING = false;
     saveFile(out);
@@ -561,6 +573,14 @@ function saveFile(out){
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 
+/* WHERE AN OFFERED SET HAS GOT TO (30 Oct 2026, the specification's R26): Sent, Under review, Clarification requested,
+   then Published or Declined. Sending writes Sent on the set; Connect moves it on. */
+function offeredHTML(o){
+  const steps = ['Sent', 'Under review', 'Clarification requested', 'Published or declined'];
+  const at = steps.indexOf(o.status === 'Published' || o.status === 'Declined' ? 'Published or declined' : o.status);
+  return `<div class="offered"><b>Offered to the TP Point Pool</b><span>${esc(o.status || 'Sent')} · ${esc(o.at || '')} · credited to ${esc(o.by || '')}</span>
+    <ol>${steps.map((x, i) => `<li class="${i < at ? 'done' : i === at ? 'now' : ''}">${esc(x === 'Published or declined' && (o.status === 'Published' || o.status === 'Declined') ? o.status : x)}</li>`).join('')}</ol></div>`;
+}
 function offerPanel(){
   if (!SHOWOFFER || !S) return '';
   const slots = Object.keys(S.sessions || {}).reduce((a, k) => a + (S.sessions[k].slots || []).length, 0);
@@ -575,8 +595,10 @@ function offerPanel(){
     <p class="libwarn" style="margin-top:12px"><b>What travels:</b> the aims, the lesson shapes, every stage with its timing and its watch notes, and the page and track numbers each lesson teaches from &mdash; ${slots} lessons, ${staged} of them staged. <b>What does not:</b> your scans, your recordings, your printed days and the name you gave this set. Not one link leaves your course. Another center points Lite at its own copy of the book and cuts the pages itself.</p>
     <p class="libwarn"><b>It stays yours.</b> Offering it lets Connect edit it and publish it in the Pool for other centers to teach from, credited as above. You can ask for it to be taken out at any time, and it is yours to go on using however you like.</p>
     <p class="libwarn"><b>It has to be yours to give.</b> Your own lessons &mdash; not stages copied out of a teacher&rsquo;s book. Naming the pages of a coursebook is fine and is how every set in the Pool works; copying the publisher&rsquo;s procedure is not, and a set that does will not go in.</p>
+    <label class="tick"><input type="checkbox" id="offerown"${OFFEROWN ? ' checked' : ''}> These lessons are our own work: no procedure copied from a publisher, and no scans or recordings.</label>
+    <label class="tick"><input type="checkbox" id="offerrev"${OFFERREV ? ' checked' : ''}> Connect may edit, ask about, decline or publish it, credited as above.</label>
     <div class="acts" style="margin-top:12px">
-      <button type="button" class="btn" id="offerdl"${OFFERBY.trim() && !SENDING ? '' : ' disabled'}>${SENDING ? 'Sending…' : 'Contribute'}</button>
+      <button type="button" class="btn" id="offerdl"${OFFERBY.trim() && OFFEROWN && OFFERREV && !SENDING ? '' : ' disabled'}>${SENDING ? 'Sending…' : 'Contribute'}</button>
       <button type="button" class="btn quiet" id="offerclose">Close</button></div>
     <p class="hint" style="margin:9px 0 0">It goes straight to Connect &mdash; nobody else can see it until it is in the Pool. We read every one and write back.</p>
   </div>`;
@@ -858,7 +880,7 @@ function render(){
     ${pagesPanel()}
     ${sessions}
     <div class="acts">
-      ${written(S) && !isConnects(S) ? '<button type="button" class="btn quiet" id="offer">Contribute this set</button>' : ''}
+      ${written(S) && !isConnects(S) ? (S.offered ? offeredHTML(S.offered) : '<button type="button" class="btn quiet" id="offer">Contribute this set</button>') : ''}
     </div>
     <p class="status" id="status">${esc(note)}</p>`;
   wire();
@@ -1246,8 +1268,10 @@ function wire(){
   const offBy = $('offerby');
   if (offBy) offBy.oninput = () => {
     OFFERBY = offBy.value;
-    const go = $('offerdl'); if (go) go.disabled = !OFFERBY.trim();
+    const go = $('offerdl'); if (go) go.disabled = !(OFFERBY.trim() && OFFEROWN && OFFERREV);
   };
+  [['offerown', v => { OFFEROWN = v; }], ['offerrev', v => { OFFERREV = v; }]].forEach(([id, set]) => { const el = $(id); if (el) el.onchange = () => {
+    set(el.checked); const go = $('offerdl'); if (go) go.disabled = !(OFFERBY.trim() && OFFEROWN && OFFERREV); }; });
   const offGo = $('offerdl');
   if (offGo) offGo.onclick = () => contributeSet();
   const offX = $('offerclose');
