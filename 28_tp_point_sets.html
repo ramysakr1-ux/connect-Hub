@@ -605,8 +605,9 @@ const haveFrom = () => new Set(Object.values(LIB).map(x => x.from).filter(Boolea
 function libraryPanel(){
   if (!SHOWLIB) return '';
   const rows = CAT || [];
-  const levels = [...new Set(rows.map(r => r.level).filter(Boolean))];
-  const shown = LVL ? rows.filter(r => r.level === LVL) : rows;
+  const have = new Set(rows.map(r => bookLevel(r.book, r.level).shelf));
+  const levels = SHELVES.filter(x => have.has(x)).concat(have.has('Other') ? ['Other'] : []);
+  const shown = LVL ? rows.filter(r => bookLevel(r.book, r.level).shelf === LVL) : rows;
   const books = haveBooks(), froms = haveFrom();
   const body = !CAT ? '<p class="hint">Opening the library…</p>'
     : !rows.length ? '<p class="hint">Nothing in the library to show.</p>'
@@ -615,7 +616,7 @@ function libraryPanel(){
         const ed = r.book.slice(title.length).replace(/^,\s*/, '');
         const had = froms.has(r.id) || books.has(title.toLowerCase());
         return `<article class="libcard">
-          <span class="lv">${esc(r.level)}</span>
+          <span class="lv">${esc(bookLevel(r.book, r.level).printed)}</span>
           <b>${esc(title)}</b>
           ${ed ? `<p class="ed">${esc(ed)}</p>` : ''}
           ${r.by ? `<p class="by">Contributed by ${esc(r.by)}</p>` : ''}
@@ -647,6 +648,22 @@ function libraryPanel(){
    (and any course that has grown to three sets or more); a course with one or two sets
    has the tabs and needs no index. */
 const levelKey = l => String(l || '').split('(')[0].trim() || 'No level';
+/* THE LEVEL IS THE BOOK'S (Ramy, 30 Oct 2026: "we should go with what's written on the book ... categorize them. And the book will
+   tell us where it lives"). Publishers disagree about pre-intermediate -- A2+, A2+/B1, B1 -- so the shelf showed seven levels for five.
+   Now each set shows the level its book prints on the cover (Speakout A1, Roadmap A2+, Empower B1 Pre-intermediate), and the book
+   files itself on one of five shelves: a level word on the cover decides, else its code. The set's own level field is untouched:
+   it is what matches a volunteer's level to the lessons for homework. */
+const SHELVES = ['Beginner', 'Elementary', 'Pre-intermediate', 'Intermediate', 'Upper-intermediate', 'Advanced'];
+const CODE_SHELF = { 'A1': 'Beginner', 'A2': 'Elementary', 'A2+': 'Pre-intermediate', 'B1': 'Intermediate', 'B1+': 'Intermediate', 'B2': 'Upper-intermediate', 'B2+': 'Upper-intermediate', 'C1': 'Advanced' };
+function bookLevel(book, level){
+  const t = String(book || '').split(',')[0];
+  const code = (t.match(/\b([ABC][12]\+?)(?![\w])/) || [])[1] || '';
+  const w = /pre[- ]?intermediate/i.test(t) ? 'Pre-intermediate' : /upper[- ]?intermediate/i.test(t) ? 'Upper-intermediate'
+    : /\bintermediate/i.test(t) ? 'Intermediate' : /elementary/i.test(t) ? 'Elementary' : /beginner|starter/i.test(t) ? 'Beginner' : /advanced/i.test(t) ? 'Advanced' : '';
+  const printed = [code, w].filter(Boolean).join(' ');
+  const shelf = w || CODE_SHELF[code] || CODE_SHELF[levelKey(level).split('/')[0]] || '';
+  return { printed: printed || String(level || ''), shelf: shelf || 'Other' };
+}
 function indexPanel(){
   const ids = Object.keys(LIB);
   /* the library course carries no course name and the company as its center */
@@ -656,7 +673,7 @@ function indexPanel(){
   const slots = sets.flatMap(x => Object.values(x.sessions || {}).flatMap(ses => ses.slots || []));
   const lineCount = t => (Array.isArray(t) ? t : String(t || '').split('\n')).filter(l => String(l).trim()).length;
   const books = new Set(sets.map(x => String(x.book || '').split(',')[0].trim().toLowerCase()).filter(Boolean));
-  const levels = new Set(sets.map(x => levelKey(x.level)));
+  const levels = new Set(sets.map(x => bookLevel(x.book, x.level).shelf));
   const written = slots.filter(sl => sl.type || sl.aim || (sl.stages || []).length).length;
   const pages = slots.reduce((n, sl) => n + (sl.files || []).length, 0);
   const tracks = slots.reduce((n, sl) => n + lineCount(sl.tracks), 0);
@@ -743,7 +760,7 @@ function render(){
   const ids = Object.keys(LIB);
   const gnames = groupNames();
   const tabs = `<div class="settabs">${ids.map(id => `<button type="button" class="settab${id === CUR ? ' on' : ''}" data-set="${id}">${esc(LIB[id].name || LIB[id].book || 'Untitled set')}${
-      LIB[id].level ? `<i>${esc(LIB[id].level)}</i>` : ''}</button>`).join('')}
+      LIB[id].level || LIB[id].book ? `<i>${esc(bookLevel(LIB[id].book, LIB[id].level).printed)}</i>` : ''}</button>`).join('')}
     <button type="button" class="settab add" id="addlib">Add one of Connect’s sets</button>
     <button type="button" class="settab add" id="addset">Write your own set</button></div>`;
   const usedBy = !gnames.length ? '' : `<div class="row"><label class="lab">Taught by</label><div class="groupsel">${
@@ -758,7 +775,7 @@ function render(){
     ${libraryPanel()}
     ${offerPanel()}
     <div class="head">
-      <h2 class="hband">${esc(S.name || S.book || 'Untitled set')}${S.level ? `<span class="lv">${esc(S.level)}</span>` : ''}</h2>
+      <h2 class="hband">${esc(S.name || S.book || 'Untitled set')}${S.level || S.book ? `<span class="lv">${esc(bookLevel(S.book, S.level).printed)}</span>` : ''}</h2>
       <div class="row"><label class="lab" for="setname">This set is</label><input id="setname" value="${esc(S.name || '')}" placeholder="Jordan’s group · Language Hub Elementary">${Object.keys(LIB).length > 1 && !written(S) ? '<button type="button" class="btn quiet sm" id="dropset" style="margin-left:10px">Remove this set</button>' : ''}</div>
       ${usedBy}
       <div class="row"><label class="lab" for="book">Coursebook</label><input id="book" value="${esc(S.book || '')}" placeholder="Language Hub Elementary"></div>
