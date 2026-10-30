@@ -651,7 +651,7 @@ async function takeFromLibrary(libId){
     /* `by` comes too: the credit the contributor asked for, so a printed TP
        point from this set names them (Ramy, 13 Oct 2026). */
     LIB[id] = Object.assign(JSON.parse(JSON.stringify(got)),
-      { from: libId, taken: new Date().toISOString().slice(0, 10), by: row.by || 'Connect' });
+      { from: libId, taken: new Date().toISOString().slice(0, 10), by: row.by || 'Connect', version: parseInt(row.version, 10) || 1 });   /* R23/R24: the version taken stays with the copy */
     /* an own set begun and never written in goes when a Connect set is taken instead (Ramy, 30 Oct 2026: "if I click on your own
        set and then I change my mind and I want to come out and choose Connect library, I can't") */
     Object.keys(LIB).forEach(k => { const x = LIB[k]; if (k !== id && x && x.own && !String(x.book || '').trim()
@@ -905,7 +905,11 @@ function render(){
 function lockConnects(){
   if (!isConnects(S)) return;
   const head = document.querySelector('.head'); if (!head) return;
-  if (!head.querySelector('.cxnote')) head.querySelector('.hband').insertAdjacentHTML('afterend', '<p class="cxnote"><b>Connect’s set.</b> It stays as written. Yours to add: the links to the book and the audio, and the pages from your own course copy.</p>');
+  /* WHICH VERSION, AND WHETHER A NEWER ONE EXISTS (30 Oct 2026, the specification's R23 and R24): the copy keeps the version
+     it was taken at; when Connect's Pool carries a later one it says so, and the copy changes only if the centre takes it again. */
+  const row = Array.isArray(CAT) ? CAT.find(r => r.id === S.from) : null, mine = parseInt(S.version, 10) || 1, theirs = row ? (parseInt(row.version, 10) || 1) : mine;
+  const ver = 'Version ' + mine + (S.taken ? ', taken ' + S.taken : '') + '.' + (theirs > mine ? ' <b>Connect has a newer version (' + theirs + ').</b> Your copy stays as it is until you take the set again from the TP Point Pool.' : '');
+  if (!head.querySelector('.cxnote')) head.querySelector('.hband').insertAdjacentHTML('afterend', '<p class="cxnote"><b>Connect’s set.</b> It stays as written. Yours to add: the links to the book and the audio, and the pages from your own course copy. ' + ver + '</p>');
   ['setname', 'book', 'level', 'sources', 'mins'].forEach(id => { const el = $(id); if (el) { el.readOnly = true; el.classList.add('ro'); } });
   document.querySelectorAll('.sbody input, .sbody textarea, .sbody select').forEach(el => { el.disabled = true; if (el.tagName !== 'SELECT' && !String(el.value || '').trim()) el.classList.add('cxempty');
     /* a long note shows whole: the box grows to its text */

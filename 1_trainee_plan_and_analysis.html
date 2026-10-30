@@ -443,7 +443,15 @@
   #matNote{margin:18px 0 0;} body:not(.mat-only) #matNote{display:none;}
   @media(max-width:1000px){ .pv2 .chk span:not(.lead){display:none;} }
   @media(max-width:640px){ .pv2{display:none;} }
+  /* the foot strip is the readiness on a wide screen; on a phone it is hidden, so the cues card stands in for it (R11) */
+  @media(min-width:641px){ .readycues{display:none;} } @media print{ .readycues{display:none;} }
   @media print{ .pv2{display:none;} }
+  .readycues h2{margin:0 0 2px;} .readycues ul{list-style:none; margin:10px 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:8px;}
+  .readycues li{display:grid; gap:3px; padding:10px 12px; border-radius:10px; background:var(--box); font-size:.84rem;}
+  .readycues li b{display:block;} .readycues li small{color:var(--grey); font-size:.76rem;}
+  .readycues .rk{font-size:.66rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+  .readycues li.ok{background:color-mix(in oklch, var(--teal) 8%, var(--paper));} .readycues li.ok .rk{color:var(--teal);}
+  .shareVol .aud{display:block; font-size:.74rem; color:var(--grey); margin-top:2px;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610310008">
 </head>
@@ -474,6 +482,10 @@
       <div class="field"><label for="fLength">Lesson length (min)</label><input id="fLength" type="number" min="0" step="5" placeholder="45"><small id="fLengthFromTt" class="fromtt"></small></div>
     </div>
   </div>
+
+  <!-- READINESS ON A PHONE (30 Oct 2026, the specification's R11): the foot strip (Aims, Problems, Class, Materials, Stages,
+       Time) is the readiness on a wide screen and is hidden under 640px; this card says the same there. Nothing is blocked. -->
+  <div class="card readycues" id="readyCues" aria-live="polite"></div>
 
   <div class="part"><span>Lesson Plan</span></div>
 
@@ -536,7 +548,7 @@
          link does not already go. -->
     <div class="shareVol" id="shareVol">
       <label class="sv-row"><input type="checkbox" id="fShareVol">
-        <span><b>Share with the volunteer students</b><small id="shareVolNote">For example, your lesson material.</small></span></label>
+        <span><b>Share with the volunteer students</b><small id="shareVolNote">For example, your lesson material.</small><small class="aud">Who sees it: the volunteer students, the other trainees and the tutors. You can stop sharing it.</small></span></label>
     </div>
     <details class="mats-fallback">
       <summary>No Drive? Attach the file instead</summary>
@@ -1298,6 +1310,22 @@ function updateTotal(){
   if(!isNaN(planned)&&planned>sum){ const sp=document.createElement('span'); sp.style.flex=String(planned-sum); sp.style.background='var(--row-line)'; bar.appendChild(sp); }
 }
 $('fLength').addEventListener('input',updateTotal);
+function paintReady(){
+  const el=$('readyCues'); if(!el) return;
+  const all=rows(), written=all.filter(tr=>tr.classList.contains('written')||((tr.querySelector('.t-stage')||{}).value||'').trim()).length;
+  const sum=all.reduce((n,tr)=>n+timeVal(tr.querySelector('.t-time').value),0), planned=parseFloat($('fLength').value);
+  const la=$('laSection'), laDone=!!(la && [...la.querySelectorAll('textarea,input[type=text]')].some(x=>String(x.value||'').trim()));
+  const items=[
+    [!!$('fMain').value.trim(), 'Main aim written', $('fMain').value.trim() ? 'Near the top, where the learning starts.' : 'Say what the learners will be able to do by the end.'],
+    [written>=2, 'Stages written', written ? written+' so far' : 'Add the stages of the lesson.'],
+    [!isNaN(planned)&&planned>0&&sum>0&&sum<=planned, 'Timing fits the lesson', !isNaN(planned)&&planned>0 ? sum+' of '+planned+' min' : 'Fill in the lesson length.'],
+    [!!(($('fMatsLink')||{}).value||'').trim()||!!(($('fMats')||{}).value||'').trim(), 'Materials named or linked', (($('fMatsLink')||{}).value||'').trim() ? 'Linked.' : (($('fMats')||{}).value||'').trim() ? 'Named.' : 'What you will use, and a link if there is one.'],
+    [laDone, 'Language analysis', laDone ? 'Started' : 'Optional help, below the plan.', true]
+  ];
+  el.innerHTML='<h2>Before you teach</h2><p class="guide">Quiet cues, read from your plan. Nothing here is marked or blocked.</p><ul>'+items.map(([ok,t,sub,opt])=>`<li class="${ok?'ok':opt?'opt':''}"><span class="rk">${ok?'Ready':opt?'Optional':'Not yet'}</span><span><b>${t}</b><small>${esc(sub)}</small></span></li>`).join('')+'</ul>';
+}
+document.addEventListener('input', ()=>{ clearTimeout(paintReady.t); paintReady.t=setTimeout(paintReady, 250); });
+setTimeout(paintReady, 600);
 
 addRow('Lead-in','','',{auto:true});
 for(let i=0;i<4;i++) addRow('','','');
@@ -1865,10 +1893,25 @@ $('prevBtn').addEventListener('click',()=>{
   const tpNum = (function(){ const m = String(last.tp == null ? '' : last.tp).match(/\d+/); const n = m ? parseInt(m[0],10) : 0; return n >= 1 && n <= HUB_MAX_TP ? 'TP' + n : (last.tp || ''); })();
   const lead='From my last feedback'+(tpNum?' ('+tpNum+')':'')+':';
   const block=lead+'\n'+pts.map((x,i)=>`${i+1}. ${x}\n   What I will do: `).join('\n');
-  const cur=$('fPers').value.trim();
-  $('fPers').value = cur ? cur+'\n\n'+block : block;
-  autoGrow($('fPers'));
-  setStatus(pts.length+' action point'+(pts.length>1?'s':'')+' brought in. Add what you will do about each.');
+  /* SOURCED, AND NEVER TWICE (30 Oct 2026, the specification's R12): the block is named by the TP it came from, so bringing
+     it in again replaces that block (keeping nothing doubled) instead of adding a second copy. What the trainee wrote under
+     each point is kept when the point is the same. */
+  const cur=$('fPers').value;
+  const at=cur.indexOf(lead);
+  if (at >= 0) {
+    const rest=cur.slice(at+lead.length), nextLead=rest.search(/\n\n(From my last feedback|[^\n]*:\n1\. )/);
+    const old=nextLead>=0 ? rest.slice(0,nextLead) : rest;
+    const kept={}; old.split(/\n(?=\d+\. )/).forEach(chunk=>{ const m=chunk.match(/^\s*\d+\. ([^\n]*)\n\s*What I will do: ?([\s\S]*)$/); if(m) kept[m[1].trim()]=m[2].trim(); });
+    const fresh=lead+'\n'+pts.map((x,i)=>`${i+1}. ${x}\n   What I will do: ${kept[String(x).trim()]||''}`).join('\n');
+    $('fPers').value = cur.slice(0,at) + fresh + (nextLead>=0 ? rest.slice(nextLead) : '');
+    autoGrow($('fPers'));
+    setStatus('The action points from '+(tpNum||'your last feedback')+' are up to date. What you wrote under each is kept.');
+  } else {
+    const c=cur.trim();
+    $('fPers').value = c ? c+'\n\n'+block : block;
+    autoGrow($('fPers'));
+    setStatus(pts.length+' action point'+(pts.length>1?'s':'')+' brought in from '+(tpNum||'your last feedback')+'. Add what you will do about each.');
+  }
   dirty=true;
   autosave();
 });

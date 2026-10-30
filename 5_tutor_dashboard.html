@@ -506,6 +506,9 @@
   @media(max-width:560px){ .welcome.join{padding:24px 18px 20px;} .welcome.join .wname{transform:none;} .dv6-date{flex-basis:100%;} }
   @media print{ .dv6-brief{display:none;} }
   .st .waited{display:block; font-size:0.74rem; font-weight:500; color:var(--grey); margin-top:2px;}
+  .focusbar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; font-size:.82rem;} .focusbar > span{font-weight:700; color:var(--grey); margin-right:4px;}
+  .focusbar button{font:inherit; font-size:.8rem; font-weight:700; padding:5px 12px; border-radius:99px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .focusbar button[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:var(--paper);} .focusbar small{color:var(--grey); margin-left:6px;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610310008">
 </head>
@@ -682,6 +685,16 @@ const A_STATE={
 };
 
 let TAB='tp', FILTER=null;
+/* FOCUS ON MY GROUP (30 Oct 2026, the specification's R18): a tutor can show one TP group's rows. Kept in this browser
+   only; it is a view, not a permission, and the cards' counts stay the whole course's. */
+document.addEventListener('click', e => { const b = e.target.closest('[data-focus]'); if (!b) return; FOCUS = b.dataset.focus; try { localStorage.setItem('chub:focusGroup', FOCUS); } catch (er) {} paintRows(); });
+let FOCUS = ''; try { FOCUS = localStorage.getItem('chub:focusGroup') || ''; } catch (e) {}
+function focusBar(list){
+  const gs = [...new Set(list.map(t => t.group).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+  if (gs.length < 2) return '';
+  if (FOCUS && !gs.includes(FOCUS)) FOCUS = '';
+  return `<div class="focusbar" role="group" aria-label="Show"><span>Show</span>${[''].concat(gs).map(g => `<button type="button" data-focus="${esc(g)}" aria-pressed="${FOCUS === g}">${g ? 'Group ' + esc(g) : 'All groups'}</button>`).join('')}<small>Kept on this device only</small></div>`;
+}
 /* HOW LONG IT HAS WAITED (30 Oct 2026, the specification's R17: "order tutor work by time waiting inside each meaningful
    group"). A self-evaluation turned in, or an assignment (re)submitted, carries its time; what waits for the tutor shows
    how long, and inside a group the oldest comes first. */
@@ -820,7 +833,8 @@ function action(label, go, href){
 
 function paintRows(){
   const host=document.getElementById('rows');
-  const list=people();
+  const all=people(), bar=focusBar(all);
+  const list=FOCUS ? all.filter(t => String(t.group) === FOCUS) : all;
   if (!list.length){
     host.innerHTML = '<div class="empty">No trainees on the course yet \u2014 add them on Course admin\u2019s Roster and links tab, and give each their link.</div>';
     return;
@@ -836,7 +850,7 @@ function paintRows(){
          <div class="st ${s.tone}">${esc(s.label)}${s.act && waitedFor(waitedSince(tr)) ? `<small class="waited">${esc(waitedFor(waitedSince(tr)))}</small>` : ''}</div>
          ${action(s.act?'Write feedback':s.label==='Returned'?'View feedback':'Open', s.act,
            '3_tutor_feedback.html?trainee='+encodeURIComponent(tr.id))}`);
-    host.innerHTML =
+    host.innerHTML = bar +
       `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">TP</div><div>Status</div><div></div></div>` +
       (rows.length ? byGroup(rows, r => r.tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(tpRow).join('')).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
     return;
@@ -880,7 +894,7 @@ function paintRows(){
       }).join('')).join('');
       return `<div class="asec${isOpen?' open':''}"><button type="button" class="ahead" data-asg="${key}"><span class="code">${esc(ASSIGN_NAMES[key]||key)}</span><span class="full">${esc((ASSIGN_FULL[key]||key).replace(/^[A-Z0-9]+ — /,''))}</span><span class="bits">${bits}</span><span class="caret">${isOpen?'&#9662;':'&#9656;'}</span></button>${isOpen?`<div class="abody"><div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div>Status</div><div></div></div>${body}</div>`:''}</div>`;
     };
-    host.innerHTML = (keys.length ? keys.map(section).join('') : '<div class="empty">No assignments are switched on for the trainees yet.</div>')
+    host.innerHTML = bar + (keys.length ? keys.map(section).join('') : '<div class="empty">No assignments are switched on for the trainees yet.</div>')
       + (a5Rows.length ? `<div class="asec open"><div class="ahead" style="cursor:default"><span class="code">A5</span><span class="full">Plagiarism Reflection</span><span class="bits">${a5Rows.length} set</span></div><div class="abody">${a5Rows.map(({tr,key,stage,s})=>row(cols,`<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div><div class="st ${s.tone}">${esc(s.label)}</div>${action(s.act?'Mark':stage==='closed'?'Open the record':'Open', s.act, (stage==='closed'?'11_assignment_record.html':'10_tutor_assignment_marking.html')+'?trainee='+encodeURIComponent(tr.id)+'&a=a5')}`)).join('')}</div></div>` : '');
     host.querySelectorAll('[data-asg]').forEach(b=>b.addEventListener('click',()=>{ try{ localStorage.setItem('chub:asgOpen', b.dataset.asg===open?'none':b.dataset.asg); }catch(e){} paintRows(); }));
     return;
@@ -906,7 +920,7 @@ function paintRows(){
          ${obsCell(tr)}
          <div class="act"><a class="rowbtn pair" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">CELTA 5</a><a class="rowbtn pair" href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Portfolio</a></div>`);
     };
-  host.innerHTML =
+  host.innerHTML = bar +
     `<div class="grid ghead" style="grid-template-columns:${cols}"><div>Trainee</div><div class="mid">Teaching practice</div><div>Assignments</div><div class="obs">Observations</div><div></div></div>` +
     byGroup(list, tr => tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(trRow).join('')).join('');
 }
@@ -1226,6 +1240,10 @@ function paintBrief(){
     if (today && today.tp) chips.push('<a class="dv6-chip tp now" href="23_timetable.html">TP <b>' + esc(today.tp) + '</b> today</a>');
     else { const nx = days.find(d => d && d.tp && d.date > TODAY); if (nx) chips.push('<a class="dv6-chip tp" href="23_timetable.html">Next TP: <b>TP ' + esc(nx.tp) + '</b>, ' + esc(dt(nx.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })) + '</a>'); }
   }
+    /* THE ASSESSOR'S VISIT JOINS THE LINE (30 Oct 2026, the specification's R19: rare obligations in the daily attention
+       line): from a week before, the visit day from the timetable, and the pack one tap away. */
+    { const vd = days.find(d => d && d.date >= TODAY && (d.sessions || []).some(x => x && (x.k === 'assessor' || /assessor/i.test(x.t || ''))));
+      if (vd) { const n = between(TODAY, vd.date); if (n <= 7) chips.push('<a class="dv6-chip due' + (n <= 2 ? ' soon' : '') + '" href="12_assessor_pack.html">Assessor visit <b>' + (n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days') + '</b></a>'); } }
   /* the nearest deadline still open, among the assignments the trainees can see */
   try {
     const w = rd('connect_assignment_wording_v2') || {};

@@ -306,6 +306,14 @@
   .otl li.bad::before{border-color:var(--brick); background:var(--brick);}
   .otl .d{font-size:0.78rem; color:var(--grey); font-variant-numeric:tabular-nums;}
   @media (max-width:620px){ .otl::before{left:6px;} .otl li{grid-template-columns:1fr auto; gap:4px 12px; padding-left:24px;} .otl li::before{left:1px;} .otl .d{grid-column:1 / -1;} }
+  .vcheck{margin:0 0 22px; padding:16px 18px; border-radius:14px; background:var(--paper); box-shadow:var(--nb-shadow);}
+  .vcheck .vh{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:baseline;} .vcheck .vh span{font-size:.8rem; color:var(--grey);}
+  .vcheck ul{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:6px;}
+  .vcheck li{display:grid; grid-template-columns:90px 1fr auto; gap:12px; align-items:center; padding:8px 12px; border-radius:10px; background:var(--box); font-size:.88rem;}
+  .vcheck li.ok{background:transparent;} .vcheck .rk{font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--brick);} .vcheck li.ok .rk{color:var(--teal);}
+  .vcheck a{color:var(--teal); font-weight:700; font-size:.82rem;}
+  @media (max-width:560px){ .vcheck li{grid-template-columns:1fr auto;} .vcheck .rk{grid-column:1 / -1;} }
+  @media print{ .vcheck{display:none;} }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610310008">
 </head>
@@ -466,6 +474,23 @@ const TP_TOTAL = (function(){ const n = parseInt(SETTINGS.tpCount, 10); return (
    The pack's first screen for the one visitor from outside: who it is for,
    the visit, three numbers, and a way into each section. Screen only -- the
    printed pack starts where it always has. Design: Magic Touches, 9b. */
+/* THE CENTRE'S CHECK BEFORE THE VISIT (30 Oct 2026, the specification's R40): a short list the tutors see on the pack, never
+   the assessor. Read from what the course holds: the visit's day, the trainees chosen for it, the documents provided on
+   Course admin, and the volunteer register. Advice, not a compliance mark. */
+function visitCheckHTML(){
+  const when = (typeof visitWhen === 'function' && visitWhen()) || '';
+  const chosen = (SETTINGS.assessorVisit || []).filter(id => PEOPLE.some(p => p.id === id)).length;
+  const docs = (SETTINGS && SETTINGS.docs) || {}, provided = DOC_LABELS.filter(([k]) => docs[k]).length;
+  const reg = rec('connect_volunteers_v1') || {}, vols = (reg.students || reg.list || []).length || Object.keys(reg.byId || {}).length;
+  const items = [
+    [!!when, when ? 'The visit: ' + when : 'The visit is not on the timetable yet', '23_timetable.html'],
+    [chosen > 0, chosen ? chosen + ' trainee' + (chosen === 1 ? '' : 's') + ' chosen for the visit' : 'No trainees chosen for the visit yet', '6_centre_admin_dashboard.html'],
+    [provided > 0, provided + ' of ' + DOC_LABELS.length + ' course documents provided', '6_centre_admin_dashboard.html'],
+    [vols > 0, vols ? 'The volunteer register: ' + vols + ' student' + (vols === 1 ? '' : 's') : 'The volunteer register is empty', '25_volunteer_register.html']
+  ];
+  return `<section class="vcheck" aria-label="Before the visit"><div class="vh"><b>Before the visit</b><span>Only the tutors see this. The assessor's link does not show it.</span></div>
+    <ul>${items.map(([ok, t, href]) => `<li class="${ok ? 'ok' : ''}"><span class="rk">${ok ? 'Ready' : 'Still to do'}</span><span>${esc(t)}</span><a href="${href}">Open</a></li>`).join('')}</ul></section>`;
+}
 function ap9Visit(){
   const n = PEOPLE.length;
   const chosen = (SETTINGS.assessorVisit || []).filter(id => PEOPLE.some(p => p.id === id)).length;
@@ -631,6 +656,7 @@ function renderList(){
   /* a tutor's way out, where a way back always is (Ramy, 21 Oct 2026: "I can't even get out") */
   if (MODE === 'tutor') { $('backLink').hidden = false; $('backLink').textContent = 'Back'; $('backLink').href = '5_tutor_dashboard.html'; }
   $('app').innerHTML = `
+    ${MODE === 'tutor' ? visitCheckHTML() : ''}
     ${ap9Visit()}
     <!-- Handbook 14.1 opens its list with "Candidate portfolios - clearly
          named candidate portfolios including the documentation detailed in

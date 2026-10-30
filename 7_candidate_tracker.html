@@ -267,6 +267,7 @@
   @media(prefers-reduced-motion:reduce){ .row{transition:none;} .detail{animation:none;} }
   @media(hover:none){ .row.tk-row{background:none;} .cell.tk-col{background:none;} }
   @media print{ .tk-bar{display:none;} .row.tk-row, .cell.tk-col{background:none;} }
+  .fact .v.next{font-weight:700; color:var(--ink);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610310008">
 </head>
@@ -726,6 +727,19 @@ function renderDetail(all){
   if (!RO && r.stage1Due) facts.push(['Stage 1', 'the first third of the course has passed and no Stage 1 is recorded (10.2)', 'amb']);
   if (!RO && r.watch) facts.push(['Watch', r.watch, 'amb']);
   if (!RO && r.withdrawnQuery) facts.push(['Withdrawn', r.withdrawnQuery, 'red']);
+  /* ONE NEXT ACTION (30 Oct 2026, the specification's R21: "show one derived next action and explain why an attention label
+     appears"). The reasons are above, each from its record; this is the one thing to do first, chosen in Cambridge's order. */
+  if (!RO && !ME) {
+    const nm = toMark(p);
+    const next = r.stage3Why ? 'Write Stage 3 on the CELTA 5'
+      : (r.potentialFail && !r.letterIssued) ? 'Decide on the Fail warning letter'
+      : r.withdrawnQuery ? 'Check the withdrawal against 11.4.1'
+      : nm ? 'Mark ' + nm + ' piece' + (nm === 1 ? '' : 's') + ' of work waiting'
+      : r.stage2Due ? 'Hold the Stage 2 tutorial'
+      : r.stage1Due ? 'Return Stage 1'
+      : '';
+    if (next) facts.unshift(['Next', next, 'next']);
+  }
   // The tutorials, the letter and withdrawal: one row each, set by choosing
   // a value, not by cycling a button (Ramy, 20 Sep 2026: "the stages look
   // really messy"). The trainee's view prints the values as text.
