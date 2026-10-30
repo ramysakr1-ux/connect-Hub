@@ -71,7 +71,7 @@
          screen: "it's just too much... it doesn't need to be that bright."
          A filled button at the foot of every page is a shout. Outlined,
          grey, teal when the pointer is on it. */
-      '.say-pill{display:block; margin:34px auto 26px; font-family:inherit; font-weight:600; font-size:0.8rem; line-height:1;',
+      '.say-pill{display:block; margin:64px auto 26px; font-family:inherit; font-weight:600; font-size:0.8rem; line-height:1;',
       '  background:none; color:var(--grey,#555); border:1px solid var(--sand-line,#ddd);',
       '  border-radius:999px; padding:10px 18px; cursor:pointer;}',
       '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6); background:none;}',
