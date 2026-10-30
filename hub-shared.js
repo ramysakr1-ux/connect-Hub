@@ -923,6 +923,28 @@ window.hubLevelName = function(v){
 };
 /* where a full name will not fit (Ramy, 30 Oct 2026: "use abbreviation like pre-int, upper-int ... and if you can, the full wording") */
 window.hubLevelShort = function(v){ var n = window.hubLevelName(v); return n.replace(/Pre-intermediate/g, 'Pre-int').replace(/Upper-intermediate/g, 'Upper-int').replace(/(^|\/)Intermediate/g, '$1Int'); };
+/* HOW LONG A TP LESSON IS (Ramy, 30 Oct 2026: "they start 20 minutes and then by TP8 it's an hour"; the Courseboard spec, his
+   friend's: "no duplicate timetable truth"). One reader for TP points, the set editor's stage clock and the trainee's card:
+   the published timetable's TP slot on that TP's day first; else the course's own provisional length for that TP, kept in
+   the TP points record under set.lengths (everything there lives under `set`, or the store drops it); else the set's old
+   single length; else 45. */
+window.hubTpLength = function(tp, tpRec, set){
+  var n = Number(tp), mm = function(h){ var a = String(h || '').match(/^(\d{1,2}):(\d{2})/); return a ? +a[1] * 60 + +a[2] : null; };
+  var tt = null; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {}
+  if (tt && tt.published && Array.isArray(tt.days)) {
+    var day = tt.days.filter(function(d){ return d && !d.closed && Number(d.tp) === n; })[0];
+    if (day) {
+      var sl = ((window.hubSlotsFor ? window.hubSlotsFor(tt, day.date) : tt.slots) || []).filter(function(x){ return x && x.kind === 'tp'; })[0];
+      var len = sl ? mm(sl.to) - mm(sl.from) : 0;
+      if (len >= 10 && len <= 180) return { min: len, from: 'timetable' };
+    }
+  }
+  var L = tpRec && tpRec.set && tpRec.set.lengths ? parseInt(tpRec.set.lengths[n], 10) : NaN;
+  if (L >= 15 && L <= 120) return { min: L, from: 'course' };
+  var S = set ? parseInt(set.minutes, 10) : NaN;
+  if (S >= 15 && S <= 120) return { min: S, from: 'set' };
+  return { min: 45, from: 'default' };
+};
 window.hubClockIs24 = function(){
   try { var cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return String(cs.clock || '') === '24'; }
   catch (e) { return false; }

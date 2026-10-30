@@ -455,6 +455,34 @@
   .tpout .oo span{display:flex; flex-direction:column; gap:2px;} .tpout .oo small{font-size:0.78rem; color:var(--grey);}
   .tpout .oo select{font:inherit; font-size:0.8rem; padding:2px 6px; border:1px solid var(--sand-line); border-radius:6px; background:var(--paper);}
   .tpout .ohand{display:grid; gap:6px; margin:10px 0 0;} .tpout .orow{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:0.86rem;} .tpout .orow span{color:var(--grey);}
+
+  /* THE COURSEBOARD (Ramy, 30 Oct 2026: his friend's design, "keep that sort of green color ... as TP points, it'd be kind of like
+     an engine"; their header bar stays out). Which set each group uses, how long each TP lesson is, and one Deal. */
+  .cb{background:#fcfbf7; border:1px solid #d9ddd5; border-radius:17px; box-shadow:0 8px 22px rgba(24,63,50,.07); margin:18px 0 6px; color:#1d2520;}
+  .cb .cbhead{display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; padding:20px 22px 12px;}
+  .cb h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.45rem; margin:0 0 4px; color:#1d2520;}
+  .cb .cbsub{color:#667069; font-size:0.9rem; margin:0;}
+  .cb .cbpill{font-size:0.75rem; font-weight:600; padding:6px 12px; border-radius:99px; background:#e0f0ea; color:#183f32; text-decoration:none; white-space:nowrap;}
+  .cb .cbrow{display:grid; grid-template-columns:150px minmax(0,1fr) auto; gap:16px; align-items:center; padding:14px 22px; border-top:1px solid #d9ddd5;}
+  .cb .cbg b{display:block; font-size:0.95rem; font-weight:600;}
+  .cb .cbg small{color:#667069; font-size:0.76rem;}
+  .cb select{width:100%; font:inherit; font-size:0.9rem; padding:9px 11px; border:1px solid #d9ddd5; border-radius:10px; background:#fcfbf7; color:#1d2520;}
+  .cb .cbact{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;}
+  .cb .cbtag{font-size:0.7rem; font-weight:800; padding:5px 11px; border-radius:99px; white-space:nowrap;}
+  .cb .cbtag.cx{background:#e0f0ea; color:#183f32;} .cb .cbtag.own{background:#f8e9e3; color:#9a503d;} .cb .cbtag.none{background:#f2f1ed; color:#667069;}
+  .cb .cblink{color:#183f32; font-weight:600; font-size:0.86rem; text-decoration:underline; text-underline-offset:3px;}
+  .cb .cblen{display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; padding:16px 22px; border-top:1px solid #d9ddd5; align-items:start;}
+  .cb .cblen b{display:block; font-size:0.95rem; font-weight:600;} .cb .cblen small{color:#667069; font-size:0.76rem; line-height:1.4; display:block; margin-top:3px;}
+  .cb .cblens{display:grid; grid-template-columns:repeat(var(--n,6), minmax(0,1fr)); gap:8px;}
+  .cb .cblens label{display:block; text-align:center; font-size:0.66rem; font-weight:700; letter-spacing:.1em; color:#1d2520; margin:0 0 6px;}
+  .cb .cblens input, .cb .cblens .ro{width:100%; box-sizing:border-box; text-align:center; font:inherit; font-size:0.9rem; padding:9px 4px; border:1px solid #d9ddd5; border-radius:10px; background:#f2f1ed; color:#1d2520;}
+  .cb .cblens .ro{display:block; color:#667069;}
+  .cb .cbdeal{display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding:16px 22px 18px; border-top:1px solid #d9ddd5;}
+  .cb .cbgo{font:inherit; font-weight:700; font-size:0.9rem; padding:10px 18px; border:0; border-radius:10px; background:#c68b29; color:#382708; box-shadow:0 3px 0 #ad7820; cursor:pointer;}
+  .cb .cbgo:hover{filter:brightness(1.05);} .cb .cbgo:active{transform:translateY(2px); box-shadow:0 1px 0 #ad7820;}
+  .cb .cbst{color:#667069; font-size:0.86rem;}
+  .cbnote{color:#667069; font-size:0.8rem; margin:0 0 16px;}
+  @media (max-width:720px){ .cb .cbrow{grid-template-columns:1fr; gap:10px;} .cb .cbact{justify-content:flex-start;} .cb .cblen{grid-template-columns:1fr;} .cb .cblens{grid-template-columns:repeat(3, minmax(0,1fr));} }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610301615">
 <style>
@@ -976,7 +1004,7 @@ function build(keepEdits){
      library with it. Whatever is on the record stays on the record. */
   const out = Object.assign({}, P || {}, { groups: {}, sets: {},
                 released: (P && P.released) || {},
-                set: { library: lib, setFor: assigned() } });
+                set: Object.assign({}, (P && P.set) || {}, { library: lib, setFor: assigned() }) });
   let usedAny = false;
   gs.forEach((g, i) => {
     const set = setFor(g.group);
@@ -1023,7 +1051,7 @@ function build(keepEdits){
     });
   });
   P = out;
-  persist(usedAny ? (Object.keys(lib).length > 1 ? 'Built from the sets' : 'Built from the set') : 'Rotation built');
+  persist(usedAny ? 'TP points dealt.' : 'Lesson types dealt.');
 }
 
 function persist(word){
@@ -2063,12 +2091,12 @@ function renderCore(){
     app.innerHTML = head + startHTML();
     const bb = $('build'); if (bb) bb.addEventListener('click', () => build(false));
     const tonly = $('typesOnly'); if (tonly) tonly.addEventListener('click', () => { TYPES_ONLY = true; render(); });
-    wireSetBar();
+    wireBoard(false);
     return;
   }
   BUILT = true;
 
-  app.innerHTML = head + setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Rebuild</button><span class="status">${esc(note)}</span></div>` + tpOutHTML(gs) + gs.map(g => {
+  app.innerHTML = head + (Object.keys(library()).length ? boardHTML(true) : setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Deal TP points again</button><span class="status">${esc(note)}</span></div>`) + tpOutHTML(gs) + gs.map(g => {
     const rows = (P.groups || {})[g.group] || {};
     const lettered = R.lettersFor(g.people);
     const sets = R.setsFor(g.people);
@@ -2100,7 +2128,7 @@ function renderCore(){
       ${(function(){
         /* WHICH BOOK THIS GROUP TEACHES FROM (Ramy, 28 Oct 2026: "I cannot go back to choose another book for the other group").
            The choice lived only on the sets page, under Taught by; now each group's card says it, and changes it, here. */
-        const lib = library(), ids = Object.keys(lib); if (ids.length < 2) return '';
+        const lib = library(), ids = Object.keys(lib); if (ids.length) return '';   /* on the Courseboard now (30 Oct 2026) */
         const cur = setIdFor(g.group);
         return `<p class="bookrow"><label>Teaches from <select data-book="${esc(g.group)}">${ids.map(id => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(setName(lib[id]))}${lib[id].level ? ' · ' + esc(window.hubLevelName ? hubLevelName(lib[id].level) : lib[id].level) : ''}</option>`).join('')}</select></label><span class="status">Apply it afterwards to deal this book's lessons.</span></p>`; })()}
       <div class="relbar">${on
@@ -2140,7 +2168,7 @@ function renderCore(){
   }).join('');
 
   if ($('rebuild')) $('rebuild').addEventListener('click', () => build(true));   // same: no confirm, see wireSetBar
-  wireSetBar();
+  wireSetBar(); wireBoard(true);
   /* THE TEACHING SETS BY HAND. The letters are kept in the course settings as
      `letterOrder` (hub-rotation reads it), so every screen agrees, then the
      lessons are dealt again -- a cell a tutor changed by hand is kept. */
@@ -2222,11 +2250,74 @@ var BUILT = false, TYPES_ONLY = false;   // the rotation is dealt; a tutor chose
    open the library ... work this out"). Before anything is dealt the page asks two things, in this order: where the
    lessons come from (Connect's library, or a set of the course's own; or, quietly, lesson types only), then deal the
    trainees into them. Nobody is shown "see it as" a trainee while there is nothing for a trainee to see. */
+/* THE COURSEBOARD (30 Oct 2026, from the spec Ramy's friend wrote). One card once a set is chosen: which set each group
+   uses, how long each TP lesson is, and one Deal. It replaces the set chips, Write the sets, Another book, Apply, Rebuild and
+   each group's own "Teaches from". Choosing a set only says which set a group uses; nothing reaches a trainee until Deal. */
+function readyOf(s){
+  const sess = sessionIds();
+  return s ? sess.filter(k => { const sl = (((s.sessions || {})[k] || {}).slots) || []; return [0, 1, 2].every(i => sl[i] && (sl[i].type || sl[i].aim)); }).length : 0;
+}
+function dealKept(){
+  let ed = 0, mk = 0;
+  Object.values((P && P.groups) || {}).forEach(rows => Object.values(rows || {}).forEach(r => Object.values(r || {}).forEach(c => { if (c && c.edited) ed++; if (c && c.missed) mk++; })));
+  return { ed, mk };
+}
+function boardHTML(dealt){
+  const lib = library(), ids = Object.keys(lib), gs = groups(), sess = sessionIds();
+  const lv = x => { const n = window.hubLevelName ? hubLevelName(x.level) : (x.level || ''); return n && String(setName(x)).toLowerCase().indexOf(n.toLowerCase()) === -1 ? ' · ' + n : ''; };
+  const rows = gs.map((g, gi) => {
+    const cur = setIdFor(g.group), s = lib[cur], cx = s && !s.own, rd = readyOf(s);
+    const r = R.rotate(g.people, { tps: TPS, groupOffset: gi * 3 });
+    const sets = (r.sets || []).filter(st => st.length).map(st => R.setName(st)).join(' / ');
+    const tag = !s ? '<span class="cbtag none">No set yet</span>'
+      : cx ? '<span class="cbtag cx">Connect’s set</span>'
+      : `<span class="cbtag own">Your own · ${rd}/${sess.length} ready</span>`;
+    const act = s ? `<a class="cblink" href="28_tp_point_sets.html?from=tp&set=${encodeURIComponent(cur)}">${cx ? 'Open' : 'Write'}</a>` : '';
+    const label = g.group ? 'Group ' + g.group : 'The course';
+    return `<div class="cbrow"><div class="cbg"><b>${esc(label)}</b><small>${g.people.length} trainee${g.people.length === 1 ? '' : 's'}${sets ? ' · ' + esc(sets) : ''}</small></div>
+      <select data-cbset="${esc(g.group)}" aria-label="The TP point set ${esc(label)} uses"><optgroup label="Sets on this course">${ids.map(id => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(setName(lib[id]))}${esc(lv(lib[id]))}</option>`).join('')}</optgroup>
+        <optgroup label="Add a set"><option value="__pool">Browse the TP Point Pool…</option><option value="__own">Write your own set…</option></optgroup></select>
+      <div class="cbact">${tag}${act}</div></div>`;
+  }).join('');
+  const first = lib[setIdFor((gs[0] || {}).group)] || null;
+  const lens = Array.from({ length: TPS }, (_, k) => k + 1).map(tp => {
+    const L = window.hubTpLength ? hubTpLength(tp, P, first) : { min: 45, from: 'default' };
+    return `<div><label for="cbl${tp}">TP ${tp}</label>${L.from === 'timetable' ? `<span class="ro" id="cbl${tp}">${L.min}</span>` : `<input id="cbl${tp}" type="number" min="15" max="120" step="5" inputmode="numeric" data-cblen="${tp}" value="${L.min}">`}</div>`;
+  }).join('');
+  const fromTT = window.hubTpLength && hubTpLength(1, P, first).from === 'timetable';
+  const kept = dealKept();
+  const st = note ? note
+    : !dealt ? 'No lessons have been dealt yet.'
+    : 'Dealt. Dealing again updates the lessons Lite gave out' + (kept.ed || kept.mk ? '; ' + [kept.ed ? kept.ed + ' lesson' + (kept.ed === 1 ? '' : 's') + ' you changed' : '', kept.mk ? kept.mk + ' make-up' + (kept.mk === 1 ? '' : 's') : ''].filter(Boolean).join(' and ') + ' stay in place.' : '.');
+  return `<section class="cb" aria-labelledby="cbh">
+    <div class="cbhead"><div><h2 id="cbh">Which TP point set each group uses</h2><p class="cbsub">One choice per group. A set includes the book, the lessons and the level.</p></div><a class="cbpill" href="6_centre_admin_dashboard.html">Course setup</a></div>
+    ${rows}
+    <div class="cblen"><div><b>Lesson length</b><small>${fromTT ? 'From the timetable; change it there. The stage clock uses the same length.' : 'Minutes, until the timetable says. The stage clock uses the same length.'}</small></div><div class="cblens" style="--n:${TPS}">${lens}</div></div>
+    <div class="cbdeal"><button type="button" class="cbgo" id="cbdeal">${dealt ? 'Deal TP points again' : 'Deal TP points'}</button><span class="cbst" role="status">${esc(st)}</span></div>
+  </section>
+  <p class="cbnote">Dealing keeps the order balanced, so nobody in a teaching set teaches the same kind of lesson on the same day. The last two TPs are the trainees’ own.</p>`;
+}
+function wireBoard(dealt){
+  const d = $('cbdeal'); if (d) d.addEventListener('click', () => build(!!dealt));
+  document.querySelectorAll('select[data-cbset]').forEach(el => el.addEventListener('change', () => {
+    const g = el.dataset.cbset, v = el.value;
+    if (v === '__pool' || v === '__own') { location.href = '28_tp_point_sets.html?from=tp&' + (v === '__pool' ? 'add=1' : 'make=1') + '&group=' + encodeURIComponent(g); return; }
+    P.set = P.set || {}; P.set.setFor = Object.assign({}, assigned(), { [g]: v });
+    persist((g ? 'Group ' + g : 'The course') + ' uses ' + setName(library()[v]) + '. Deal to give it out.');
+  }));
+  document.querySelectorAll('input[data-cblen]').forEach(el => el.addEventListener('change', () => {
+    const n = parseInt(el.value, 10); if (!(n >= 15 && n <= 120)) { el.value = (window.hubTpLength ? hubTpLength(+el.dataset.cblen, P, null).min : 45); return; }
+    P.set = P.set || {}; P.set.lengths = Object.assign({}, P.set.lengths || {}, { [el.dataset.cblen]: n });
+    persist('TP ' + el.dataset.cblen + ' is ' + n + ' minutes');
+  }));
+}
+
 function startHTML(){
   const lib = library(), has = Object.keys(lib).some(id => { const x = lib[id]; return !!(x.book || (x.name && !x.own)) || sessionIds().some(k => ((x.sessions || {})[k] || {}).slots && x.sessions[k].slots.some(sl => sl && (sl.type || sl.aim))); });
   const ready = has || TYPES_ONLY;
+  if (has) return boardHTML(false);
   const step1 = has
-    ? `<div class="tstep done"><p class="tsn">Step 1 · The lessons</p>${setBar()}</div>`
+    ? ''
     : `<div class="tstep"><p class="tsn">Step 1 · Choose the lessons</p>
         <div class="tchoice">
           <a class="tcard lib" href="28_tp_point_sets.html?from=tp&add=1"><b>Connect’s library</b><span>TP points already written for Speakout, Empower and other coursebooks, level by level. Pick one for each group.</span><em>Open the library</em></a>

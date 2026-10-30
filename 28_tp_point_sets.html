@@ -245,6 +245,13 @@
   @media(prefers-reduced-motion:reduce){ .sm-cell, .sm-cell i{transition:none;} }
   @media(max-width:560px){ .sm-cell{height:18px; padding:2px;} .sm-grid{gap:4px 3px;} }
   @media print{ .sm-map{display:none;} }
+
+  /* the Courseboard's editor top (30 Oct 2026) */
+  .ro-line{font-size:0.92rem; color:var(--ink); padding:6px 0;} .ro-line a.hint{color:var(--grey); text-decoration:underline; text-underline-offset:3px;}
+  .addmenu{display:inline-block; position:relative;} .addmenu summary{list-style:none; cursor:pointer;} .addmenu summary::-webkit-details-marker{display:none;}
+  .addmenu .addpop{position:absolute; z-index:5; top:calc(100% + 6px); left:0; width:min(300px, 86vw); background:var(--paper); border-radius:12px; box-shadow:var(--nb-shadow); padding:6px;}
+  .addmenu .addpop button{display:block; width:100%; text-align:left; font:inherit; background:none; border:0; border-radius:8px; padding:10px 12px; cursor:pointer; color:var(--ink);}
+  .addmenu .addpop button:hover{background:var(--field);} .addmenu .addpop b{display:block; font-size:0.9rem;} .addmenu .addpop span{font-size:0.78rem; color:var(--grey);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610301615">
 <style>
@@ -593,6 +600,7 @@ async function takeFromLibrary(libId){
        set and then I change my mind and I want to come out and choose Connect library, I can't") */
     Object.keys(LIB).forEach(k => { const x = LIB[k]; if (k !== id && x && x.own && !String(x.book || '').trim()
       && !Object.values(x.sessions || {}).some(ses => (ses.slots || []).some(sl => sl && (sl.type || sl.aim || (sl.stages || []).length)))) delete LIB[k]; });
+    forGroup(id);
     CUR = id; S = LIB[id]; OPEN = null; SHOWLIB = false; TAKING = ''; LIBNOTE = '';
     persist(row.book.split(',')[0] + ' is on the course');
   } catch (e) {
@@ -710,7 +718,7 @@ function persist(word){
   if (S) S.updated = new Date().toISOString().slice(0, 10);
   /* Everything lives under `set`: the store rebuilds this record from named
      keys when it reads it, so a sibling field would never come back. */
-  P.set = { library: LIB, setFor: FOR };
+  P.set = Object.assign({}, P.set || {}, { library: LIB, setFor: FOR });   /* keeps set.lengths, the course's lesson lengths (30 Oct 2026) */
   try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {}
   note = word || 'Saved';
   render();
@@ -740,7 +748,7 @@ function render(){
         <button type="button" class="tcard own" id="make"><b>Your own set</b><span>Write your course’s TP points against your coursebook, session by session, or import each from a document.</span><em>Start a set</em></button>
       </div>`;
     wireLibrary();
-    const mk = $('make'); if (mk) mk.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; persist('Set started'); };
+    const mk = $('make'); if (mk) mk.onclick = () => { const id = newId(); LIB[id] = blankSet(); forGroup(id); CUR = id; S = LIB[id]; persist('Set started'); };
     const tl = $('takelib'); if (tl) tl.onclick = openLibrary;
     if (new URLSearchParams(location.search).get('make') === '1' && mk && !MADE) { MADE = true; mk.click(); }
     return;
@@ -765,12 +773,12 @@ function render(){
   const gnames = groupNames();
   const tabs = `<div class="settabs">${ids.map(id => `<button type="button" class="settab${id === CUR ? ' on' : ''}" data-set="${id}">${esc(LIB[id].name || LIB[id].book || 'Untitled set')}${
       LIB[id].level || LIB[id].book ? `<i>${esc(window.hubLevelShort ? hubLevelShort(bookLevel(LIB[id].book, LIB[id].level).shelf) : bookLevel(LIB[id].book, LIB[id].level).shelf)}</i>` : ''}</button>`).join('')}
-    <button type="button" class="settab add" id="addlib">Add one of Connect’s sets</button>
-    <button type="button" class="settab add" id="addset">Write your own set</button></div>`;
-  const usedBy = !gnames.length ? '' : `<div class="row"><label class="lab">Taught by</label><div class="groupsel">${
-    gnames.map(g => { const on = (FOR[g] || ids[0]) === CUR;
-      return `<label class="gchip${on ? ' on' : ''}"><input type="checkbox" data-group="${esc(g)}"${on ? ' checked' : ''}> Group ${esc(g)}</label>`; }).join('')}
-    <p class="hint" style="margin:5px 0 0">Which groups teach from this set. A course of twenty-four running four groups has four sets, one per tutor and book.</p></div></div>`;
+    <details class="addmenu"><summary class="settab add">+ Add a set</summary><div class="addpop">
+      <button type="button" id="addlib"><b>Browse the TP Point Pool</b><span>Written against a real coursebook, ready to deal.</span></button>
+      <button type="button" id="addset"><b>Write your own set</b><span>Your book, your lessons.</span></button></div></details></div>`;
+  /* WHO USES THIS SET is chosen on TP points now, one choice per group (the Courseboard, 30 Oct 2026); here it is only said. */
+  const users = gnames.filter(g => (FOR[g] || ids[0]) === CUR);
+  const usedBy = !gnames.length ? '' : `<div class="row"><label class="lab">Used by</label><div class="ro-line">${users.length ? users.map(g => 'Group ' + esc(g)).join(', ') : 'Not used on this course'} <a class="hint" href="24_tp_points.html">· chosen on TP points</a></div></div>`;
 
   $('app').innerHTML = `<p class="eyebrow">Teaching practice</p><h1>TP point sets</h1>
     <p class="lede">The lessons this course teaches, written once against the book. A set belongs to a tutor and their book; the rotation on the TP points screen deals its slots to whoever is teaching. Give a slot its stages and the trainee’s own plan can start from them.</p>
@@ -783,12 +791,14 @@ function render(){
       <div class="row"><label class="lab" for="setname">This set is</label><input id="setname" value="${esc(S.name || '')}" placeholder="Jordan’s group · Language Hub Elementary">${Object.keys(LIB).length > 1 && !written(S) ? '<button type="button" class="btn quiet sm" id="dropset" style="margin-left:10px">Remove this set</button>' : ''}</div>
       ${usedBy}
       <div class="row"><label class="lab" for="book">Coursebook</label><input id="book" value="${esc(S.book || '')}" placeholder="Language Hub Elementary"></div>
-      <div class="row"><label class="lab" for="level">Level</label><select id="level">${(() => { const cur = bookLevel(S.book, S.level).shelf, opts = (window.HUB_LEVELS || []).map(([c, n]) => [c + ' (' + n.toLowerCase() + ')', n]);
-        return '<option value="">Choose a level</option>' + opts.map(([v, n]) => `<option value="${esc(v)}"${S.level && n === cur ? ' selected' : ''}>${esc(n)}</option>`).join(''); })()}</select></div>
+      ${isConnects(S) ? `<div class="row"><label class="lab">Level</label><div class="ro-line">${esc(bookLevel(S.book, S.level).shelf)}</div></div>` : `<div class="row"><label class="lab" for="level">Level</label><select id="level">${(() => { const cur = bookLevel(S.book, S.level).shelf, opts = (window.HUB_LEVELS || []).map(([c, n]) => [c + ' (' + n.toLowerCase() + ')', n]);
+        return '<option value="">Choose a level</option>' + opts.map(([v, n]) => `<option value="${esc(v)}"${S.level && n === cur ? ' selected' : ''}>${esc(n)}</option>`).join(''); })()}</select></div>`}
       <div class="row"><label class="lab" for="url">Link to the book</label><div><input id="url" type="url" value="${esc(S.url || '')}" placeholder="https://… wherever the book lives"><p class="hint">Every slot&rsquo;s card links here, so the link is written once. The page number in a slot opens a direct PDF address at that page.</p></div></div>
       <div class="row"><label class="lab" for="audiourl">Link to the audio</label><div><input id="audiourl" type="url" value="${esc(S.audioUrl || '')}" placeholder="https://\u2026 the folder your class audio lives in"><p class="hint">Where this book&rsquo;s recordings live &mdash; a Drive folder, the publisher&rsquo;s page, wherever. A slot that names a track without carrying the file points here, so the track number leads somewhere. Written once, like the book.</p></div></div>
       <div class="row"><label class="lab" for="sources">How to source it</label><div><textarea id="sources" rows="3" placeholder="Maggs, P. &amp; Smith, C. (2019) Language Hub Elementary Student&rsquo;s Book. Macmillan.&#10;Pathare, G. (2019) Language Hub Elementary Teacher&rsquo;s Book. Macmillan.&#10;One reference per line">${esc(S.sources || '')}</textarea><p class="hint">The references for this book, written correctly. They appear on the card for the first two TPs only, taken apart so the trainee can see which part is which &mdash; after that they write their own.</p></div></div>
-      <div class="row"><label class="lab" for="mins">A slot is</label><div class="pair" style="display:grid;grid-template-columns:110px 1fr;gap:9px;align-items:center"><input id="mins" type="number" min="15" max="120" value="${esc(S.minutes || 45)}"><span class="hint" style="margin:0">minutes. The stage clock in each slot counts against this.</span></div></div>
+      <div class="row"><label class="lab">Lesson length</label><div class="ro-line">${(() => { const T = rec(KEY) || {}; const tps = Math.max(1, (parseInt((rec('connect_course_settings') || {}).tpCount, 10) || 8) - 2);
+        const m = Array.from({ length: tps }, (_, k) => window.hubTpLength ? hubTpLength(k + 1, T, S).min : (S.minutes || 45));
+        return m.every(x => x === m[0]) ? m[0] + ' minutes, every TP' : m.map((x, k) => 'TP ' + (k + 1) + ' · ' + x).join(', ') + ' minutes'; })()} <a class="hint" href="24_tp_points.html">· set on TP points</a></div></div>
     </div>
     ${pagesPanel()}
     ${sessions}
@@ -802,7 +812,7 @@ function render(){
 function lockConnects(){
   if (!isConnects(S)) return;
   const head = document.querySelector('.head'); if (!head) return;
-  if (!head.querySelector('.cxnote')) head.querySelector('.hband').insertAdjacentHTML('afterend', '<p class="cxnote"><b>Connect’s set.</b> It stays as written. Yours to set: which groups teach from it, the links to the book and the audio, and the pages from your own PDF.</p>');
+  if (!head.querySelector('.cxnote')) head.querySelector('.hband').insertAdjacentHTML('afterend', '<p class="cxnote"><b>Connect’s set.</b> It stays as written. Yours to add: the links to the book and the audio, and the pages from your own course copy.</p>');
   ['setname', 'book', 'level', 'sources', 'mins'].forEach(id => { const el = $(id); if (el) { el.readOnly = true; el.classList.add('ro'); } });
   document.querySelectorAll('.sbody input, .sbody textarea, .sbody select').forEach(el => { el.disabled = true; if (el.tagName !== 'SELECT' && !String(el.value || '').trim()) el.classList.add('cxempty');
     /* a long note shows whole: the box grows to its text */
@@ -1089,7 +1099,7 @@ function sessionBody(id, ses){
 }
 
 function slotBody(id, i, sl, scaffold){
-  const total = slotMinutes(sl), cap = parseInt(S.minutes, 10) || 45;
+  const total = slotMinutes(sl), cap = window.hubTpLength ? hubTpLength(parseInt(id, 10) || 1, rec(KEY) || {}, S).min : (parseInt(S.minutes, 10) || 45);   /* this TP's own length (30 Oct 2026) */
   const over = total > cap;
   const FULL = scaffold === 'full', issues = standardIssues(sl, scaffold);
   const stages = scaffold === 'bare' ? `
@@ -1166,7 +1176,7 @@ function wire(){
     CUR = el.dataset.set; S = LIB[CUR]; OPEN = null; render();
   });
   const add = $('addset');
-  if (add) add.onclick = () => { const id = newId(); LIB[id] = blankSet(); CUR = id; S = LIB[id]; OPEN = null; persist('Your own set started'); };
+  if (add) add.onclick = () => { const id = newId(); LIB[id] = blankSet(); forGroup(id); CUR = id; S = LIB[id]; OPEN = null; persist('Your own set started'); };
   wireLibrary();
   wirePages();
   const off = $('offer');
@@ -1438,6 +1448,10 @@ function parseDoc(text){
 }
 
 load();
+/* From the Courseboard (30 Oct 2026): ?set= opens that set; ?group= with add or make gives the new set to that group. */
+const Q_ = new URLSearchParams(location.search), Q_GROUP = Q_.get('group');
+if (Q_.get('set') && LIB[Q_.get('set')]) { CUR = Q_.get('set'); S = LIB[CUR]; }
+const forGroup = id => { if (Q_GROUP !== null && Q_GROUP !== undefined && id) FOR[Q_GROUP] = id; };
 render();
 /* the catalogue is a kilobyte: fetched at once so an older copy of one of Connect's sets is known as Connect's */
 fetch(LIB_CATALOGUE + '?v=' + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (Array.isArray(j) && !CAT) { CAT = j; render(); } }).catch(() => {});
