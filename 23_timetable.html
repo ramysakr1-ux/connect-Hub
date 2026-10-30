@@ -2978,7 +2978,7 @@ function openDetails(date, id){
   const el = pop('ttpop');
   const name = x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '');
   const lt = localRange(day.date, x.s, x.e), tut = x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by] ? TUTORS[+x.by] : '';
-  const page = x.k === 'input' ? libPageFor(x.t) : '';
+  const page = x.k === 'input' ? (x.lib ? 'input-sessions/' + x.lib + '/' : libPageFor(x.t)) : '';
   const room = joinFor(x, (rec('hub:me') || {}).group);
   el.innerHTML = `<p class="dt1">${esc(dayName(date))} · ${esc(hubClockRange(x.s, x.e))}${lt ? ` · <span class="lt" title="Your time">${esc(lt)}</span>` : ''}</p>
     <span class="kchip k-${esc(x.k)}">${esc(KIND_LABEL[x.k] || x.k)}</span>
@@ -2993,10 +2993,15 @@ function openDetails(date, id){
 }
 /* A new session (+ Session, an empty place, or the library): made on the draft at once and opened to change, the same as
    any other; closing it with nothing typed keeps an empty tile the tutor can name later or remove. */
+/* THE SESSION KNOWS ITS PAGE (31 Oct 2026, the specification's R05: "link input material to a precise timetable session,
+   not a matching title"). A session placed from the Input library carries its page (x.lib) as well as its title; the
+   tile, the trainee's home and the library's own opening rule read x.lib first. Sessions placed before this, or typed by
+   hand, still find their page by title, as they always have. */
+const libSlugOf = t => { const n = normT(t); const hit = STUDIO_LIB.concat(LIB_SESSIONS).find(x => normT(x[1]) === n); return hit ? hit[0] : ''; };
 function newSession(date, s, e, t){
   const day = dayOfDate(date); if (!day || day.closed) return;
   const x = { id: newId(), s, e, k: t ? 'input' : 'event' };
-  if (t) { x.t = t; x.room = 'Input'; }
+  if (t) { x.t = t; x.room = 'Input'; const sl = libSlugOf(t); if (sl) x.lib = sl; }
   openTile(date, x.id, x);
 }
 function freeAfter(day){
@@ -3476,7 +3481,7 @@ function openTile(date, id, fresh){
   /* CONNECT'S SESSIONS KEEP THEIR TITLE (Ramy, 30 Oct 2026: "they cannot change the title, but they can still click on the session
      ... maybe they want to change other things like the time or the length. But the title stays and then it will say why"). The
      title is what finds the session page (libPageFor), so renaming it would quietly cut the tile off from its page. */
-  const CX_TITLE = x0.k === 'input' && !!libPageFor(x0.t);
+  const CX_TITLE = x0.k === 'input' && !!(x0.lib || libPageFor(x0.t));
   const groupsOpt = GROUPS.length > 1 ? GROUPS.map(g => String(g.group || '')).filter(Boolean) : [];
   const tpField = k => k === 'tp'
     ? `<div class="two"><label>TP number<input name="tp" type="number" min="1" max="8" value="${esc(day0.tp || '')}"></label>
@@ -3529,6 +3534,7 @@ function openTile(date, id, fresh){
     if (g) x.g = g; else delete x.g;
     const d = v('d').trim(); if (d) x.d = d; else delete x.d;
     if (url) x.url = url; else delete x.url;
+    if (k !== 'input') delete x.lib;   /* a session that is no longer input no longer opens a session page */
     if (F.elements.locked.checked) x.locked = true; else delete x.locked;
     if (to !== from || isNew) {
       if (!isNew) from.sessions = from.sessions.filter(o => o !== x);

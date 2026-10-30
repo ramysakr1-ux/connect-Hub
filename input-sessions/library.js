@@ -60,7 +60,7 @@ window.InputLib = (function(){
       if (!d || !d.date) return;
       (d.sessions || []).forEach(function(x){
         if (!x || x.k !== 'input' || !x.t) return;
-        var slugs = slugsFor(x.t);
+        var slugs = x.lib ? [String(x.lib)] : slugsFor(x.t);   /* the page the session was placed from, first (R05, 31 Oct 2026) */
         if (!slugs.length) slugs = [''];
         slugs.forEach(function(sl){ out.push({ date: d.date, s: x.s || '', t: x.t, slug: sl }); });
       });
