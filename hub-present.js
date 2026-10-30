@@ -264,6 +264,23 @@
     say('Five volunteer students. Add them: the addresses are made up, so no invitation leaves Lite.');
   }};
 
+  /* THE VOLUNTEERS ARE READY (Ramy, 30 Oct 2026: "they haven't agreed to be filmed or recorded ... can we make it so that they
+     actually have agreed"; "it still reads 200 hours ... I only see the notebook"). A demo's made-up volunteers are added with
+     a name and an address and nothing more, and two things then go wrong: with no level the page counts 200 hours and the
+     store sends no homework or flip cards (volunteerCards answers an empty list for a volunteer with no level); and none of
+     them has agreed to the joining note, which holds back the FoL interviews. So, as they are added: a level (the two
+     elementary groups' A2, the two B2), and, all but the first, the joining note agreed, the same stamp their own press leaves.
+     The first is the one the Volunteer button opens, so its consent card is still there to show, and Ramy agrees it himself. */
+  if (PAGE === '25_volunteer_register.html' && ROLE === 'tutor') setInterval(function(){
+    var R = g('REG'); if (!R || !Array.isArray(R.students)) return;
+    var withLink = R.students.filter(function(x){ return x && x.token; }), LV = ['A2', 'A2', 'B2', 'B2', 'A2'], lv = 0, ag = 0;
+    withLink.forEach(function(x, i){
+      if (!x.level) { x.level = LV[i % LV.length]; lv++; }
+      if (i > 0 && !x.agreed) { x.agreed = new Date().toISOString(); ag++; }
+    });
+    if ((lv || ag) && typeof g('persist') === 'function') g('persist')((lv ? lv + ' got a level' : '') + (lv && ag ? ', ' : '') + (ag ? ag + ' agreed to the joining note' : ''));
+  }, 1500);
+
   FILL['23_timetable.html'] = { who: 'tutor', label: 'Fill in', run: async function(P){
     if (!has('TT') || typeof g('startFromCarried') !== 'function') { say('This page has nothing to fill in.'); return; }
     if (!cs().start) { say('Set the course dates in Course admin first.'); return; }
