@@ -48,7 +48,7 @@
         'Trainee teachers may reference it in their coursework. It will not be shared with any other party.',
         'You may withdraw from the course at any time.'
       ],
-      recordingConsentLine: 'I agree to being recorded, in sound or on video, during this sign-up and in lessons, for teacher-training purposes only.',
+      recordingConsentLine: 'I agree to being recorded, in sound or on video, in lessons, for teacher-training purposes only.',
       agreeLabel: 'I agree',
       keptNote: 'Your agreement is kept on this device and noted on the course register.',
       readAgain: 'Read it again',
@@ -80,7 +80,7 @@
         'Öğretmen adayları bu bilgilere ödevlerinde başvurabilir. Bilgileriniz başka hiçbir tarafla paylaşılmayacaktır.',
         'Kurstan istediğiniz zaman ayrılabilirsiniz.'
       ],
-      recordingConsentLine: 'Bu kayıt sırasında ve derslerde ses veya görüntü olarak kaydedilmeyi, yalnızca öğretmen eğitimi amacıyla, kabul ediyorum.',
+      recordingConsentLine: 'Derslerde ses veya görüntü olarak kaydedilmeyi, yalnızca öğretmen eğitimi amacıyla, kabul ediyorum.',
       agreeLabel: 'Kabul ediyorum',
       keptNote: 'Onayınız bu cihazda saklanır ve kurs kayıt defterine işlenir.',
       readAgain: 'Tekrar oku',
@@ -108,7 +108,7 @@
         'يجوز للمتدربين الرجوع إليها في أعمالهم الدراسية. لن تُشارك مع أي طرف آخر.',
         'يجوز لك الانسحاب من الدورة في أي وقت.'
       ],
-      recordingConsentLine: 'أوافق على تسجيلي صوتًا أو صورةً أثناء هذا التسجيل وفي الدروس، لأغراض تدريب المعلمين فقط.',
+      recordingConsentLine: 'أوافق على تسجيلي صوتًا أو صورةً في الدروس، لأغراض تدريب المعلمين فقط.',
       agreeLabel: 'أوافق',
       keptNote: 'تُحفظ موافقتك على هذا الجهاز وتُسجَّل في سجل الدورة.',
       readAgain: 'اقرأها مرة أخرى',
@@ -136,7 +136,7 @@
         'Стажёры-преподаватели могут использовать её в учебных целях. Она не будет передана никакой другой стороне.',
         'Вы можете прекратить участие в курсе в любое время.'
       ],
-      recordingConsentLine: 'Я согласен на аудио- или видеозапись во время этой регистрации и на занятиях, исключительно в целях подготовки преподавателей.',
+      recordingConsentLine: 'Я согласен на аудио- или видеозапись на занятиях, исключительно в целях подготовки преподавателей.',
       agreeLabel: 'Я согласен',
       keptNote: 'Ваше согласие сохраняется на этом устройстве и отмечается в журнале курса.',
       readAgain: 'Прочитать ещё раз',
@@ -164,7 +164,7 @@
         'کارآموزان معلمی ممکن است در تکالیف درسی خود به آن استناد کنند. این اطلاعات با هیچ طرف دیگری به اشتراک گذاشته نخواهد شد.',
         'شما می‌توانید در هر زمان از دوره انصراف دهید.'
       ],
-      recordingConsentLine: 'من با ضبط صدا یا تصویر خودم در طول این ثبت‌نام و در کلاس‌ها، صرفاً برای اهداف آموزش معلمان، موافقم.',
+      recordingConsentLine: 'من با ضبط صدا یا تصویر خودم در کلاس‌ها، صرفاً برای اهداف آموزش معلمان، موافقم.',
       agreeLabel: 'موافقم',
       keptNote: 'موافقت شما روی این دستگاه نگه داشته می‌شود و در دفتر حضور دوره ثبت می‌شود.',
       readAgain: 'دوباره بخوانید',
@@ -192,7 +192,7 @@
         'Стажери-викладачі можуть використовувати її у своїх навчальних роботах. Вона не буде передана жодній іншій стороні.',
         'Ви можете припинити участь у курсі в будь-який час.'
       ],
-      recordingConsentLine: 'Я погоджуюсь на аудіо- або відеозапис під час цієї реєстрації та на заняттях, виключно з метою підготовки викладачів.',
+      recordingConsentLine: 'Я погоджуюсь на аудіо- або відеозапис на заняттях, виключно з метою підготовки викладачів.',
       agreeLabel: 'Погоджуюсь',
       keptNote: 'Ваша згода зберігається на цьому пристрої та відмічається в журналі курсу.',
       readAgain: 'Прочитати ще раз',
