@@ -775,6 +775,7 @@
   .say-pill{margin-top:90px !important;}
   @media (max-width:760px){ .ttpop .prow, .ttpop .phead{grid-template-columns:92px 92px minmax(0,1fr) 22px;} .slayout.libopen{grid-template-columns:minmax(0,1fr);} .slib{position:static; max-height:320px;} .stool h2{font-size:1.3rem;} .ttpop.drawer{padding:18px 16px;} }
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
+  .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610302306">
 </head>
@@ -2773,7 +2774,20 @@ async function toggleClosed(date){
   const day = TT.days[i];
   const after = TT.days.slice(i).filter(d => !d.closed || d === day);
   if (!day.closed) {
-    if (!(await ask('Close ' + dayName(date) + '? Everything from that day on moves along one course day, keeping its times; what the last day held waits in “Doesn’t fit”.', 'Close'))) return;
+    /* WHAT IT MOVES, SAID BEFORE IT MOVES (30 Oct 2026, the specification's R03: "list TP, deadline and visit effects
+       before closing or shifting a day"). Read from the days themselves: each TP and the assessor's visit with where it
+       goes, the deadlines that stay on their dates, and what will not fit. The choice stays the centre's. */
+    const moves = [];
+    after.forEach((d, k) => { const to = after[k + 1];
+      if (d.tp) moves.push('TP ' + d.tp + (after.filter(x => x.tp === d.tp).length > 1 ? ', ' + (Number(d.setIndex || 0) ? 'second' : 'first') + ' teaching set,' : '') + ' moves from ' + dayName(d.date) + (to ? ' to ' + dayName(to.date) : ' to “Doesn’t fit”'));
+      if ((d.sessions || []).some(x => x && (x.k === 'assessor' || /assessor/i.test(x.t || '')))) moves.push('The assessor’s visit moves from ' + dayName(d.date) + (to ? ' to ' + dayName(to.date) : ' to “Doesn’t fit”')); });
+    const stay = [];
+    Object.keys(DUES || {}).filter(dt => dt >= date).sort().forEach(dt => (DUES[dt] || []).forEach(x => stay.push(x.title + ', ' + dayName(dt))));
+    const lines = ['Close ' + dayName(date) + '? Everything from that day on moves along one course day (' + (after.length - 1) + ' day' + (after.length === 2 ? '' : 's') + '), keeping its times.'];
+    if (moves.length) lines.push('', ...moves.slice(0, 8), ...(moves.length > 8 ? ['and ' + (moves.length - 8) + ' more'] : []));
+    if (stay.length) lines.push('', 'Deadlines stay on their dates: ' + stay.slice(0, 6).join('; ') + (stay.length > 6 ? '; and ' + (stay.length - 6) + ' more' : '') + '. The checks below say if one now falls badly.');
+    lines.push('', 'What ' + dayName(after[after.length - 1].date) + ' held waits in “Doesn’t fit”. Undo puts it all back.');
+    if (!(await ask(lines.join('\n'), 'Close'))) return;
     remember();
     const contents = after.map(contentOf);
     putContent(day, null); day.closed = true;
