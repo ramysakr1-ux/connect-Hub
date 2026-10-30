@@ -1475,6 +1475,7 @@ case 'inbox': {
       if (reader) { if (PRIVATE_KINDS[kind] || (assessor && kind === 'about')) throw new Error('Not yours to read: ' + kind); return { data: read_(course.id, String(req.token || ''), kind) }; }
       if (!me) throw new Error('No token');
       if (!TRAINEE_READS[kind]) throw new Error('Not yours to read: ' + kind);
+      if (kind === 'tracker') return { data: traineeTracker_(read_(course.id, me.token, kind)) };
       return { data: read_(course.id, me.token, kind) };
     }
     case 'put': {
@@ -3664,12 +3665,29 @@ function tpOf_(kind) { var m = /^tpHistory:(\d+)$/.exec(String(kind)); return m 
 // Fold one records row into a bucket of {kind: data}, assembling the history
 // from its rows. A per-TP row always wins over the legacy whole-map row,
 // whichever order the sheet holds them in.
+/* A TRAINEE READS THEIR OWN TRACKER, NOT THE STAFF'S (30 Oct 2026). The tracker record is the tutors': the grade form's
+   strengths and areas for development, letter drafts, a withdrawn letter's history and reason, the decision before a
+   malpractice warning. A trainee's pages show only their extensions, an issued letter (its date, signer and text), the
+   provisional and final grade on their own tracker view, and the old hand-set stages and withdrawn flag. Everything else
+   stays on the staff side. Before this the whole object went to the trainee's browser and only the pages hid it. */
+function traineeTracker_(t) {
+  if (!t || typeof t !== 'object') return t;
+  var out = {};
+  ['extensions', 'stage1', 'stage2', 'stage3', 'withdrawn'].forEach(function (k) { if (t[k] !== undefined) out[k] = t[k]; });
+  if (t.grades && typeof t.grades === 'object') out.grades = { provisional: t.grades.provisional || '', final: t.grades.final || '' };
+  ['failLetter', 'malpracticeLetter'].forEach(function (p) {
+    if (!t[p + 'IssuedAt']) return;   // a draft, or a withdrawn letter, is not the trainee's to read
+    out[p] = t[p] || ''; out[p + 'IssuedAt'] = t[p + 'IssuedAt']; out[p + 'By'] = t[p + 'By'] || ''; out[p + 'Doc'] = t[p + 'Doc'] || '';
+  });
+  return out;
+}
 function foldRecord_(bucket, kind, json, kinds) {
   var n = tpOf_(kind);
   var base = n ? 'tpHistory' : kind;
   if (PRIVATE_KINDS[base] && kinds !== TRAINEE_READS) return;   // the notebook: the trainee's own, never a reader's
   if (!kinds[base] && !TRAINEE_READS[base]) return;
   var data; try { data = JSON.parse(json); } catch (e) { return; }
+  if (base === 'tracker' && kinds === TRAINEE_READS) data = traineeTracker_(data);
   if (base !== 'tpHistory') { bucket[kind] = data; return; }
   bucket.tpHistory = bucket.tpHistory || {};
   bucket._tpRows = bucket._tpRows || {};
