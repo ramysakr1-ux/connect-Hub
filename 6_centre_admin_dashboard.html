@@ -650,6 +650,13 @@
   .tset-opt .sw i:last-child{box-shadow:inset 0 0 0 1px var(--sand-line);} .tset-opt .sw i u{text-decoration:none; background:var(--paper); color:var(--ink); border-radius:3px; padding:0 4px; line-height:15px;}
   .tset-opt:has(input:checked){border-color:var(--a-forest, var(--teal)); box-shadow:0 0 0 2px color-mix(in oklch, var(--a-forest, var(--teal)) 25%, transparent);}
   .tsets .hintline{flex-basis:100%; margin:0;}
+  .ready .readyn{font-size:.78rem; font-weight:700; padding:4px 10px; border-radius:99px; background:var(--box); color:var(--ink);}
+  .readylist{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:6px;}
+  .readylist li{display:grid; grid-template-columns:86px 1fr auto; gap:12px; align-items:center; padding:9px 12px; border-radius:10px; background:var(--box); font-size:.9rem;}
+  .readylist li.ok{background:transparent; color:var(--grey);}
+  .readylist .rk{font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--brick);} .readylist li.ok .rk{color:var(--teal);}
+  .readylist a{color:var(--teal); font-weight:700; text-decoration:underline; text-underline-offset:3px;}
+  @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610302348">
 </head>
@@ -1474,6 +1481,33 @@ function renderTitle(){
 /* Setup ticks: each step is done when its evidence exists. */
 /* null until the store has answered once; then the true number on the course. */
 let TRAINEE_COUNT = null;
+/* SAVED IS NOT READY (30 Oct 2026, the specification's R04: "show advisory invitation readiness separately from basic
+   saved state"). The course saves as you type; this says what is still to do before the trainees' links go out, each
+   line a door to where it is done. Advice only: nothing here stops a link being sent. The old numbered checklist above
+   the tabs (gone 21 Sep 2026) repeated the tabs; this one lives where the links are sent, and names different things. */
+document.addEventListener('click', e => { const a = e.target.closest('a[data-gotab]'); if (!a) return; e.preventDefault(); showTab(a.dataset.gotab); window.scrollTo(0, 0); });
+function readyHTML(nTrainees){
+  let cs = {}, tt = null, P = null, w = null;
+  try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {}
+  try { P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null'); } catch (e) {}
+  try { w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2') || 'null'); } catch (e) {}
+  const agr = cs.agreement || {};
+  const hasAgr = !!(String(((cs.docs || {}).docAgreement) || '').trim() || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(agr[k] || '').trim()));
+  const dealt = !!(P && P.groups && Object.keys(P.groups).some(g => Object.keys(P.groups[g] || {}).length));
+  const items = [
+    [!!(cs.courseName && cs.start && cs.end), 'The course’s name and dates', '#panel-settings', 'settings'],
+    [hasAgr, 'The candidate agreement, for them to sign on their first visit', '#panel-settings', 'settings'],
+    [!!(tt && tt.published), 'The timetable, published', '23_timetable.html', ''],
+    [dealt, 'TP points dealt, so each trainee has their first lesson', '24_tp_points.html', ''],
+    [!!w, 'The assignments, as the center sets them', '#panel-assignments', 'assignments'],
+    [nTrainees > 0, 'The trainees on the roster, below', '#storeRoster', '']
+  ];
+  const todo = items.filter(x => !x[0]).length;
+  return `<section class="setcard ready"><div class="sectionhead"><h2>Before the links go out</h2><span class="readyn">${todo ? todo + ' still to do' : 'All set'}</span></div>
+    <p class="lede">The course is saved as you type. This is what a trainee meets when their link opens; none of it stops a link being sent.</p>
+    <ul class="readylist">${items.map(([ok, text, href, tab]) => `<li class="${ok ? 'ok' : ''}"><span class="rk">${ok ? 'Ready' : 'Still to do'}</span><span>${text}</span>${ok ? '' : `<a href="${href}"${tab ? ` data-gotab="${tab}"` : ''}>Open</a>`}</li>`).join('')}</ul></section>`;
+}
 function renderSetup(){
   let cs = null, w = null;
   try{ cs = JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
@@ -2432,7 +2466,7 @@ async function renderStoreRoster(next){
     paintAssessorPicks(already.length ? already : ((cs && cs.assessorVisit) || []));
   })();
 
-  box.innerHTML = `
+  box.innerHTML = readyHTML(trainees.length) + `
     <section class="setcard">
     <div class="sectionhead">
       <h2>Course links</h2>
