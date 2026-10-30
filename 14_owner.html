@@ -246,6 +246,7 @@
 
   @media (max-width:760px){ .demo .doors{grid-template-columns:1fr 1fr;} .setting{grid-template-columns:1fr;} }
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
+  .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610302334">
 </head>
@@ -738,18 +739,25 @@ async function fillMaterials(){
 }
 
 /* ---- the inbox: what the people using Lite sent (store v73) ---- */
+/* WHERE AN OFFER HAS GOT TO (30 Oct 2026, the specification's R26). The centre's set page reads this back (store v183,
+   offerStates): Sent, Under review, Clarification requested with Connect's question, Published or Declined. */
+const OFFER_STATES = [['new', 'Sent'], ['review', 'Under review'], ['ask', 'Ask a question'], ['published', 'Published'], ['declined', 'Declined']];
+function offerSelect(at, state){
+  const cur = state === 'done' ? 'new' : (state || 'new');
+  return `<select class="offerstate" data-offer="${esc(at)}" aria-label="Where this offer has got to">${OFFER_STATES.map(([v, n]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${n}</option>`).join('')}</select>`;
+}
 async function inbox(){ try { INBOX = await call({ op: 'inbox' }); } catch (e) { INBOX = { contributions: [], reports: [] }; } drawInbox(); }
 function drawInbox(){
   const box = $('inboxBox'), small = $('inboxSmall'); if (!box || !INBOX) return;
   const C = INBOX.contributions || [], R = INBOX.reports || [];
-  const fresh = x => String(x.state || 'new') !== 'done';
+  const fresh = x => String(x.state || 'new') === 'new';   /* an offer moved on (review, ask, published, declined) is no longer waiting */
   const nC = C.filter(fresh).length, nR = R.filter(fresh).length;
   const dot = $('inboxDot'); if (dot) { dot.textContent = String(nC + nR); dot.hidden = !(nC + nR); }
   if (small) small.innerHTML = (nC || nR) ? `<span class="count">${nC + nR}</span> ${[nC ? nC + ' set' + (nC === 1 ? '' : 's') + ' offered' : '', nR ? nR + ' thing' + (nR === 1 ? '' : 's') + ' said' : ''].filter(Boolean).join(', ')}` : 'nothing waiting';
   const CAP = 5, showC = INBOX_ALL ? C : C.slice(0, CAP), showR = INBOX_ALL ? R : R.slice(0, CAP), hidden = (C.length - showC.length) + (R.length - showR.length);
   const when = at => String(at || '').slice(0, 16).replace('T', ' ');
   const row = (sheet, at, tag, cls, head, meta, state) => `<div class="inrow${state === 'done' ? ' done' : ''}"><span class="intag ${cls}">${esc(tag)}</span><div class="body">${head}<small class="meta">${esc(meta)}</small></div><div class="iacts">
-      ${sheet === 'contributions' ? `<button type="button" class="btn small" data-read="${esc(at)}">Read it</button>` : ''}${state === 'done' ? '' : `<button type="button" class="btn small" data-in="done|${esc(sheet)}|${esc(at)}">Done</button>`}<button type="button" class="btn small quiet" data-in="drop|${esc(sheet)}|${esc(at)}">Delete</button></div></div>`;
+      ${sheet === 'contributions' ? `<button type="button" class="btn small" data-read="${esc(at)}">Read it</button>${offerSelect(at, state)}` : ''}${sheet === 'contributions' || state === 'done' ? '' : `<button type="button" class="btn small" data-in="done|${esc(sheet)}|${esc(at)}">Done</button>`}<button type="button" class="btn small quiet" data-in="drop|${esc(sheet)}|${esc(at)}">Delete</button></div></div>`;
   box.innerHTML = (!showC.length && !showR.length) ? `<p class="empty" style="padding:6px 0">Nothing yet: no sets offered and nothing said.${INBOX.sheet ? ` <a href="${esc(INBOX.sheet)}" target="_blank" rel="noopener">The sheet behind the store</a> has every row.` : ''}</p>`
     : showC.map(c => row('contributions', c.at, 'set', 'set', `<b>${esc(c.book || 'Untitled')}</b> — contributed by <b>${esc(c.by || '')}</b>` + (c.file ? ` · <a href="${esc(c.file)}" target="_blank" rel="noopener">the file</a>` : ''), [c.level, (c.lessons || 0) + ' lessons', (c.stages || 0) + ' stages', c.centre, when(c.at)].filter(Boolean).join(' · '), c.state)).join('')
       + showR.map(x => row('reports', x.at, x.kind === 'wrong' ? 'wrong' : 'idea', x.kind === 'wrong' ? 'wrong' : 'idea', esc(x.text || ''), [x.page, x.where, x.role, x.course, when(x.at)].filter(Boolean).join(' · '), x.state)).join('')
@@ -763,6 +771,13 @@ function drawInbox(){
     b.disabled = true; b.textContent = 'Opening…';
     try { showSet(await call({ op: 'readContribution', file: r.file }), r); } catch (e) { alert(e.message || e); }
     b.disabled = false; b.textContent = 'Read it';
+  });
+  box.querySelectorAll('[data-offer]').forEach(sel => sel.onchange = async () => {
+    let note = '';
+    if (sel.value === 'ask') { note = prompt('Your question for the centre. It shows on their set, under the offer.') || ''; if (!note.trim()) { drawInbox(); return; } }
+    sel.disabled = true;
+    try { await call({ op: 'inboxRow', sheet: 'contributions', at: sel.dataset.offer, state: sel.value, note: sel.value === 'ask' ? note.trim() : '' }); await inbox(); }
+    catch (e) { sel.disabled = false; alert(e.message || e); }
   });
   box.querySelectorAll('[data-in]').forEach(b => b.onclick = async () => {
     const [what, sheet, at] = b.dataset.in.split('|');

@@ -166,7 +166,7 @@
   .st .st-aim{margin-top:5px; font-size:0.8rem; font-style:italic;}
   .tick{display:flex; gap:10px; align-items:flex-start; font-size:0.86rem; margin:12px 0 0; line-height:1.45;} .tick input{margin-top:3px;}
   .offered{display:grid; gap:6px; padding:12px 14px; border-radius:var(--r-strip); background:var(--a-mint-wash); border:1px solid var(--a-mint); font-size:0.86rem;}
-  .offered span{color:var(--grey);} .offered ol{display:flex; flex-wrap:wrap; gap:6px; list-style:none; margin:4px 0 0; padding:0;}
+  .offered span{color:var(--grey);} .offered .onote{margin:4px 0 0; padding:8px 10px; border-radius:8px; background:var(--paper); color:var(--ink);} .offered ol{display:flex; flex-wrap:wrap; gap:6px; list-style:none; margin:4px 0 0; padding:0;}
   .offered li{font-size:0.74rem; font-weight:700; padding:4px 10px; border-radius:99px; background:var(--paper); color:var(--grey); border:1px solid var(--sand-line);}
   .offered li.done{color:var(--a-forest); border-color:var(--a-mint);} .offered li.now{background:var(--a-forest); color:var(--paper); border-color:var(--a-forest);}
   .libwarn{font-size:0.8rem; color:var(--ink); background:color-mix(in oklch, var(--a-lemon) 32%, var(--paper));
@@ -550,10 +550,10 @@ async function contributeSet(){
   const out = offerFile();
   SENDING = true; render();
   try {
-    await HubStore.call({ op: 'contribute', set: out, by: out.by,
+    const sent = await HubStore.call({ op: 'contribute', set: out, by: out.by,
       centre: (SETTINGS.centreName || '') + (SETTINGS.centreNumber ? ' (' + SETTINGS.centreNumber + ')' : '') });
     SENDING = false; SHOWOFFER = false;
-    S.offered = { at: new Date().toISOString().slice(0, 10), by: out.by, status: 'Sent' };
+    S.offered = { at: new Date().toISOString().slice(0, 10), id: (sent && sent.at) || '', by: out.by, status: 'Sent' };
     persist('Sent to Connect, credited to ' + out.by + '.');
     return;
   } catch (e) {
@@ -575,10 +575,26 @@ function saveFile(out){
 
 /* WHERE AN OFFERED SET HAS GOT TO (30 Oct 2026, the specification's R26): Sent, Under review, Clarification requested,
    then Published or Declined. Sending writes Sent on the set; Connect moves it on. */
+const OFFER_WORD = { new: 'Sent', done: 'Sent', review: 'Under review', ask: 'Clarification requested', published: 'Published', declined: 'Declined' };
+/* Once per visit, the course's offers as Connect has moved them on in its console (store v183's offerStates). */
+let OFFERS_READ = false;
+async function readOfferStates(){
+  if (OFFERS_READ || !window.HubStore || !Object.values(LIB).concat(Object.values(SHELF)).some(x => x && x.offered && x.offered.id)) return;
+  OFFERS_READ = true;
+  try {
+    const r = await HubStore.call({ op: 'offerStates' }); let changed = false;
+    (r && r.offers || []).forEach(o => Object.values(LIB).concat(Object.values(SHELF)).forEach(x => {
+      if (!x || !x.offered || x.offered.id !== o.at) return;
+      const st = OFFER_WORD[o.state] || 'Sent';
+      if (x.offered.status !== st || (x.offered.note || '') !== (o.note || '')) { x.offered.status = st; x.offered.note = o.note || ''; changed = true; }
+    }));
+    if (changed) persist('Connect has moved your offer on');
+  } catch (e) {}
+}
 function offeredHTML(o){
   const steps = ['Sent', 'Under review', 'Clarification requested', 'Published or declined'];
   const at = steps.indexOf(o.status === 'Published' || o.status === 'Declined' ? 'Published or declined' : o.status);
-  return `<div class="offered"><b>Offered to the TP Point Pool</b><span>${esc(o.status || 'Sent')} · ${esc(o.at || '')} · credited to ${esc(o.by || '')}</span>
+  return `<div class="offered"><b>Offered to the TP Point Pool</b><span>${esc(o.status || 'Sent')} · ${esc(o.at || '')} · credited to ${esc(o.by || '')}</span>${o.note ? `<p class="onote"><b>Connect asks:</b> ${esc(o.note)} Reply to lite@celtaconnect.com.</p>` : ''}
     <ol>${steps.map((x, i) => `<li class="${i < at ? 'done' : i === at ? 'now' : ''}">${esc(x === 'Published or declined' && (o.status === 'Published' || o.status === 'Declined') ? o.status : x)}</li>`).join('')}</ol></div>`;
 }
 function offerPanel(){
@@ -1559,6 +1575,7 @@ if (Q_.get('set') && LIB[Q_.get('set')]) { CUR = Q_.get('set'); S = LIB[CUR]; }
 function toPool(){ location.href = '24_tp_points.html?view=pool' + (Q_GROUP !== null && Q_GROUP !== undefined ? '&group=' + encodeURIComponent(Q_GROUP) : ''); }
 const forGroup = id => { if (Q_GROUP !== null && Q_GROUP !== undefined && id) FOR[Q_GROUP] = id; };
 render();
+readOfferStates();
 /* the catalogue is a kilobyte: fetched at once so an older copy of one of Connect's sets is known as Connect's */
 fetch(LIB_CATALOGUE + '?v=' + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (Array.isArray(j) && !CAT) { CAT = j; render(); } }).catch(() => {});
 /* "Another book" on the TP points screen lands here with the library open (28 Oct 2026) */

@@ -717,11 +717,13 @@ case 'inbox': {
       if (!iAt) throw new Error('Which row?');
       var iHit = function (r) { return r[0] && new Date(r[0]).toISOString() === iAt; };
       if (req.drop) return { dropped: deleteRowsWhere_(iName, iHit) };
-      var iSh = sheet_(iName), iLast = iSh.getLastRow(), iCol = HEADERS[iName].length;
+      /* the state column by its name, not the last column: the offers sheet grew a course and a note (v183) */
+      var iSh = sheet_(iName), iLast = iSh.getLastRow(), iCol = HEADERS[iName].indexOf('state') + 1, iNote = HEADERS[iName].indexOf('note') + 1;
       if (iLast < 2) return { marked: 0 };
       var iVals = iSh.getRange(2, 1, iLast - 1, iCol).getValues(), iN = 0;
       for (var iz = 0; iz < iVals.length; iz++) {
-        if (iHit(iVals[iz])) { iSh.getRange(iz + 2, iCol).setValue(String(req.state || 'done')); iN++; }
+        if (iHit(iVals[iz])) { iSh.getRange(iz + 2, iCol).setValue(String(req.state || 'done'));
+          if (iNote && req.note !== undefined) iSh.getRange(iz + 2, iNote).setValue(String(req.note || '').slice(0, 600)); iN++; }
       }
       return { marked: iN };
     }
@@ -750,8 +752,9 @@ case 'inbox': {
         + '--' + cBy.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24)
         + '-' + new Date().toISOString().slice(0, 10) + '.json';
       var cFile = contributionsFolder_().createFile(Utilities.newBlob(cJson, 'application/json', cName));
-      sheet_(SHEET_OFFERS).appendRow([new Date(), cBy, cBook, cLevel, cSlots, cStages,
-        String(req.centre || '').slice(0, 80), cFile.getUrl(), 'new']);
+      var cAt = new Date();
+      sheet_(SHEET_OFFERS).appendRow([cAt, cBy, cBook, cLevel, cSlots, cStages,
+        String(req.centre || '').slice(0, 80), cFile.getUrl(), 'new', course ? course.id : '', '']);
       try {
         var cTo = Session.getEffectiveUser().getEmail();
         if (cTo) sendAs_({ to: cTo, name: 'Connect',
@@ -762,7 +765,18 @@ case 'inbox': {
                  '', cFile.getUrl(), '',
                  'Download it, then: ./tools/check-library.sh <the file>'].filter(String).join('\n') });
       } catch (e) { /* the set is saved; a mail that fails must not lose it */ }
-      return { saved: true };
+      return { saved: true, at: cAt.toISOString() };
+    }
+    /* WHERE AN OFFERED SET HAS GOT TO (v183, 30 Oct 2026, the specification's R26): a tutor reads this course's own offers,
+       each with the state Connect set in the console (new, review, ask, published, declined) and Connect's question. */
+    case 'offerStates': {
+      requireTutor_(tutor);
+      var osSh = sheet_(SHEET_OFFERS), osLast = osSh.getLastRow(), osH = HEADERS[SHEET_OFFERS];
+      if (osLast < 2 || !course) return { offers: [] };
+      var osRows = osSh.getRange(2, 1, osLast - 1, osH.length).getValues();
+      return { offers: osRows.filter(function (r) { return String(r[osH.indexOf('course')] || '') === String(course.id); }).map(function (r) {
+        return { at: r[0] instanceof Date ? r[0].toISOString() : String(r[0]), book: String(r[2] || ''), state: String(r[osH.indexOf('state')] || 'new'), note: String(r[osH.indexOf('note')] || '') };
+      }) };
     }
     /* The owner's console: this week's thumbs and the latest lines. */
     case 'feedbackSummary': {
@@ -2841,7 +2855,7 @@ function cleanEmail_(e) {
 }
 HEADERS[SHEET_COURSE]   = ['course', 'kind', 'json', 'updated'];
 HEADERS[SHEET_FEEDBACK] = ['at', 'page', 'course', 'role', 'thumb', 'text'];
-HEADERS[SHEET_OFFERS]   = ['at', 'by', 'book', 'level', 'lessons', 'stages', 'centre', 'file', 'state'];
+HEADERS[SHEET_OFFERS]   = ['at', 'by', 'book', 'level', 'lessons', 'stages', 'centre', 'file', 'state', 'course', 'note'];   /* course + note (v183, 30 Oct 2026): where an offer came from, and Connect's question */
 HEADERS[SHEET_REPORTS]  = ['at', 'kind', 'page', 'where', 'text', 'role', 'course', 'state'];
 /* v74 (6 Oct 2026): the centres Connect has sold to, number -> name. Written
    when a course is made, read by the console to fill the name in. Not a
