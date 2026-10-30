@@ -657,6 +657,7 @@
   .readylist .rk{font-size:.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--brick);} .readylist li.ok .rk{color:var(--teal);}
   .readylist a{color:var(--teal); font-weight:700; text-decoration:underline; text-underline-offset:3px;}
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
+  .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610310052">
 </head>
@@ -764,6 +765,7 @@
         <label for="courseEnd">Ends</label>
         <input type="date" id="courseEnd">
         <p class="hintline">Also when the assessor’s link expires: it stops at the end of this day.</p>
+        <p class="hintline datewarn" id="dateWarn" hidden></p>
       </div>
       <!-- The three things the final course report states that nothing else on
            the course records (Handbook 7.11: the report gives the course hours,
@@ -1486,6 +1488,21 @@ let TRAINEE_COUNT = null;
    line a door to where it is done. Advice only: nothing here stops a link being sent. The old numbered checklist above
    the tabs (gone 21 Sep 2026) repeated the tabs; this one lives where the links are sent, and names different things. */
 document.addEventListener('click', e => { const a = e.target.closest('a[data-gotab]'); if (!a) return; e.preventDefault(); showTab(a.dataset.gotab); window.scrollTo(0, 0); });
+/* A DATE CHANGE SAYS WHAT IT DOES NOT MOVE (31 Oct 2026, the specification's R03 and R02: a course date changed "makes
+   the linked owner and side effect explicit"). The timetable is built once from the dates; changing them here does not
+   move the days already on it, so when they no longer match, this says so under the dates, with the door. */
+function paintDateWarn(){
+  const el = document.getElementById('dateWarn'); if (!el) return;
+  let tt = null; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {}
+  const days = ((tt && tt.days) || []).filter(d => d && d.date).map(d => d.date).sort();
+  const s = (document.getElementById('courseStart') || {}).value || '', e = (document.getElementById('courseEnd') || {}).value || '';
+  if (!days.length || !s || !e || (days[0] === s && days[days.length - 1] === e)) { el.hidden = true; el.innerHTML = ''; return; }
+  const dm = x => { const m = x.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : x; };
+  el.hidden = false;
+  el.innerHTML = 'The timetable runs ' + dm(days[0]) + ' to ' + dm(days[days.length - 1]) + '. Changing the dates here does not move it: <a href="23_timetable.html">open the timetable</a> to move the days or build it again.';
+}
+['courseStart', 'courseEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', paintDateWarn); });
+setTimeout(paintDateWarn, 800);
 function readyHTML(nTrainees){
   let cs = {}, tt = null, P = null, w = null;
   try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}

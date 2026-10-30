@@ -2796,6 +2796,16 @@ async function toggleClosed(date){
     TT.unplaced = (Array.isArray(TT.unplaced) ? TT.unplaced : []).concat([Object.assign({ from: after[after.length - 1].date }, last)]);
     save('Closed', { key: 'close:' + date, text: dayName(date) + ' closed', effects: ['Everything from ' + dayName(date) + ' on moves along one day', dayName(after[after.length - 1].date) + '’s day doesn’t fit any more'] });
   } else {
+    /* reopening says what it moves back first, as closing does (R03, 31 Oct 2026) */
+    const open0 = TT.days.slice(i).filter(d => !d.closed || d === day), back = [];
+    open0.slice(1).forEach((d, k) => { const to = open0[k];
+      if (d.tp) back.push('TP ' + d.tp + ' moves back from ' + dayName(d.date) + ' to ' + dayName(to.date));
+      if ((d.sessions || []).some(x => x && (x.k === 'assessor' || /assessor/i.test(x.t || '')))) back.push('The assessor’s visit moves back from ' + dayName(d.date) + ' to ' + dayName(to.date)); });
+    const tray0 = Array.isArray(TT.unplaced) ? TT.unplaced : [];
+    const msg = ['Reopen ' + dayName(date) + '? Everything after it moves back one course day, keeping its times.'];
+    if (back.length) msg.push('', ...back.slice(0, 8), ...(back.length > 8 ? ['and ' + (back.length - 8) + ' more'] : []));
+    msg.push('', tray0.length ? 'The last day takes back what waited in “Doesn’t fit”.' : 'The last day is left for you to fill.', 'Deadlines stay on their dates. Undo puts it all back.');
+    if (!(await ask(msg.join('\n'), 'Reopen'))) return;
     remember();
     delete day.closed;
     const open = TT.days.slice(i).filter(d => !d.closed);
