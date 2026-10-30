@@ -299,6 +299,13 @@
   @media(prefers-reduced-motion:reduce){ .ap9 .ap9-mark, h2.sect:target{animation:none;} .ap9-jump a{transition:none;} }
   @media(max-width:560px){ .ap9{padding:22px 18px 18px; border-radius:12px;} .ap9-stats div{min-width:0; flex:1 1 120px;} }
   @media print{ .ap9{display:none !important;} .panel.ap9-obs{border-left:0; background:none;} }
+  .otl{list-style:none; margin:0; padding:4px 0; position:relative;}
+  .otl::before{content:''; position:absolute; left:104px; top:12px; bottom:12px; width:2px; background:var(--sand-line);}
+  .otl li{display:grid; grid-template-columns:92px 1fr auto; gap:34px; align-items:center; padding:9px 0; position:relative; font-size:0.9rem;}
+  .otl li::before{content:''; position:absolute; left:99px; top:50%; width:12px; height:12px; margin-top:-6px; border-radius:50%; background:var(--paper); border:2px solid var(--a-forest, var(--teal));}
+  .otl li.bad::before{border-color:var(--brick); background:var(--brick);}
+  .otl .d{font-size:0.78rem; color:var(--grey); font-variant-numeric:tabular-nums;}
+  @media (max-width:620px){ .otl::before{left:6px;} .otl li{grid-template-columns:1fr auto; gap:4px 12px; padding-left:24px;} .otl li::before{left:1px;} .otl .d{grid-column:1 / -1;} }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610302306">
 </head>
@@ -1071,6 +1078,38 @@ function agreementRow(tr){
   if (!a.at) return '';
   return `<div class="tp"><div class="tp-row"><span class="n">Candidate agreement</span><span class="meta">Signed ${esc(when(a.at))}</span><a class="btn ghost" href="29_candidate_agreement.html?trainee=${encodeURIComponent(tr.id)}">Open it</a></div></div>`;
 }
+/* THE OFFICIAL TIMELINE (30 Oct 2026, the specification's R35: "present dated formal events in one portfolio timeline").
+   Read only, from the records that already hold them: the candidate agreement, the CELTA 5's stages (returned, signed,
+   the final declaration), each fail or malpractice letter version (issued, withdrawn and why), the grade meeting and any
+   later change to this trainee's grade, and the handover. Each line opens its document. Nothing here is typed. */
+function timelineHTML(tr){
+  const c = tr.celta5 || {}, t = tr.celta5t || {}, man = tr.tracker || {}, id = encodeURIComponent(tr.id), ev = [];
+  const day = x => { const s = String(x || ''); const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const d = new Date(typeof x === 'number' ? x : s); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+  const key = x => { const d = new Date(typeof x === 'number' ? x : String(x || '').length === 10 ? x + 'T12:00:00' : x); return isNaN(d) ? 0 : d.getTime(); };
+  const add = (at, what, href, tone) => { if (at) ev.push({ at, what, href, tone: tone || '' }); };
+  const c5 = '20_celta5.html?trainee=' + id, OVR = { above: 'above standard', to: 'to standard', not: 'not to standard' };
+  add((tr.agreement || {}).at, 'Candidate agreement signed', '29_candidate_agreement.html?trainee=' + id);
+  [1, 2, 3].forEach(n => { const tt = t['stage' + n] || {}, cc = c['stage' + n] || {};
+    if (n === 2) add(cc.submittedAt, 'CELTA 5 Stage 2 sent to the tutor', c5);
+    add(tt.returnedAt, 'CELTA 5 Stage ' + n + ' returned' + (OVR[tt.overall] ? ', ' + OVR[tt.overall] : ''), c5, tt.overall === 'not' ? 'bad' : '');
+    add(cc.signed && cc.signed.at, 'CELTA 5 Stage ' + n + ' signed by the trainee', c5); });
+  add(c.final && c.final.signed && c.final.signed.at, 'Final declaration signed by the trainee', c5);
+  add(t.final && t.final.signed && t.final.signed.at, 'Final declaration signed by the tutor', c5);
+  [['failLetterHistory', 'Fail warning letter', '22_fail_letter.html'], ['malpracticeLetterHistory', 'Malpractice warning letter', '35_malpractice_letter.html']].forEach(([k, name, page]) =>
+    (Array.isArray(man[k]) ? man[k] : []).forEach(x => { if (!x) return;
+      add(x.issuedAt, name + ', version ' + (x.v || 1) + ', issued' + (x.by ? ' by ' + x.by : ''), page + '?trainee=' + id, 'bad');
+      add(x.withdrawnAt, name + ', version ' + (x.v || 1) + ', withdrawn: ' + (x.withdrawnReason || 'no reason given'), page + '?trainee=' + id); }));
+  let gf = {}; try { gf = (JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).gradeForm || {}; } catch (e) {}
+  (gf.meetings || []).forEach(m => { const g = (m.grades || {})[tr.id]; add(m.at, 'Grade meeting recorded' + (g && (g.final || g.provisional) ? ': ' + (g.final ? 'final ' + g.final : 'provisional ' + g.provisional) : ''), '13_grades_report.html'); });
+  (((man.grades || {}).amendments) || []).forEach(a => add(a.at, (a.kind === 'final' ? 'Final' : 'Provisional') + ' grade changed from ' + (a.from || 'not set') + ' to ' + (a.to || 'not set') + (a.reason ? ': ' + a.reason : ''), '13_grades_report.html'));
+  const ho = ((tr.staffLinks || []).find(x => x && x.handover) || {}).handed;
+  if (ho) add(ho.at, 'Handed over' + (ho.to ? ' to ' + ho.to : '') + (ho.by ? ' by ' + ho.by : ''), '34_handover.html');
+  if (!ev.length) return '<div class="tp"><div class="tp-row"><span class="n">Nothing formal yet</span><span class="meta">The CELTA 5 stages, any letter, the grade meeting and a handover appear here, dated, as they happen.</span></div></div>';
+  ev.sort((a, b) => key(a.at) - key(b.at));
+  return `<ol class="otl">${ev.map(e => `<li class="${e.tone}"><span class="d">${esc(day(e.at))}</span><span class="w">${esc(e.what)}</span><a class="btn ghost" href="${e.href}">Open</a></li>`).join('')}</ol>`;
+}
 function celta5Block(tr){
   const c = tr.celta5 || {}, t = tr.celta5t || {}; const conf = c.confirms || {};
   const sig = s => s && s.at ? '<span class="chip fine">signed</span>' : '<span class="chip nd">not signed</span>';
@@ -1132,6 +1171,8 @@ function renderOne(tr){
     <div class="panel">${observationBlock(tr)}</div>
     ${agreementRow(tr) ? `<h2 class="sect">Candidate agreement</h2>
     <div class="panel">${agreementRow(tr)}</div>` : ''}
+    <h2 class="sect">Official timeline <small>the formal events, dated, read from the records</small></h2>
+    <div class="panel">${timelineHTML(tr)}</div>
     <h2 class="sect">CELTA 5 <small>the record booklet</small></h2>
     <div class="panel">${celta5Block(tr)}</div>
     ${(tr.links || []).filter(l => l && l.url).length ? `<h2 class="sect">Private links <small>given to this trainee alone</small></h2>
