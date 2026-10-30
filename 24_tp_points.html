@@ -537,6 +537,13 @@
   .tvrow{display:flex; justify-content:space-between; gap:12px; align-items:center; padding:12px 14px; border-radius:var(--r-strip); background:var(--paper); border:1px solid var(--sand-line); margin:0 0 8px;}
   .tvrow.on{background:var(--a-mint-wash); border-color:var(--a-mint);}
   .tvrow b{display:block; font-size:0.94rem;} .tvrow small{color:var(--grey); font-size:0.8rem;}
+  .prow{align-items:flex-start; padding:14px 16px;} .prow b{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.08rem; margin:2px 0 1px;}
+  .prow .plv{font-size:0.66rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--brick);}
+  .prow .tvpill{display:inline-block; margin:4px 0 0;}
+  .prow .pfacts{margin:8px 0 6px; font-size:0.78rem; color:var(--grey); line-height:1.5; font-variant-numeric:tabular-nums;}
+  .prow .pmix{display:flex; flex-wrap:wrap; gap:5px;} .prow .pmix span{font-size:0.7rem; padding:2px 8px; border-radius:99px; background:var(--box); color:var(--ink);}
+  .prow .pact{display:flex; flex-direction:column; align-items:flex-end; gap:10px; flex:0 0 auto;}
+  @media (max-width:720px){ .prow{flex-direction:column;} .prow .pact{flex-direction:row; align-items:center;} }
   .tvrow a, .tvrow button.lnk{color:var(--a-forest); font-weight:700; font-size:0.86rem; white-space:nowrap; background:none; border:0; padding:0; font-family:inherit; text-decoration:underline; text-underline-offset:3px; cursor:pointer;}
   .tvbox{padding:12px 14px; border-radius:var(--r-strip); background:color-mix(in oklch, var(--a-lemon) 32%, var(--paper)); border:1px solid color-mix(in oklch, var(--a-mustard) 55%, var(--paper)); margin:14px 0; font-size:0.86rem;} .tvbox b{display:block; margin:0 0 3px;}
   .tvbox.plain{background:var(--box); border-color:transparent;}
@@ -1060,7 +1067,7 @@ function setBar(){
   const applied = /^(Built from|Rotation built)/.test(note || '');
   return `<div class="setbar on">${line}
     <a class="btn quiet sm" href="28_tp_point_sets.html?from=tp">${shown.length > 1 ? 'Write the sets' : 'Write the set'}</a>
-    <a class="btn quiet sm" href="28_tp_point_sets.html?from=tp&add=1">Another book</a>
+    <a class="btn quiet sm" href="24_tp_points.html?view=pool">Another book</a>
     <button type="button" class="btn sm" id="applyset"${applied ? ' disabled' : ''}>${
       applied ? 'Applied' : 'Apply ' + (shown.length > 1 ? 'them' : 'it')}</button>${
       applied ? `<span class="status">${esc(note)}</span>` : ''}</div>`;
@@ -2424,7 +2431,7 @@ function studioHTML(){
   const ready = readyOf(S);
   return `<div class="studio">
     <nav class="st-list" aria-label="TP point sets"><h3>TP point sets</h3>${list}
-      <div class="stadd"><b>+ Add a set</b><a href="28_tp_point_sets.html?from=tp&add=1">Browse the TP Point Pool</a><a href="28_tp_point_sets.html?from=tp&make=1">Write your own set</a></div></nav>
+      <div class="stadd"><b>+ Add a set</b><a href="24_tp_points.html?view=pool">Browse the TP Point Pool</a><a href="28_tp_point_sets.html?from=tp&make=1">Write your own set</a></div></nav>
     <section class="st-set" aria-labelledby="sth">
       <div class="sthead"><div><h3 id="sth">${esc(setName(S))}</h3><p class="stsub">${cx ? 'A TP Point Pool set contributed by ' + esc(S.by || 'Connect') + '. It stays as written; add the links and pages from your own course copy.' : 'Your course’s own set. Write it in the set editor.'}</p></div>${cx ? '<span class="cbtag cx">Connect’s set</span>' : '<span class="cbtag own">Your own</span>'}</div>
       <div class="stfacts">
@@ -2449,7 +2456,7 @@ function wireBoard(dealt){
   }));
   document.querySelectorAll('select[data-cbset]').forEach(el => el.addEventListener('change', () => {
     const g = el.dataset.cbset, v = el.value;
-    if (v === '__pool' || v === '__own') { location.href = '28_tp_point_sets.html?from=tp&' + (v === '__pool' ? 'add=1' : 'make=1') + '&group=' + encodeURIComponent(g); return; }
+    if (v === '__pool' || v === '__own') { location.href = v === '__pool' ? '24_tp_points.html?view=pool&group=' + encodeURIComponent(g) : '28_tp_point_sets.html?from=tp&make=1&group=' + encodeURIComponent(g); return; }
     P.set = P.set || {}; P.set.setFor = Object.assign({}, assigned(), { [g]: v });
     persist((g ? 'Group ' + g : 'The course') + ' uses ' + setName(library()[v]) + '. Deal to give it out.');
   }));
@@ -2468,7 +2475,7 @@ function startHTML(){
     ? ''
     : `<div class="tstep"><p class="tsn">Step 1 · Choose the lessons</p>
         <div class="tchoice">
-          <a class="tcard lib" href="28_tp_point_sets.html?from=tp&add=1"><b>Connect’s library</b><span>TP points already written for Speakout, Empower and other coursebooks, level by level. Pick one for each group.</span><em>Open the library</em></a>
+          <a class="tcard lib" href="24_tp_points.html?view=pool"><b>Connect’s library</b><span>TP points already written for Speakout, Empower and other coursebooks, level by level. Pick one for each group.</span><em>Open the library</em></a>
           <a class="tcard own" href="28_tp_point_sets.html?from=tp&make=1"><b>Your own set</b><span>Write your course’s TP points against your coursebook, or import them from a document.</span><em>Write a set</em></a>
         </div>
         ${TYPES_ONLY ? '<p class="tquiet">Lesson types only: Lite deals grammar, vocabulary and skills, and you add the pages and aims afterwards.</p>' : '<button type="button" class="tquiet lnk" id="typesOnly">Or deal lesson types only, without a set</button>'}</div>`;
@@ -2504,7 +2511,9 @@ const poolList = () => (Array.isArray(POOL) ? POOL : []);
 const bookTitle = b => String(b || '').split(',')[0].trim();
 const bookEdition = b => String(b || '').split(',').slice(1).join(',').trim();
 const shelfOf = row => (window.hubLevelName ? hubLevelName(row.level) : row.level) || '';
-const onCourse = id => Object.values(library()).some(x => x && x.from === id);
+/* on the course: taken from this Pool set, or the same book already there (as the set page's old grid judged it) */
+const onCourse = id => { const r = (Array.isArray(POOL) ? POOL : []).find(x => x.id === id), t = r ? bookTitle(r.book).toLowerCase() : '';
+  return Object.values(library()).some(x => x && (x.from === id || (t && String(x.book || '').split(',')[0].trim().toLowerCase() === t))); };
 const vh = (k, h, p) => `<header class="tvh"><p class="k">${k}</p><h2>${h}</h2><p>${p}</p></header>`;
 const deep = (h, sub, rows, extra) => `<aside class="tvdeep"><h3>${h}</h3><p class="sub">${sub}</p><dl>${rows.map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl>${extra || ''}</aside>`;
 
@@ -2569,7 +2578,17 @@ function poolTab(){
   const all = poolList();
   const shelves = [...new Set(all.map(shelfOf).filter(Boolean))];
   const shown = all.filter(r => (!POOLLVL || shelfOf(r) === POOLLVL) && (!POOLBY || (POOLBY === 'cx' ? (r.by || 'Connect') === 'Connect' : (r.by || 'Connect') !== 'Connect')));
-  const list = POOL === 'loading' ? '<p class="sub">Opening the Pool…</p>' : !shown.length ? '<div class="tvbox">No set on that shelf yet.</div>' : shown.map(r => `<div class="tvrow"><div><b>${esc(bookTitle(r.book))}</b><small>${esc([bookEdition(r.book), shelfOf(r), Math.round((r.slots || 0) / 3) + ' sessions', 'Contributed by ' + (r.by || 'Connect')].filter(Boolean).join(' · '))}${onCourse(r.id) ? ' · On this course' : ''}</small></div><button type="button" class="lnk" data-pool="${esc(r.id)}">View set</button></div>`).join('');
+  /* ONE POOL (Ramy, 30 Oct 2026: "the TP point pool have two different looks"). This tab is the Pool; the set page's old
+     grid is gone and its door leads here. Each row carries what the grid said: lessons, pages, recordings, printable days,
+     the kinds of lesson, and Take this set (for the group the Courseboard came from, when it came from one). */
+  const QG = new URLSearchParams(location.search).get('group');
+  const takeHref = id => '28_tp_point_sets.html?from=tp&take=' + encodeURIComponent(id) + (QG !== null ? '&group=' + encodeURIComponent(QG) : '');
+  const list = POOL === 'loading' ? '<p class="sub">Opening the Pool…</p>' : !shown.length ? '<div class="tvbox">No set on that shelf yet.</div>' : shown.map(r => `<div class="tvrow prow"><div>
+      <span class="plv">${esc(shelfOf(r) || '')}</span><b>${esc(bookTitle(r.book))}</b>
+      <small>${esc(bookEdition(r.book) || '')}</small> <span class="tvpill">Contributed by ${esc(r.by || 'Connect')}</span>
+      <p class="pfacts">${[r.slots ? r.slots + ' lessons' : '', r.scans ? r.scans + ' pages' : '', r.tracks ? r.tracks + ' recordings' : '', r.days ? r.days + ' printable days' : ''].filter(Boolean).join(' · ')}${r.span ? '<br>' + esc(r.span) : ''}</p>
+      ${(r.types || []).length ? `<div class="pmix">${r.types.slice(0, 4).map(([k, n]) => `<span>${n} ${esc(k)}</span>`).join('')}</div>` : ''}</div>
+      <div class="pact">${onCourse(r.id) ? '<span class="tvpill">On this course</span>' : `<a class="btn gold gob" href="${takeHref(r.id)}">Take this set</a>`}<button type="button" class="lnk" data-pool="${esc(r.id)}">View set</button></div></div>`).join('');
   return `<div class="tv">${vh('The TP Point Pool', 'Useful sets, freely taken.', 'The Pool is an open library. Connect’s own sets come free with Lite. Anyone can browse and take a set; offering one is optional and earns a credit line only.')}
     <section class="tvcard"><div class="tvbox"><b>Open, edited and not for sale</b>No membership, no contribution needed, no discounts, rankings or rewards. Connect reads and edits every set before it goes in.</div>
       <div class="chips"><button type="button" data-plvl=""${POOLLVL ? '' : ' class="on"'}>All levels</button>${shelves.map(v => `<button type="button" data-plvl="${esc(v)}"${POOLLVL === v ? ' class="on"' : ''}>${esc(v)}</button>`).join('')}

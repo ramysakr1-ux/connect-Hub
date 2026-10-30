@@ -793,7 +793,7 @@ function render(){
       </div>`;
     wireLibrary();
     const mk = $('make'); if (mk) mk.onclick = () => { const id = newId(); LIB[id] = blankSet(); forGroup(id); CUR = id; S = LIB[id]; persist('Set started'); };
-    const tl = $('takelib'); if (tl) tl.onclick = openLibrary;
+    const tl = $('takelib'); if (tl) tl.onclick = toPool;
     if (new URLSearchParams(location.search).get('make') === '1' && mk && !MADE) { MADE = true; mk.click(); }
     return;
   }
@@ -1125,7 +1125,7 @@ function wirePages(){
 }
 
 function wireLibrary(){
-  const open = $('addlib');   if (open)  open.onclick  = openLibrary;
+  const open = $('addlib');   if (open)  open.onclick  = toPool;
   const shut = $('libclose'); if (shut)  shut.onclick  = () => { SHOWLIB = false; LIBNOTE = ''; render(); };
   document.querySelectorAll('[data-lvl]').forEach(el => el.onclick = () => { LVL = el.getAttribute('data-lvl'); render(); });
   document.querySelectorAll('[data-take]').forEach(el => el.onclick = () => takeFromLibrary(el.getAttribute('data-take')));
@@ -1529,13 +1529,15 @@ load();
 /* From the Courseboard (30 Oct 2026): ?set= opens that set; ?group= with add or make gives the new set to that group. */
 const Q_ = new URLSearchParams(location.search), Q_GROUP = Q_.get('group');
 if (Q_.get('set') && LIB[Q_.get('set')]) { CUR = Q_.get('set'); S = LIB[CUR]; }
+function toPool(){ location.href = '24_tp_points.html?view=pool' + (Q_GROUP !== null && Q_GROUP !== undefined ? '&group=' + encodeURIComponent(Q_GROUP) : ''); }
 const forGroup = id => { if (Q_GROUP !== null && Q_GROUP !== undefined && id) FOR[Q_GROUP] = id; };
 render();
 /* the catalogue is a kilobyte: fetched at once so an older copy of one of Connect's sets is known as Connect's */
 fetch(LIB_CATALOGUE + '?v=' + Date.now()).then(r => r.ok ? r.json() : null).then(j => { if (Array.isArray(j) && !CAT) { CAT = j; render(); } }).catch(() => {});
 /* "Another book" on the TP points screen lands here with the library open (28 Oct 2026) */
 var MADE = false;
-if (new URLSearchParams(location.search).get('add') === '1') { try { openLibrary(); } catch (e) {} }
+/* ONE POOL (30 Oct 2026): the Pool is the TP points tab now; the old ?add=1 door goes there, with its group. */
+if (new URLSearchParams(location.search).get('add') === '1') toPool();
 /* From TP points' Pool and Offer tabs (30 Oct 2026): ?take=<id> takes that Pool set, ?offer=1 opens the offer for ?set=. */
 if (Q_.get('take')) { (async () => { try { if (!CAT) { const r = await fetch(LIB_CATALOGUE + '?v=' + Date.now()); CAT = r.ok ? await r.json() : []; } await takeFromLibrary(Q_.get('take')); } catch (e) {} })(); }
 if (Q_.get('offer') === '1' && S && !isConnects(S)) { SHOWOFFER = true; render(); }
