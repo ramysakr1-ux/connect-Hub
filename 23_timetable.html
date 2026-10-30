@@ -572,6 +572,7 @@
   .ttpop{width:290px; padding:14px;}
   .ttpop label{display:block; font-size:0.6rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:0 0 10px;}
   .ttpop input, .ttpop select{display:block; width:100%; box-sizing:border-box; margin-top:4px; font:inherit; font-size:0.84rem; padding:7px 9px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink); text-transform:none; letter-spacing:0; font-weight:500;}
+  .ttpop input[readonly]{background:var(--box); color:var(--grey); cursor:default;}   /* Connect's session title: shown, not typed in (30 Oct 2026) */
   .ttpop .two{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .ttpop .acts{display:flex; justify-content:space-between; gap:8px;}
   .ttpop .del{color:var(--brick);}
@@ -3450,11 +3451,17 @@ function openTile(date, id, fresh){
   const sets = (GROUPS[0] && GROUPS[0].sets) || [];
   const days = (TT.days || []).filter(d => !d.closed || d.date === date);
   const by = x0.by === undefined || x0.by === null ? '' : String(x0.by);
+  /* CONNECT'S SESSIONS KEEP THEIR TITLE (Ramy, 30 Oct 2026: "they cannot change the title, but they can still click on the session
+     ... maybe they want to change other things like the time or the length. But the title stays and then it will say why"). The
+     title is what finds the session page (libPageFor), so renaming it would quietly cut the tile off from its page. */
+  const CX_TITLE = x0.k === 'input' && !!libPageFor(x0.t);
   const groupsOpt = GROUPS.length > 1 ? GROUPS.map(g => String(g.group || '')).filter(Boolean) : [];
   const tpField = k => k === 'tp'
     ? `<div class="two"><label>TP number<input name="tp" type="number" min="1" max="8" value="${esc(day0.tp || '')}"></label>
        <label>Who teaches<select name="set">${(sets.length ? sets.map((st, i) => [i, R.setName(st) || (i ? 'Second set' : 'First set')]) : [[0, 'First set'], [1, 'Second set']]).map(o => `<option value="${o[0]}"${+day0.setIndex === o[0] ? ' selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label></div>`
-    : `<label>Session title<input name="t" required value="${esc(x0.t || '')}" placeholder="${esc(KIND_LABEL[k] || '')}"></label>`;
+    : CX_TITLE
+      ? `<label>Session title<input name="t" readonly value="${esc(x0.t || '')}" aria-describedby="cxWhy"></label><p class="muted" id="cxWhy">Connect’s session: its title links it to the session page, so it stays as it is. The time, the day, the tutor and the rest can change.</p>`
+      : `<label>Session title<input name="t" required value="${esc(x0.t || '')}" placeholder="${esc(KIND_LABEL[k] || '')}"></label>`;
   el.innerHTML = `${x0.k === 'feedback' && !isNew ? `<a class="res" href="40_tp_feedback.html?date=${esc(date)}${GVIEW ? '&group=' + encodeURIComponent(GVIEW) : ''}">Open the feedback screen</a>` : ''}<form id="sesForm" novalidate>
     <div id="tpOrTitle">${tpField(x0.k)}</div>
     <label>Date<select name="date">${days.map(d => `<option value="${esc(d.date)}"${d.date === date ? ' selected' : ''}>${esc(dayName(d.date))}</option>`).join('')}</select></label>
@@ -3478,7 +3485,7 @@ function openTile(date, id, fresh){
   F.addEventListener('submit', async ev => {
     ev.preventDefault(); err('');
     const v = n => F.elements[n] ? F.elements[n].value : '';
-    const k = v('k'), s0 = toMin(v('s')), e0 = toMin(v('e')), to = dayOfDate(v('date')), t = v('t').trim();
+    const k = v('k'), s0 = toMin(v('s')), e0 = toMin(v('e')), to = dayOfDate(v('date')), t = CX_TITLE ? String(x0.t || '') : v('t').trim();
     if (s0 == null || e0 == null) return err('Give it a start and an end.');
     if (e0 <= s0) return err('The end must be after the start.');
     if (k !== 'tp' && !t && k !== 'break' && k !== 'lunch') return err('Give the session a title.');
