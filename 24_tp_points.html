@@ -47,7 +47,7 @@
   .tsn{margin:0 0 10px; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--gold-deep);}
   .tchoice{display:grid; grid-template-columns:1fr 1fr; gap:12px;} @media (max-width:640px){ .tchoice{grid-template-columns:1fr;} }
   /* a card of its own, so it is not missed under the title (Ramy, 29 Oct 2026: "could easily be missed ... some clarity") */
-  .gtkydoor{display:grid; grid-template-columns:1fr auto; gap:4px 18px; align-items:center; margin:4px 0 22px; padding:16px 20px; border-radius:14px; text-decoration:none; color:var(--ink);
+  .gtkydoor{display:grid; grid-template-columns:1fr auto; gap:4px 18px; align-items:center; margin:22px 0; padding:16px 20px; border-radius:14px; text-decoration:none; color:var(--ink);
     background:color-mix(in oklch, var(--a-forest, var(--teal)) 8%, var(--paper)); border-left:4px solid var(--a-forest, var(--teal)); box-shadow:var(--nb-shadow); transition:transform .15s ease, background-color .15s ease;}
   .gtkydoor:hover{transform:translateY(-3px); background:color-mix(in oklch, var(--a-forest, var(--teal)) 13%, var(--paper));}
   .gtkydoor .gk-k{grid-column:1; font-size:.68rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--a-forest, var(--teal));}
@@ -475,7 +475,8 @@
   .cb .cbact{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;}
   .cbtag{font-size:0.72rem; font-weight:700; padding:5px 11px; border-radius:99px; white-space:nowrap;}
   .cbtag.cx{background:color-mix(in oklch, var(--a-forest) 10%, var(--paper)); color:var(--a-forest);}
-  .cbtag.own, .cbtag.none{background:var(--box); color:var(--ink);}
+  .cbtag.own{background:color-mix(in oklch, var(--brick) 10%, var(--paper)); color:var(--brick);}
+  .cbtag.none{background:var(--box); color:var(--ink);}
   .cb .cblink{color:var(--a-forest); font-weight:700; font-size:0.86rem; text-decoration:underline; text-underline-offset:3px;}
   .cb .cblen{display:grid; grid-template-columns:150px minmax(0,1fr); gap:16px; padding:16px 22px; border-top:1px solid var(--row-line); align-items:start;}
   .cb .cblen b{display:block; font-size:0.95rem; font-weight:700;} .cb .cblen small{color:var(--grey); font-size:0.78rem; line-height:1.4; display:block; margin-top:3px;}
@@ -485,6 +486,9 @@
   .cb .cblens .ro{display:block; background:var(--box); border-color:transparent;}
   .cb .cbdeal{display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding:16px 22px 18px; border-top:1px solid var(--row-line);}
   .cb .cbst{color:var(--grey); font-size:0.86rem;}
+  /* Deal is the one thing to do next: Lite's butter (COLOURS.md rule 4), as the spec's gold. */
+  .cb .cbgo{background:var(--a-lemon) !important; color:var(--ink) !important; border:0; border-radius:var(--r-control); font-weight:700; box-shadow:none !important;}  /* !important: hub-house's white .btn rule outranks a page class */
+  .cbtag.cx{background:color-mix(in oklch, var(--a-forest) 14%, var(--paper));}
   .cbnote{color:var(--grey); font-size:0.8rem; margin:0 0 18px;}
   /* the set studio: the sets on the left, the chosen one on the right */
   .studio{display:grid; grid-template-columns:240px minmax(0,1fr); gap:20px; align-items:start; margin:6px 0 26px;}
@@ -1838,8 +1842,14 @@ function renderCore(){
   const app = $('app');
   /* A trainee opens this to find out what they are teaching, not to read
      about rotation (Ramy, 4 Oct 2026). The explanation stays for staff. */
-  const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${IS_TRAINEE ? '' : '<a class="gtkydoor" href="31_getting_to_know_you.html?view=bank"><span class="gk-k">The first afternoon</span><b>Getting to know you: the activities</b><span class="gk-l">Connect’s bank of short first-lesson activities, three for each level. Each trainee picks one before day one.</span><span class="gk-go">Open the activities</span></a>'}${(IS_TRAINEE || VIEW_AS) ? '' :
-    `<p class="lede">The lesson type for each trainee, TP 1 to ${TPS}. It deals so nobody in a teaching set teaches the same type on the same day and nobody meets a type twice within a level. Change any cell; the check below reads what is on the page, not what was generated. The last two TPs are the trainees\u2019 own on the planning grid.</p>`}`;
+  /* THE TOP IS THE BOARD (Ramy, 30 Oct 2026, beside the spec pack's
+     tp-points-and-sets-mockup.html): one line, then the Courseboard. The
+     Getting to know you door and the rotation note sit under the board. */
+  const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${(IS_TRAINEE || VIEW_AS) ? '' :
+    '<p class="lede">Choose the TP point set each group uses, then deal each trainee their lessons. The order stays balanced; your changes stay yours.</p>'}`;
+  const gtky = IS_TRAINEE ? '' : '<a class="gtkydoor" href="31_getting_to_know_you.html?view=bank"><span class="gk-k">The first afternoon</span><b>Getting to know you: the activities</b><span class="gk-l">Connect’s bank of short first-lesson activities, three for each level. Each trainee picks one before day one.</span><span class="gk-go">Open the activities</span></a>';
+  const gridLede = (IS_TRAINEE || VIEW_AS) ? '' :
+    `<p class="lede gridlede">The lesson type for each trainee, TP 1 to ${TPS}. It deals so nobody in a teaching set teaches the same type on the same day and nobody meets a type twice within a level. Change any cell; the check below reads what is on the page, not what was generated. The last two TPs are the trainees\u2019 own on the planning grid.</p>`;
 
   if (IS_TRAINEE || VIEW_AS) {
     /* A TUTOR'S VIEW OF THE TRAINEE'S PAGE (Ramy, 21 Oct 2026). The same page,
@@ -2180,7 +2190,7 @@ function renderCore(){
   if (!built) {
     BUILT = false;
     if (IS_TUTOR && TAB !== 'board') { app.innerHTML = head + tabsHTML() + tabHTML(TAB); wireTabs(); return; }
-    app.innerHTML = head + tabsHTML() + startHTML();
+    app.innerHTML = head + tabsHTML() + startHTML() + gtky;
     const bb = $('build'); if (bb) bb.addEventListener('click', () => build(false));
     const tonly = $('typesOnly'); if (tonly) tonly.addEventListener('click', () => { TYPES_ONLY = true; render(); });
     wireBoard(false); wireTabs();
@@ -2189,7 +2199,7 @@ function renderCore(){
   BUILT = true;
 
   if (IS_TUTOR && TAB !== 'board') { app.innerHTML = head + tabsHTML() + tabHTML(TAB); wireTabs(); return; }
-  app.innerHTML = head + tabsHTML() + (Object.keys(library()).length ? boardHTML(true) : setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Deal TP points again</button><span class="status">${esc(note)}</span></div>`) + tpOutHTML(gs) + gs.map(g => {
+  app.innerHTML = head + tabsHTML() + (Object.keys(library()).length ? boardHTML(true) : setBar() + `<div class="relbar"><button class="btn quiet" id="rebuild">Deal TP points again</button><span class="status">${esc(note)}</span></div>`) + gtky + gridLede + tpOutHTML(gs) + gs.map(g => {
     const rows = (P.groups || {})[g.group] || {};
     const lettered = R.lettersFor(g.people);
     const sets = R.setsFor(g.people);
@@ -2386,7 +2396,7 @@ function boardHTML(dealt){
     <div class="cbhead"><div><h2 id="cbh">Which TP point set each group uses</h2><p class="cbsub">One choice per group. A set includes the book, the lessons and the level.</p></div><a class="cbpill" href="6_centre_admin_dashboard.html">Course setup</a></div>
     ${rows}
     <div class="cblen"><div><b>Lesson length</b><small>${fromTT ? 'From the timetable; change it there. The stage clock uses the same length.' : 'Minutes, until the timetable says. The stage clock uses the same length.'}</small></div><div class="cblens" style="--n:${TPS}">${lens}</div></div>
-    <div class="cbdeal"><button type="button" class="btn primary" id="cbdeal">${dealt ? 'Deal TP points again' : 'Deal TP points'}</button><span class="cbst" role="status">${esc(st)}</span></div>
+    <div class="cbdeal"><button type="button" class="btn gold cbgo" id="cbdeal">${dealt ? 'Deal TP points again' : 'Deal TP points'}</button><span class="cbst" role="status">${esc(st)}</span></div>
   </section>
   <p class="cbnote">Dealing keeps the order balanced, so nobody in a teaching set teaches the same kind of lesson on the same day. The last two TPs are the trainees’ own.</p>` + studioHTML();
 }
@@ -2635,7 +2645,7 @@ function render(){
   if (!IS_TUTOR) return;
   const app = $('app');
   const bar = BUILT ? viewAsBar() : ''; if (!bar) return;
-  const lede = app.querySelector('.lede');
+  const lede = app.querySelector('.gridlede');
   if (lede) lede.insertAdjacentHTML('afterend', bar); else app.insertAdjacentHTML('afterbegin', bar);
   const sel = $('viewas');
   if (sel) sel.onchange = () => {
