@@ -296,6 +296,33 @@
     say('Two books on the course: Speakout Elementary for Group 1, Empower B2 for Group 2.');
   }};
 
+  /* THE PAGE AND THE RECORDINGS FOR THE FIRST TWO (Ramy, 31 Oct 2026: "when I click on TP points for one of the trainees ...
+     the page they're teaching from ... the audio should play ... at least for one trainee ... maybe the first two"). TP2 of the
+     first two trainees in group 1 is page 16 of the book: a vocabulary lesson with track 2.6 and a listening lesson with track
+     2.7. The page and both tracks are Connect's own (tools/make-demo-flatmates.mjs), in place of the book's. Run when the
+     points are dealt, and again whenever a tutor opens the TP points of a Connect demo, so a copy dealt before today has them. */
+  var OWN_TRACKS = { '2.6': 'track-2-6.mp3', '2.7': 'track-2-7.mp3' };
+  var OWN_PAGES = { '16': 'demo-media/connect-demo/pages/sb-016.png' };
+  function attachDemoPages(){
+    var Pp = g('P'); if (!Pp || !Pp.groups) return 0;
+    var abase = new URL('demo-media/connect-demo/audio/', location.href).href, changed = 0;
+    Object.keys(Pp.groups).forEach(function(grp){ Object.keys(Pp.groups[grp]).forEach(function(tok){ var row = Pp.groups[grp][tok]; Object.keys(row).forEach(function(k){
+      var c = row[k]; if (!c) return;
+      (c.pages || []).forEach(function(f){ var m = f && !f.url && /student.?s book p\.?\s*(\d+)/i.exec(f.name || ''); if (m && OWN_PAGES[m[1]] && /language hub elementary/i.test(String((c.book || {}).ref || ''))) { f.url = new URL(OWN_PAGES[m[1]], location.href).href; f.demo = 1; changed++; } });
+      if (c.audio && c.audio.url) {
+        var was = String(c.audio.url);
+        var now = was.split(/\n+/).map(function(line){ var t = line.trim(), num = /^track\s*(\d+\.\d+)/i.exec(t); if (!num || !OWN_TRACKS[num[1]]) return line; var want = abase + OWN_TRACKS[num[1]]; if (t.indexOf(want) > -1) return line; return 'Track ' + num[1] + ' \u00b7 made for the Connect demo | ' + want; }).join('\n');
+        if (now !== was) { c.audio.url = now; changed++; }
+      }
+    }); }); });
+    return changed;
+  }
+  if (PAGE === '24_tp_points.html' && ROLE === 'tutor') {
+    var tries = 0, tick = setInterval(function(){ tries++; var Pp = g('P');
+      if (Pp && Pp.groups) { clearInterval(tick); var n = attachDemoPages(); if (n && typeof g('persist') === 'function') { g('persist')('Demo page and recordings attached'); if (typeof g('render') === 'function') g('render')(); } }
+      else if (tries > 40) clearInterval(tick); }, 500);
+  }
+
   /* Deal the rotation from the two books and release it to both groups, so the trainees see their full TP points. */
   FILL['24_tp_points.html'] = { who: 'tutor', label: 'Fill in', run: async function(){
     var b = $('build');
@@ -306,12 +333,13 @@
        you teach from are there, that the other two teachers' are there"). The books' own recordings are not ours to ship, so
        every lesson that names a track gets a short recording of one of Connect's own scripts in the house voices, labeled
        as made for the demo. The track number stays: it is what the book would say. The pages are the set's own. */
+    attachDemoPages();
     (function(){
       var Pp = g('P'); if (!Pp || !Pp.groups) return;
       var n = 0, base = new URL('demo-media/connect-demo/audio/', location.href).href;
       Object.keys(Pp.groups).forEach(function(grp){ Object.keys(Pp.groups[grp]).forEach(function(tok){ var row = Pp.groups[grp][tok]; Object.keys(row).forEach(function(k){
         var c = row[k]; if (!c || !c.audio || !c.audio.url) return;
-        c.audio.url = String(c.audio.url).split(/\n+/).map(function(line){ line = line.trim(); if (!line || line.indexOf('|') > -1 || /^(https?:)?\/\//i.test(line)) return line; n++; return line + ' \u00b7 made for the Connect demo | ' + base + 'track-' + ((n % 5) + 1) + '.mp3'; }).join('\n');
+        c.audio.url = String(c.audio.url).split(/\n+/).map(function(line){ line = line.trim(); if (!line || line.indexOf('|') > -1 || /^(https?:)?\/\//i.test(line)) return line; var own = OWN_TRACKS[line.replace(/^track\s*/i, '')]; if (own) return line + ' \u00b7 made for the Connect demo | ' + base + own; n++; return line + ' \u00b7 made for the Connect demo | ' + base + 'track-' + ((n % 5) + 1) + '.mp3'; }).join('\n');
       }); }); });
       if (n && typeof g('persist') === 'function') g('persist')('Demo recordings attached');
     })();
