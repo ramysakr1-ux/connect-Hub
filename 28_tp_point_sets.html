@@ -589,6 +589,10 @@ async function takeFromLibrary(libId){
        point from this set names them (Ramy, 13 Oct 2026). */
     LIB[id] = Object.assign(JSON.parse(JSON.stringify(got)),
       { from: libId, taken: new Date().toISOString().slice(0, 10), by: row.by || 'Connect' });
+    /* an own set begun and never written in goes when a Connect set is taken instead (Ramy, 30 Oct 2026: "if I click on your own
+       set and then I change my mind and I want to come out and choose Connect library, I can't") */
+    Object.keys(LIB).forEach(k => { const x = LIB[k]; if (k !== id && x && x.own && !String(x.book || '').trim()
+      && !Object.values(x.sessions || {}).some(ses => (ses.slots || []).some(sl => sl && (sl.type || sl.aim || (sl.stages || []).length)))) delete LIB[k]; });
     CUR = id; S = LIB[id]; OPEN = null; SHOWLIB = false; TAKING = ''; LIBNOTE = '';
     persist(row.book.split(',')[0] + ' is on the course');
   } catch (e) {

@@ -40,6 +40,8 @@
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
+  .tarrow{display:flex; justify-content:center; margin:6px 0; color:var(--sand-line);}   /* the way from Step 1 to Step 2 (Ramy, 30 Oct 2026: "a big thick arrow") */
+  .tarrow.on{color:var(--gold-deep);}
   .tstep.wait{border-top-color:var(--sand-line); opacity:.75;} .tstep.done{border-top-color:var(--a-forest, var(--teal));}
   .tstep .relbar{margin:6px 0 0;} .tstep .setbar{margin:0;}
   .tsn{margin:0 0 10px; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--gold-deep);}
@@ -917,7 +919,7 @@ function setBar(){
   /* A set with no name, no book and nothing written is not shown: an empty
      "The set" beside the real one read as a second set (Ramy, 21 Oct 2026).
      It is still there in Write the sets, with a Remove at the top. */
-  const worth = id => { const x = lib[id]; return !!(x.name || x.book) || sess.some(k => { const ses = (x.sessions || {})[k]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }); };
+  const worth = id => { const x = lib[id]; return !!(x.book || (x.name && !x.own)) || sess.some(k => { const ses = (x.sessions || {})[k]; return ses && (ses.slots || []).some(sl => sl && (sl.type || sl.aim)); }); };
   let shown = ids.filter(worth); if (!shown.length) shown = ids;
   const line = shown.map(id => {
     const s = lib[id];
@@ -2221,7 +2223,7 @@ var BUILT = false, TYPES_ONLY = false;   // the rotation is dealt; a tutor chose
    lessons come from (Connect's library, or a set of the course's own; or, quietly, lesson types only), then deal the
    trainees into them. Nobody is shown "see it as" a trainee while there is nothing for a trainee to see. */
 function startHTML(){
-  const lib = library(), has = Object.keys(lib).some(id => { const x = lib[id]; return !!(x.name || x.book) || sessionIds().some(k => ((x.sessions || {})[k] || {}).slots && x.sessions[k].slots.some(sl => sl && (sl.type || sl.aim))); });
+  const lib = library(), has = Object.keys(lib).some(id => { const x = lib[id]; return !!(x.book || (x.name && !x.own)) || sessionIds().some(k => ((x.sessions || {})[k] || {}).slots && x.sessions[k].slots.some(sl => sl && (sl.type || sl.aim))); });
   const ready = has || TYPES_ONLY;
   const step1 = has
     ? `<div class="tstep done"><p class="tsn">Step 1 · The lessons</p>${setBar()}</div>`
@@ -2231,10 +2233,12 @@ function startHTML(){
           <a class="tcard own" href="28_tp_point_sets.html?from=tp&make=1"><b>Your own set</b><span>Write your course’s TP points against your coursebook, or import them from a document.</span><em>Write a set</em></a>
         </div>
         ${TYPES_ONLY ? '<p class="tquiet">Lesson types only: Lite deals grammar, vocabulary and skills, and you add the pages and aims afterwards.</p>' : '<button type="button" class="tquiet lnk" id="typesOnly">Or deal lesson types only, without a set</button>'}</div>`;
-  const step2 = `<div class="tstep${ready ? '' : ' wait'}"><p class="tsn">Step 2 · Deal the trainees</p>
-      <div class="relbar"><button class="btn${ready ? ' primary' : ''}" id="build"${ready ? '' : ' disabled'}>Deal the trainees</button>
-      <span class="status">${ready ? (has ? 'Each trainee takes a lesson from the set, so nobody in a teaching set teaches the same type on the same day.' : 'Each trainee gets a lesson type for every TP, spread across the language and skills areas.') : 'Choose the lessons first.'}</span></div></div>`;
-  return step1 + step2;
+  /* Ramy, 30 Oct 2026: "step 2, deal the trainees. It's just not very clear, is it?" -- it says what it does now. */
+  const step2 = `<div class="tstep${ready ? '' : ' wait'}"><p class="tsn">Step 2 · Give each trainee their lessons</p>
+      <div class="relbar"><button class="btn${ready ? ' primary' : ''}" id="build"${ready ? '' : ' disabled'}>Deal the TP points</button>
+      <span class="status">${ready ? (has ? 'Lite gives every trainee a lesson from the set for each TP, so nobody in a teaching set teaches the same kind of lesson on the same day. You can swap any of them afterwards.' : 'Lite gives every trainee a lesson type for each TP, spread across language and skills. You can swap any of them afterwards.') : 'Choose the lessons in Step 1 first.'}</span></div></div>`;
+  const arrow = `<div class="tarrow${ready ? ' on' : ''}" aria-hidden="true"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v16"/><path d="M5 12l7 7 7-7"/></svg></div>`;
+  return step1 + arrow + step2;
 }
 let VIEW_AS = null;   // a tutor's "see it as": { token, name, group }, or null for the tutor's own view
 
