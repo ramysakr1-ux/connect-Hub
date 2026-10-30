@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610302040">
+<link rel="stylesheet" href="hub-tokens.css?v=202610302113">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -195,7 +195,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610302040">
+<link rel="stylesheet" href="hub-house.css?v=202610302113">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -203,18 +203,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202610302040"></script>
-<script src="assignment-history.js?v=202610302040"></script>
-<script src="hub-due.js?v=202610302040"></script>
-<script src="hub-shared.js?v=202610302040"></script>
-<script src="hub-store.js?v=202610302040"></script>
-<script src="hub-say.js?v=202610302040"></script>
-<script src="hub-sync.js?v=202610302040"></script>
-<script src="hub-notebook.js?v=202610302040"></script>
-<script src="observation-defaults.js?v=202610302040"></script>
-<script src="hub-rotation.js?v=202610302040"></script>
-<script src="hub-peers.js?v=202610302040"></script>
-<script src="fol-interview.js?v=202610302040"></script>
+<script src="assignment-defaults.js?v=202610302113"></script>
+<script src="assignment-history.js?v=202610302113"></script>
+<script src="hub-due.js?v=202610302113"></script>
+<script src="hub-shared.js?v=202610302113"></script>
+<script src="hub-store.js?v=202610302113"></script>
+<script src="hub-say.js?v=202610302113"></script>
+<script src="hub-sync.js?v=202610302113"></script>
+<script src="hub-notebook.js?v=202610302113"></script>
+<script src="observation-defaults.js?v=202610302113"></script>
+<script src="hub-rotation.js?v=202610302113"></script>
+<script src="hub-peers.js?v=202610302113"></script>
+<script src="fol-interview.js?v=202610302113"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -279,7 +279,7 @@ if (!CURRENT) CURRENT = ORDER.filter(k => k !== 'a5')[0] || 'fol';
 
 let PICKED = {};   // { sectionIdx: { A:[], B:[] } }
 let TEXT = {};      // { sectionIdx: string }
-let DECL = {};      // { sectionIdx: { checks:[bool], aiUsed, aiLink, aiPurpose } }
+let DECL = {};      // { sectionIdx: { checks:[bool], aiUsed, aiTool, aiPurpose, aiMaterial, aiChecked, aiLink } }
 let dirty = false;
 
 function saveSubs(){ if (PREVIEW) return; localStorage.setItem(SUB_KEY, JSON.stringify(SUBS)); }
@@ -546,7 +546,10 @@ function render(){
           <label><input type="radio" name="ai${i}" data-role="ai" data-i="${i}" value="no" ${d.aiUsed==='no'?'checked':''} ${locked?'disabled':''}> Did not use AI</label>
         </div>
         <div class="ai-fields ${d.aiUsed==='yes'?'open':''}" data-aibox="${i}">
-          <div class="row"><label>Link to the AI conversation</label><input type="url" data-role="ailink" data-i="${i}" value="${esc(d.aiLink)}" ${locked?'disabled':''} placeholder="https://… the shared link to the conversation"></div>
+          <!-- THE AI-USE RECORD (30 Oct 2026, the Connect Lite specification's R29: "collect purpose and verification;
+               do not expect a private conversation link"). Which tool, what for, what came from it, and what the
+               trainee checked or changed. The link is optional now. -->
+          <div class="row"><label>Which tool</label><input type="text" data-role="aitool" data-i="${i}" value="${esc(d.aiTool||'')}" ${locked?'disabled':''} placeholder="For example ChatGPT, Claude, Grammarly"></div>
           <div class="row"><label>Purpose</label>
             <select data-role="aipurpose" data-i="${i}" ${locked?'disabled':''}>
               <option value="">\u2014 choose \u2014</option>
@@ -554,6 +557,9 @@ function render(){
               <option value="research" ${d.aiPurpose==='research'?'selected':''}>Research</option>
               <option value="proofreading" ${d.aiPurpose==='proofreading'?'selected':''}>Proofreading</option>
             </select></div>
+          <div class="row"><label>What you used from it</label><input type="text" data-role="aimaterial" data-i="${i}" value="${esc(d.aiMaterial||'')}" ${locked?'disabled':''} placeholder="For example a list of example sentences"></div>
+          <div class="row"><label>What you checked or changed</label><textarea rows="3" data-role="aichecked" data-i="${i}" ${locked?'disabled':''} placeholder="What you checked against the book or your notes, and what you rewrote yourself">${esc(d.aiChecked||'')}</textarea></div>
+          <div class="row"><label>Link to the conversation <span class="hint" style="display:inline">(optional)</span></label><input type="url" data-role="ailink" data-i="${i}" value="${esc(d.aiLink)}" ${locked?'disabled':''} placeholder="https://… only if you want to share it"></div>
         </div>`:''}
         <p class="hint" style="margin:8px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another trainee\u2019s does count as a breach. Unacknowledged AI use is treated as a fail on first submission.</p>
       </div>`;
@@ -700,7 +706,7 @@ function declOk(a){
       if (!d || !d.checks || !s.items.every((_, ci) => d.checks[ci] === true)) ok = false;
       if (s.aiToggle) {
         if (!d || !d.aiUsed) ok = false;
-        else if (d.aiUsed==='yes' && (!d.aiLink || !d.aiPurpose)) ok = false;
+        else if (d.aiUsed==='yes' && (!String(d.aiTool||'').trim() || !d.aiPurpose || !String(d.aiChecked||'').trim())) ok = false;
       }
     }
   });
@@ -755,6 +761,10 @@ function bindInputs(){
   document.querySelectorAll('[data-role="ailink"]').forEach(el => el.addEventListener('input', () => {
     const i = el.dataset.i; if (!DECL[i]) DECL[i]={checks:[],aiUsed:'',aiLink:'',aiPurpose:''}; DECL[i].aiLink = el.value; dirty=true; autosave();
   }));
+  ['aitool:aiTool', 'aimaterial:aiMaterial', 'aichecked:aiChecked'].forEach(pair => { const [role, key] = pair.split(':');
+    document.querySelectorAll('[data-role="' + role + '"]').forEach(el => el.addEventListener('input', () => {
+      const i = el.dataset.i; if (!DECL[i]) DECL[i]={checks:[],aiUsed:'',aiLink:'',aiPurpose:''}; DECL[i][key] = el.value; dirty=true; autosave();
+    })); });
   document.querySelectorAll('[data-role="aipurpose"]').forEach(el => el.addEventListener('change', () => {
     const i = el.dataset.i; if (!DECL[i]) DECL[i]={checks:[],aiUsed:'',aiLink:'',aiPurpose:''}; DECL[i].aiPurpose = el.value; dirty=true; autosave();
   }));

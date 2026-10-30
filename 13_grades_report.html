@@ -23,7 +23,7 @@
 <title>Connect Lite — Grades report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610302040">
+<link rel="stylesheet" href="hub-tokens.css?v=202610302113">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -275,8 +275,12 @@
   .cand{margin-top:14px;}   /* a white card, as the house draws it (hub-house.css) */
   .chead .ltr{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:var(--box); color:var(--ink); font-size:13px; letter-spacing:0; margin-right:12px; vertical-align:2px;}
   .gt tr.band td{padding:12px 20px 5px; border-top:0; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gold-deep); background:var(--surface);}
+  .gmrec .gmlist{margin:6px 0 8px; padding-left:18px; font-size:0.88rem;} .gmrec .btn{margin-top:6px;}
+  .amends{margin:6px 24px 10px; padding:10px 12px; border-radius:var(--r-strip); background:var(--box);} .amends h4{margin:0 0 6px; font-size:0.82rem;}
+  .amend{display:grid; gap:4px; margin:6px 0;} .amend span{font-size:0.82rem; color:var(--grey);} .amend p{margin:0; font-size:0.88rem;}
+  .amend input{font:inherit; font-size:0.88rem; padding:7px 9px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field);} .amend input.need{border-color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610302040">
+<link rel="stylesheet" href="hub-house.css?v=202610302113">
 </head>
 <body>
 <div class="board">
@@ -329,12 +333,12 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202610302040"></script>
-<script src="hub-store.js?v=202610302040"></script>
-<script src="hub-say.js?v=202610302040"></script>
-<script src="hub-rotation.js?v=202610302040"></script>
-<script src="hub-shared.js?v=202610302040"></script>
-<script src="hub-sync.js?v=202610302040"></script>
+<script src="hub-tracker.js?v=202610302113"></script>
+<script src="hub-store.js?v=202610302113"></script>
+<script src="hub-say.js?v=202610302113"></script>
+<script src="hub-rotation.js?v=202610302113"></script>
+<script src="hub-shared.js?v=202610302113"></script>
+<script src="hub-sync.js?v=202610302113"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -501,8 +505,29 @@ function paintCourse(){
       <textarea class="prose"${ro()} data-coursefield="${f.key}" placeholder="${esc(f.ph)}" style="min-height:120px">${esc(COURSE[f.key] || '')}</textarea>
       <div class="hint">${f.hint}</div>
     </div>`).join('')}
+    ${meetingHTML()}
   </div>`;
   box.querySelectorAll('textarea').forEach(fit);
+  const rb = document.getElementById('recordMeeting'); if (rb) rb.addEventListener('click', recordMeeting);
+}
+/* THE GRADE MEETING, RECORDED (30 Oct 2026, the Connect Lite specification's R31: "capture grade meeting snapshot and
+   append amendments with reasons"). Recording takes a dated copy of every trainee's provisional and final grade. After
+   that a grade can still be changed, but the change is kept beside it, from and to, with the day and a reason, and the
+   meeting's copy is never overwritten. */
+const fmtDay = iso => { try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return iso; } };
+function meetingHTML(){
+  const ms = COURSE.meetings || [];
+  const list = ms.map(m => `<li>Recorded ${esc(fmtDay(m.at))} · ${Object.keys(m.grades || {}).length} trainee${Object.keys(m.grades || {}).length === 1 ? '' : 's'}${m.note ? ' · ' + esc(m.note) : ''}</li>`).join('');
+  return `<div class="sec gmrec"><div class="head"><h3>Grade meeting record</h3></div>
+    ${ms.length ? `<ul class="gmlist">${list}</ul><p class="hint">A grade changed after this keeps its change, with a reason, under the trainee.</p>` : '<p class="hint">Nothing recorded yet. Record the meeting once the grades are agreed; later changes then keep a reason.</p>'}
+    ${RO ? '' : `<button type="button" class="btn" id="recordMeeting">${ms.length ? 'Record the meeting again' : 'Record the grade meeting'}</button>`}</div>`;
+}
+function recordMeeting(){
+  if (RO) return;
+  const grades = {};
+  ORDER.forEach(p => { const d = DATA[p.id] || {}; grades[p.id] = { name: d.name || '', provisional: d.provisional || '', final: d.final || '' }; });
+  COURSE.meetings = (COURSE.meetings || []).concat([{ at: new Date().toISOString(), note: String(COURSE.meeting || '').split('\n')[0].slice(0, 120), grades }]);
+  touch(); persist(); paintCourse();
 }
 /* The door to the final course report. There is no report to write on a
    course that ended in an outcome rather than a grade -- the document
@@ -676,6 +701,8 @@ function paintCands(){
       <div class="prosewrap evwrap" data-ev="${esc(p.id)}"${wantsEvidence(p, d.provisional) ? '' : ' hidden'}>${proseSection(p, EVIDENCE)}</div>
       <div class="cols">${SECTIONS.map(s => listSection(p, s)).join('')}</div>
       <div class="grow final"><label>Final grade</label>${gradeSelect('final', FINAL, d.final, p)}</div>
+      ${(d.amendments || []).length ? `<div class="amends"><h4>Changed since the grade meeting</h4>${d.amendments.map((a, ai) => `<div class="amend"><span>${esc(fmtDay(a.at))} · ${a.kind === 'final' ? 'Final' : 'Provisional'} ${esc(a.from || 'not set')} to ${esc(a.to || 'not set')}</span>
+        ${RO ? `<p>${esc(a.reason || 'No reason given')}</p>` : `<input type="text" data-amend="${ai}" data-id="${esc(p.id)}" value="${esc(a.reason || '')}" placeholder="Why it changed${a.reason ? '' : ' (needed)'}"${a.reason ? '' : ' class="need"'}>`}</div>`).join('')}</div>` : ''}
       <!-- One box, two sides, as Appian has it: the update on the left, the
            evidence that earned a higher grade on the right. It comes with the
            final grade and goes with it, unless either side already has text. -->
@@ -874,6 +901,7 @@ cands.addEventListener('click', e => {
 });
 
 cands.addEventListener('input', e => {
+  if (!RO && e.target.matches('[data-amend]')) { const am = (DATA[e.target.dataset.id].amendments || [])[+e.target.dataset.amend]; if (am) { am.reason = e.target.value; e.target.classList.toggle('need', !e.target.value.trim()); touch(); } return; }
   if (RO) return;
   const sec = e.target.closest('[data-sec]'); if (!sec) return;
   const d = DATA[sec.dataset.id];
@@ -885,7 +913,13 @@ cands.addEventListener('input', e => {
    lands in the same record, and both views repaint from it. */
 function onGrade(e){
   if (RO || !e.target.matches('select.grade')) return;
+  const was = DATA[e.target.dataset.id][e.target.dataset.grade] || '';
+  if ((COURSE.meetings || []).length && was !== e.target.value) {
+    const D = DATA[e.target.dataset.id];
+    D.amendments = (D.amendments || []).concat([{ at: new Date().toISOString(), kind: e.target.dataset.grade, from: was, to: e.target.value, reason: '' }]);
+  }
   DATA[e.target.dataset.id][e.target.dataset.grade] = e.target.value; touch();
+  if ((COURSE.meetings || []).length && was !== e.target.value) { paintCands(); return; }
   if (e.target.dataset.grade === 'provisional') {
     const box = document.querySelector(`.evwrap[data-ev="${CSS.escape(e.target.dataset.id)}"]`);
     if (box) box.hidden = !wantsEvidence(byId(e.target.dataset.id), e.target.value);

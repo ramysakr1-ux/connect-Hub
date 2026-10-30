@@ -1199,7 +1199,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
         });
       } else if (s.type==='declaration' && snap.decl && snap.decl[i]) {
         const d = snap.decl[i];
-        out += `<div class="roundlabel">Declaration</div><div class="readonly">${s.items.map((it,ci)=>`${d.checks[ci]?'\u2611':'\u2610'} ${esc(it)}`).join('\n')}${s.aiToggle?`\nAI used: ${d.aiUsed==='yes'?('Yes \u2014 '+esc(d.aiPurpose)+' \u2014 '+esc(d.aiLink)):'No'}`:''}</div>`;
+        out += `<div class="roundlabel">Declaration</div><div class="readonly">${s.items.map((it,ci)=>`${d.checks[ci]?'\u2611':'\u2610'} ${esc(it)}`).join('\n')}${s.aiToggle?`\nAI used: ${d.aiUsed==='yes'?('Yes'+[d.aiTool, d.aiPurpose, d.aiMaterial ? 'used: '+d.aiMaterial : '', d.aiChecked ? 'checked or changed: '+d.aiChecked : '', d.aiLink].filter(Boolean).map(x=>' \u2014 '+esc(x)).join('')):'No'}`:''}</div>`;
       }
     });
     return out || '<p class="readonly">Nothing submitted.</p>';
@@ -1829,17 +1829,20 @@ window.hubGuidanceHTML = function(text){
    reader never says it; but it is real text, so copying the brief, or any
    tool that reads the page, carries it. The marking page looks for it in the
    submission and tells the tutor; the trainee is never told. It is a prompt to
-   look closer, never proof. */
+   look closer, never proof.
+
+   RETIRED 30 Oct 2026 (Ramy, "go for it", on the Connect Lite specification's R28: "remove the
+   hidden-word trap; use transparent human-reviewed authorship evidence"). No brief carries the
+   word any more and no marking page looks for it. A course's stored word (wording[k].trap) is
+   left where it is and simply not used; the own-work check, the declaration and the tutor's
+   judgement are the authorship evidence. */
 (function(){
   if (document.getElementById('hub-tw-css')) return;
   var st = document.createElement('style'); st.id = 'hub-tw-css';
   st.textContent = '.hub-tw{color:transparent !important; font-size:1px !important; line-height:0 !important; letter-spacing:0 !important; user-select:text; -webkit-user-select:text;} @media print{.hub-tw{color:#fff !important;}}';
   (document.head || document.documentElement).appendChild(st);
 })();
-window.hubTrapSpan = function(word){
-  word = String(word || '').replace(/[^A-Za-z]/g, '');
-  return word ? '<span class="hub-tw" aria-hidden="true"> ' + word + ' </span>' : '';
-};
+window.hubTrapSpan = function(){ return ''; };
 /* Every piece of writing in one submission round, as one string. */
 window.hubSubmissionText = function(round){
   if (!round) return '';
@@ -1849,12 +1852,14 @@ window.hubSubmissionText = function(round){
   return out.join('\n');
 };
 window.hubTrapFound = function(word, sub){
+  return false;   // retired 30 Oct 2026, see above
   word = String(word || '').replace(/[^A-Za-z]/g, '');
   if (!word || !sub) return false;
   var re = new RegExp('\\b' + word + '\\b', 'i');
   return [sub.sub1, sub.sub2].some(function(r){ return r && re.test(window.hubSubmissionText(r)); });
 };
 window.hubTrapNote = function(word){
+  return '';   // retired 30 Oct 2026
   word = String(word || '').replace(/[^A-Za-z]/g, '');
   return word ? 'The hidden word for this assignment is ' + word + '. It is in every section of the brief: invisible on the page and in print, but anything that copies or reads the page’s text picks it up. If it appears in a trainee’s answer, the work was probably produced from a copy of the brief rather than from the brief as read. Treat it as a prompt to look more closely at how the work was produced, and follow the center’s usual process rather than acting on it alone. Lite checks every submission for it and tells you on the marking page.' : '';
 };
@@ -1943,10 +1948,11 @@ window.hubWorkChecks = function (a, snap, key, who) {
   if (d) {
     var all = (d.checks || []).every(Boolean);
     add(all ? 'ok' : 'look', all ? 'Declaration signed' : 'Declaration not complete', all ? '' : 'Every line of the declaration should be ticked.');
-    if (d.aiUsed === 'yes') add(d.aiLink ? 'info' : 'look', 'AI declared: ' + (d.aiPurpose || 'no purpose given'), d.aiLink ? 'Check it is one of the permitted uses and cited in the text.' : 'No link to the conversation.');
+    /* the AI-use record (30 Oct 2026): tool, purpose and what was checked or changed; a link is optional, never expected */
+    if (d.aiUsed === 'yes') { var full = d.aiTool && d.aiPurpose && d.aiChecked; var what = [d.aiTool, d.aiPurpose].filter(Boolean).join(', '); add(full ? 'info' : 'look', 'AI declared' + (what ? ': ' + what : ''), full ? 'Check it is one of the permitted uses and cited in the text.' : (d.aiTool || d.aiPurpose ? 'It does not say what was checked or changed.' : 'It does not say which tool or what for.')); }
     else if (d.aiUsed) add('ok', 'No AI declared');
   }
-  if (a.trap && window.hubTrapFound) { var hit = hubTrapFound(a.trap, { sub1: snap }); add(hit ? 'look' : 'ok', hit ? 'Hidden word used' : 'Hidden word not used', ''); }
+  /* the hidden-word row went with the hidden word, 30 Oct 2026 */
   return items;
 };
 

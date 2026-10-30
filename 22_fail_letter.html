@@ -35,7 +35,7 @@
 <title>Connect Lite — Fail warning letter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610302040">
+<link rel="stylesheet" href="hub-tokens.css?v=202610302113">
 <style>
   :root{
     --cream:oklch(97.5% 0.012 85);
@@ -138,6 +138,8 @@
   .receipt .who b{display:block;}
   .sign{margin-top:26px; padding-top:18px; border-top:1px solid var(--sand-line); font-size:0.88rem;}
   @media print{ textarea{border:none; background:transparent; padding:0; resize:none;} .f{margin-top:14px;} .cite, .lede{display:none;} }
+  .lhist{margin:22px 0 0; padding:16px 18px; border-radius:var(--r-strip); background:var(--box);} .lhist h3{margin:0 0 2px;} .lhist ol{margin:10px 0 0; padding-left:20px;} .lhist li{margin:0 0 10px; font-size:0.9rem;}
+  .lhist .w{color:var(--brick);} .lhist summary{cursor:pointer; font-size:0.84rem; color:var(--grey); margin-top:4px;} .lhist .para{white-space:pre-wrap; font-size:0.86rem; margin-top:6px;}
 </style>
 </head>
 <body class="hub-paper">
@@ -149,13 +151,13 @@
   <div id="doc"></div>
 </div>
 
-<script src="hub-hand.js?v=202610302040"></script>
-<script src="hub-ink.js?v=202610302040"></script>
-<script src="hub-tracker.js?v=202610302040"></script>
-<script src="hub-store.js?v=202610302040"></script>
-<script src="hub-say.js?v=202610302040"></script>
-<script src="hub-shared.js?v=202610302040"></script>
-<script src="hub-sync.js?v=202610302040"></script>
+<script src="hub-hand.js?v=202610302113"></script>
+<script src="hub-ink.js?v=202610302113"></script>
+<script src="hub-tracker.js?v=202610302113"></script>
+<script src="hub-store.js?v=202610302113"></script>
+<script src="hub-say.js?v=202610302113"></script>
+<script src="hub-shared.js?v=202610302113"></script>
+<script src="hub-sync.js?v=202610302113"></script>
 <script type="text/x-hub-app">
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const T = window.HubTracker;
@@ -248,6 +250,18 @@ function receipt(issuedAt){
   if (IS_TRAINEE) return `<div class="receipt"><button class="btn primary" type="button" id="signLetter">Sign to say you have read it</button></div>`;
   return `<div class="receipt"><span class="pill amb">Not signed yet</span><span class="status">It is signed from the trainee\u2019s own link.</span></div>`;
 }
+/* THE LETTER'S HISTORY (30 Oct 2026, the Connect Lite specification's R33: "keep issued versions, withdrawal event and
+   superseding version history"). Staff only. A letter issued before today has no history yet; its current issue is
+   read in as version 1 the first time it is withdrawn or issued again. */
+function failLetterHistory(man){
+  const h = Array.isArray(man.failLetterHistory) ? man.failLetterHistory.slice() : [];
+  if (!h.length && man.failLetterIssuedAt) h.push({ v: 1, issuedAt: man.failLetterIssuedAt, by: man.failLetterBy || '', doc: man.failLetterDoc || '' });
+  return h;
+}
+function letterHistoryHTML(h){
+  if (!h.length) return '';
+  return `<div class="lhist"><h3>Letter history</h3><p class="status">For staff. The trainee sees only the letter that is issued now.</p><ol>${h.map((x, i) => `<li><b>Version ${x.v}</b> \u00b7 issued ${esc(when(x.issuedAt))}${x.by ? ' by ' + esc(x.by) : ''}${i ? ' \u00b7 replaces version ' + h[i - 1].v : ''}${x.withdrawnAt ? `<br><span class="w">Withdrawn ${esc(when(x.withdrawnAt))}${x.withdrawnBy ? ' by ' + esc(x.withdrawnBy) : ''}: ${esc(x.withdrawnReason || '')}</span>` : ''}<details><summary>The text as issued</summary><div class="para">${esc(x.doc || '')}</div></details></li>`).join('')}</ol></div>`;
+}
 function render(){
   if (!who) { $('doc').innerHTML = '<div class="empty">Name a trainee in the link to open their letter.</div>'; return; }
   const r = T.readCandidate(T.recordFor(who.tr));
@@ -283,7 +297,8 @@ function render(){
         : `<button class="btn primary" type="button" id="issue">Issue this letter</button>${r.lessonsLeft <= 2 ? `<span class="pill amb">${r.lessonsLeft <= 0 ? 'no lessons left to teach' : r.lessonsLeft + ' lesson' + (r.lessonsLeft === 1 ? '' : 's') + ' left to teach'}</span>` : `<span class="status">${r.lessonsLeft} lessons left to teach</span>`}`}
       <button class="btn" type="button" id="reset">Start again from the record</button>
       <span class="status" id="status"></span>
-    </div>`}`;
+    </div>`}
+    ${IS_TRAINEE ? '' : letterHistoryHTML(failLetterHistory(man))}`;
 
   const sg = $('signLetter');
   if (sg) sg.addEventListener('click', async () => {
@@ -305,14 +320,20 @@ function render(){
     const today = new Date().toISOString();
     /* failLetter is the date the tracker has always shown; the document and
        the signer sit beside it so the old field keeps working. */
-    saveTracker({ failLetterDoc: ($('body') || {}).value || body, failLetterIssuedAt: today, failLetterBy: name,
+    /* every issue is kept as a version (30 Oct 2026, the specification's R33): the text, the day and who issued it */
+    const hist = (failLetterHistory(man)).concat([{ v: failLetterHistory(man).length + 1, issuedAt: today, by: name, doc: ($('body') || {}).value || body }]);
+    saveTracker({ failLetterHistory: hist, failLetterDoc: ($('body') || {}).value || body, failLetterIssuedAt: today, failLetterBy: name,
                   failLetter: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) });
     render();
   });
   const un = $('unissue');
   if (un) un.addEventListener('click', () => {
-    if (!confirm('Withdraw the letter? It stops being the trainee\u2019s to read. The text stays here.')) return;
-    saveTracker({ failLetterIssuedAt: '', failLetterBy: '', failLetter: '' }); render();
+    /* a withdrawal keeps the issued version and says why (30 Oct 2026, R33) */
+    const why = prompt('Why is the letter withdrawn? This stays on the staff record; the trainee’s pages do not show it.', '');
+    if (why === null) return;
+    const hist = failLetterHistory(man).slice(); const last = hist[hist.length - 1];
+    if (last && !last.withdrawnAt) hist[hist.length - 1] = Object.assign({}, last, { withdrawnAt: new Date().toISOString(), withdrawnReason: why.trim() || 'No reason given', withdrawnBy: tutorName() || '' });
+    saveTracker({ failLetterHistory: hist, failLetterIssuedAt: '', failLetterBy: '', failLetter: '' }); render();
   });
   const rs = $('reset');
   if (rs) rs.addEventListener('click', () => {

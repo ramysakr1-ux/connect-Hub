@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202610302040">
+<link rel="stylesheet" href="hub-tokens.css?v=202610302113">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -776,25 +776,25 @@
   @media (max-width:760px){ .ttpop .prow, .ttpop .phead{grid-template-columns:92px 92px minmax(0,1fr) 22px;} .slayout.libopen{grid-template-columns:minmax(0,1fr);} .slib{position:static; max-height:320px;} .stool h2{font-size:1.3rem;} .ttpop.drawer{padding:18px 16px;} }
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202610302040">
+<link rel="stylesheet" href="hub-house.css?v=202610302113">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202610302040"></script>
-<script src="hub-tracker.js?v=202610302040"></script>
-<script src="hub-rotation.js?v=202610302040"></script>
-<script src="hub-xlsx.js?v=202610302040"></script>
-<script src="hub-docx.js?v=202610302040"></script>
-<script src="hub-timetable-parse.js?v=202610302040"></script>
-<script src="assignment-defaults.js?v=202610302040"></script>
-<script src="hub-shared.js?v=202610302040"></script>
-<script src="hub-store.js?v=202610302040"></script>
-<script src="hub-say.js?v=202610302040"></script>
-<script src="hub-sync.js?v=202610302040"></script>
-<script src="hub-notebook.js?v=202610302040"></script>
+<script src="hub-due.js?v=202610302113"></script>
+<script src="hub-tracker.js?v=202610302113"></script>
+<script src="hub-rotation.js?v=202610302113"></script>
+<script src="hub-xlsx.js?v=202610302113"></script>
+<script src="hub-docx.js?v=202610302113"></script>
+<script src="hub-timetable-parse.js?v=202610302113"></script>
+<script src="assignment-defaults.js?v=202610302113"></script>
+<script src="hub-shared.js?v=202610302113"></script>
+<script src="hub-store.js?v=202610302113"></script>
+<script src="hub-say.js?v=202610302113"></script>
+<script src="hub-sync.js?v=202610302113"></script>
+<script src="hub-notebook.js?v=202610302113"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2724,9 +2724,17 @@ function checksHTML(){
   (function(){
     const mins = x => Math.max(0, (toMin(x.e) || 0) - (toMin(x.s) || 0));
     const all = open.flatMap(d => (d.sessions || []).map(x => ({ x, d })));
-    const contact = all.filter(o => o.x.k !== 'lunch').reduce((a, o) => a + mins(o.x), 0) / 60;
+    /* ONE RULE FOR CONTACT HOURS (30 Oct 2026, the Connect Lite specification's R01: "use a single countsTowardContactHours
+       property and show the total calculation"). A session's own `ct` decides when it is set; otherwise the rule is the one
+       this page has always used: lunch does not count, everything else does, breaks included. The note now shows the sum. */
+    const counts = x => (typeof x.ct === 'boolean') ? x.ct : x.k !== 'lunch';
+    const contact = all.filter(o => counts(o.x)).reduce((a, o) => a + mins(o.x), 0) / 60;
     const obs = all.filter(o => o.x.k === 'demo').reduce((a, o) => a + mins(o.x), 0) / 60;
-    if (contact < 120) lines.push(['note', `Contact hours: ${Math.round(contact * 4) / 4} of Cambridge’s 120`]);
+    const q = h => Math.round(h * 4) / 4;
+    const NAME = { input: 'input', tp: 'TP', feedback: 'feedback', plan: 'planning', demo: 'observation', reflect: 'reflection', break: 'breaks', assessor: 'assessor', event: 'other', task: 'other' };
+    const by = {}; all.filter(o => counts(o.x)).forEach(o => { const n = NAME[o.x.k] || 'other'; by[n] = (by[n] || 0) + mins(o.x) / 60; });
+    const sum = Object.keys(by).filter(k => by[k] > 0).map(k => q(by[k]) + ' ' + k).join(' + ');
+    if (contact < 120) lines.push(['note', `Contact hours: ${q(contact)} of Cambridge’s 120 (${sum}; lunch not counted)`]);
     if (obs < 6) lines.push(['note', `Observation: ${Math.round(obs * 4) / 4} hours of the 6 (demonstration lessons and observations)`]);
     if (!all.some(o => o.x.k === 'assessor' || /assessor/i.test(o.x.t || ''))) lines.push(['note', 'No assessor visit on the timetable yet']);
     const lastOf = n => { let at = -1; open.forEach((d, i) => { if (Number(d.tp) === n) at = i; }); return at; };
