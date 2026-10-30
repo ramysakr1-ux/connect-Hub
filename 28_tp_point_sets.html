@@ -74,7 +74,19 @@
   .files li input{flex:1 1 auto; margin:0;}
   .files li a{font-size:0.78rem; font-weight:600; color:var(--teal); text-decoration:none; white-space:nowrap;}
   .filebtn{display:inline-block; cursor:pointer;}
-  .settabs{display:flex; flex-wrap:wrap; gap:12px 14px; margin:8px 0 28px;}   /* room between the sets (Ramy, 27 Oct 2026) */
+  .settabs{display:flex; flex-wrap:wrap; gap:12px 14px; margin:8px 0 12px;}
+  .settabs.catch{outline:2px dashed var(--a-mint); outline-offset:8px; border-radius:var(--r-card);}
+  .settab[draggable="true"]{cursor:grab;} body.dragging .settab{cursor:grabbing;}
+  /* the shelf: a quiet ledge under the tabs, that opens while a set is dragged */
+  .shelf{display:none; align-items:center; flex-wrap:wrap; gap:8px 12px; margin:0 0 28px; padding:12px 16px 14px; border-radius:var(--r-strip); background:var(--box); border-bottom:5px solid color-mix(in oklch, var(--a-mustard) 70%, var(--paper)); transition:background .15s ease, transform .15s ease;}
+  .shelf.has, .shelf.open{display:flex;}
+  .shelf.open{background:color-mix(in oklch, var(--a-lemon) 32%, var(--paper));}
+  .shelf.open.over{background:var(--a-mint-wash); transform:translateY(-2px);}
+  .shelf.open.no{background:color-mix(in oklch, var(--brick) 8%, var(--paper)); border-bottom-color:var(--brick);}
+  .shelf .shk{font-size:0.68rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--brick);}
+  .shelf .shsay{font-size:0.82rem; color:var(--ink); flex:1 1 260px;}
+  .spine{display:inline-flex; align-items:center; gap:10px; padding:7px 8px 7px 12px; border-radius:var(--r-control); background:var(--paper); box-shadow:var(--nb-shadow); border-left:4px solid var(--a-mint); cursor:grab; font-size:0.82rem;}
+  .spine .putback{font:inherit; font-size:0.74rem; font-weight:700; color:var(--a-forest); background:none; border:0; text-decoration:underline; text-underline-offset:3px; cursor:pointer; padding:2px 4px;}   /* room between the sets (Ramy, 27 Oct 2026) */
   .settab{font-family:inherit; font-size:0.84rem; font-weight:600; text-align:left; cursor:pointer;
     background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:11px 17px;
     color:var(--ink); display:flex; flex-direction:column; gap:1px;}
@@ -392,6 +404,8 @@ function standardIssues(sl, scaffold){
    group teaches from which. */
 let UPLOADING = '';    // "sessionId|slot" while a scan is going up
 let LIB = {};          // id -> set
+let SHELF = {};        // id -> one of the course's own sets, taken off it but kept (30 Oct 2026)
+let DRAG = '';         // the set whose tab is being dragged
 /* putMaterial needs a token to resolve the course; the tutor key rides along
    automatically (hub-store adds it), which is what buys the larger upload cap
    since store v71. Any trainee's token will do -- the file lands in the
@@ -704,6 +718,7 @@ function load(){
   LIB = (holder.library && Object.keys(holder.library).length) ? holder.library
       : (holder.sessions ? { s1: holder } : {});
   FOR = holder.setFor || {};
+  SHELF = holder.shelf || {};
   CUR = LIB[CUR] ? CUR : Object.keys(LIB)[0] || '';
   S = LIB[CUR] || null;
   Object.keys(LIB).forEach(id => {
@@ -714,12 +729,40 @@ function load(){
     });
   });
 }
+/* THE SHELF (Ramy, 30 Oct 2026: "drag and drop it somewhere ... not a bin, but something clever"). A set no group uses is
+   dragged off its tab onto the shelf under the tabs. One of Connect's goes back to the TP Point Pool, where it can be
+   taken again; one of the course's own waits on the shelf, writing and all, and is dragged back (or Put back) whenever
+   it is wanted. A set a group uses will not go: the shelf says which group to move first. Lessons already dealt are
+   copies on the trainees' points, so they stay. The shelf is under `set`, so the store keeps it; TP points reads only
+   the library, so a shelved set is never dealt. */
+function usersOf(id){ const first = Object.keys(LIB)[0]; return groupNames().filter(g => (FOR[g] || first) === id); }
+function takeOff(id){
+  const set = LIB[id]; if (!set || usersOf(id).length) return;
+  const nm = set.name || set.book || 'The set', cx = isConnects(set);
+  delete LIB[id];
+  Object.keys(FOR).forEach(g => { if (FOR[g] === id) delete FOR[g]; });
+  if (!cx) SHELF[id] = Object.assign({}, set, { shelved: new Date().toISOString().slice(0, 10) });
+  if (CUR === id) { CUR = Object.keys(LIB)[0] || ''; S = LIB[CUR] || null; OPEN = null; }
+  persist(cx ? nm + ' is back in the TP Point Pool. Take it again from + Add a set.' : nm + ' is on the shelf. Drag it back whenever you want it.');
+}
+function putBack(id){
+  const set = SHELF[id]; if (!set) return;
+  delete SHELF[id]; delete set.shelved; LIB[id] = set; CUR = id; S = set; OPEN = null;
+  persist((set.name || set.book || 'The set') + ' is back on this course.');
+}
+function shelfHTML(){
+  const ids = Object.keys(SHELF);
+  if (!ids.length && Object.keys(LIB).length < 2) return '';
+  return `<div class="shelf has" id="shelf" aria-label="The shelf"><span class="shk">The shelf</span>
+    <span class="shsay" id="shsay">${ids.length ? 'Sets taken off this course. Drag one back up to the tabs, or put it back.' : 'Drag a set here to take it off this course.'}</span>
+    ${ids.map(id => `<span class="spine" draggable="true" data-spine="${esc(id)}"><b>${esc(SHELF[id].name || SHELF[id].book || 'Untitled set')}</b><button type="button" class="putback" data-putback="${esc(id)}">Put back</button></span>`).join('')}</div>`;
+}
 function persist(word){
   const P = rec(KEY) || {};
   if (S) S.updated = new Date().toISOString().slice(0, 10);
   /* Everything lives under `set`: the store rebuilds this record from named
      keys when it reads it, so a sibling field would never come back. */
-  P.set = Object.assign({}, P.set || {}, { library: LIB, setFor: FOR });   /* keeps set.lengths, the course's lesson lengths (30 Oct 2026) */
+  P.set = Object.assign({}, P.set || {}, { library: LIB, setFor: FOR, shelf: SHELF });   /* keeps set.lengths, the course's lesson lengths (30 Oct 2026) */
   try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {}
   note = word || 'Saved';
   render();
@@ -772,14 +815,21 @@ function render(){
 
   const ids = Object.keys(LIB);
   const gnames = groupNames();
-  const tabs = `<div class="settabs">${ids.map(id => `<button type="button" class="settab${id === CUR ? ' on' : ''}" data-set="${id}">${esc(LIB[id].name || LIB[id].book || 'Untitled set')}${
+  const tabs = `<div class="settabs" id="settabs">${ids.map(id => `<button type="button" class="settab${id === CUR ? ' on' : ''}" data-set="${id}" draggable="true">${esc(LIB[id].name || LIB[id].book || 'Untitled set')}${
       LIB[id].level || LIB[id].book ? `<i>${esc(window.hubLevelShort ? hubLevelShort(bookLevel(LIB[id].book, LIB[id].level).shelf) : bookLevel(LIB[id].book, LIB[id].level).shelf)}</i>` : ''}</button>`).join('')}
     <details class="addmenu"><summary class="settab add">+ Add a set</summary><div class="addpop">
       <button type="button" id="addlib"><b>Browse the TP Point Pool</b><span>Written against a real coursebook, ready to deal.</span></button>
-      <button type="button" id="addset"><b>Write your own set</b><span>Your book, your lessons.</span></button></div></details></div>`;
+      <button type="button" id="addset"><b>Write your own set</b><span>Your book, your lessons.</span></button></div></details></div>` + shelfHTML();
   /* WHO USES THIS SET is chosen on TP points now, one choice per group (the Courseboard, 30 Oct 2026); here it is only said. */
   const users = gnames.filter(g => (FOR[g] || ids[0]) === CUR);
   const usedBy = !gnames.length ? '' : `<div class="row"><label class="lab">Used by</label><div class="ro-line">${users.length ? users.map(g => 'Group ' + esc(g)).join(', ') : 'Not used on this course'} <a class="hint" href="24_tp_points.html">· chosen on TP points</a></div></div>`;
+  /* TAKE IT OFF THIS COURSE (Ramy, 30 Oct 2026: "I ended up with three, and I'd like to get rid of one"). Any set no group
+     uses can go: a Pool set stays in the Pool and can be taken again; your own asks first and says what is written in it.
+     A set a group uses cannot, so nothing dealt loses its set: choose another for that group on TP points first. Lessons
+     already dealt are copies on the trainees' points, so they stay. */
+  const offRow = `<div class="row"><label class="lab">On this course</label><div class="ro-line">${users.length
+    ? `To take it off, first choose another set for ${users.map(g => 'Group ' + esc(g)).join(' and ')} <a class="hint" href="24_tp_points.html">on TP points</a>.`
+    : `No group uses this set. Drag its tab onto the shelf, or <button type="button" class="btn quiet sm" id="takeoff" style="margin-left:4px">take it off this course</button>`}</div></div>`;
 
   $('app').innerHTML = `<p class="eyebrow">Teaching practice</p><h1>TP point sets</h1>
     <p class="lede">The lessons this course teaches, written once against the book. A set belongs to a tutor and their book; the rotation on the TP points screen deals its slots to whoever is teaching. Give a slot its stages and the trainee’s own plan can start from them.</p>
@@ -789,8 +839,9 @@ function render(){
     ${offerPanel()}
     <div class="head">
       <h2 class="hband">${esc(S.name || S.book || 'Untitled set')}${S.level || S.book ? `<span class="lv">${esc(bookLevel(S.book, S.level).shelf)}</span>` : ''}</h2>
-      <div class="row"><label class="lab" for="setname">This set is</label><input id="setname" value="${esc(S.name || '')}" placeholder="Jordan’s group · Language Hub Elementary">${Object.keys(LIB).length > 1 && !written(S) ? '<button type="button" class="btn quiet sm" id="dropset" style="margin-left:10px">Remove this set</button>' : ''}</div>
+      <div class="row"><label class="lab" for="setname">This set is</label><input id="setname" value="${esc(S.name || '')}" placeholder="Jordan’s group · Language Hub Elementary">${false ? '<button type="button" class="btn quiet sm" id="dropset" style="margin-left:10px">Remove this set</button>' : ''}</div>
       ${usedBy}
+      ${offRow}
       <div class="row"><label class="lab" for="book">Coursebook</label><input id="book" value="${esc(S.book || '')}" placeholder="Language Hub Elementary"></div>
       ${isConnects(S) ? `<div class="row"><label class="lab">Level</label><div class="ro-line">${esc(bookLevel(S.book, S.level).shelf)}</div></div>` : `<div class="row"><label class="lab" for="level">Level</label><select id="level">${(() => { const cur = bookLevel(S.book, S.level).shelf, opts = (window.HUB_LEVELS || []).map(([c, n]) => [c + ' (' + n.toLowerCase() + ')', n]);
         return '<option value="">Choose a level</option>' + opts.map(([v, n]) => `<option value="${esc(v)}"${S.level && n === cur ? ' selected' : ''}>${esc(n)}</option>`).join(''); })()}</select></div>`}
@@ -1198,6 +1249,32 @@ function wire(){
   if (offGo) offGo.onclick = () => contributeSet();
   const offX = $('offerclose');
   if (offX) offX.onclick = () => { SHOWOFFER = false; render(); };
+  const offBtn = $('takeoff');
+  if (offBtn) offBtn.onclick = () => {
+    if (isConnects(S) && !confirm(`Put ${S.name || S.book || 'this set'} back in the TP Point Pool? You can take it again; the links and pages you added for it go.`)) return;
+    takeOff(CUR);
+  };
+  /* dragging a tab to the shelf, and a spine back to the tabs */
+  const shelf = $('shelf'), say = $('shsay'), tabsRow = $('settabs');
+  const sayFor = id => { const u = usersOf(id); return u.length ? `${u.map(g => 'Group ' + g).join(' and ')} ${u.length === 1 ? 'uses' : 'use'} this set. Choose another for ${u.length === 1 ? 'it' : 'them'} on TP points first.`
+    : isConnects(LIB[id]) ? 'Drop it here and it goes back to the TP Point Pool.' : 'Drop it here. It waits on the shelf, writing and all.'; };
+  document.querySelectorAll('.settab[data-set]').forEach(el => {
+    el.ondragstart = e => { DRAG = el.dataset.set; e.dataTransfer.setData('text/plain', 'set:' + DRAG); e.dataTransfer.effectAllowed = 'move';
+      document.body.classList.add('dragging'); if (shelf) { shelf.classList.add('open'); shelf.classList.toggle('no', !!usersOf(DRAG).length); } if (say) say.textContent = sayFor(DRAG); };
+    el.ondragend = () => { DRAG = ''; document.body.classList.remove('dragging'); if (shelf) shelf.classList.remove('open', 'no', 'over'); };
+  });
+  if (shelf) {
+    shelf.ondragover = e => { if (DRAG && !usersOf(DRAG).length) { e.preventDefault(); shelf.classList.add('over'); } };
+    shelf.ondragleave = () => shelf.classList.remove('over');
+    shelf.ondrop = e => { e.preventDefault(); const id = DRAG; DRAG = ''; if (id) takeOff(id); };
+  }
+  document.querySelectorAll('[data-spine]').forEach(el => el.ondragstart = e => { e.dataTransfer.setData('text/plain', 'spine:' + el.dataset.spine); if (tabsRow) tabsRow.classList.add('catch'); });
+  document.querySelectorAll('[data-spine]').forEach(el => el.ondragend = () => { if (tabsRow) tabsRow.classList.remove('catch'); });
+  if (tabsRow) {
+    tabsRow.ondragover = e => { if (!DRAG) e.preventDefault(); };
+    tabsRow.ondrop = e => { const t = e.dataTransfer.getData('text/plain') || ''; if (t.indexOf('spine:') === 0) { e.preventDefault(); putBack(t.slice(6)); } };
+  }
+  document.querySelectorAll('[data-putback]').forEach(b => b.onclick = () => putBack(b.dataset.putback));
   const drop = $('dropset');
   if (drop) drop.onclick = () => {
     if (!confirm('Remove this set? It has nothing written in it.')) return;
