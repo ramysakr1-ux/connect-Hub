@@ -1434,7 +1434,7 @@ case 'inbox': {
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
       var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
-      if (tutor) boot.course.courseFeedback = courseRead_(course.id, 'courseFeedback') || [];
+      if (tutor) boot.course.courseFeedback = courseFeedbackFor_(course.id);
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
@@ -1542,7 +1542,7 @@ case 'inbox': {
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
       var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
-      if (tutor) cres.courseFeedback = courseRead_(course.id, 'courseFeedback') || [];
+      if (tutor) cres.courseFeedback = courseFeedbackFor_(course.id);
       // critLearn: what this course's tutors have tagged, for the criteria suggester (26 Sep 2026).
       // Tutors only. Restored 24 Oct 2026: it had dropped out of the read and the write when the
       // other course kinds were added, so every course's learning was refused and lost.
@@ -3565,6 +3565,27 @@ function hideTokens_(courseId, me) {
   var mine = me ? String(me.token) : '';
   return function (t) { return (t == null || t === '') ? t : String(t) === mine ? t : standIn_(courseId, t); };
 }
+/* THE ANONYMITY THRESHOLD (30 Oct 2026, the Connect Lite specification's R32:
+   "hold narrative feedback and small breakouts below the configured response
+   minimum"). Until as many trainees have answered as the course's minimum (five
+   unless the centre sets another), the tutors read the taps of an anonymous
+   answer but not its comments or its day: with three answers in, a comment's
+   wording or date can say whose it is. A trainee who ticked to add their name
+   is not anonymous, so their comments show. Nothing stored changes; the read
+   holds them back, and they appear once the minimum is reached. */
+function courseFeedbackFor_(courseId) {
+  var list = courseRead_(courseId, 'courseFeedback') || [];
+  var cf = (courseRead_(courseId, 'settings') || {}).courseFeedback || {};
+  var min = Math.max(1, Math.min(50, parseInt(cf.minComments, 10) || 5));
+  if (list.length >= min) return list;
+  return list.map(function (e) {
+    if (e && e.name) return e;
+    var a = (e && e.answers) || {}, kept = {}, held = 0;
+    Object.keys(a).forEach(function (q) { if (/Note$/.test(q)) { if (String(a[q] || '').trim()) held++; } else kept[q] = a[q]; });
+    return { answers: kept, heldNotes: held, held: true };
+  });
+}
+
 function settingsFor_(course, s, reader, me) {
   if (reader || !s || typeof s !== 'object') return s;
   var hide = hideTokens_(course.id, me), out = {};

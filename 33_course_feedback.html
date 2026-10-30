@@ -85,6 +85,7 @@
   .tally div{display:grid; grid-template-columns:140px minmax(0,1fr) 30px; gap:10px; align-items:center; font-size:.9rem;}
   .tally i{display:block; height:10px; border-radius:999px; background:var(--teal);}
   .tally .bar{background:#EEF0F3; border-radius:999px;}
+  .held{margin:10px 0 0; padding:10px 14px; border-radius:10px; background:var(--box); font-size:.9rem; line-height:1.5;}
   .quote{margin:10px 0 0; padding:12px 14px; border-radius:10px; background:#F7F7FA; font-size:.95rem; line-height:1.5;}
   .quote small{display:block; margin-top:4px; color:var(--grey); font-size:.78rem;}
   @media print{ body{background:#fff;} .back, .noprint, #formCard{display:none !important;} .card{box-shadow:none; border:1px solid var(--sand-line); break-inside:avoid;} }
@@ -161,6 +162,8 @@ const openLine = cf => {
   return t && !isNaN(t) ? t.toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '';
 };
 
+const minOf = cf => Math.max(1, Math.min(50, parseInt((cf || {}).minComments, 10) || 5));
+
 /* ---- the trainee ---------------------------------------------------------- */
 function trainee(){
   const cs = S(), cf = CF();
@@ -177,7 +180,7 @@ function trainee(){
     return;
   }
   $('app').innerHTML = head
-    + '<p class="lede">Sixteen short questions, one tap each. Comments are optional. It takes a few minutes. Your answers go to the center, without your name unless you choose to add it.</p>'
+    + '<p class="lede">Sixteen short questions, one tap each. Comments are optional. It takes a few minutes. Your answers go to the center, without your name unless you choose to add it. Comments without a name reach your tutors only once ' + minOf(cf) + ' trainees have answered.</p>'
     + '<form id="form">' + QS.map((x, i) => (x.sec ? '<p class="k" style="margin:34px 0 0">' + esc(x.sec) + '</p>' : '') + '<div class="card q"><h2 id="h' + i + '">' + esc(x.q) + '</h2>'
         + (x.hint ? '<p class="hint">' + esc(x.hint) + '</p>' : '')
         + (x.scale ? '<div class="arow"><fieldset class="scale" aria-labelledby="h' + i + '"><legend>' + esc(x.q) + '</legend>' + x.scale.map(v => '<label><input type="radio" name="' + x.id + '" value="' + esc(v) + '"><span>' + esc(v) + '</span></label>').join('') + '</fieldset>'
@@ -216,7 +219,15 @@ function staff(){
     const max = Math.max(1, ...Object.values(n));
     return '<div class="tally">' + x.scale.map(v => '<div><span>' + esc(v) + '</span><span class="bar"><i style="width:' + Math.round(100 * n[v] / max) + '%"></i></span><b>' + n[v] + '</b></div>').join('') + '</div>';
   };
-  const notes = x => list.filter(e => ((e.answers || {})[x.id + 'Note'] || '').trim())
+  /* THE ANONYMITY THRESHOLD (30 Oct 2026, the specification's R32). Below the
+     minimum (five unless the centre sets another) an anonymous answer's comments
+     and day are held: with three answers in, a comment's wording or date can say
+     whose it is. The store holds them back too; this keeps the page, the
+     spreadsheet and the email to the same rule. Named answers show. */
+  const MIN = minOf(cf), below = list.length < MIN;
+  const hidden = e => below && !e.name;
+  const heldCount = list.reduce((n, e) => n + (!hidden(e) ? 0 : (e.heldNotes || Object.keys(e.answers || {}).filter(k => /Note$/.test(k) && String(e.answers[k] || '').trim()).length)), 0);
+  const notes = x => list.filter(e => !hidden(e) && ((e.answers || {})[x.id + 'Note'] || '').trim())
     .map(e => '<div class="quote">' + esc(e.answers[x.id + 'Note']) + '<small>' + (e.name ? esc(e.name) : 'Anonymous') + (e.day ? ' · ' + esc(e.day) : '') + '</small></div>').join('');
   $('app').innerHTML = '<p class="k">The end of the course · ' + esc(cs.courseName || '') + '</p><h1>Course feedback</h1>'
     + '<p class="lede">What the trainees think of the course. Anonymous unless a trainee chooses to add their name.</p>'
@@ -228,11 +239,13 @@ function staff(){
       + (form === 'none' ? '<div class="row"><button type="button" class="gold" id="save">Save</button><span class="status" id="status" role="status"></span></div>' : '<h2 style="margin:22px 0 4px;font:700 1.3rem Newsreader,serif;color:var(--teal)">When it opens</h2>'
       + '<p style="margin:0 0 8px">' + (open ? '<span class="pill open">Open</span> The trainees can answer now.' : '<span class="pill shut">Not open yet</span> ' + (openLine(cf) ? 'Opens on ' + esc(openLine(cf)) + '.' : 'Release it now, or set a time.')) + '</p>'
       + '<label class="f" for="openAt">Open at</label><input type="datetime-local" id="openAt" value="' + esc(local(cf.openAt)) + '">'
+      + '<label class="f" for="minComments">Show anonymous comments once this many trainees have answered</label><input type="number" id="minComments" min="1" max="50" value="' + MIN + '" style="font:inherit;font-size:.92rem;padding:10px 12px;border:1.5px solid var(--sand-line);border-radius:8px;width:90px">'
       + '<div class="row"><button type="button" class="' + (list.length ? 'line' : 'gold') + '" id="save">Save</button>'
       + (open ? '<button type="button" class="line" id="close">Close it again</button>' : '<button type="button" class="line" id="release">Release it now</button>')
       + '<span class="status" id="status" role="status"></span></div>') + '</div>'
     + '<div class="card"><h2 style="margin:0 0 4px;font:700 1.3rem Newsreader,serif;color:var(--teal)">The answers</h2>'
       + '<p style="margin:0;color:#4A4843">' + (list.length ? list.length + (list.length === 1 ? ' trainee has' : ' trainees have') + ' answered.' : (form === 'own' ? 'The answers are on your own form.' : 'No answers yet.')) + '</p>'
+      + (list.length && below ? '<p class="held">' + (heldCount ? heldCount + (heldCount === 1 ? ' comment' : ' comments') + ' from anonymous answers ' + (heldCount === 1 ? 'is' : 'are') + ' held' : 'Comments from anonymous answers are held') + ' until ' + MIN + ' trainees have answered. With fewer, a comment can show whose it is. The taps show now, and so do comments from trainees who added their name.</p>' : '')
       + (list.length ? QS.map(x => '<div style="margin-top:22px"><h3 style="margin:0;font:600 1.05rem Newsreader,serif">' + esc(x.q) + '</h3>' + (x.scale ? tally(x) : '') + notes(x) + '</div>').join('') : '')
     + '</div>'
     + (list.length ? '<div class="card noprint"><h2 style="margin:0 0 4px;font:700 1.3rem Newsreader,serif;color:var(--teal)">Keep them</h2>'
@@ -244,7 +257,7 @@ function staff(){
   const csv = () => {
     const cell = v => { const t = String(v == null ? '' : v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
     const head = ['Day', 'Name'].concat(QS.reduce((a, x) => a.concat(x.scale ? [x.q] : []).concat(x.note ? [x.scale ? x.q + ' (comment)' : x.q] : []), []));
-    const rows = list.map(e => { const a = e.answers || {}; return [e.day || '', e.name || 'Anonymous'].concat(QS.reduce((r, x) => r.concat(x.scale ? [a[x.id] || ''] : []).concat(x.note ? [a[x.id + 'Note'] || ''] : []), [])); });
+    const rows = list.map(e => { const a = e.answers || {}, h = hidden(e); return [h ? '' : (e.day || ''), e.name || 'Anonymous'].concat(QS.reduce((r, x) => r.concat(x.scale ? [a[x.id] || ''] : []).concat(x.note ? [h ? '' : (a[x.id + 'Note'] || '')] : []), [])); });
     return '\ufeff' + [head].concat(rows).map(r => r.map(cell).join(',')).join('\r\n');
   };
   const fileName = () => ((cs.courseName || 'Course') + ' - course feedback').replace(/[^\w .-]+/g, '').trim() + '.csv';
@@ -254,9 +267,10 @@ function staff(){
     QS.forEach(x => {
       out.push(x.q);
       if (x.scale) { const n = {}; x.scale.forEach(v => n[v] = 0); list.forEach(e => { const v = (e.answers || {})[x.id]; if (v in n) n[v]++; }); out.push('  ' + x.scale.map(v => v + ': ' + n[v]).join(' \u00b7 ')); }
-      list.forEach(e => { const c = ((e.answers || {})[x.id + 'Note'] || '').trim(); if (c) out.push('  \u201c' + c + '\u201d (' + (e.name || 'Anonymous') + ')'); });
+      list.forEach(e => { const c = hidden(e) ? '' : ((e.answers || {})[x.id + 'Note'] || '').trim(); if (c) out.push('  \u201c' + c + '\u201d (' + (e.name || 'Anonymous') + ')'); });
       out.push('');
     });
+    if (below && heldCount) out.push(heldCount + (heldCount === 1 ? ' comment' : ' comments') + ' from anonymous answers held until ' + MIN + ' trainees have answered.', '');
     out.push('Every answer is in the attached spreadsheet.', '', 'Sent from Connect Lite.');
     return out.join('\n');
   };
@@ -282,7 +296,8 @@ function staff(){
     next.courseFeedback = Object.assign({}, next.courseFeedback || {}, {
       form: (document.querySelector('input[name=form]:checked') || {}).value || 'lite',
       url: $('url').value.trim(),
-      openAt: ($('openAt') && $('openAt').value) ? new Date($('openAt').value).toISOString() : ((S().courseFeedback || {}).openAt || '')
+      openAt: ($('openAt') && $('openAt').value) ? new Date($('openAt').value).toISOString() : ((S().courseFeedback || {}).openAt || ''),
+      minComments: $('minComments') ? Math.max(1, Math.min(50, parseInt($('minComments').value, 10) || 5)) : minOf(S().courseFeedback || {})
     }, patch || {});
     if (next.courseFeedback.form === 'own' && !/^https:\/\//.test(next.courseFeedback.url)) { $('status').textContent = 'Paste your form’s link first (it starts https://).'; return; }
     $('status').textContent = 'Saving…';
