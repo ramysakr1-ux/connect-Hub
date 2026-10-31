@@ -53,7 +53,7 @@
 
   /* ---- the two sheets ---- */
   .sheet{background:var(--surface); border-radius:6px; padding:44px 52px; margin-bottom:22px; position:relative;
-    border-left:5px solid var(--gold); min-height:1000px;}
+    border-left:5px solid var(--gold);}
   .sheet.cover{background:var(--cream); text-align:center;}
   .frame{border:1px solid var(--sand-line); padding:40px 36px; position:relative;}
   .corner{position:absolute; width:22px; height:22px; border-color:var(--gold); border-style:solid;}
@@ -136,6 +136,8 @@
   .receipt{margin-top:18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:0.88rem;}
   .receipt svg{width:150px; height:50px;}
   .receipt .who b{display:block;}
+  .ack{margin-top:22px; padding:16px 18px; background:var(--surface); border:1px solid var(--sand-line); border-radius:var(--r-card);}
+  .ack .receipt{margin-top:10px;} .ackline{margin:0; font-size:0.9rem;} .ackline b{display:block; font-family:'Newsreader',Georgia,serif; font-size:1.05rem; margin-bottom:4px;}
   .sign{margin-top:26px; padding-top:18px; border-top:1px solid var(--sand-line); font-size:0.88rem;}
   @media print{ textarea{border:none; background:transparent; padding:0; resize:none;} .f{margin-top:14px;} .cite, .lede{display:none;} }
   .lhist{margin:22px 0 0; padding:16px 18px; border-radius:var(--r-strip); background:var(--box);} .lhist h3{margin:0 0 2px;} .lhist ol{margin:10px 0 0; padding-left:20px;} .lhist li{margin:0 0 10px; font-size:0.9rem;}
@@ -205,31 +207,84 @@ function actionPoints(){
   return out;
 }
 
+/* WHAT THE RECORD SAYS, IN THE TRAINEE'S WORDS (Ramy, 31 Oct 2026: "my client should be able to come up with the
+   criteria that will go on the letter and recommendations and all the things that the candidate is struggling
+   with. And then the trainer can edit before releasing the letter"). The tracker's own reasons are written for
+   staff ("15.1 calls a potential Fail"); the letter says the same things to the trainee: each failed assignment,
+   the one-failed-assignment rule where it applies, the lessons not to standard, the stage standing. */
+const AS_NAME = { lsrt: 'Language Skills Related Tasks', lrt: 'Language Related Tasks', fol: 'Focus on the Learner', lfc: 'Lessons from the Classroom', a5: 'Assignment 5' };
+const recOf = k => (who.tr && (who.tr[k] || (who.tr.records && who.tr.records[k]))) || null;
+function tpHistory(){ return (who.tr.tp && who.tr.tp.history) || recOf('tpHistory') || {}; }
+function failedAssignments(){
+  const A = recOf('assignments') || {};
+  return Object.entries(A).filter(([k, a]) => a && a.feedback && /fail/i.test(a.feedback.outcome || '') && !/on resubmission/i.test(a.feedback.outcome || ''))
+    .map(([k, a]) => ({ name: AS_NAME[k] || k.toUpperCase(), at: a.marked2At || a.marked1At || '',
+      /* a malpractice case: said in the decision, or on the record (the case ticked, or its warning issued) */
+      mal: /plagiar|malpractice|not (your|their) own work|copied|collu|word for word|model answer/i.test((a.feedback.generalComment1 || '') + ' ' + (a.feedback.generalComment2 || ''))
+        || !!((who.tr.tracker || {}).malpracticeLetterIssuedAt || ((who.tr.tracker || {}).malpracticeCase || {}).evidence) }));
+}
+function notToStandard(){
+  const h = tpHistory();
+  return Object.keys(h).filter(k => { const f = h[k] && h[k].state && h[k].state.f; return f && /not to standard/i.test(f.fGrade || ''); }).map(Number).sort((a, b) => a - b);
+}
+function recordLines(r){
+  const out = [], fa = failedAssignments(), nts = notToStandard();
+  fa.forEach(a => out.push('Your ' + a.name + ' assignment has been recorded as a Fail' + (a.at ? ' on ' + when(a.at) : '') + (a.mal ? ', after a malpractice case found that it was not your own work.' : '.')));
+  if (fa.length === 1) out.push('Under Cambridge English regulations, a candidate who fails one written assignment may still be recommended a Pass only where the teaching practice and remaining written work provide sufficient evidence of the required criteria. A Pass A cannot be awarded. A second failed assignment would mean that the course cannot be passed.');
+  if (nts.length) {
+    const list = nts.map(n => 'TP' + n), said = list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] + ' lessons were' : list[0] + ' lesson was';
+    out.push('Your ' + said + ' not at the required standard.' + (fa.length ? ' In light of the failed assignment, your remaining teaching practice must now provide clear evidence that you meet the relevant criteria.' : ''));
+  }
+  if (r.from && r.state === 'notstd') out.push('Your ' + r.from + ' record shows your teaching practice as not yet at the required standard.');
+  if (r.provisionalPassFail) out.push('At the provisional grading, your work was placed on the borderline between a Pass and a Fail.');
+  return out;
+}
+/* The priorities: the action points the tutors wrote in the TP feedback (10.2 asks the letter to draw attention
+   to them), the starred ones first, the latest lesson first, each with the criterion it was tagged with. */
+function priorities(){
+  const h = tpHistory(), seen = {}, out = [];
+  const clean = html => { const d = document.createElement('div'); d.innerHTML = String(html || '').replace(/<span class="tag"[^>]*>([^<]*)<\/span>/g, '§$1§'); const t = d.textContent.replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+    const codes = (t.match(/§[^§]+§/g) || []).map(x => x.replace(/§/g, ''));
+    return { text: t.replace(/§[^§]+§/g, '').replace(/\s+([.,;])/g, '$1').trim().replace(/[.;,]$/, ''), codes }; };
+  Object.keys(h).map(Number).sort((a, b) => b - a).forEach(n => {
+    const lists = h[n] && h[n].state && h[n].state.lists, ap = (lists && lists.lAP) || [];
+    ap.slice().sort((a, b) => (b && b.star ? 1 : 0) - (a && a.star ? 1 : 0)).forEach(x => {
+      const c = clean(x && x.html); if (!c.text) return;
+      const k = c.text.toLowerCase().slice(0, 40); if (seen[k]) return; seen[k] = 1;
+      out.push({ text: c.text.charAt(0).toUpperCase() + c.text.slice(1) + '.' + (c.codes.length ? ' (' + c.codes.join(', ') + ')' : ''), star: !!(x && x.star) });
+    });
+  });
+  return out.sort((a, b) => (b.star ? 1 : 0) - (a.star ? 1 : 0)).slice(0, 6).map(x => x.text);
+}
+
 function draft(r){
-  const cname = SETTINGS.centreName || 'the center';
   const lines = [];
   lines.push('Dear ' + (who.name.split(/\s+/)[0] || who.name) + ',');
   lines.push('');
-  lines.push('I am writing to let you know that, on your work so far, you are at risk of being recommended a Fail for this course. I want you to know this now, while there is still time on the course to change it.');
-  if (r.failWhy && r.failWhy.length) {
+  lines.push('I am writing to let you know that, based on your work to date, you are at risk of being recommended a Fail for this course. I want to make this clear while there is still time for you to address the concerns identified.');
+  const rl = recordLines(r);
+  if (rl.length) {
     lines.push('');
-    lines.push('This is what stands behind that, as the course record has it:');
-    r.failWhy.forEach(w => lines.push('  \u2022 ' + w));
+    lines.push('The course record currently shows the following:');
+    lines.push('');
+    rl.forEach(w => lines.push('• ' + w));
   }
-  const ap = actionPoints();
-  if (ap.length) {
-    lines.push('');
-    lines.push('Your tutors have already written the areas to work on in your CELTA 5. These are the ones that matter most now:');
-    ap.forEach(a => lines.push('  \u2022 ' + a));
-  } else {
-    lines.push('');
-    lines.push('Your tutors will go through the areas to work on with you, and they are recorded in your CELTA 5.');
-  }
+  const pr = priorities(), ap = actionPoints();
   lines.push('');
-  if (r.lessonsLeft > 0) lines.push('You have ' + r.lessonsLeft + ' assessed ' + (r.lessonsLeft === 1 ? 'lesson' : 'lessons') + ' left to teach. Please come and talk to us before the next one so we can plan how to use them.');
-  else lines.push('Please come and talk to us as soon as you can so we can go through where things stand.');
+  if (pr.length) {
+    lines.push('Your CELTA 5 feedback identifies the following priorities:');
+    lines.push('');
+    pr.forEach(a => lines.push('• ' + a));
+  } else if (ap.length) {
+    lines.push('Your CELTA 5 identifies the following priorities:');
+    lines.push('');
+    ap.forEach(a => lines.push('• ' + a));
+  } else lines.push('Your tutors will go through the areas to work on with you; they are recorded in your CELTA 5.');
   lines.push('');
-  lines.push('This is not a final grade. The final recommended grade is decided at the end of the course and is subject to confirmation by Cambridge English.');
+  const left = r.lessonsLeft > 0 ? 'You have ' + r.lessonsLeft + ' assessed ' + (r.lessonsLeft === 1 ? 'lesson' : 'lessons') + ' remaining. ' : '';
+  lines.push(left + 'We will discuss these points at your next tutorial and agree a plan for the rest of the course' + (failedAssignments().length ? ', including planning and referencing for your remaining assignments' : '') + '.');
+  lines.push('');
+  lines.push('This letter is not a final grade decision. Your final recommended grade will be determined at the end of the course and remains subject to confirmation by Cambridge English.');
   return lines.join('\n');
 }
 
@@ -246,9 +301,12 @@ function letterSig(issuedAt){
 }
 function receipt(issuedAt){
   const s = letterSig(issuedAt);
-  if (s) return `<div class="receipt">${s.ink && window.hubInk ? window.hubInk.svg(s.ink, 'sm', s.name) : ''}<div class="who"><b>${esc(s.name)}</b>Received and read, signed ${esc(when(s.at))}</div></div>`;
-  if (IS_TRAINEE) return `<div class="receipt"><button class="btn primary" type="button" id="signLetter">Sign to say you have read it</button></div>`;
-  return `<div class="receipt"><span class="pill amb">Not signed yet</span><span class="status">It is signed from the trainee\u2019s own link.</span></div>`;
+  /* The acknowledgement, signed on the page instead of on paper (Ramy, 31 Oct 2026: "they will need to sign ...
+     more of a digital signature"): the line they confirm, then their name, signature and date. */
+  const ack = '<p class="ackline"><b>Acknowledgment</b>I confirm that I have read and received this letter.</p>';
+  if (s) return `<div class="ack">${ack}<div class="receipt">${s.ink && window.hubInk ? window.hubInk.svg(s.ink, 'sm', s.name) : ''}<div class="who"><b>${esc(s.name)}</b>Signed ${esc(when(s.at))}</div></div></div>`;
+  if (IS_TRAINEE) return `<div class="ack">${ack}<div class="receipt"><button class="btn primary" type="button" id="signLetter">Sign the acknowledgement</button></div></div>`;
+  return `<div class="ack">${ack}<div class="receipt"><span class="pill amb">Not signed yet</span><span class="status">It is signed from the trainee\u2019s own link.</span></div></div>`;
 }
 /* THE LETTER'S HISTORY (30 Oct 2026, the Connect Lite specification's R33: "keep issued versions, withdrawal event and
    superseding version history"). Staff only. A letter issued before today has no history yet; its current issue is
@@ -283,14 +341,13 @@ function render(){
     <p class="cite"><b>Administration Handbook 10.2</b> \u2014 potential Fail candidates <b>should</b> also be issued with a Fail letter which makes the possible Fail outcome clear and draws attention to action points detailed by the tutors in the CELTA 5 documents. This should be issued sufficiently in advance of the end of the course, ideally with at least two lessons left to teach. <b>Cambridge recommends this; it does not require it.</b></p>`}
     <div class="sheet">
       <h2>${esc(SETTINGS.centreName || '')}</h2>
-      <p class="meta">${esc(SETTINGS.courseName || '')}${dates ? ' \u00b7 ' + esc(dates) : ''}<br>
-        ${esc(who.name)}${issuedAt ? ' \u00b7 issued ' + esc(when(issuedAt)) + (issuedBy ? ' by ' + esc(issuedBy) : '') : ''}</p>
+      <p class="meta">${esc(SETTINGS.courseName || '')}${dates ? '<br>' + esc(dates.replace(' \u2013 ', ' to ')) : ''}${issuedAt ? '<br>Issued ' + esc(when(issuedAt)) + (issuedBy ? ' by ' + esc(issuedBy) : '') : '<br>For ' + esc(who.name) + ' \u00b7 not issued yet'}</p>
       ${readOnly
         ? `<div class="para">${esc(body)}</div>`
         : `<label class="f" for="body">The letter</label><textarea id="body" style="min-height:420px" placeholder="The letter as the trainee will read it.">${esc(body)}</textarea>`}
       <div class="sign">${issuedAt ? esc(issuedBy || '') + '<br>' + esc(SETTINGS.centreName || '') : ''}</div>
+      ${issuedAt ? receipt(issuedAt) : ''}
     </div>
-    ${issuedAt ? receipt(issuedAt) : ''}
     ${readOnly ? '' : `<div class="acts">
       ${issuedAt
         ? `<span class="pill on">Issued ${esc(when(issuedAt))}</span><button class="btn" type="button" id="unissue">Withdraw the letter</button>`
@@ -310,7 +367,8 @@ function render(){
     render();
   });
   const b = $('body');
-  if (b) b.addEventListener('input', () => saveTracker({ failLetterDoc: b.value }));
+  const fit = () => { if (b) { b.style.height = 'auto'; b.style.height = (b.scrollHeight + 4) + 'px'; } };
+  if (b) { fit(); b.addEventListener('input', () => { fit(); saveTracker({ failLetterDoc: b.value }); }); }
   const iss = $('issue');
   if (iss) iss.addEventListener('click', () => {
     let name = tutorName();
