@@ -260,6 +260,7 @@ function mintMissing(){
    register, the student's page and the certificate all read the same file so
    they cannot drift. */
 const recordOf = (st, days, lessons, lessonMinutes, perDay) => A.record(st.marks || {}, days, lessons, lessonMinutes, perDay);
+const dayOf = iso => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : String(iso || ''); };
 const fmtH = h => (Math.round(h * 100) / 100).toString().replace(/\.00$/, '');
 
 /* v56: who is coming to the next class, from the store's own count. */
@@ -325,7 +326,7 @@ function render(){
         <div class="nm">${esc(st.name)}${IS_TUTOR
           ? `<span class="lvl"><select data-lvl="${i}"><option value="">Level</option>${LEVEL_OPTS.concat(st.level && !LEVEL_OPTS.includes(st.level) ? [st.level] : []).map(l => `<option value="${l}"${st.level === l ? ' selected' : ''}>${esc(LV(l))}</option>`).join('')}</select></span>`
           : (st.level ? '<span class="lvltag">' + esc(LV(st.level)) + '</span>' : '')}${IS_TUTOR
-          ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at this level at the center, before this course"><small>h at this level before</small>${st.carried && st.carriedBy ? `<small class="prov">${esc([st.carriedBy.from, 'entered by ' + st.carriedBy.who, st.carriedBy.at].filter(Boolean).join(' · '))}</small>` : ''}</span>`
+          ? `<span class="carried"><input type="number" min="0" step="0.25" data-carried="${i}" value="${st.carried != null ? esc(st.carried) : ''}" placeholder="0" title="Hours this student already had at this level at the center, before this course"><small>h at this level before</small>${st.carried && st.carriedBy ? `<small class="prov">${esc([st.carriedBy.from, 'entered by ' + st.carriedBy.who, dayOf(st.carriedBy.at)].filter(Boolean).join(' · '))}</small>` : ''}</span>`
           : (st.carried ? '<small>' + esc(st.carried) + ' h at this level before this course' + (st.carriedBy && st.carriedBy.from ? ', at ' + esc(st.carriedBy.from) : '') + '</small>' : '')}${st.note ? '<small>' + esc(st.note) + '</small>' : ''}</div>
         ${IS_TUTOR ? `<div class="mailrow"><input type="email" class="email" data-email="${i}" value="${esc(st.email || '')}" placeholder="Their email">${st.token ? `<button type="button" class="btn sm" data-invite="${i}">${st.invited ? 'Send again' : 'Send the invitation'}</button>` : ''}${st.email && st.notify === false ? '<small>asked for no emails</small>' : ''}${st.invited ? `<small class="invited">Invitation sent ${dm(String(st.invited).slice(0, 10))}</small>` : ''}</div>` : ''}
         ${st.token ? (st.agreed

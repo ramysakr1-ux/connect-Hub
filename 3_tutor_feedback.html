@@ -1915,16 +1915,21 @@ function saveFeedbackRecord(patch){
     try{ const n=parseInt(String((cur.state&&cur.state.f&&cur.state.f.fTP)||cur.label||'').replace(/\D/g,''),10); if(n>=1&&n<=HUB_MAX_TP){ const h=JSON.parse(localStorage.getItem('chub:tpHistory')||'{}'); h[n]=cur; localStorage.setItem('chub:tpHistory',JSON.stringify(h)); } }catch(e){}
   }
 }
-let saveTimer=null, locked=false;
-function autosave(){
+let saveTimer=null, locked=false, byHand=false, touchedAt=0;
+['pointerdown','keydown'].forEach(t=>document.addEventListener(t,e=>{ if(e.isTrusted) touchedAt=Date.now(); },true));
+function autosave(e){
   if(!CAN_STORE||locked) return;
+  /* only a person's own typing or clicking names them: the page fills its own boxes as it opens, and that once
+     stamped whoever merely opened it as having saved the draft (walk, 31 Oct 2026) */
+  if((e&&e.isTrusted)||Date.now()-touchedAt<1500) byHand=true;
   clearTimeout(saveTimer);
   saveTimer=setTimeout(function(){
     /* WHO STARTED IT, WHO LAST SAVED IT (30 Oct 2026, the specification's R20): a shared draft says so, by the name each
        tutor gave the dashboard. Not a lock: any tutor can go on writing it. */
     let me=''; try{ me=(localStorage.getItem('chub:tutorName')||'').trim(); }catch(e){}
-    const was=loadFeedbackRecord()||{};
-    saveFeedbackRecord(Object.assign({ label:draftLabel(), state:draftState(), savedBy:{ who:me||'a tutor', at:Date.now() } }, was.startedBy ? {} : { startedBy:{ who:me||'a tutor', at:Date.now() } }));
+    const was=loadFeedbackRecord()||{}, stamp={ who:me||'a tutor', at:Date.now() };
+    saveFeedbackRecord(Object.assign({ label:draftLabel(), state:draftState() }, byHand ? { savedBy:stamp } : {}, byHand&&!was.startedBy ? { startedBy:stamp } : {}));
+    byHand=false;
     setStatus('Saved automatically');
     paintDraftBy();
   },800);
