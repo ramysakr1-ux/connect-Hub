@@ -1780,7 +1780,7 @@ window.hubLockup = function(size){
    they do. */
 (function(){
   /* hub-shared loads before hub-store on some pages, so who is looking is asked once the page is in */
-  var WRITE = /\b(save|add|delete|remove|edit|share|stop sharing|release|upload|post|issue|withdraw|submit|send|sign|book|cancel my place|clear|reset|move|put back|publish|take it back|give it back|rename|swap|create|start again|copy|import|record|tick|mark as|answered|to mark|connect with)\b/i;
+  var WRITE = /\b(save|add|delete|remove|edit|share|stop sharing|release|upload|post|issue|withdraw|submit|send|sign|book|cancel my place|clear|reset|move|put back|publish|take it back|give it back|rename|swap|create|start again|import|record|tick|mark as|answered|to mark|connect with)\b/i;
   var VIEW = /\b(print|open|show|hide|reveal|play|listen|watch|next|previous|close|full screen|days across|days down|by week|by topic|more|less|turn)\b/i;
   function viewOnly(el){ return el.hasAttribute('data-view') || /^(show|filter|view|see)\b/i.test(el.getAttribute('aria-label') || ''); }
   function lock(root){
