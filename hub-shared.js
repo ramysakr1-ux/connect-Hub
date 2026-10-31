@@ -1810,6 +1810,9 @@ window.hubLockup = function(size){
   function go(){
     var S = window.HubStore;
     if (!S || !S.isAssessor || !S.isAssessor()) return;
+    /* The owner's entry page is Connect's, not a course's: an assessor key left in this browser from a visit must not
+       lock it (1 Nov 2026, the role-by-role review's R6). The owner signs in there with their own passphrase. */
+    if (/14_owner\.html$/.test(location.pathname)) return;
     var st = document.createElement('style');
     st.textContent = '.hub-ro-hide{display:none !important;} textarea.hub-ro, input.hub-ro{background:transparent !important; cursor:default;} .hub-ro:focus{outline:none !important;}';
     document.head.appendChild(st);
