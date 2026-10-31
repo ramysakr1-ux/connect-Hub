@@ -509,6 +509,14 @@
   .focusbar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; font-size:.82rem;} .focusbar > span{font-weight:700; color:var(--grey); margin-right:4px;}
   .focusbar button{font:inherit; font-size:.8rem; font-weight:700; padding:5px 12px; border-radius:99px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
   .focusbar button[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:var(--paper);} .focusbar small{color:var(--grey); margin-left:6px;}
+  /* the tutorials panel under the day's line (31 Oct 2026) */
+  #dv6Tut{margin:10px 0 18px; padding:14px 18px; background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow);}
+  #dv6Tut .h{margin:0 0 8px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem;} #dv6Tut .h a{color:var(--ink); text-decoration:none;} #dv6Tut .h a:hover{color:var(--teal);}
+  #dv6Tut .dv6-sheet + .dv6-sheet{margin-top:10px; padding-top:10px; border-top:1px solid var(--row-line);}
+  #dv6Tut .t{margin:0 0 6px; font-weight:700; font-size:.9rem;} #dv6Tut .t span{font-weight:500; color:var(--grey); margin-left:6px;}
+  #dv6Tut ul{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:6px;}
+  #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
+  #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202610312357">
 </head>
@@ -1262,6 +1270,35 @@ function paintBrief(){
   if (waiting) chips.push('<a class="dv6-chip wait" href="#queue"><b>' + waiting + '</b> waiting on you</a>');
   host.innerHTML = chips.join('');
   host.hidden = false;
+  /* YOUR TUTORIALS (Ramy, 31 Oct 2026: "yes, add it to the dashboard"). The tutorial and consultation sheets that are
+     this tutor's (or nobody's in particular), today, or else the next day that has one: each place in time order,
+     who has it, and what is still free. Booked on the timetable; the bookings arrive a moment after the page. */
+  (function(){
+    if (!window.HubStore || !HubStore.isTutor || !HubStore.isTutor()) return;
+    const set = rd('connect_course_settings') || {};
+    const names = window.hubTutorNames ? (hubTutorNames(set) || []) : String(set.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
+    let me = ''; try { me = (localStorage.getItem('chub:tutorName') || '').trim().toLowerCase(); } catch (e) {}
+    const myI = names.findIndex(n => n.toLowerCase() === me);
+    const pl = x => [10, 15, 20, 30, 45, 60].indexOf(+x.pl) >= 0 ? +x.pl : 15;
+    const mm = hm => { const m = String(hm || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : 0; };
+    const hm = t => p2(Math.floor(t / 60)) + ':' + p2(t % 60);
+    const sheetsOn = d => ((d && d.sessions) || []).filter(x => x && /tutorial|consultation/i.test(x.t || '') && (x.by === undefined || x.by === '' || myI < 0 || +x.by === myI));
+    const day = days.find(d => d && d.date === TODAY && sheetsOn(d).length) || days.find(d => d && d.date > TODAY && sheetsOn(d).length);
+    if (!day) return;
+    HubStore.call({ op: 'bookings' }).then(r => {
+      const B = (r && r.bookings) || {};
+      const label = day.date === TODAY ? 'Your tutorials today' : 'Your tutorials, ' + dt(day.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+      const rows = sheetsOn(day).map(x => {
+        const n = Math.max(1, Math.floor((mm(x.e) - mm(x.s)) / pl(x))), places = (B[day.date + '|' + x.id] || {}).places || {};
+        const items = []; for (let i = 1; i <= n; i++) { const pp = places[i]; items.push('<li' + (pp && pp.token ? '' : ' class="free"') + '><b>' + esc(window.hubClock ? hubClock(hm(mm(x.s) + (i - 1) * pl(x))) : hm(mm(x.s) + (i - 1) * pl(x))) + '</b> ' + (pp && pp.token ? esc(pp.name || 'Booked') + (pp.asg ? ' \u00b7 ' + esc(String(pp.asg).toUpperCase()) : '') : 'Free') + '</li>'); }
+        const taken = Object.keys(places).filter(k => places[k] && places[k].token).length;
+        return '<div class="dv6-sheet"><p class="t">' + esc(x.t) + ' <span>' + taken + ' of ' + n + ' booked</span></p><ul>' + items.join('') + '</ul></div>';
+      }).join('');
+      let box = document.getElementById('dv6Tut');
+      if (!box) { box = document.createElement('section'); box.id = 'dv6Tut'; host.insertAdjacentElement('afterend', box); }
+      box.innerHTML = '<p class="h"><a href="23_timetable.html">' + esc(label) + '</a></p>' + rows;
+    }).catch(() => {});
+  })();
   /* the numbers count up, once */
   if (DV6_FIRST && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
     DV6_FIRST = false;
