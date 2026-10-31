@@ -1011,7 +1011,7 @@ function dues(){
        screen, where both sets' dates sit side by side. */
     const base = a.dueAt || a.due || '';
     const perSet = !!(a.dueSets && Object.keys(a.dueSets).length);
-    const subOf = tr => ((tr.records && tr.records.assignments) || (IS_TRAINEE ? rec('connect_assignment_submissions_v1') : null) || {})[k];
+    const subOf = tr => ((tr.records && tr.records.assignments) || tr.assignments || (IS_TRAINEE ? rec('connect_assignment_submissions_v1') : null) || {})[k];
     /* In hand once it has been submitted: the submission screen stamps sub1At
        (it never wrote submittedAt, so every passed deadline read "12 of 12 not
        in" on a course where all twelve were in -- found walking the demo,
@@ -3337,6 +3337,7 @@ function wireBoard(){
   });
 }
 /* ---- TUTORIALS AND CONSULTATIONS, BOOKED HERE (Ramy, 29 Oct 2026; Connect's rules, store v182) -----------------
+   A trainee's calls carry their token: the store client adds a tutor's key on its own, not a trainee's (31 Oct 2026). 
    A tile named Consultation or Tutorials is a sheet of 15-minute places; a trainee books the next open one. Before an
    assignment's first submission, any tutor's consultation; after it, their own tutor's only; tutorials with their own
    tutor. The store holds the sheets and judges the rule; this page shows them. */
@@ -3347,7 +3348,7 @@ const placeAt = (x, n) => toHM(toMin(x.s) + (n - 1) * 15);
 function loadBookings(force){
   if (!window.HubStore || !HubStore.call || (!force && BOOK && Date.now() - BOOK_AT < 60000)) return;
   BOOK_AT = Date.now();
-  HubStore.call({ op: 'bookings' }).then(r => { BOOK = (r && r.bookings) || {}; render(); }).catch(() => {});
+  HubStore.call({ op: 'bookings', token: IS_TRAINEE && HubStore.token ? HubStore.token() : undefined }).then(r => { BOOK = (r && r.bookings) || {}; render(); }).catch(() => {});
 }
 function sheetOf(day, x){
   const raw = (BOOK || {})[day.date + '|' + x.id] || {};
@@ -3387,12 +3388,12 @@ function openBooking(date, id){
   $('bkOk').addEventListener('click', closePop);
   if ($('bkGo')) $('bkGo').addEventListener('click', () => {
     $('bkGo').disabled = true; $('bkMsg').textContent = 'Booking…';
-    HubStore.call({ op: 'bookSlot', date, id, asg: $('bkAsg') ? $('bkAsg').value : '' })
+    HubStore.call({ op: 'bookSlot', token: HubStore.token ? HubStore.token() : undefined, date, id, asg: $('bkAsg') ? $('bkAsg').value : '' })
       .then(r => { if (!r || !r.booked) { $('bkMsg').textContent = 'Nothing was booked. Try again.'; $('bkGo').disabled = false; return; } $('bkMsg').textContent = 'Booked: ' + hubClock(r.from) + '.'; BOOK = null; loadBookings(true); setTimeout(closePop, 900); })
       .catch(e => { $('bkMsg').textContent = String((e && e.message) || e).replace(/^Error:\s*/, ''); $('bkGo').disabled = false; });
   });
   if ($('bkFree')) $('bkFree').addEventListener('click', () => {
-    HubStore.call({ op: 'releaseSlot', date, id }).then(() => { BOOK = null; loadBookings(true); closePop(); }).catch(() => {});
+    HubStore.call({ op: 'releaseSlot', token: IS_TRAINEE && HubStore.token ? HubStore.token() : undefined, date, id }).then(() => { BOOK = null; loadBookings(true); closePop(); }).catch(() => {});
   });
 }
 function swapOffer(x, o, before){

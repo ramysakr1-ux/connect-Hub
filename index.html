@@ -883,7 +883,7 @@ line(document.getElementById('badgeSelf'),
   NEXT === 'self' ? 'act' : selfIn ? 'done' : '');
 
 line(document.getElementById('badgeFeedback'),
-  fbBack && selfIn && !fbOpened ? 'Sealed, in your welcome card'
+  fbBack && selfIn && !fbOpened ? 'Back, not opened yet'
   : fbBack && selfIn  ? 'Ready to read'
   : fbBack          ? 'Ready — your self-evaluation first'
   : selfIn          ? 'With your tutor'
@@ -1486,11 +1486,24 @@ if (fbBack){
       for (let n = tpTotal; n >= 2; n--) { const t = opensAt(n); if (t <= now) return (now - t < 36 * 3600 * 1000 || (O.mode === 'hand' && n > filed + 1)) && (((PTS.points || {})[ME.token] || {})['tp' + n] || {}).aim ? n : 0; }
       return 0;
     })();
-    if (NEW_TP && NEW_TP !== HERO_TP) add('New: your TP points for TP ' + NEW_TP + ' are out', '24_tp_points.html');
     /* the TP points first: what they teach, with its pages and its audio */
     if (NEXT === 'plan' && HERO_TP && PTS.released) add((NEW_TP === HERO_TP ? 'New: y' : 'Y') + 'our TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
     if (NEXT === 'plan') add(HERO_TP ? (matOnly(HERO_TP) ? 'Prepare your material for TP ' + HERO_TP + ' and send it to your tutor' : 'Write your lesson plan for TP ' + HERO_TP) : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
-    if (NEXT === 'self') add(fbBack ? 'Write your self-evaluation — it opens your feedback' : 'Write your self-evaluation', '2_trainee_self_evaluation.html');
+    /* NOT BEFORE THE LESSON (Ramy, 31 Oct 2026, walking the mid-course demo: Dmitri teaches TP4 at 3:00 today and was asked
+       for its self-evaluation at lunchtime). On the day of the TP, until it starts, the line is the lesson itself. */
+    const lessonAhead = NEXT === 'self' && !fbBack && tpDay === TODAY && (function(){
+      const sl = ((window.hubSlotsFor && heroDay ? hubSlotsFor(TT, heroDay.date) : TT.slots) || []).filter(x => x && x.kind === 'tp' && x.from)[0];
+      if (!sl) return false;
+      const at = window.hubZonedInstant && CS.timeZone ? hubZonedInstant(tpDay, sl.from, CS.timeZone) : null;
+      const p = tpDay.split('-'), hm = String(sl.from).split(':');
+      const start = at != null ? at : new Date(+p[0], +p[1] - 1, +p[2], +hm[0], +hm[1] || 0).getTime();
+      return (window.hubNow ? hubNow() : Date.now()) < start;
+    })();
+    /* the lesson leads the card on its own day: the line under the title is that lesson's */
+    if (lessonAhead) waiting.unshift({ text: 'You teach TP ' + HERO_TP + ' today' + (tpTime ? ' at ' + tpTime : '') + '. Your self-evaluation opens after the lesson', href: '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''), tone: '' });
+    else if (NEXT === 'self') add(fbBack ? 'Write your self-evaluation — it opens your feedback' : 'Write your self-evaluation', '2_trainee_self_evaluation.html');
+    /* the next TP's points come after this TP's own business (31 Oct 2026: Mateo's TP5 points headed a card about his TP4) */
+    if (NEW_TP && NEW_TP !== HERO_TP) add('New: your TP points for TP ' + NEW_TP + ' are out', '24_tp_points.html');
   }
   /* the planning grid's own row, when it is released and not filled */
   (function(){
@@ -1576,7 +1589,10 @@ if (fbBack){
         .concat(preLinks.map(l => ({ text: String(l.label || 'Your pre-course task'), href: l.url, out: true }))).concat(READS);
       note = '';
     }
-  } else if (firstVisit) {
+  } else if (firstVisit && !((CS.demoToday || CS.presentToday) && TODAY !== START)) {
+    /* NOT ON A DEMO PAST DAY ONE (Ramy, 31 Oct 2026, on the mid-course demo: "catch up on how to succeed on the CELTA, catch up
+       on the CELTA glossary ... this is like day one stuff"). Every demo visit starts clean, so every visitor was a "first visit"
+       and the trainee halfway through the course read as a late joiner. A demo past day one shows the page that trainee has. */
     /* A WELCOME FOR WHOEVER COMES IN AFTER DAY ONE (Ramy, 10 Oct 2026). The
        welcome above only ever showed before the course started, so a trainee
        whose link came on day three went straight to "Today" with nobody saying
