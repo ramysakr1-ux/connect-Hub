@@ -3838,14 +3838,14 @@ function requireOwner_(owner) { if (!owner) throw new Error('Not yours to open')
 /* ---------- the CV present: shaping it for a job (v184) ---------- */
 function shapeCv_(req, capKey, scCap, fromCourse) {
   var scKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
-  if (!scKey) throw new Error('Shaping is not switched on yet');
+  if (!scKey) throw new Error('Tailoring is not switched on yet');
   var scPost = String(req.post || '').replace(/\s+\n/g, '\n').trim().slice(0, 8000);
   if (scPost.length < 80) throw new Error('Paste the whole job post: what the school does and what it asks for.');
   var scRec = req.record && typeof req.record === 'object' ? req.record : {};
   var scMine = req.mine && typeof req.mine === 'object' ? req.mine : {};
   var scProps = PropertiesService.getScriptProperties(), scDay = new Date().toISOString().slice(0, 10), scPk = capKey;
   var scWas = String(scProps.getProperty(scPk) || '').split('|'), scN = scWas[0] === scDay ? Number(scWas[1] || 0) : 0;
-  if (scN >= scCap) throw new Error('That is enough shaping for today. Try again tomorrow.');
+  if (scN >= scCap) throw new Error('That is enough tailoring for today. Try again tomorrow.');
   scProps.setProperty(scPk, scDay + '|' + (scN + 1));
   /* the sources the model may cite: one id per fact, nothing else */
   var scSrc = {}, scFacts = [];
