@@ -2353,6 +2353,10 @@ window.hubHeadHTML = function (text, heads) {
     if (a && demo() && a.closest && a.closest('.rooms .rm, .online-rooms .or-join')) {
       e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the online room.'); return;
     }
+    /* The demo's people have made-up addresses (31 Oct 2026, walking C/1): an email link opened a mail to nobody. */
+    if (a && demo() && /^mailto:/i.test(a.getAttribute('href') || '') && /\.example\b/i.test(a.getAttribute('href') || '')) {
+      e.preventDefault(); e.stopPropagation(); say('This is a demo course, so no email is sent. On a real course this writes to them.'); return;
+    }
     if (a && /drive\.google\.com\/drive\/folders\/demo-/.test(a.href || '') && demo()) {
       e.preventDefault(); e.stopPropagation(); say('This is a demo course. On a real course this opens the file itself.');
     }
