@@ -106,6 +106,17 @@
 
   /* SENDING: one row that does the whole job */
   .send .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;}
+  /* the thank-you card: a gold ring and a gold top line, so it reads apart from the rest of the console (Ramy, 31 Oct 2026) */
+  #giftcard{border-top:3px solid oklch(74% 0.11 78); box-shadow:0 0 0 1.5px oklch(80% 0.09 82), 0 8px 22px oklch(60% 0.09 75 / .14);}
+  #giftcard .goldword{color:oklch(60% 0.11 72);}
+  .gcard{position:relative; overflow:hidden; border-radius:12px; padding:16px 18px 15px; margin:12px 0 4px; color:oklch(26% 0.025 65);
+    background:linear-gradient(135deg, oklch(86% 0.08 88) 0%, oklch(78% 0.1 80) 38%, oklch(72% 0.11 70) 70%, oklch(66% 0.1 62) 100%);}
+  .gcard .gtag{float:right; font:700 9px 'Instrument Sans',sans-serif; letter-spacing:.18em; text-transform:uppercase; background:oklch(98% 0.03 90 / .6); border-radius:999px; padding:5px 9px; color:oklch(35% 0.06 70);}
+  .gcard .gh{font-family:'Newsreader',Georgia,serif; font-weight:500; font-size:1.55rem; line-height:1.08; margin:6px 0 8px;}
+  .gcard .gh i{display:block;}
+  .gcard .gl{font:500 .86rem/1.45 'Karla',sans-serif; margin:0; color:oklch(32% 0.035 68); max-width:420px;}
+  .gwords{margin:8px 0 0;} .gwords summary{cursor:pointer; font:600 .84rem 'Karla',sans-serif; color:var(--a-forest);}
+  .gwords input{width:100%; margin:6px 0 0;}
   .send input[type=email], .send select, .send textarea, .send input[type=url], .send input[type=text], .send input[type=password]{
     font:inherit; font-size:0.88rem; padding:8px 11px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
   .send input[type=email]{flex:1 1 220px; min-width:180px;}
@@ -523,14 +534,70 @@ function demoCard(c){
    and greets them by name. The link is copied, or written into an email from your own mail. */
 function giftCard(){
   return `<div class="card send" id="giftcard">
-    <h3>Say thank you with Connect CV</h3>
-    <p class="note" style="margin:0 0 10px">For someone who helped along the way. Their link opens the CV page with their name on it, and tailors their CV to any job post they paste, from what they write about themselves.</p>
+    <h3>Say thank you with <span class="goldword">Connect CV</span></h3>
+    <p class="note" style="margin:0">For someone who helped along the way. Their link opens Connect CV with their name on it, and tailors their CV to any job post they paste.</p>
+    <div class="gcard" aria-label="The card they get"><span class="gtag">A thank-you</span><p class="gh"><span id="gH1"></span><i id="gH2"></i></p><p class="gl" id="gLine"></p></div>
+    <details class="gwords"><summary>Edit the words</summary>
+      <input type="text" id="gW1" maxlength="60" aria-label="First line"><input type="text" id="gW2" maxlength="80" aria-label="Second line"><input type="text" id="gW3" maxlength="220" aria-label="The line under it">
+      <button type="button" class="linkbtn" id="gReset">Back to the standard words</button></details>
     <div class="row">
       <input type="text" id="giftName" placeholder="Their name" autocomplete="off">
-      <button class="btn primary" type="button" id="giftMake">Make their link</button>
+      <input type="email" id="giftTo" placeholder="Their email, for Email" autocomplete="off">
     </div>
+    <div class="row"><button type="button" class="btn small" id="gCopy">Copy the link</button><button type="button" class="linkbtn" id="gWa">WhatsApp</button><button type="button" class="linkbtn" id="gMail">Email</button><button type="button" class="linkbtn" id="gPic">Download the card</button></div>
     <p class="note" id="giftOut"></p>
   </div>`;
+}
+/* the words: the standard ones until Ramy changes them; kept on this device */
+const GIFT_STD = { h1: 'Thank you.', h2: 'This one\u2019s for you.', line: 'Connect CV: your teaching CV and cover letter, tailored to any job you choose.' };
+function giftWords(){ const v = id => ($(id) ? $(id).value : '').trim(); const w = { h1: v('gW1'), h2: v('gW2'), line: v('gW3') }; return w.h1 ? w : Object.assign({}, GIFT_STD); }
+function paintGift(){ const w = giftWords(); if ($('gH1')) { $('gH1').textContent = w.h1; $('gH2').textContent = w.h2; $('gLine').textContent = w.line; } }
+function bindGift(){
+  let saved = null; try { saved = JSON.parse(localStorage.getItem('lite:giftWords') || 'null'); } catch (e) {}
+  const w = saved && saved.h1 ? saved : GIFT_STD;
+  if (!$('gW1')) return;
+  $('gW1').value = w.h1; $('gW2').value = w.h2; $('gW3').value = w.line; paintGift();
+  ['gW1', 'gW2', 'gW3'].forEach(id => $(id).addEventListener('input', () => { GIFT = null; try { localStorage.setItem('lite:giftWords', JSON.stringify(giftWords())); } catch (e) {} paintGift(); }));
+  $('giftName').addEventListener('input', () => { GIFT = null; });
+}
+/* one link per name and words: made on the first button pressed, reused by the others */
+let GIFT = null;
+async function giftLink(){
+  const nm = ($('giftName').value || '').trim();
+  if (!nm) { $('giftOut').textContent = 'Type their name first.'; $('giftName').focus(); return null; }
+  if (GIFT && GIFT.name === nm) return GIFT;
+  $('giftOut').textContent = 'Making their link…';
+  const r = await call({ op: 'mintCvGift', name: nm, words: giftWords() });
+  GIFT = { name: nm, code: r.code, link: r.link || ('https://lite.celtaconnect.com/cv/for/?g=' + r.code) };
+  $('giftOut').textContent = GIFT.link;
+  return GIFT;
+}
+/* the card as a picture, 1200 x 630, with the words on it: for WhatsApp when the words are not the standard ones */
+async function giftPicture(){
+  try { await document.fonts.load('500 84px Newsreader'); await document.fonts.load('italic 500 84px Newsreader'); await document.fonts.load('500 30px Karla'); } catch (e) {}
+  const w = giftWords(), c = document.createElement('canvas'); c.width = 1200; c.height = 630; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 1200, 630); gr.addColorStop(0, 'oklch(86.1% 0.090 89)'); gr.addColorStop(.38, 'oklch(77.8% 0.106 82)'); gr.addColorStop(.7, 'oklch(70.9% 0.112 76)'); gr.addColorStop(1, 'oklch(65.5% 0.105 71)');
+  g.fillStyle = gr; g.fillRect(0, 0, 1200, 630);
+  /* the mark's two arcs, as the logo draws them (viewBox 8 28 104 64): circles at x 40 and 80, open on the right */
+  const arcs = (x, y, k, c1, c2, wd) => { const a = Math.atan2(17.8, 16.1); g.lineCap = 'round'; g.lineWidth = wd * k;
+    [[40, c1], [80, c2]].forEach(([cx, col]) => { g.strokeStyle = col; g.beginPath(); g.arc(x + (cx - 8) * k, y + (60 - 28) * k, 24 * k, -a, a, true); g.stroke(); }); };
+  g.globalAlpha = .16; arcs(650, 380, 5.6, 'oklch(100% 0 0)', 'oklch(100% 0 0)', 13); g.globalAlpha = 1;
+  g.fillStyle = 'oklch(98.0% 0.010 87)'; g.beginPath(); g.roundRect(84, 70, 262, 72, 20); g.fill();
+  g.fillStyle = 'oklch(97.3% 0.007 89)'; g.beginPath(); g.roundRect(95, 81, 50, 50, 12); g.fill();
+  arcs(103.5, 95.85, 33 / 104, 'oklch(62.6% 0.096 78)', 'oklch(25.9% 0.022 70)', 13);
+  g.fillStyle = 'oklch(62.6% 0.096 78)'; g.font = 'italic 38px "Instrument Serif", Georgia, serif'; g.fillText('Connect', 159, 120);
+  const cw = g.measureText('Connect').width; g.fillStyle = 'oklch(25.9% 0.022 70)'; g.font = '600 14.5px "Instrument Sans", sans-serif'; g.letterSpacing = '3.5px'; g.fillText('LITE', 159 + cw + 7, 120); g.letterSpacing = '0px';
+  g.fillStyle = 'oklch(98.6% 0.03 95 / .6)'; g.beginPath(); g.roundRect(900, 84, 216, 42, 21); g.fill();
+  g.fillStyle = 'oklch(34.8% 0.058 79)'; g.font = '700 17px "Instrument Sans", sans-serif'; g.letterSpacing = '3.4px'; g.fillText('A THANK-YOU', 922, 112); g.letterSpacing = '0px';
+  /* the two big lines take the largest size, up to 84px, at which both fit the width */
+  let fs = 84; const fits = () => { g.font = '500 ' + fs + 'px Newsreader, Georgia, serif'; const a1 = g.measureText(w.h1).width; g.font = 'italic 500 ' + fs + 'px Newsreader, Georgia, serif'; return Math.max(a1, w.h2 ? g.measureText(w.h2).width : 0) <= 1032; };
+  while (fs > 40 && !fits()) fs -= 2;
+  g.fillStyle = 'oklch(25.9% 0.022 70)'; g.font = '500 ' + fs + 'px Newsreader, Georgia, serif'; g.fillText(w.h1, 84, 280);
+  if (w.h2) { g.font = 'italic 500 ' + fs + 'px Newsreader, Georgia, serif'; g.fillText(w.h2, 84, 280 + fs * 1.02); }
+  g.fillStyle = 'oklch(31.9% 0.032 72)'; g.font = '500 30px Karla, sans-serif';
+  const words = String(w.line || '').split(' '); let line = '', y = 280 + fs * (w.h2 ? 1.02 : 0) + 74;
+  words.forEach(t => { const tryL = line ? line + ' ' + t : t; if (g.measureText(tryL).width > 820) { g.fillText(line, 84, y); line = t; y += 42; } else line = tryL; }); if (line) g.fillText(line, 84, y);
+  const a = document.createElement('a'); a.href = c.toDataURL('image/jpeg', .92); a.download = 'Connect CV - a thank-you.jpg'; document.body.appendChild(a); a.click(); a.remove();
 }
 function sendCard(){
   const kind = cardKind();
@@ -726,6 +793,7 @@ function render(courses, msg){
   ['foldEarlier', 'foldBin', 'foldInbox', 'foldSettings'].forEach(id => { const d = $(id); if (!d) return; d.open = ls.get('hub:o:' + id) === '1'; d.ontoggle = () => ls.set('hub:o:' + id, d.open ? '1' : '0'); });
   COURSES.filter(c => courseKind(c) === 'demo').forEach(fillDoors);   // the cover's doors, and a trainee link on every other demo
   fillMaterials();
+  bindGift();
   drawInbox();
   txState(); checksState();
   feedbackLine();
@@ -917,13 +985,19 @@ $('app').addEventListener('click', async e => {
   if (T('#aiSave')) { const b = T('#aiSave'), key = $('aiKey'), note = $('aiNote'); b.disabled = true; note.textContent = 'Saving…';
     try { const r = await call({ op: 'setClaudeKey', key: key.value.trim() }); key.value = ''; note.textContent = r && r.on ? 'Saved. The paraphrase pass is on.' : 'The paraphrase pass is off.'; checksState(); } catch (err) { note.textContent = err.message || String(err); }
     b.disabled = false; return; }
-  if (T('#giftMake')) { const b = T('#giftMake'), nm = ($('giftName').value || '').trim(), out = $('giftOut');
-    if (!nm) { out.textContent = 'Type their name first.'; $('giftName').focus(); return; }
-    b.disabled = true; out.textContent = 'Making it…';
-    try { const r = await call({ op: 'mintCvGift', name: nm }), link = 'https://lite.celtaconnect.com/cv/?g=' + r.code, first = nm.split(/\s+/)[0];
-      const body = 'Dear ' + first + ',\n\nThank you for your help. A small present from Connect Lite: Connect CV, a page that builds a modern teaching CV and cover letter, and tailors them to any job you paste in.\n\n' + link + '\n\nIt is yours to keep.\n\nRamy';
-      out.innerHTML = esc(link) + ' <button type="button" class="btn small" data-copy="' + esc(link) + '">Copy the link</button> <a class="linkbtn" href="mailto:?subject=' + encodeURIComponent('A thank-you from Connect Lite') + '&body=' + encodeURIComponent(body) + '">Write the email</a>';
-    } catch (err) { out.textContent = err.message || String(err); }
+  if (T('#gReset')) { ['gW1', 'gW2', 'gW3'].forEach((id, i) => { $(id).value = [GIFT_STD.h1, GIFT_STD.h2, GIFT_STD.line][i]; }); try { localStorage.removeItem('lite:giftWords'); } catch (e) {} GIFT = null; paintGift(); return; }
+  if (T('#gPic')) { giftPicture(); return; }
+  if (T('#gCopy') || T('#gWa') || T('#gMail')) { const b = T('#gCopy') || T('#gWa') || T('#gMail'), out = $('giftOut');
+    const wa = T('#gWa') ? window.open('', '_blank') : null;   /* opened now, filled after the link is made: a window opened after a wait is blocked */
+    if (T('#gMail') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(($('giftTo').value || '').trim())) { out.textContent = 'Type their email address first.'; $('giftTo').focus(); return; }
+    let G = null; try { G = await giftLink(); } catch (err) { out.textContent = err.message || String(err); if (wa) wa.close(); return; }
+    if (!G) { if (wa) wa.close(); return; }
+    const w = giftWords(), first = G.name.split(/\s+/)[0];
+    if (T('#gCopy')) { try { await navigator.clipboard.writeText(G.link); out.textContent = 'Copied: ' + G.link; } catch (e) { out.textContent = G.link; } return; }
+    if (wa) { const text = w.h1 + (w.h2 ? ' ' + w.h2 : '') + '\n\n' + (w.line ? w.line + '\n\n' : '') + G.link; wa.location = 'https://wa.me/?text=' + encodeURIComponent(text);
+      out.textContent = (w.h1 === GIFT_STD.h1 && w.h2 === GIFT_STD.h2 ? 'WhatsApp shows the golden card with the link.' : 'Your own words are in the message. WhatsApp shows the standard card under the link; to show yours, send the downloaded card with it.'); return; }
+    b.disabled = true; out.textContent = 'Sending the card…';
+    try { const r = await call({ op: 'giftMail', code: G.code, email: $('giftTo').value.trim() }); out.textContent = 'The card went to ' + r.to + ', for ' + first + '.'; } catch (err) { out.textContent = err.message || String(err); }
     b.disabled = false; return; }
   if (T('#noteReset')) { ls.del(noteKey()); const n = $('demoNote'); if (n) n.value = demoNote(); status('The standard letter is back.'); return; }
   if ((T('#cardPreview') || T('#cardCopy') || T('#cardSend')) && cardKind() === 'price' && !ratesList()) { status('Type the four rates first, under Settings.'); const d = $('foldSettings'); if (d) d.open = true; const f = document.querySelector('[data-rate]'); if (f) f.focus(); return; }

@@ -367,7 +367,7 @@ function handle_(req) {
     var cgRaw = PropertiesService.getScriptProperties().getProperty('cvGift:' + String(req.g || '').replace(/[^a-z0-9]/gi, ''));
     if (!cgRaw) throw new Error('This present link is not valid.');
     var cg = JSON.parse(cgRaw);
-    if (op === 'cvGift') return { name: cg.name || '' };
+    if (op === 'cvGift') return { name: cg.name || '', words: cg.words || null };
     return shapeCv_(req, 'shapeCv:g:' + String(req.g), 20, false);
   }
 
@@ -490,9 +490,32 @@ function handle_(req) {
       requireOwner_(owner);
       var mgName = String(req.name || '').trim().slice(0, 80);
       if (!mgName) throw new Error('Who is it for?');
-      var mgCode = newKey_().slice(0, 16);
-      PropertiesService.getScriptProperties().setProperty('cvGift:' + mgCode, JSON.stringify({ name: mgName, at: new Date().toISOString() }));
-      return { code: mgCode, name: mgName };
+      var mgCode = newKey_().slice(0, 16), mgW = cvGiftWords_(req.words);
+      PropertiesService.getScriptProperties().setProperty('cvGift:' + mgCode, JSON.stringify({ name: mgName, words: mgW, at: new Date().toISOString() }));
+      return { code: mgCode, name: mgName, link: SITE_ + 'cv/for/?g=' + mgCode, words: mgW };
+    }
+    /* THE THANK-YOU CARD BY EMAIL (Ramy, 31 Oct 2026: "why isn't the link the golden card?"; "the default is thank you,
+       but I can also change the wording"; "on it"). The golden card with the owner's words on it, their link under it. */
+    case 'giftMail': {
+      requireOwner_(owner);
+      var gmCode = String(req.code || '').replace(/[^a-z0-9]/gi, ''), gmRaw = PropertiesService.getScriptProperties().getProperty('cvGift:' + gmCode);
+      if (!gmRaw) throw new Error('Make their link first');
+      var gm = JSON.parse(gmRaw), gmW = gm.words || cvGiftWords_(null), gmTo = String(req.email || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmTo)) throw new Error('Type their email address');
+      var gmE = function (x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      var gmUrl = SITE_ + 'cv/for/?g=' + gmCode, gmFirst = String(gm.name || '').trim().split(/\s+/)[0];
+      var gmHtml = '<div style="max-width:560px">'
+        + '<div style="background:#D9B064;background-image:linear-gradient(135deg,#E9CF8C 0%,#D9B064 38%,#C9974A 70%,#B98543 100%);border-radius:16px;padding:30px 30px 28px">'
+        + '<p style="margin:0 0 22px"><span style="display:inline-block;background:#FBF8F1;border-radius:10px;padding:7px 12px;font:italic 20px Georgia,serif;color:#a8803f">Connect <span style="font:600 9px Arial,sans-serif;letter-spacing:2px;color:#2b2218">LITE</span></span>'
+        + '<span style="float:right;display:inline-block;background:rgba(255,250,232,.6);border-radius:999px;padding:7px 12px;font:bold 10px Arial,sans-serif;letter-spacing:2px;color:#4a3612">A THANK-YOU</span></p>'
+        + '<p style="font:500 38px/1.06 Georgia,serif;color:#2b2218;margin:0 0 14px">' + gmE(gmW.h1) + (gmW.h2 ? '<br><i>' + gmE(gmW.h2) + '</i>' : '') + '</p>'
+        + (gmW.line ? '<p style="font:16px/1.5 Arial,Helvetica,sans-serif;color:#3d3020;margin:0 0 20px">' + gmE(gmW.line) + '</p>' : '')
+        + '<p style="margin:0"><a href="' + gmUrl + '" style="display:inline-block;padding:13px 22px;background:#1E3B2F;color:#ffffff;text-decoration:none;border-radius:10px;font:bold 16px Arial,Helvetica,sans-serif">Open Connect CV</a></p></div>'
+        + '<p style="font:15px/1.6 Arial,Helvetica,sans-serif;color:#444;margin:20px 0 0">' + (gmFirst ? 'For ' + gmE(gmFirst) + '. ' : '') + 'The link is yours to keep: a modern teaching CV and cover letter, tailored to any job you paste in. What you type stays in your own browser.</p>'
+        + '</div>';
+      var gmText = gmW.h1 + (gmW.h2 ? ' ' + gmW.h2 : '') + '\n\n' + (gmW.line ? gmW.line + '\n\n' : '') + 'Open Connect CV: ' + gmUrl + '\n\nThe link is yours to keep. What you type stays in your own browser.';
+      sendAs_({ to: gmTo, subject: (gmW.h1 || 'Thank you').replace(/[.!]+$/, '') + ': a present from Connect Lite', htmlBody: gmHtml, body: gmText, name: 'Connect Lite' });
+      return { to: gmTo };
     }
     case 'passInfo': {
       var pi = parsePass_(req.p);
@@ -3835,6 +3858,14 @@ function requireOwner_(owner) { if (!owner) throw new Error('Not yours to open')
    the trainees sheet) and courseKey_() twice (a property read each). So
    listing N courses cost 2N+1 sheet reads and 2N property reads, and every
    course Ramy sold made the console slower for every course after it. */
+/* the words on a thank-you card: the owner's, or the default (v185) */
+function cvGiftWords_(w) {
+  w = w && typeof w === 'object' ? w : {};
+  var t = function (x, n) { return String(x == null ? '' : x).replace(/\s+/g, ' ').trim().slice(0, n); };
+  var h1 = t(w.h1, 60);
+  return h1 ? { h1: h1, h2: t(w.h2, 80), line: t(w.line, 220) }
+    : { h1: 'Thank you.', h2: 'This one\u2019s for you.', line: 'Connect CV: your teaching CV and cover letter, tailored to any job you choose.' };
+}
 /* ---------- the CV present: shaping it for a job (v184) ---------- */
 function shapeCv_(req, capKey, scCap, fromCourse) {
   var scKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
