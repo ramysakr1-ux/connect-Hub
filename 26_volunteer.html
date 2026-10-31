@@ -67,6 +67,17 @@
   .next.done .k{opacity:1; color:var(--grey);}
   .card{background:var(--surface); border:1px solid var(--sand-line); border-radius:11px; padding:16px 18px; margin:0 0 14px;}
   .card h3{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 3px;}
+  /* A LITTLE COLOUR (Ramy, 31 Oct 2026: "a little bit of color to the volunteer page ... nothing too much"). Each
+     section keeps the white card and gets its own tone from the notebook palette: a slim rule along the top, a
+     dot before its title, the faintest wash at its head, and its day buttons in the same tone. The material
+     cards and their hover are as they were. */
+  .card[data-tone="forest"]{--tone:var(--a-forest);} .card[data-tone="mustard"]{--tone:var(--a-mustard);}
+  .card[data-tone="mint"]{--tone:color-mix(in oklch, var(--a-mint) 70%, var(--a-forest));} .card[data-tone="red"]{--tone:var(--a-red);}
+  .card[data-tone="navy"]{--tone:var(--a-navy);} .card[data-tone="slate"]{--tone:var(--a-slate);}
+  body .card[data-tone]:not(.doc *){box-shadow:inset 0 3px 0 var(--tone), var(--nb-shadow) !important; background:linear-gradient(to bottom, color-mix(in oklch, var(--tone) 8%, var(--paper)) 0, var(--paper) 70px) !important;}
+  .card[data-tone] > h3{display:flex; align-items:center; gap:9px;}
+  .card[data-tone] > h3::before{content:''; flex:none; width:9px; height:9px; border-radius:50%; background:var(--tone);}
+  .card[data-tone] .fc-days button.on{border-color:var(--tone) !important; background:color-mix(in oklch, var(--tone) 12%, var(--paper)) !important; color:var(--ink) !important;}
   /* The day buttons (Self-study and Build up your vocab). */
   .fc-days{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0;}
   .fc-days button{border:1px solid var(--sand-line); background:var(--surface); border-radius:999px; padding:6px 12px; font:inherit; font-size:0.8rem; color:var(--ink); cursor:pointer;}
@@ -489,7 +500,7 @@ function cardsBlock(){
         <p class="vb-def">${esc(w.def)}</p>${VB.mode === 'spell' ? `<p class="vb-hint">It starts with <b>${esc(w.w.charAt(0))}</b>${/\s/.test(w.w.trim()) ? ' and is ' + w.w.trim().split(/\s+/).length + ' words' : ' and has ' + w.w.replace(/[^A-Za-z]/g, '').length + ' letters'}.</p>` : ''}
         ${ask}${fb}${answered ? '<div class="hw-bar"><button type="button" class="hw-b" id="vbNext">Next</button></div>' : ''}</div>`;
   }
-  return `<div class="card" id="vb"><h3>${esc(head)}</h3>
+  return `<div class="card" id="vb" data-tone="mint"><h3>${esc(head)}</h3>
       <p class="note">${n} words from ${cls.date === TODAY ? 'today’s' : 'that day’s'} lessons. Read what it means, then choose the word. A word you miss comes back at the end.</p>
       ${body}
       ${days.length > 1 ? `<div class="fc-days">${days.map(x => `<button type="button" data-vbday="${esc(x.date)}" class="${x === cls ? 'on' : ''}">${esc(shortDay(x.date))}</button>`).join('')}</div>` : ''}
@@ -577,7 +588,7 @@ function hwBlock(){
   const said = h.script ? `<p class="hw-said"><b>What was said</b><br>${(Array.isArray(h.script) ? h.script : [h.script]).map(esc).join('<br>')}</p>` : '';
   const flip = !!st.flipped;
   const mark = window.hubLockup ? hubLockup(16) : '';
-  return `<div class="card" id="hw"><h3>${esc(head)}</h3>
+  return `<div class="card" id="hw" data-tone="mustard"><h3>${esc(head)}</h3>
       <p class="note">${cls === days[0] && cls.date !== TODAY ? esc(longDay(cls.date)) + '. ' : ''}A little practice for you to do on your own. Try it, check it, then turn the card over for the answers.</p>
       ${cls.homework.length > 1 ? `<div class="fc-days">${cls.homework.map((x, i) => `<button type="button" data-hwi="${i}" class="${i === hwIdx ? 'on' : ''}">${esc(x.aim || ('Lesson ' + (i + 1)))}${x.by ? ' \u00b7 ' + esc(x.by) : ''}</button>`).join('')}</div>` : ''}
       <div class="hw-card${flip ? ' on' : ''}" id="hwCard"><div class="hw-in">
@@ -655,7 +666,7 @@ function notesBlock(){
   if (!past.length) return '';
   const d = past.indexOf(nbDay) >= 0 ? nbDay : past[0];
   const opts = past.map(x => `<option value="${esc(x)}"${x === d ? ' selected' : ''}>${esc(longDay(x))}${NOTES[x] ? ' \u00b7 notes' : ''}</option>`).join('');
-  return `<div class="card" id="nb"><h3>My notebook</h3>
+  return `<div class="card" id="nb" data-tone="red"><h3>My notebook</h3>
       <p class="note">Your own notes for each class: words, sentences, questions for your teacher. They stay on this phone and nobody else reads them.</p>
       <label class="nb-day"><span>Class</span><select id="nbDay">${opts}</select></label>
       <div class="nb-page"><p class="nb-head">${esc(longDay(d))}</p><textarea id="nbBox" rows="8" placeholder="Write here\u2026" aria-label="Notes for ${esc(longDay(d))}">${esc(NOTES[d] || '')}</textarea></div>
@@ -718,12 +729,12 @@ function render(){
          or the material of the day, and the previous stuff lives in the
          background?"). The newest share is what they came for; the rest is
          still here, behind a line. -->
-    <div class="card"><h3>For your next class</h3>
+    <div class="card" data-tone="forest"><h3>For your next class</h3>
       <p class="note">Anything your teachers share for the lesson appears here. Have a look if you like — you do not have to.</p>
       ${SHARED.length ? SHARED.slice(0, 3).map(mat).join('') : '<p class="empty">Nothing shared yet.</p>'}
       ${SHARED.length > 3 ? `<details class="earlier"><summary>Everything else your teachers have shared — ${SHARED.length - 3} more</summary>${SHARED.slice(3).map(mat).join('')}</details>` : ''}</div>
     ${hwBlock()}${cardsBlock()}${notesBlock()}
-    <div class="card"><h3>Your attendance</h3>
+    <div class="card" data-tone="navy"><h3>Your attendance</h3>
       <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < JOINED ? 'before' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>
       <div class="hrs"><b>${fmtH(hours)} h</b><span>${attended} ${attended === 1 ? 'class' : 'classes'}${REC.partial ? ' · ' + REC.partial + ' part of a class' : ''}${upcoming.length ? ' · ' + upcoming.length + ' still to come' : ''}</span></div>
       ${TARGET > 0 ? `<div class="track"><i style="width:${Math.min(100, Math.round(CERT.total / TARGET * 100))}%"></i></div><p class="trk-l"><b>${fmtH(Math.min(CERT.total, TARGET))}</b> of ${fmtH(TARGET)} hours${LEVEL ? ' at ' + esc(window.hubLevelName ? hubLevelName(LEVEL) : LEVEL) + ' level' : ''} toward your certificate${CERT.carried ? ', ' + fmtH(CERT.carried) + ' of them from earlier courses' : ''}</p>`
@@ -734,7 +745,7 @@ function render(){
         ? `Your <b>certificate</b> for ${fmtH(TARGET)} hours${LEVEL ? ' at ' + esc(window.hubLevelName ? hubLevelName(LEVEL) : LEVEL) + ' level' : ''} is ready. Print it, or save it as a PDF.<br><a class="certlink" href="27_volunteer_certificate.html">Open your certificate</a>`
         : `Your <b>certificate</b> comes when you complete ${fmtH(TARGET)} hours${LEVEL ? ' at ' + esc(window.hubLevelName ? hubLevelName(LEVEL) : LEVEL) + ' level' : ''}. That is <b>${classesLeft} more ${classesLeft === 1 ? 'class' : 'classes'}</b>. It is signed by the center and yours to keep.`}</div>` : ''}
     </div>
-    ${upcoming.length > 1 ? `<div class="card"><h3>The rest of the course</h3>
+    ${upcoming.length > 1 ? `<div class="card" data-tone="slate"><h3>The rest of the course</h3>
       <p class="days">${upcoming.slice(1, 9).map(d => { const t0 = dayStart(d) || startT; return `<span><b>${esc(shortDay(d))}</b> · ${esc(window.hubClock ? hubClock(t0) : t0)}</span>`; }).join('')}${upcoming.length > 9 ? '<span>and ' + (upcoming.length - 9) + ' more to ' + esc(shortDay(upcoming[upcoming.length-1])) + '</span>' : ''}</p></div>` : ''}
     <div class="install-hint" id="installHint" hidden></div>
     <!-- Telling the center you cannot come. Lite sends no mail of its own and
