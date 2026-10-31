@@ -823,6 +823,7 @@ function stamp(){
     r.stamped = true; try { localStorage.setItem(CONSENT_KEY, JSON.stringify(r)); } catch (e) {}
   }).catch(() => {});
 }
+let CTRAP = null;
 function consent(readOnly){
   const host = $('consent'); if (!host) return;
   const L = LANG(), W = T();
@@ -838,9 +839,12 @@ function consent(readOnly){
          <p class="kept">${esc(W.keptNote)}</p>`}
   </div></div>`;
   document.body.style.overflow = 'hidden';
+  /* R7 (1 Nov 2026): the note holds the keyboard while it is open; reading it again closes on Escape */
+  if (CTRAP) CTRAP();
+  CTRAP = window.hubTrapFocus ? hubTrapFocus(host.querySelector('.consent'), { focus: readOnly ? '#cClose' : '#cAgree', backSel: '#readAgain', onClose: readOnly ? () => done() : null }) : null;
   /* The note leaves on a short fade rather than vanishing (the one hard cut
      left in the v10 frame scan, 1 Oct 2026). */
-  const done = () => { const c = host.querySelector('.consent'); if (c && window.hubFadeAway) hubFadeAway(c, () => { host.innerHTML = ''; }); else host.innerHTML = ''; document.body.style.overflow = ''; };
+  const done = () => { if (CTRAP) { CTRAP(); CTRAP = null; } const c = host.querySelector('.consent'); if (c && window.hubFadeAway) hubFadeAway(c, () => { host.innerHTML = ''; }); else host.innerHTML = ''; document.body.style.overflow = ''; };
   host.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => { I18N.remember(b.dataset.lang); consent(readOnly); render(); }));
   if ($('cClose')) $('cClose').addEventListener('click', done);
   if ($('cAgree')) { $('cAgree').focus(); $('cAgree').addEventListener('click', () => {

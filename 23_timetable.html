@@ -2979,7 +2979,11 @@ function asDrawer(el, title){
   el.insertAdjacentHTML('afterbegin', `<div class="dhd"><b>${esc(title)}</b><button type="button" class="x" data-closepop aria-label="Close">×</button></div>`);
   el.querySelector('[data-closepop]').addEventListener('click', () => closePop());
   shade(true);
+  /* R7 (1 Nov 2026): focus goes into the panel and stays there until it closes, then back to the tile */
+  const t = document.activeElement, id = t && t.closest && t.closest('[data-id]');
+  if (window.hubTrapFocus) TRAP = hubTrapFocus(el, { onClose: closePop, keep: '.ttshade', backSel: id ? '.tile[data-date="' + CSS.escape(id.dataset.date || '') + '"][data-id="' + CSS.escape(id.dataset.id) + '"]' : '' });
 }
+let TRAP = null;
 /* A session, read: what it is, when (in the reader's own time too), who teaches it, what to prepare, and where it is. */
 function openDetails(date, id){
   closePop();
@@ -3441,6 +3445,7 @@ function pop(cls){
 }
 let OPEN_TILE = null;   // the tile the editor is open on, and what it was, for the change it records
 function closePop(){
+  if (TRAP) { const r = TRAP; TRAP = null; r(); }   // focus goes back once the board has redrawn
   if (OPEN_TILE) {
     const o = OPEN_TILE; OPEN_TILE = null;
     const day = dayOfDate(o.date), x = day && (day.sessions || []).find(s => s.id === o.id);

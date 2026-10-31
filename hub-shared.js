@@ -2470,3 +2470,44 @@ window.hubHeadHTML = function (text, heads) {
     e.preventDefault(); window.history.back();
   }, true);
 })();
+
+/* A MODAL HOLDS THE KEYBOARD (1 Nov 2026, the role-by-role review's R7: opening a timetable session left focus on the
+   tile behind it, and Shift+Tab walked out of the volunteer's information note while it stayed open). hubTrapFocus moves
+   focus into the dialog, keeps Tab and Shift+Tab inside it, makes the rest of the page inert while it is open, closes on
+   Escape when it can be closed, and gives focus back to whatever opened it. It returns the function that lets go. */
+window.hubTrapFocus = function(dlg, opts){
+  opts = opts || {};
+  var back = document.activeElement, backSel = opts.backSel || '';
+  var FOC = 'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  var items = function(){ return Array.prototype.filter.call(dlg.querySelectorAll(FOC), function(e){ return e.offsetWidth || e.offsetHeight || e.getClientRects().length; }); };
+  var top = dlg; while (top.parentElement && top.parentElement !== document.body) top = top.parentElement;
+  var muted = Array.prototype.filter.call(document.body.children, function(e){
+    return e !== top && !e.inert && !e.hidden && e.tagName !== 'SCRIPT' && !(opts.keep && e.matches(opts.keep));
+  });
+  muted.forEach(function(e){ e.inert = true; });
+  var first = (opts.focus && dlg.querySelector(opts.focus)) || items()[0];
+  if (!first) { dlg.tabIndex = -1; first = dlg; }
+  try { first.focus({ preventScroll: true }); } catch (e) { first.focus(); }
+  function key(e){
+    if (e.key === 'Escape' && opts.onClose) { e.preventDefault(); opts.onClose(); return; }
+    if (e.key !== 'Tab') return;
+    var f = items(); if (!f.length) { e.preventDefault(); return; }
+    var a = f[0], z = f[f.length - 1];
+    if (!dlg.contains(document.activeElement)) { e.preventDefault(); a.focus(); }
+    else if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+    else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+  }
+  document.addEventListener('keydown', key, true);
+  var done = false;
+  return function(){
+    if (done) return; done = true;
+    document.removeEventListener('keydown', key, true);
+    muted.forEach(function(e){ e.inert = false; });
+    /* a page that redraws as the dialog closes gets a moment first; if another dialog has opened by then, it keeps focus */
+    setTimeout(function(){
+      var a = document.activeElement; if (a && a !== document.body && a.closest && !dlg.contains(a) && a.closest('[aria-modal="true"]:not([hidden])')) return;
+      var to = back && back.isConnected ? back : (backSel ? document.querySelector(backSel) : null);
+      if (to && to.focus) try { to.focus({ preventScroll: true }); } catch (e) { to.focus(); }
+    }, 0);
+  };
+};
