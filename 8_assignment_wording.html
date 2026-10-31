@@ -485,10 +485,29 @@ const andList = xs => xs.length <= 1 ? (xs[0] || '') : xs.slice(0, -1).join(', '
 
 /* SAVE writes the whole wording for the course, as it always has; hub-sync
    carries it to the store. Each assignment that changed takes the time. */
+/* EVERY VERSION OF A BRIEF IS KEPT (the specification's R30). Each attempt records the key of the brief it answered;
+   the course keeps each version by that key (course kind briefs), so a tutor can open the exact brief behind an
+   attempt even after it has changed. Saved when the briefs are saved, and once when the page opens, so the version
+   in force today is kept before anyone edits it. On a demo the store saves nothing. */
+function keepBriefVersions(){
+  if (!window.HubStore || !HubStore.isTutor || !HubStore.isTutor() || !window.hubBriefKey || !DATA) return;
+  HubStore.course().then(c => {
+    const B = (c && c.briefs && typeof c.briefs === 'object') ? JSON.parse(JSON.stringify(c.briefs)) : {};
+    let changed = false;
+    Object.keys(DATA).forEach(k => {
+      const b = DATA[k]; if (!b || typeof b !== 'object' || !b.sections) return;
+      const h = hubBriefKey(b); B[k] = B[k] || {};
+      if (!B[k][h]) { B[k][h] = { at: b.savedAt || new Date().toISOString(), brief: hubBriefCore(b) }; changed = true; }
+    });
+    if (changed) HubStore.call({ op: 'putCourse', kind: 'briefs', data: B }).catch(() => {});
+  }).catch(() => {});
+}
+setTimeout(keepBriefVersions, 1500);
 function persist(){
   const unsaved = allUnsaved(), now = new Date().toISOString();
   Object.keys(unsaved).forEach(k => { DATA[k].savedAt = now; });
   localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
+  setTimeout(keepBriefVersions, 1500);
   refreshMarks();
   const w = $('saveWhat'); if (w) { w.textContent = 'Saved for this course'; }
 }

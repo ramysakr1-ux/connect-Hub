@@ -836,6 +836,16 @@ window.hubWordingFilled = function(w){
 // plagiarism finding. Ramy, 20 Sep 2026: "I don't want assignment five to be
 // visible... can we have it out of the way somehow?" Nothing lists it until
 // then; a submission of it already on file counts as set.
+/* THE BRIEF'S FINGERPRINT (the specification's R30: "attach the governing assignment brief version to every attempt").
+   What the trainee answers is the brief's title, length, format, criteria and sections; the dates, the release and the
+   time it was saved are not the brief. The same brief always gives the same short key, so an attempt can say which
+   version it answered, and the course keeps each version by its key (course kind briefs). */
+window.hubBriefCore = function(b){ b = b || {}; return { title: b.title || '', wordMin: b.wordMin || '', wordMax: b.wordMax || '', format: b.format || '', criteria: b.criteria || [], sections: b.sections || [] }; };
+window.hubBriefKey = function(b){
+  var s = JSON.stringify(window.hubBriefCore(b)), h = 5381;
+  for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return ('0000000' + h.toString(16)).slice(-8);
+};
 window.a5InPlay = function(subs){
   var s = subs && subs.a5;
   return !!(s && (s.assigned || (s.stage && s.stage !== 'draft')));

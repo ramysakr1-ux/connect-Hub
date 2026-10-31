@@ -682,6 +682,11 @@
     .tvlens{grid-template-columns:repeat(3, minmax(0,1fr));} .steps{grid-template-columns:1fr;} .tv .tvh h2{font-size:1.55rem;} }
   @media (max-width:720px){ .cb .cbrow{grid-template-columns:1fr; gap:10px;} .cb .cbact{justify-content:flex-start;} .cb .cblen{grid-template-columns:1fr;} .cb .cblens{grid-template-columns:repeat(3, minmax(0,1fr));}
     .studio{grid-template-columns:1fr;} .st-set{padding:18px 16px;} .st-set .stfacts{grid-template-columns:1fr;} .st-set .sthead{grid-template-columns:1fr;} .st-set .sthead .cbtag{justify-self:start;} .st-set .tiles{grid-template-columns:repeat(3, minmax(0,1fr));} }
+  /* the practice map: printed only (R22) */
+  #mapPrint{display:none;}
+  @media print{ body.print-map > *:not(#mapPrint){display:none !important;} body.print-map #mapPrint{display:block !important; font:10pt/1.4 'Karla',sans-serif; color:var(--ink);}
+    #mapPrint h1{font:600 16pt 'Newsreader',Georgia,serif; margin:0 0 4px;} #mapPrint h2{font:600 12pt 'Newsreader',Georgia,serif; margin:14px 0 6px; break-after:avoid;}
+    #mapPrint table{width:100%; border-collapse:collapse; break-inside:avoid;} #mapPrint th, #mapPrint td{border:1px solid var(--grey); padding:4px 6px; text-align:left; vertical-align:top;} #mapPrint small{color:var(--grey);} }
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202611010018">
 <style>
@@ -895,6 +900,31 @@ function whenPagesReady(btn, then){
   tick();
 }
 function printTP(btn){ whenPagesReady(btn, () => window.print()); }
+/* THE PRACTICE MAP, ON PAPER (the specification's R22: "keep one next TP by default and offer a print or tutor map on
+   demand"). A trainee's page shows the next TP only; a tutor can print the whole rotation: a table per group, a row per
+   trainee, a column per TP, each cell the lesson type and the day. Nothing on the page changes; it only prints. */
+function printMap(){
+  const roster = (rec('connect_roster_v1') || {}).trainees || {}, tt = rec('connect_timetable_v1') || {};
+  const groups = Object.keys((P && P.groups) || {}).sort();
+  const day = (tp, si) => { const d = (tt.days || []).find(x => x && Number(x.tp) === tp && Number(x.setIndex || 0) === si); return d ? new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : ''; };
+  const esc2 = t => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const html = groups.map(g => {
+    const rows = P.groups[g] || {}, sets = ((P.sets || {})[g] || []).filter(x => Array.isArray(x));
+    const tokens = sets.length ? sets.reduce((a, b) => a.concat(b), []).filter(Boolean) : Object.keys(rows);
+    const si = t => Math.max(0, sets.findIndex(x => x.indexOf(t) >= 0));
+    return '<h2>Group ' + esc2(g) + '</h2><table><tr><th>Trainee</th>' + Array.from({ length: TPS }, (_, i) => '<th>TP ' + (i + 1) + '</th>').join('') + '</tr>'
+      + tokens.map(t => '<tr><td><b>' + esc2((roster[t] || {}).name || '') + '</b></td>' + Array.from({ length: TPS }, (_, i) => { const c = (rows[t] || {})['tp' + (i + 1)] || {}; return '<td>' + esc2(c.aim || '') + (c.aim ? '<br><small>' + esc2(day(i + 1, si(t))) + '</small>' : '') + '</td>'; }).join('') + '</tr>').join('')
+      + '</table>';
+  }).join('');
+  let box = document.getElementById('mapPrint');
+  if (!box) { box = document.createElement('section'); box.id = 'mapPrint'; document.body.appendChild(box); }
+  box.innerHTML = '<h1>' + esc2(SETTINGS.courseName || 'The course') + ': the practice map</h1><p>TP 1 to ' + TPS + '. The last two TPs are the trainees\u2019 own, on the planning grid.</p>' + (html || '<p>No TP points have been dealt yet.</p>');
+  document.body.classList.add('print-map');
+  const off = () => document.body.classList.remove('print-map');
+  window.addEventListener('afterprint', off, { once: true });
+  setTimeout(() => { window.print(); setTimeout(off, 1500); }, 60);
+}
+window.printMap = printMap;
 window.printTP = printTP;
 function printPages(btn){
   whenPagesReady(btn, () => {
@@ -1953,7 +1983,7 @@ function renderCore(){
     '<p class="lede">Choose the TP point set each group uses, then deal each trainee their lessons. The order stays balanced; your changes stay yours.</p>'}`;
   const gtky = IS_TRAINEE ? '' : '<a class="gtkydoor" href="31_getting_to_know_you.html?view=bank"><span class="gk-k">The first afternoon</span><b>Getting to know you: the activities</b><span class="gk-l">Connect’s bank of short first-lesson activities, three for each level. Each trainee picks one before day one.</span><span class="gk-go">Open the activities</span></a>';
   const gridLede = (IS_TRAINEE || VIEW_AS) ? '' :
-    `<p class="lede gridlede">The lesson type for each trainee, TP 1 to ${TPS}. It deals so nobody in a teaching set teaches the same type on the same day and nobody meets a type twice within a level. Change any cell; the check below reads what is on the page, not what was generated. The last two TPs are the trainees\u2019 own on the planning grid.</p>`;
+    `<p class="gridlede" style="margin:0 0 6px;"><button type="button" class="btn quiet" onclick="printMap()">Print the practice map</button></p><p class="lede gridlede">The lesson type for each trainee, TP 1 to ${TPS}. It deals so nobody in a teaching set teaches the same type on the same day and nobody meets a type twice within a level. Change any cell; the check below reads what is on the page, not what was generated. The last two TPs are the trainees\u2019 own on the planning grid.</p>`;
 
   if (IS_TRAINEE || VIEW_AS) {
     /* A TUTOR'S VIEW OF THE TRAINEE'S PAGE (Ramy, 21 Oct 2026). The same page,

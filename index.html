@@ -115,6 +115,10 @@
     border-radius:50%; background:var(--gold-lifted);}
   .hero .todo a{color:inherit; font-weight:700; text-decoration:underline; text-underline-offset:3px;}
   /* color on the cover (Ramy, 25 Oct 2026): red for a warning or a Fail, amber for a letter already signed; readable on the forest */
+  /* R06: the main step stands out; the fold is quiet */
+  .hero .todo li.todo-more{padding-left:0;} .hero .todo li.todo-more:before{display:none;}
+  .hero .todo li.todo-more summary{cursor:pointer; list-style:none; font-size:.84rem; font-weight:700; opacity:.8; text-decoration:underline; text-underline-offset:3px;} .hero .todo li.todo-more summary::-webkit-details-marker{display:none;}
+  .hero .todo li.todo-more ul{list-style:none; margin:8px 0 0; padding:0; display:grid; gap:6px;}
   .hero .todo li.red:before{background:var(--a-red-ink);} .hero .todo li.red a{color:var(--a-red-ink);}
   .hero .todo li.amber:before{background:var(--a-gold-ink);} .hero .todo li.amber a{color:var(--a-gold-ink);}
   .hero.quiet .todo li.red a{color:var(--a-red);} .hero.quiet .todo li.amber a{color:var(--a-mustard);}
@@ -1658,6 +1662,21 @@ if (fbBack){
   w.innerHTML = when;
   ul.innerHTML = list.map(it => '<li' + (it.tone ? ' class="' + it.tone + '"' : '') + '><a href="' + esc2(it.href) + '"' + (it.sign ? ' class="sign"' : it.locked ? ' class="locked"' : '')
     + (it.out ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc2(it.text) + '</a></li>').join('');
+  /* ONE MAIN STEP, TWO QUIET ONES (the specification's R06: "keep one primary action and two quiet secondary
+     actions"). The main step is the card itself, its title and its button; under it, two lines, what must be signed
+     or put right first, and the rest folded under And N more, one tap away. Nothing is dropped. */
+  const ranked = () => {
+    const fold = ul.querySelector('li.todo-more'); if (fold) { fold.querySelectorAll(':scope > ul > li').forEach(li => ul.appendChild(li)); fold.remove(); }
+    const items = [...ul.querySelectorAll(':scope > li')];
+    items.sort((a, b) => (b.classList.contains('red') ? 1 : 0) - (a.classList.contains('red') ? 1 : 0)).forEach(li => ul.appendChild(li));
+    const rest = [...ul.querySelectorAll(':scope > li')].slice(2);
+    if (rest.length) {
+      const more = document.createElement('li'); more.className = 'todo-more';
+      more.innerHTML = '<details><summary>And ' + rest.length + ' more</summary><ul></ul></details>';
+      rest.forEach(li => more.querySelector('ul').appendChild(li)); ul.appendChild(more);
+    }
+  };
+  ranked(); window.__heroRank = ranked;
   /* YOUR PLACE ON A TUTORIAL OR CONSULTATION SHEET (Ramy, 31 Oct 2026: "add it to the home"). Booked on the timetable;
      on the day and the day before, the home says when and with whom, at the top of the list. The bookings arrive a
      moment after the page, so the line is put in when they do. */
@@ -1685,6 +1704,7 @@ if (fbBack){
       });
       if (!lines.length || !ul) return;
       ul.insertAdjacentHTML('afterbegin', lines.map(it => '<li' + (it.tone ? ' class="' + it.tone + '"' : '') + '><a href="' + esc2(it.href) + '">' + esc2(it.text) + '</a></li>').join(''));
+      if (window.__heroRank) window.__heroRank();
     }).catch(() => {});
   })();
   if (window.NEEDS_SIGN && !ASK_NAME) door = { href: '29_candidate_agreement.html?first=1' };

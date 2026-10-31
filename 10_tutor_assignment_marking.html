@@ -433,6 +433,27 @@ function wordDiff(x, y){
    never named), webCheck (six distinctive sentences through a Google search key),
    aiCheck (the pairs the first pass found, read for paraphrase). The store refuses the
    last two on a demo course, so nothing leaves Lite there. */
+/* WHICH BRIEF IT ANSWERED (the specification's R30: "a tutor can open the precise brief version that governed an
+   attempt"). Each attempt carries the key of the brief it answered (brief1, brief2); the course keeps each version by
+   key (briefs). Said for each attempt: the brief as it is now, an earlier version that opens here, or a submission made
+   before Lite kept versions. */
+function briefLine(a, sub){
+  const box = document.getElementById('briefLine'); if (!box || !window.hubBriefKey) return;
+  const now = hubBriefKey(a), when = iso => { try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return ''; } };
+  const show = b => '<div class="mk-briefcopy"><h3>' + esc(b.title || '') + '</h3>' + (b.wordMin || b.wordMax ? '<p class="note">' + esc((b.wordMin || '') + (b.wordMax ? '\u2013' + b.wordMax : '') + ' words') + '</p>' : '')
+    + (b.sections || []).map(x => '<h4>' + esc(x.label || '') + '</h4><p>' + nl2br(esc(x.body || x.text || '')) + '</p>').join('')
+    + ((b.criteria || []).length ? '<h4>Criteria</h4><ul>' + b.criteria.map(c => '<li>' + esc(c.text || c) + '</li>').join('') + '</ul>' : '') + '</div>';
+  const one = (label, rec, B) => {
+    if (!rec || !rec.h) return '<p>' + label + ': submitted before Lite kept brief versions, so the brief shown is the current one.</p>';
+    if (rec.h === now) return '<p>' + label + ': answered the brief as it is now.</p>';
+    const v = (B || {})[rec.h];
+    return '<p>' + label + ': answered an earlier version of the brief' + (v && v.at ? ', saved ' + esc(when(v.at)) : '') + '.</p>'
+      + (v && v.brief ? '<details><summary>Open that version</summary>' + show(v.brief) + '</details>' : '<p class="note">That version was not kept.</p>');
+  };
+  const paint = B => { box.innerHTML = '<h2>The brief</h2>' + one('First submission', sub.brief1, B) + (sub.sub2 ? one('Resubmission', sub.brief2, B) : ''); };
+  paint(null);
+  if (window.HubStore && HubStore.course) HubStore.course().then(c => paint(((c && c.briefs) || {})[CURRENT] || {})).catch(() => {});
+}
 function checkCard(sub){
   const round = sub.sub2 ? 'sub2' : 'sub1';
   return `<div class="card mk-check" id="checkCard"><h2>Is it their own work?</h2>
@@ -651,6 +672,7 @@ function render(){
   } else {
     if (sub.sub2) left += compareRounds(a, sub);
     else left += `<div class="card mk-round"><h2>First submission</h2>${summarize(a, sub.sub1, 'sub1')}</div>`;
+    left += '<div class="card mk-brief" id="briefLine"><p class="note" style="margin:0;">Checking which brief this answered\u2026</p></div>';
     left += checkCard(sub);
     if (sub.feedback && sub.feedback.outcome) {
       right += `${sub.stage === 'closed' ? '<div class="card"><h2>Marked and returned</h2><p class="mk-how" style="margin:0;">This assignment is finished. The work and your feedback are kept here as the record; there is nothing to do.</p></div>' : ''}<div class="card"><h2>Your feedback</h2><div class="readonly">${esc(sub.feedback.outcome)}${sub.feedback.generalComment1?('\n\n'+nl2br(sub.feedback.generalComment1)):''}${sub.feedback.generalComment2?('\n\n'+nl2br(sub.feedback.generalComment2)):''}</div></div>`;
@@ -769,6 +791,7 @@ function render(){
   }
   if (CX) html += hubConnectFooter();
   $('app').innerHTML = html;
+  if (sub && sub.stage !== 'draft') briefLine(a, sub);
   if (window.hubMarking) hubMarking.afterRender({ key: CURRENT, trainee: TRAINEE_ID, a, sub, round: sub.stage === 'resubmitted' ? 'sub2' : 'sub1', marking: sub.stage === 'submitted' || sub.stage === 'resubmitted', guide: window.hubGuidance ? hubGuidance(CURRENT) : null, save: saveSubs, rerender: render,
     setNote: (i, v) => { const r = sub.stage === 'resubmitted' ? 'sub2' : 'sub1'; sub.criteriaComments[r] = sub.criteriaComments[r] || []; sub.criteriaComments[r][i] = v; saveSubs(); },
     setMark: (i, v) => { const r = sub.stage === 'resubmitted' ? 'sub2' : 'sub1'; sub.criteriaMarks[r][i] = v; saveSubs(); render(); },
