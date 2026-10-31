@@ -1745,8 +1745,12 @@ window.hubLockup = function(size){
     var b = document.createElement('button'); b.type = 'button'; b.className = 'hub-signout hub-signout-float'; b.textContent = 'Sign out';
     b.addEventListener('click', window.hubSignOut); document.body.appendChild(b);
   }
+  /* A link-only visitor has nothing to sign out of (Ramy, 31 Oct 2026: "why does the assessor's page read sign
+     out? If it's only a link ... the assessor and the volunteer students should not be able to sign in and sign
+     out"). Trainees and tutors keep it. */
+  function linkOnly(){ var S = window.HubStore; return !!(S && ((S.isAssessor && S.isAssessor()) || (S.isVolunteer && S.isVolunteer()))); }
   function mount(){
-    if (!signedIn()) return;
+    if (!signedIn() || linkOnly()) return;
     mountFloat();
     document.querySelectorAll('.chrome .role').forEach(function(role){
       if (role.dataset.signout === 'off' || role.parentNode.querySelector('.hub-signout')) return;
@@ -1765,6 +1769,43 @@ window.hubLockup = function(size){
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+})();
+
+/* THE ASSESSOR READS, NOTHING MORE (Ramy, 31 Oct 2026: "make sure that the assessor when they take a tour of Lite
+   that it's also view only, read only? Including when they go to the TP points"). The store already refuses an
+   assessor's writes; this makes every page say so before anyone tries: on an assessor's link each field is read
+   only (a checkbox, radio or choice cannot be changed), nothing is editable in place, and a button that saves,
+   adds, releases, signs or takes back is not shown. What only changes the view stays: a select labelled Show or
+   marked data-view, Print, Open, Show, Reveal, the films and the sounds. Pages draw late, so it looks again as
+   they do. */
+(function(){
+  /* hub-shared loads before hub-store on some pages, so who is looking is asked once the page is in */
+  var WRITE = /\b(save|add|delete|remove|edit|share|stop sharing|release|upload|post|issue|withdraw|submit|send|sign|book|cancel my place|clear|reset|move|put back|publish|take it back|give it back|rename|swap|create|start again|copy|import|record|tick|mark as|answered|to mark|connect with)\b/i;
+  var VIEW = /\b(print|open|show|hide|reveal|play|listen|watch|next|previous|close|full screen|days across|days down|by week|by topic|more|less|turn)\b/i;
+  function viewOnly(el){ return el.hasAttribute('data-view') || /^(show|filter|view|see)\b/i.test(el.getAttribute('aria-label') || ''); }
+  function lock(root){
+    (root || document).querySelectorAll('input, textarea, select').forEach(function(el){
+      if (el.dataset.roDone || el.type === 'hidden' || el.type === 'search' || viewOnly(el)) return;
+      el.dataset.roDone = '1';
+      if (el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'radio' || el.type === 'file' || el.type === 'range' || el.type === 'color') el.disabled = true;
+      else el.readOnly = true;
+      el.classList.add('hub-ro');
+    });
+    (root || document).querySelectorAll('[contenteditable]').forEach(function(el){ if (el.getAttribute('contenteditable') !== 'false') { el.setAttribute('contenteditable', 'false'); el.classList.add('hub-ro'); } });
+    (root || document).querySelectorAll('button, a.btn, [role=button]').forEach(function(el){
+      var t = (el.innerText || el.getAttribute('aria-label') || el.title || '').replace(/\s+/g, ' ').trim();
+      if (t && WRITE.test(t) && !VIEW.test(t)) el.classList.add('hub-ro-hide');
+    });
+  }
+  function go(){
+    var S = window.HubStore;
+    if (!S || !S.isAssessor || !S.isAssessor()) return;
+    var st = document.createElement('style');
+    st.textContent = '.hub-ro-hide{display:none !important;} textarea.hub-ro, input.hub-ro{background:transparent !important; cursor:default;} .hub-ro:focus{outline:none !important;}';
+    document.head.appendChild(st);
+    lock(); try { new MutationObserver(function(){ lock(); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
 })();
 
 /* THE MARKING GUIDANCE (17 Oct 2026). Ramy: "do we have like a marking
