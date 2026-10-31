@@ -124,6 +124,7 @@
   .side li .st{font:700 .66rem 'Karla',sans-serif; letter-spacing:.08em; text-transform:uppercase; padding:3px 8px; border-radius:6px; background:var(--box); color:var(--grey);}
   .side li.now .st{background:var(--a-forest, var(--teal)); color:#fff;}
   .side li.done{opacity:.62;}
+  .side li .none{grid-column:1 / -1;}
   @media(max-width:640px){ .next{grid-template-columns:1fr !important;} .side li{grid-template-columns:52px 1fr;} .side li .st{grid-column:2; justify-self:start;} }
   /* THE NOTEBOOK (21 Oct 2026): the shelf's cards are white surfaces with the
      soft shadow, no edges; today's session is the forest card. */
@@ -262,8 +263,8 @@
   </section>
 
   <section class="libcard" id="myCard" hidden>
-    <h2 class="cardhead">Your input sessions</h2>
-    <p class="cardlede">The sessions on your timetable. This week&rsquo;s are here before their day and open on it; each stays open once it has been given.</p>
+    <h2 class="cardhead" id="myHead">Your input sessions</h2>
+    <p class="cardlede" id="myLede">The sessions on your timetable. This week&rsquo;s are here before their day and open on it; each stays open once it has been given.</p>
     <div class="cards" id="myCards"></div>
   </section>
 
@@ -435,11 +436,14 @@
       if (isPage(x)) { if (given[x.slug] || aheadSeen[x.slug]) return false; aheadSeen[x.slug] = 1; }
       return true;
     });
-    var earlierSeen = {}, earlier = all.filter(function(x){ return x.date < now && (isPage(x) || x.date >= wk.mon); }).reverse()
+    /* Earlier WEEKS only: this week's given sessions are in This week above, and the page listed them twice (Ramy,
+       31 Oct 2026, the mid-course demo: "something is wrong ... like one long wide sheet"). */
+    var earlierSeen = {}, earlier = all.filter(function(x){ return x.date < wk.mon && isPage(x); }).reverse()
       .filter(function(x){ if (!isPage(x)) return true; if (earlierSeen[x.slug] || todays.some(function(t){ return t.slug === x.slug; })) return false; earlierSeen[x.slug] = 1; return true; });
     var head = function(x){ return '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(nameOf(x)) + '</h3>'; };
     var openCard = function(x){
-      var pill = '<span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(x.date === now ? 'Today' : dayName(x.date)) + '</span>';
+      /* a given session's date is already in its heading; the pill is for news: today, or opened early */
+      var pill = x.date < now ? '' : '<span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(x.date === now ? 'Today' : dayName(x.date)) + '</span>';
       if (isPage(x)) return '<a class="s" href="' + esc(x.slug) + '/">' + head(x) + '<p class="m">' + pill + '</p></a>';
       var link = centreLinkFor(x, cs, tt);
       return link
@@ -448,7 +452,9 @@
     };
     var lockedCard = function(x){ return '<div class="s locked" aria-disabled="true">' + head(x) + '<p class="m"><span class="pill">Opens ' + esc(dayName(L.opensOn(x.date, cs), true).split(' ')[0]) + '</span></p></div>'; };
     var html = todays.map(openCard).join('') + early.map(openCard).join('') + ahead.map(lockedCard).join('') + earlier.map(openCard).join('');
-    $('myCards').innerHTML = html || '<p class="cardlede">No input sessions have been given on your course yet.</p>';
+    $('myCards').innerHTML = html || '<p class="cardlede">' + (all.some(function(x){ return x.date >= wk.mon && x.date < now; }) ? 'Sessions from earlier weeks will be here.' : 'No input sessions have been given on your course yet.') + '</p>';
+    $('myHead').textContent = 'Earlier weeks';
+    $('myLede').textContent = 'Every session given before this week, open whenever you need it.';
     var last = all.filter(function(x){ return isPage(x) && x.date <= now; }).pop();
     var next = all.filter(function(x){ return x.date > now; })[0] || null;
     if (last) setStrip(true, (last.date === now ? 'Today' : 'Last session') + ' · ' + dayName(last.date, true) + (last.s ? ' · ' + clockOf(last.s, cs) : ''),
@@ -458,12 +464,17 @@
     else { setStrip(false); return; }
     var week = all.filter(function(x){ return x.date >= wk.mon && x.date <= wk.sun; });
     $('weekHead').textContent = 'This week';
+    /* One row each: the day, the session, where it stands, in the three columns the strip is laid out in. The rows
+       had two spans, so the title fell into the narrow day column and broke a word to a line (31 Oct 2026). A
+       session already given is open, so it reads as a link and Given, not dimmed as if it were locked. */
+    var toCome = false;
     $('weekList').innerHTML = week.length ? week.map(function(x){
-      var open = isPage(x) && given[x.slug];
-      var cls = x.date < now ? 'done' : x.date === now ? 'now' : '';
+      var open = isPage(x) && (given[x.slug] || L.isOpen(x, cs));
+      var st = x.date === now ? 'Today' : x.date < now ? 'Given' : open ? 'Open' : 'Opens ' + dayName(L.opensOn(x.date, cs)).split(' ')[0];
+      if (x.date > now && !open) toCome = true;
       var name = open ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a>' : esc(nameOf(x));
-      return '<li class="' + cls + '"><span>' + name + '</span><span>' + esc(dayName(x.date)) + '</span></li>';
-    }).join('') + '<li><span class="none">Each session opens here ' + esc(L.whenText(cs)) + '.</span></li>'
+      return '<li class="' + (x.date === now ? 'now' : '') + '"><span class="d">' + esc(dayName(x.date)) + '</span><span>' + name + '</span><span class="st">' + esc(st) + '</span></li>';
+    }).join('') + (toCome ? '<li><span class="none">Each session opens here ' + esc(L.whenText(cs)) + '.</span></li>' : '')
       : '<li><span class="none">No input sessions this week.</span></li>';
   }
   function run(tt, cs, who){
