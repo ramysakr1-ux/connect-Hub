@@ -230,7 +230,13 @@ window.HubTracker = (function(){
       ? 'TP' + backToBack[0] + ' and TP' + backToBack[1] + ' not to standard back to back — worth a look (the center\'s own signal, not a Cambridge rule)'
       : null;
     var letterIssued = !!(c.failLetter && String(c.failLetter).trim());
-    var letterDue = potentialFail && !letterIssued;
+    /* AN ASSIGNMENT FAILED FOR GOOD (Ramy, 31 Oct 2026: "If they resubmit and fail, LSRT, for example, and there
+       are 3 more assignments coming, yes, of course they get a warning letter"). An assignment awaiting its
+       resubmission asks for nothing (9.2.3 guarantees the resubmission); one recorded as a Fail, after the
+       resubmission or an upheld malpractice case, does: under 11.6 one more and the course cannot be passed. */
+    var writtenRisk = fails.length === 1;
+    if (writtenRisk) failWhy.push(fails[0] + ' recorded as a Fail — one more failed assignment and the course cannot be passed (11.6); the trainee should be warned in writing');
+    var letterDue = (potentialFail || writtenRisk) && !letterIssued;
     /* How much teaching practice is left, which is what makes a Fail letter
        urgent rather than merely due. Was 8 - graded: on a six-TP course with
        all six taught it answered "2 lessons left to teach — the window is
