@@ -315,7 +315,7 @@
     padding:10px 12px; border:1.5px solid var(--sand-line); border-radius:6px; background:var(--box);
     color:var(--ink); width:100%;}
   textarea{resize:vertical;}
-  input.locked{background:var(--sand-deep); color:var(--grey); cursor:default;}
+  input.locked, body .fields input.locked{background:var(--sand-deep); color:var(--grey); cursor:default;}
   .locked-hint{display:block; font-size:0.74rem; color:var(--grey); margin-top:4px;}
   input:focus, textarea:focus{outline:none; border-color:var(--teal);}
   .note{margin:12px 0 0; font-size:0.8rem; color:var(--grey); line-height:1.5;}
@@ -760,6 +760,7 @@
       <div>
         <label for="courseStart">Starts</label>
         <input type="date" id="courseStart">
+        <p class="hintline" id="startLockHint" hidden>Fixed once the timetable is built. The end date can still move.</p>
       </div>
       <div>
         <label for="courseEnd">Ends</label>
@@ -1495,11 +1496,15 @@ function paintDateWarn(){
   const el = document.getElementById('dateWarn'); if (!el) return;
   let tt = null; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {}
   const days = ((tt && tt.days) || []).filter(d => d && d.date).map(d => d.date).sort();
-  const s = (document.getElementById('courseStart') || {}).value || '', e = (document.getElementById('courseEnd') || {}).value || '';
-  if (!days.length || !s || !e || (days[0] === s && days[days.length - 1] === e)) { el.hidden = true; el.innerHTML = ''; return; }
+  /* THE START DOES NOT MOVE (Ramy, 31 Oct 2026: "they cannot change the start ... the end of the date, yes").
+     Once the timetable is built, Starts is read-only; only the end can drift from it. */
+  const st = document.getElementById('courseStart');
+  if (st && days.length) { st.disabled = true; st.classList.add('locked'); if (st._fp) { st._fp.close(); if (st._fp.altInput) { st._fp.altInput.disabled = true; st._fp.altInput.classList.add('locked'); } } const h = document.getElementById('startLockHint'); if (h) h.hidden = false; }
+  const e = (document.getElementById('courseEnd') || {}).value || '';
+  if (!days.length || !e || days[days.length - 1] === e) { el.hidden = true; el.innerHTML = ''; return; }
   const dm = x => { const m = x.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : x; };
   el.hidden = false;
-  el.innerHTML = 'The timetable runs ' + dm(days[0]) + ' to ' + dm(days[days.length - 1]) + '. Changing the dates here does not move it: <a href="23_timetable.html">open the timetable</a> to move the days or build it again.';
+  el.innerHTML = 'The timetable ends on ' + dm(days[days.length - 1]) + '. Changing the end date here does not move it: <a href="23_timetable.html">open the timetable</a> to move the days.';
 }
 ['courseStart', 'courseEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', paintDateWarn); });
 setTimeout(paintDateWarn, 800);
