@@ -311,7 +311,7 @@ function doPost(e) {
    else counts as a change. The course's own day is part of the version, so a page whose content follows the
    date (a demo clock, released points) boots once the day turns. */
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '';
-var READ_OPS_ = { ping: 1, boot: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
+var READ_OPS_ = { ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
   ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1 };
 function verKey_(id) { return 'ver:' + id; }
@@ -360,6 +360,16 @@ function handle_(req) {
   /* THE ROOM'S DOOR (28 Oct 2026): the one op with no key, no token. A Connect demo's audience asks a question on a page of
      its own (ask.html?c=<course>&k=<code>); the code is the course's own and says nothing but "ask". See roomAsk_. */
   if (op === 'roomAsk') return roomAsk_(req);
+  /* THE CV PRESENT AS A THANK-YOU (v184, 31 Oct 2026; Ramy: "people who kind of maybe helped me out along the way ...
+     people with experience ... a DELTA, a master's degree"). A gift link (cv/?g=<code>) made by the owner opens
+     "Shape it for a job" for someone who was never a trainee: their own typed lines are the only facts. */
+  if (op === 'cvGift' || (op === 'shapeCv' && req.g)) {
+    var cgRaw = PropertiesService.getScriptProperties().getProperty('cvGift:' + String(req.g || '').replace(/[^a-z0-9]/gi, ''));
+    if (!cgRaw) throw new Error('This present link is not valid.');
+    var cg = JSON.parse(cgRaw);
+    if (op === 'cvGift') return { name: cg.name || '' };
+    return shapeCv_(req, 'shapeCv:g:' + String(req.g), 20, false);
+  }
 
   // Which course is this? The credential says so: a tutor key and an assessor
   // key each belong to one course, and a trainee's token is on one course's
@@ -475,6 +485,14 @@ function handle_(req) {
         return pool;
       });
       return { id: mpId, exp: mpExp };
+    }
+    case 'mintCvGift': {
+      requireOwner_(owner);
+      var mgName = String(req.name || '').trim().slice(0, 80);
+      if (!mgName) throw new Error('Who is it for?');
+      var mgCode = newKey_().slice(0, 16);
+      PropertiesService.getScriptProperties().setProperty('cvGift:' + mgCode, JSON.stringify({ name: mgName, at: new Date().toISOString() }));
+      return { code: mgCode, name: mgName };
     }
     case 'passInfo': {
       var pi = parsePass_(req.p);
@@ -2320,6 +2338,18 @@ case 'inbox': {
       pmProps.setProperty(pmKey, String(Date.now()));
       return { to: pmTo };
     }
+    /* SHAPE IT FOR A JOB (v184, 31 Oct 2026; Ramy, 30 Oct: "it's a good idea. We can do that."). On the CV present, a
+       trainee pastes a job post; this matches what the employer asks for to the trainee's own record (the TPs they
+       taught, the coursebooks, the tutors' strengths) and the lines they typed on the CV page, and suggests CV and
+       letter lines for that job. Every suggestion names its source; a line with no real source is dropped here, so
+       nothing is invented. What the record does not show is said plainly as a gap. No grade, no "passed", and the
+       CELTA report is the reference, never a tutor. Nothing is kept: the post and the lines go to OpenAI and back. */
+    case 'shapeCv': {
+      if (!me || tutor || assessor || vol) throw new Error('Only the trainee can shape their own CV');
+      /* a day's worth per trainee: a demo trainee is shared by every visitor, so it has a little more */
+      var scSet = courseRead_(course.id, 'settings') || {};
+      return shapeCv_(req, 'shapeCv:' + me.token, scSet.demoToday || scSet.demoAskName ? 40 : 20, true);
+    }
     case 'volunteerInvite': {
       requireTutor_(tutor);
       var viTok = String(req.v || '');
@@ -3805,6 +3835,76 @@ function requireOwner_(owner) { if (!owner) throw new Error('Not yours to open')
    the trainees sheet) and courseKey_() twice (a property read each). So
    listing N courses cost 2N+1 sheet reads and 2N property reads, and every
    course Ramy sold made the console slower for every course after it. */
+/* ---------- the CV present: shaping it for a job (v184) ---------- */
+function shapeCv_(req, capKey, scCap, fromCourse) {
+  var scKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+  if (!scKey) throw new Error('Shaping is not switched on yet');
+  var scPost = String(req.post || '').replace(/\s+\n/g, '\n').trim().slice(0, 8000);
+  if (scPost.length < 80) throw new Error('Paste the whole job post: what the school does and what it asks for.');
+  var scRec = req.record && typeof req.record === 'object' ? req.record : {};
+  var scMine = req.mine && typeof req.mine === 'object' ? req.mine : {};
+  var scProps = PropertiesService.getScriptProperties(), scDay = new Date().toISOString().slice(0, 10), scPk = capKey;
+  var scWas = String(scProps.getProperty(scPk) || '').split('|'), scN = scWas[0] === scDay ? Number(scWas[1] || 0) : 0;
+  if (scN >= scCap) throw new Error('That is enough shaping for today. Try again tomorrow.');
+  scProps.setProperty(scPk, scDay + '|' + (scN + 1));
+  /* the sources the model may cite: one id per fact, nothing else */
+  var scSrc = {}, scFacts = [];
+  var scAdd = function (id, label, text) { text = String(text || '').trim().slice(0, 400); if (!text) return; scSrc[id] = label; scFacts.push(id + ' [' + label + '] ' + text); };
+  var scC = scRec.course || {};
+  scAdd('course', 'The course', [scC.name, scC.centre, scC.start && scC.end ? scC.start + ' to ' + scC.end : '', scC.mode === 'online' ? 'online' : scC.mode === 'mixed' ? 'in person and online' : 'in person', scC.hours ? scC.hours + ' hours' : ''].filter(Boolean).join(' · '));
+  (Array.isArray(scRec.tps) ? scRec.tps : []).slice(0, 12).forEach(function (t) {
+    if (!t || !t.n) return;
+    scAdd('tp' + Number(t.n), 'TP ' + Number(t.n), [t.level && 'level ' + t.level, t.minutes && t.minutes + ' minutes', t.students && t.students + ' students', t.aim && 'main aim: ' + t.aim, t.sub && 'subsidiary aim: ' + t.sub, t.type && 'lesson type: ' + t.type, t.book && 'coursebook: ' + t.book].filter(Boolean).join(' · '));
+  });
+  (Array.isArray(scRec.strengths) ? scRec.strengths : []).slice(0, 60).forEach(function (x) {
+    if (!x || !x.id || !/^s\d+-\d+$/.test(String(x.id))) return;
+    scAdd(String(x.id), 'TP ' + Number(x.tp) + ' feedback', x.text);
+  });
+  ['qualifications', 'experience', 'languages', 'extra', 'setup', 'profile'].forEach(function (k) { if (scMine[k]) scAdd('mine-' + k, 'Your ' + k, scMine[k]); });
+  if (!scFacts.length || (fromCourse && scFacts.length < 2)) throw new Error(fromCourse ? 'Open this page from the last page of your course first, so your record comes with it.' : 'Fill in your experience and qualifications first: the job is matched to what you wrote.');
+  var scSys = (fromCourse ? 'You help a teacher who has just finished the Cambridge CELTA shape their CV and cover letter for one job post. '
+      : 'You help an English language teacher shape their CV and cover letter for one job post. They may be new or very experienced, with qualifications such as the CELTA, the DELTA or a master\'s degree. ')
+    + 'You are given the job post, and FACTS: the teacher\'s own course record and the lines they typed themselves, each with an id in front. '
+    + 'RULES. Use only the facts. Never invent or stretch anything: no experience, ages, levels, exams, subjects, years, places, qualifications or skills that a fact does not show. '
+    + 'Every line you write names the id or ids it comes from in "src". A line you cannot source, you do not write. '
+    + 'If the post asks for something the facts do not show, put it in "gaps" in plain words (for example "Two years\' experience: your record shows the CELTA teaching practice only."). Never paper over a gap. '
+    + 'The tutors\' strengths come from feedback on single lessons: reword each one you use into a short CV phrase about what the teacher does, keeping its meaning and not making it bigger. '
+    + 'Never mention a grade, a result, "passed", "to standard" or "above standard". ' + (fromCourse ? 'Never offer a tutor as a reference: the CELTA report is the reference. ' : '')
+    + (fromCourse ? 'Teaching practice on the CELTA is with adult volunteer students; never say it was with children or teenagers. Say "teaching practice" or "TP", never "practice" alone. ' : 'Their own lines are the only facts: take dates, places, levels and qualifications exactly as they wrote them. ')
+    + 'American spelling. Plain, confident, specific; no adjectives without evidence; no "passionate", "dynamic" or "dedicated". '
+    + 'ANSWER as JSON: {"job":{"title":"","school":"","kind":"general|yl|exam|prep|esp|summer|oneone","where":"abroad|home|online"},'
+    + '"asks":[{"ask":"what the post asks for, short","have":"what the facts show for it, short, or empty if nothing","src":["ids"]}],'
+    + '"gaps":["..."],'
+    + '"lines":[{"field":"headline|profile|extra|why|can|bring","text":"","src":["ids"]}],'
+    + '"strengths":[{"text":"the CV phrase","src":["one strength id"]}]}' + (fromCourse ? '' : ' (strengths stays empty: there is no course feedback)') + '. '
+    + 'asks: up to 8, in the post\'s order. lines: one each for headline (under 14 words), profile (two sentences), why (one sentence on why this school, from the post itself: use src ["post"]), can (one sentence), bring (two or three sentences in the first person), and extra only if the post\'s kind of teaching needs it. strengths: the 3 to 6 that matter most for this post.';
+  var scUser = 'JOB POST:\n' + scPost + '\n\nFACTS:\n' + scFacts.join('\n');
+  var scResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + scKey },
+    payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.2, response_format: { type: 'json_object' },
+      messages: [{ role: 'system', content: scSys }, { role: 'user', content: scUser }] })
+  });
+  if (scResp.getResponseCode() !== 200) throw new Error('The post could not be read just now (' + scResp.getResponseCode() + '). Try again in a moment.');
+  var scOut = {}; try { scOut = JSON.parse(JSON.parse(scResp.getContentText()).choices[0].message.content || '{}'); } catch (e) {}
+  scSrc.post = 'The job post';
+  var scIds = function (a) { return (Array.isArray(a) ? a : []).map(String).filter(function (i) { return scSrc[i]; }).slice(0, 4); };
+  var scTxt = function (t, n) { return String(t || '').replace(/\s+/g, ' ').trim().slice(0, n || 600); };
+  var scBad = /\b(passed|to standard|above standard|grade[ds]?|reference[s]? from|my tutors? (?:will|can|would))\b/i;
+  var scJob = scOut.job || {};
+  return {
+    job: { title: scTxt(scJob.title, 120), school: scTxt(scJob.school, 120),
+      kind: /^(general|yl|exam|prep|esp|summer|oneone)$/.test(scJob.kind) ? scJob.kind : '', where: /^(abroad|home|online)$/.test(scJob.where) ? scJob.where : '' },
+    asks: (Array.isArray(scOut.asks) ? scOut.asks : []).slice(0, 8).map(function (a) { var ids = scIds(a && a.src), have = ids.length ? scTxt(a.have, 300) : '';
+      return { ask: scTxt(a && a.ask, 200), have: have, src: have ? ids : [] }; }).filter(function (a) { return a.ask; }),
+    gaps: (Array.isArray(scOut.gaps) ? scOut.gaps : []).slice(0, 8).map(function (g) { return scTxt(g, 300); }).filter(Boolean),
+    lines: (Array.isArray(scOut.lines) ? scOut.lines : []).map(function (l) { return { field: String(l && l.field || ''), text: scTxt(l && l.text, 900), src: scIds(l && l.src) }; })
+      .filter(function (l) { return /^(headline|profile|extra|why|can|bring)$/.test(l.field) && l.text && l.src.length && !scBad.test(l.text); }),
+    strengths: (Array.isArray(scOut.strengths) ? scOut.strengths : []).slice(0, 6).map(function (x) { return { text: scTxt(x && x.text, 200), src: scIds(x && x.src).filter(function (i) { return /^s\d/.test(i); }) }; })
+      .filter(function (x) { return x.text && x.src.length && !scBad.test(x.text); }),
+    sources: scSrc
+  };
+}
+
 /* ---------- questions: the helpers (v173) ---------- */
 function questionAdd_(pool, item) {
   var list = (pool.items || []).filter(function (q) { return q && q.id !== item.id; });

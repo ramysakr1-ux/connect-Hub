@@ -363,12 +363,35 @@ function presentCard(R){
     + '<div class="ptop"><span class="chipmark">' + (window.hubLockup ? hubLockup(20) : 'Connect Lite') + '</span><span class="tag">A present for you</span></div>'
     + '<h2>Well done' + (first ? ', ' + esc(first) : '') + '.<br><i>Here’s to what comes next.</i></h2>'
     + '<p>You’ve finished the course: every plan, every lesson, every piece of feedback. Wherever you teach next, we hope it goes brilliantly.</p>'
-    + '<p>To help you on your way, a present: a modern teaching CV and cover letter, shaped for where you are in teaching and where you’re applying.</p>'
+    + '<p>To help you on your way, a present: a modern teaching CV and cover letter, shaped for where you are in teaching, and for any job you paste in, from your own course record.</p>'
     + '<div class="prow"><a class="go" href="cv/" target="_blank" rel="noopener">Build your CV</a>' + mail + '<button type="button" class="soft" id="pShare">Share</button></div>'
-    + '<p class="psay" id="pSay">Yours to keep: the link stays open after the course. Nothing you type there is sent anywhere.</p>'
+    + '<p class="psay" id="pSay">Yours to keep: the link stays open after the course. What you type there stays in your browser, unless you ask it to shape your CV for a job.</p>'
     + '<div class="psign">Good luck, from all of us at Connect Lite.</div></div>';
 }
-function bindPresent(){
+/* THE RECORD FOR THE CV (31 Oct 2026, "Shape it for a job"): what the course shows, left in this browser for the CV
+   page (same site, lite:cv:record) so it can match a job post to it. Facts only, from the records: each TP's level,
+   minutes, students, aims, lesson type and coursebook, and the tutors' strengths, each with the TP it came from.
+   No grade, no action points, nothing a tutor wrote about anyone else. The CV page sends it on only when the
+   trainee asks it to shape their CV for a job, and says so. */
+function cvRecord(R){
+  if (!IS_TRAINEE || !window.HubStore || !HubStore.token) return null;
+  const cs = S(), H = R.tp || {}, P = rec('connect_tp_points_v1') || {}, mine = ((P.points || {})[P.me]) || {};
+  const book = n => { const b = (mine['tp' + n] || {}).book; const ref = String((b && (b.title || b.ref)) || '').trim(); return ref.split(/\s+(?:SB|WB|TB|Student|Workbook|Unit|p\.|pp\.|\/)\b/)[0].replace(/[\s,;:–-]+$/, '').slice(0, 80); };
+  const tps = [], strengths = [];
+  tpNums(H).forEach(n => {
+    const f = (H[n].state && H[n].state.f) || {};
+    tps.push({ n, date: f.fDate || '', level: f.fLevel || '', minutes: f.fTime || '', students: f.fStudents || '', aim: f.fMain || '', sub: f.fSub || '', type: (mine['tp' + n] || {}).framework || '', book: book(n) });
+    listItems(H[n], ['lSP', 'lST']).map(it => textOf(it.html)).filter(Boolean).forEach((t, i) => strengths.push({ id: 's' + n + '-' + (i + 1), tp: n, text: t }));
+  });
+  return { v: 1, at: new Date().toISOString(), token: HubStore.token(), name: R.name || '',
+    course: { name: cs.courseName || '', centre: cs.centreName || '', start: cs.start || '', end: cs.end || '', mode: cs.deliveryMode || cs.mode || '', hours: cs.totalHours || '' },
+    tps, strengths };
+}
+function bindPresent(R){
+  /* the record goes with them to the CV page */
+  const keepRecord = () => { try { const r = cvRecord(R); if (r) localStorage.setItem('lite:cv:record', JSON.stringify(r)); } catch (e) {} };
+  keepRecord();
+  const go = document.querySelector('#present .go'); if (go) go.addEventListener('click', keepRecord);
   const say = t => { const e = document.getElementById('pSay'); if (e) e.textContent = t; };
   const sh = document.getElementById('pShare');
   if (sh) sh.addEventListener('click', async () => {
@@ -455,7 +478,7 @@ function trainee(R){
       + presentCard(R)
       + '<div style="height:56px"></div>'
     + '</div>';
-  bindPresent();
+  bindPresent(R);
 
   $('printcard').innerHTML = (cs.classPhoto && cs.classPhoto.src ? framed(cs, R) : '')
     + '<h1>' + esc(R.name) + '</h1><p>finished the CELTA course</p><small>' + esc([cs.centreName, span(cs)].filter(Boolean).join(' · ')) + '</small>';
