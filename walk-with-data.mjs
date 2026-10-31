@@ -40,7 +40,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdtempSync, cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, cpSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -63,24 +63,50 @@ const NAMES  = ['Aylin Demir', 'Mert Kaya', 'Olivia Hart', 'Selin Yilmaz', 'Gül
 const DAYS = ['2026-03-02','2026-03-03','2026-03-04','2026-03-05','2026-03-06','2026-03-09','2026-03-10','2026-03-11'];
 const AIMS = ['Grammar','Reading','Listening','Speaking','Vocabulary','Writing'];
 
-const plan = (who, n) => ({ meta:{ name:who, tp:'TP'+n, date:DAYS[n-1], level:'B1', length:'60' },
-  plan:{ main:'By the end of the lesson learners will be better able to use the past simple.',
-         sub:'To give controlled practice.', pers:'Watch my instructions.', mats:'Speakout B1 p.42',
-         matsLink:'https://drive.google.com/file/d/abc/view',
-         profile:'12 learners at B1, mostly Turkish L1.',
-         rows:[{stage:'Lead-in',time:'5',inter:'T-S',proc:'Show the picture and ask what they did.'},
-               {stage:'Practice',time:'15',inter:'S-S',proc:'Pairs do the gap-fill, then check.'}],
-         probs:[{form:'did + infinitive',mean:'finished past',pron:'/dɪd/'}] }, turnedInAt: n<=2 ? '2026-03-04T10:00:00Z' : '' });
-const feedback = n => ({ returnedAt:'2026-03-04T16:00:00Z', by:'Selin Yilmaz', grade:'S',
-  strengths:[{text:'Clear instructions, checked with a question.',codes:['2a']}],
-  actions:[{text:'Give the handout after the instruction, not before.',codes:['4c'],star:true}] });
+/* THE RECORDS IN TODAY'S SHAPES (1 Nov 2026, the role-by-role review's R8: the old samples were the shapes of
+   September, so a screen rendered them without proving a submitted plan locks, a returned TP opens, or an assignment
+   shows its outcome). Each is the shape the store hands back on a demo boot today: a record with a status, a label,
+   the form's state and the moment it moved on. */
+const AT0 = Date.parse('2026-03-02T09:00:00Z'), ONEDAY = 86400000;
+const planState = (who, n) => ({ v:1, kind:'celta-tp',
+  meta:{ name:who, tp:String(n), level:'B1', date:DAYS[n-1], length:'45', framework:'Present, practise, produce' },
+  plan:{ main:'By the end of the lesson, students will have practised the past simple to talk about last weekend.',
+         sub:'To give students fluency practice in pairs.', pers:'• To give instructions before handing out the paper.',
+         mats:'• Speakout Intermediate SB p. 42', matsLink:'', matsFile:null, profile:'Twelve adults at B1, mostly Turkish speakers.',
+         probs:[{ problem:'Students say "did went".', solution:'Board the form and drill did + base form.' }],
+         rows:[{ stage:'Lead-in: To engage students and set the context', aim:'', proc:'• Show the picture and ask what the man did.', int:'T-S', time:'5' },
+               { stage:'Controlled practice: To practise the form', aim:'', proc:'• Pairs do the gap-fill, then check.', int:'PW', time:'10' }] },
+  la:{ type:'grammar', context:'Last weekend', mainAim:'Yes', blocks:[], vocab:[], ref:'Speakout Intermediate' },
+  self:{ well:'', not:'', learn:'', diff:'', next:'', actions:'' }, feedback:null });
+const planRec = (who, n, turned) => ({ status: turned ? 'turned_in' : 'draft', label: n + ' · ' + who, state: planState(who, n),
+  centreName:'Elmswood English Center', turnedInAt: turned ? AT0 + (n - 1) * ONEDAY : null, docHTML:'' });
+const selfRec = (who, n) => ({ status:'turned_in', label: n + ' · ' + who,
+  state:{ well:'• The pairs talked a lot.', not:'• The gap-fill ran long.', learn:'• Shorter instructions work.', diff:'• I would time the gap-fill.', next:'• Check instructions with a question.', actions:'' },
+  turnedInAt: AT0 + (n - 1) * ONEDAY + 7200000 });
+const tag = c => ` <span class="tag" contenteditable="false" data-c="${c}" title="">${c}</span>&nbsp;`;
+const feedbackRec = (who, n) => ({ status:'returned', label: n + ' · ' + who,
+  state:{ f:{ fTP:'TP' + n, fDate:DAYS[n-1], fTutor:'Selin Yilmaz', fLevel:'B1', fTime:'45', fStudents:'12', fMain:'Grammar', fSub:'Speaking',
+              fGrade:'To standard', tOverall:'A clear lesson with good rapport.', tSelf:'A fair look back.', tLA:'Form and meaning well checked.' },
+          lists:{ lSP:[{ html:'Clear instructions, checked with a question' + tag('2a'), star:false }],
+                  lAP:[{ html:'Give the handout after the instruction, not before' + tag('4c'), star:true }],
+                  lST:[{ html:'Good rapport with the class' + tag('1a'), star:false }],
+                  lAT:[{ html:'Time the practice stage' + tag('5b'), star:true }] },
+          tcomm:{ st0:'A quick, clear lead-in.', st1:'The gap-fill ran a little long.' }, doc: planState(who, n) },
+  returnedAt: AT0 + (n - 1) * ONEDAY + 28800000, docHTML:'<div><p>TP ' + n + ' feedback</p></div>' });
+const lsrtPass = { usedResubmission:false,
+  sub1:{ picked:{}, text:{ 5:'I chose Text C. Level: most of the text is B1.' }, fields:{}, decl:{ 11:{ checks:[true, true, true], aiUsed:'no', aiLink:'', aiPurpose:'' } }, materialsLink:'' },
+  sub2:null, markers:{ first:'Selin Yilmaz', second:'', doubleMarked:false }, sub1At: AT0 + 3 * ONEDAY, marked1At: AT0 + 6 * ONEDAY, stage:'closed',
+  criteriaMarks:{ sub1:[true], sub2:[] }, criteriaComments:{ sub1:[''], sub2:[] },
+  feedback:{ outcome:'Pass', generalComment1:'A clear, well-argued assignment.', generalComment2:'' } };
+const plan = (who, n) => planRec(who, n, n <= 2);
+const feedback = n => feedbackRec(NAMES[0], n);
 
 const roster = { trainees: {} };
 TOKENS.forEach((tok, i) => {
   roster.trainees[tok] = { id:tok, name:NAMES[i], group:i<3?'ABC':'DEF', email:'', importedAt:'2026-03-01T00:00:00Z',
-    tp:{ plan: plan(NAMES[i], i+1), selfeval:{ went:'It went well.', next:'Shorter instructions.' },
-         feedback: i<3 ? feedback(i+1) : null, history:{} },
-    assignments:{ fol:{ state:'PASS', submittedAt:'2026-03-05T09:00:00Z', text:'Focus on the learner…' } },
+    tp:{ plan: plan(NAMES[i], i+1), selfeval: selfRec(NAMES[i], i+1),
+         feedback: i<3 ? feedbackRec(NAMES[i], i+1) : null, history:{} },
+    assignments:{ lsrt: lsrtPass },
     tracker:{ grades:{ provisional: i===0?'Pass B':'' } }, observations:{}, links:[], staffLinks:[],
     celta5:{ stage1:{ signed:{ name:NAMES[i], at:'2026-03-06T10:00:00Z', ink:'@caveat,3' } } },
     celta5t:{ stage1:{ returnedAt:'2026-03-06T09:00:00Z', signedBy:{ name:'Selin Yilmaz', at:'2026-03-06T09:00:00Z', ink:'@allura,-2' }, strengths:'Good rapport.', actionPlan:'Tighten the stages.' } },
@@ -130,6 +156,10 @@ const COMMON = {
    every screen walked shows the loading gate, which is what check-screens
    has always seen. */
 const booted = (mode, tok) => ({ 'hub:booted': mode + ':' + tok });
+/* AND hub:demoVisit (1 Nov 2026, review R8). The seeded course has a demo date, so it is a demo course, and the first
+   page of a demo visit forgets everything Lite kept in the browser before the boot refills it (hub-sync.js, "A NEW DEMO
+   VISIT STARTS FROM NOTHING"). With the store dead nothing refills it, and every screen walked the empty course. The
+   seed below marks the tab as a visit already under way, so the seeded course is what each screen reads. */
 /* THE STORE SHAPES THESE PER READER (hub-sync.js, 28-29 Sep 2026): a tutor
    holds the whole grid and the whole rotation, keyed by token and by group; a
    trainee gets their own group's rows as a list, and their set as a list of
@@ -146,9 +176,9 @@ const SEED = {
                'hub:assessor':{ name:'Dr Jane Powell', expires:'2026-04-10' } },
   trainee:   { ...COMMON, ...booted('trainee',TOKENS[0]),
                'hub:t':TOKENS[0], 'hub:me':{ token:TOKENS[0], name:NAMES[0], group:'ABC' },
-               'chub:plan': plan(NAMES[0],1).plan, 'chub:selfeval':{ went:'Good.' },
-               'chub:feedback': feedback(1), 'chub:tracker':{}, 'chub:celta5':roster.trainees[TOKENS[0]].celta5,
-               'chub:celta5t':roster.trainees[TOKENS[0]].celta5t, 'chub:tpHistory':{},
+               'chub:plan': planRec(NAMES[0], 2, true), 'chub:selfeval': selfRec(NAMES[0], 2),
+               'chub:feedback': feedbackRec(NAMES[0], 2), 'chub:tracker':{}, 'chub:celta5':roster.trainees[TOKENS[0]].celta5,
+               'chub:celta5t':roster.trainees[TOKENS[0]].celta5t, 'chub:tpHistory':{ 1: feedbackRec(NAMES[0], 1), 2: feedbackRec(NAMES[0], 2) },
                'chub:agreement': roster.trainees[TOKENS[0]].agreement,
                connect_tp_grid_v1: GRID_T, connect_tp_points_v1: POINTS_T,
                connect_assignment_submissions_v1: roster.trainees[TOKENS[0]].assignments },
@@ -203,9 +233,9 @@ const T0 = TOKENS[0];
 const PARAMS = {
   '3_tutor_feedback.html': '?trainee=' + T0,
   '4_feedback_returned.html': '?trainee=' + T0,
-  '9_assignment_submission.html': '?a=fol',
-  '10_tutor_assignment_marking.html': '?trainee=' + T0 + '&a=fol',
-  '11_assignment_record.html': '?trainee=' + T0 + '&a=fol',
+  '9_assignment_submission.html': '?a=lsrt',
+  '10_tutor_assignment_marking.html': '?trainee=' + T0 + '&a=lsrt',
+  '11_assignment_record.html': '?trainee=' + T0 + '&a=lsrt',
   '16_final_report.html': '?id=' + T0,
   '20_celta5.html': '?trainee=' + T0,
   '22_fail_letter.html': '?trainee=' + T0,
@@ -216,7 +246,8 @@ const PARAMS = {
 const TYPES = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.json':'application/json',
                 '.svg':'image/svg+xml', '.png':'image/png', '.ico':'image/x-icon', '.ttf':'font/ttf', '.webmanifest':'application/manifest+json' };
 const srv = createServer((q, r) => {
-  const f = join(DIR, (q.url.split('?')[0] || '/').replace(/^\//, '') || 'index.html');
+  let f = join(DIR, decodeURIComponent(q.url.split('?')[0] || '/').replace(/^\//, '') || 'index.html');
+  if (existsSync(f) && statSync(f).isDirectory()) f = join(f, 'index.html');   // a folder link (the input sessions, the demo lessons)
   if (!existsSync(f)) { r.writeHead(404); r.end(); return; }
   r.writeHead(200, { 'Content-Type': TYPES[extname(f)] || 'application/octet-stream' });
   r.end(readFileSync(f));
@@ -245,7 +276,7 @@ if (process.env.DOORS) {
     const ctx = await browser.newContext({ viewport: { width: parseInt(process.env.WIDTH, 10) || 390, height: 860 } });
     const page = await ctx.newPage();
     await page.goto(`http://127.0.0.1:${PORT}/${LANDING[role][0]}`, { waitUntil: 'domcontentloaded' });
-    await page.evaluate(seed => { localStorage.clear();
+    await page.evaluate(seed => { localStorage.clear(); sessionStorage.setItem('hub:demoVisit', '1'); sessionStorage.setItem('hub:demoSeen', String(Date.now()));
       for (const k of Object.keys(seed)) localStorage.setItem(k, typeof seed[k] === 'string' ? seed[k] : JSON.stringify(seed[k]));
     }, SEED[role]);
     const doors = [];
@@ -302,7 +333,7 @@ for (const role of ROLES) {
     try {
       /* HASH='#roster' opens a tab or anchor on the screens walked (8 Oct 2026). */
       await page.goto(`http://127.0.0.1:${PORT}/${screen}${PARAMS[screen] || ''}${process.env.HASH || ''}`, { waitUntil: 'domcontentloaded' });
-      await page.evaluate(seed => { localStorage.clear();
+      await page.evaluate(seed => { localStorage.clear(); sessionStorage.setItem('hub:demoVisit', '1'); sessionStorage.setItem('hub:demoSeen', String(Date.now()));
         for (const k of Object.keys(seed)) localStorage.setItem(k, typeof seed[k] === 'string' ? seed[k] : JSON.stringify(seed[k]));
       }, SEED[role]);
       await page.reload({ waitUntil: 'domcontentloaded' });
@@ -357,7 +388,7 @@ for (const role of ROLES) {
           const h = a.getAttribute('href');
           if (h === null || h === '' || h === '#') {
             if (!a.offsetWidth || !a.offsetHeight) return false;
-            return !a.hasAttribute('aria-disabled') && !a.id;   // ids are wired by script
+            return !a.hasAttribute('aria-disabled') && !a.id && !a.classList.contains('txtlink');   // ids are wired by script; so is a text link (hub-shared opens the text)
           }
           return false;
         }).slice(0, 3).map(a => (a.textContent || '').trim().slice(0, 30));
@@ -371,6 +402,28 @@ for (const role of ROLES) {
       for (const c of seen.covered) found.push(`${where}: ${c}`);
       for (const d of seen.dead) found.push(`${where}: a link that goes nowhere — "${d}"`);
       for (const u of seen.unhidden) found.push(`${where}: ${u} is marked hidden and is on screen anyway`);
+      /* THE STATE BEFORE THE LOOKS (1 Nov 2026, review R8): a screen that renders proves little unless it is the right
+         person's, in the right role, showing the record the seed put there. */
+      const state = await page.evaluate(({ role, screen }) => {
+        const bad = [], txt = document.body.innerText || '';
+        if (window.HubMode !== undefined && window.HubMode !== role) bad.push(`opened as "${window.HubMode}", not ${role}`);
+        if (role === 'trainee') { let me = {}; try { me = JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; } catch (e) {}
+          if (me.token !== 't-aylin') bad.push('the trainee in this browser is not the seeded one'); }
+        const field = s => [...document.querySelectorAll('textarea, input')].find(e => (e.value || '').indexOf(s) !== -1);
+        const locked = e => e && (e.readOnly || e.disabled || !!e.closest('fieldset[disabled]'));
+        if (role === 'trainee' && screen === '1_trainee_plan_and_analysis.html') {
+          const f = field('past simple to talk about last weekend');
+          if (!f) bad.push('the turned-in plan did not load'); else if (!locked(f)) bad.push('the turned-in plan can still be typed in');
+        }
+        if (role === 'trainee' && screen === '2_trainee_self_evaluation.html') {
+          const f = field('The pairs talked a lot');
+          if (!f) bad.push('the turned-in self-evaluation did not load'); else if (!locked(f)) bad.push('the turned-in self-evaluation can still be typed in');
+        }
+        if (role === 'trainee' && screen === '4_feedback_returned.html' && !/\b(TP ?2|teaching practice 2)\b/i.test(txt)) bad.push('the returned TP2 feedback is not there');
+        if (screen === '9_assignment_submission.html' && role === 'trainee' && !/\bpass\b/i.test(txt)) bad.push('the marked assignment does not show its outcome (Pass)');
+        return bad;
+      }, { role, screen });
+      for (const b of state) found.push(`${where}: ${b}`);
       if (SHOTS && VIEW === '1') { await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); await page.waitForTimeout(300); }
       if (SHOTS) await page.screenshot({ path: join(SHOTS, `${role}-${screen.replace('.html','')}${VIEW === '1' ? '-foot' : VIEW ? '-top' : ''}.png`), fullPage: !VIEW });
     } catch (e) {

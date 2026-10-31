@@ -69,6 +69,16 @@ if ((reg.students || []).length < 2) {
   const put = await raw({ op: 'putCourse', key: TK, kind: 'volunteers', data: reg });
   if (!put.ok) { console.error('could not put the students on the register: ' + put.error); process.exit(1); }
 }
+/* The students carry emails, so the check below can see the assessor's copy arrives without them (review R3, 1 Nov 2026) */
+if (reg.students.some((x) => !x.email)) {
+  reg.students.forEach((x, i) => { if (!x.email) x.email = 'role-student-' + (i + 1) + '@example.com'; });
+  const put = await raw({ op: 'putCourse', key: TK, kind: 'volunteers', data: reg });
+  if (!put.ok) { console.error('could not give the students emails: ' + put.error); process.exit(1); }
+}
+/* An unpublished timetable with a draft on it: only the tutors may see the draft (review R4, 1 Nov 2026) */
+const DRAFT_MARK = 'role-check-draft-only-tutors-see';
+{ const put = await raw({ op: 'putCourse', key: TK, kind: 'timetable', data: { published: false, draft: { note: DRAFT_MARK } } });
+  if (!put.ok) { console.error('could not put the draft timetable: ' + put.error); process.exit(1); } }
 const V1 = reg.students[0].token, V2 = reg.students[1].token;
 const SECRETS = { 'classmate token': T2, 'tutor key': TK, 'assessor key': AK, 'owner key': OWNER, 'volunteer token': V1, 'other volunteer token': V2 };
 console.log('scratch course', sc.id, '| trainees', roster.length, '| students', reg.students.length, '| other-course key', OTHER_KEY ? 'yes' : 'NO (.library-key missing; cross-course checks skipped)');
@@ -94,7 +104,7 @@ const ARGS = {
   gridSet: { token: T1, tp: 7, main: 'role check' }, gridRelease: { released: {} }, volunteerAgree: {}, volunteerReply: { yes: true },
   courseFeedback: { answers: {}, named: false }, materials: { course: sc.id }, feedback: { text: 'role check', page: 'check', role: 'check' },
   report: { text: 'role check', page: 'check', role: 'check', kind: 'check' }, readContribution: { set: 'none' }, pins: {}, inbox: {},
-  feedbackSummary: {}, stats: {}, ownerPulse: {}, centres: {}, celta5Assets: {}, audio: { id: 'none' }, assessorLink: {}, demoCard: {}, me: {}, roster: {}, course: {}, boot: {}, ping: {},
+  feedbackSummary: {}, stats: {}, ownerPulse: {}, centres: {}, celta5Assets: {}, audio: { id: 'none' }, assessorLink: {}, demoCard: {}, me: { token: T1 }, roster: {}, course: {}, boot: {}, ping: {},
   similar: { token: T1, code: 'lsrt', round: 'sub1' }, webCheck: { token: T1, code: 'lsrt', round: 'sub1' }, aiCheck: { token: T1, code: 'lsrt', round: 'sub1' }, checksOn: {},
 };
 /* Called ONLY as the roles that must be refused: the permitted role would
@@ -153,6 +163,13 @@ check('the volunteer never sees the other student', !JSON.stringify(replies.volu
 check('the assessor writes nothing', OPS.every((op) => ['ping', 'boot', 'me', 'get', 'course', 'roster', 'celta5Assets', 'audio'].includes(op) || matrix[op].assessor !== 'ok'));
 check('nobody opens nothing that names a course', ['boot', 'me', 'course', 'roster', 'get', 'put', 'putCourse', 'ownerCourses', 'stats', 'inbox'].every((op) => matrix[op].nobody !== 'ok'));
 if (ROLES.cross) check('another course\'s tutor key with this course\'s token opens nothing', OPS.every((op) => op === 'ping' || matrix[op].cross !== 'ok'));
+/* The role-by-role review, 1 Nov 2026 (R2-R4) */
+check('a tutor or assessor key beside a trainee token cannot read the me record (R2)', !replies.assessor.me.ok && !replies.tutor.me.ok);
+const emailIn = (r) => /"email":"[^"]+@/.test(JSON.stringify(((r || {}).result || {})));
+check('the assessor gets the register without emails (R3)', !emailIn({ result: (replies.assessor.course.result || {}).volunteers }) && !emailIn({ result: ((replies.assessor.boot.result || {}).course || {}).volunteers }));
+check('the timetable draft reaches the tutor (R4)', JSON.stringify(replies.tutor.course || {}).includes(DRAFT_MARK));
+for (const role of ['trainee', 'volunteer', 'assessor']) for (const op of ['boot', 'course'])
+  if (replies[role] && replies[role][op] && replies[role][op].ok) check(`the ${role}'s ${op} carries no timetable draft (R4)`, !JSON.stringify(replies[role][op]).includes(DRAFT_MARK));
 check('the tutor key works', replies.tutor.roster.ok && replies.tutor.get.ok);
 check('the owner key works', replies.owner.ownerCourses.ok);
 const secretsClean = fails.length === 0;
