@@ -1945,6 +1945,30 @@ case 'inbox': {
       var gqBlob = DriveApp.getFileById(gqId).getBlob();
       return { type: gqBlob.getContentType(), bytes: Utilities.base64Encode(gqBlob.getBytes()) };
     }
+    /* THE TUTOR'S OWN WATCH FOR NOTES (v186, 31 Oct 2026; Ramy: "the trainer can provide some extra instructions for
+       the trainees ... things they can pay attention to"). A demonstration lesson carries a note for the trainee above
+       each step; a tutor may reword any of them for their own course. Kept in settings.watchNotes[page][step], which
+       reaches the course's trainees with the rest of the settings; an empty note goes back to the page's own. Only
+       this one key is touched, never the rest of the settings. */
+    case 'putWatchNotes': {
+      requireTutor_(tutor);
+      var wnPage = String(req.page || '').trim();
+      if (!/^[\w-]{1,40}\/[\w-]{1,60}$/.test(wnPage)) throw new Error('Which lesson?');
+      var wnIn = req.notes && typeof req.notes === 'object' ? req.notes : {}, wnClean = {};
+      Object.keys(wnIn).slice(0, 30).forEach(function (k) {
+        if (!/^[\w-]{1,40}$/.test(k)) return;
+        wnClean[k] = String(wnIn[k] == null ? '' : wnIn[k]).replace(/\s+/g, ' ').trim().slice(0, 700);
+      });
+      var wnSet = courseUpdateObj_(course.id, 'settings', function (st) {
+        var all = st.watchNotes && typeof st.watchNotes === 'object' ? st.watchNotes : {};
+        var mine = all[wnPage] && typeof all[wnPage] === 'object' ? all[wnPage] : {};
+        Object.keys(wnClean).forEach(function (k) { if (wnClean[k]) mine[k] = wnClean[k]; else delete mine[k]; });
+        if (Object.keys(mine).length) all[wnPage] = mine; else delete all[wnPage];
+        st.watchNotes = all;
+        return st;
+      });
+      return { saved: true, notes: (wnSet.watchNotes || {})[wnPage] || {} };
+    }
     /* the link the room is given: made once, kept in the course's settings, handed only to a tutor */
     case 'roomLink': {
       requireTutor_(tutor);
