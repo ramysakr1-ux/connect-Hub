@@ -208,7 +208,37 @@ function cases(){
   const A = (who.tr && who.tr.assignments) || {};
   const all = Object.entries(A).filter(([k, a]) => a && a.feedback && /fail/i.test(a.feedback.outcome || '') && !/on resubmission/i.test(a.feedback.outcome || ''));
   const mal = all.filter(([k, a]) => /plagiar|malpractice|not (your|their) own work|copied|collu/i.test(a.feedback.generalComment1 || a.feedback.generalComment2 || ''));
-  return (mal.length ? mal : all).map(([k, a]) => ({ key: k, name: AS_NAME[k] || k.toUpperCase(), at: a.marked2At || a.marked1At || '', decision: String(a.feedback.generalComment1 || '').trim() }));
+  return (mal.length ? mal : all).map(([k, a]) => ({ key: k, name: AS_NAME[k] || k.toUpperCase(), at: a.marked2At || a.marked1At || '', decision: String(a.feedback.generalComment1 || '').trim(),
+    /* what the own-work check found and the tutor attached to the record (sub.flags), both rounds */
+    flags: [].concat(((a.flags || {}).sub1) || [], ((a.flags || {}).sub2) || []).filter(Boolean) }));
+}
+/* WHERE THE WORK CAME FROM (31 Oct 2026): the tutor says, in the decision; until then it is read from what was
+   attached. The own-work check finds pages online and other candidates' work; it cannot tell that a text was
+   written by AI, so that one is the tutor's to choose. */
+const SOURCES = { web: 'Published online', candidate: 'Another candidate\u2019s work', ai: 'Generated with AI', other: 'Something else' };
+function sourceOf(man){
+  const c = (man.malpracticeCase || {}).source; if (c) return c;
+  const f = [].concat.apply([], cases().map(x => x.flags));
+  if (f.some(x => x.kind === 'web')) return 'web';
+  if (f.some(x => x.kind === 'lite' || x.kind === 'paraphrase')) return 'candidate';
+  return '';
+}
+/* Assignment 5, the centre's sanction, is set from the marking page; the letter only says so when it has been. */
+function a5Of(){ const A = (who.tr && who.tr.assignments) || {}; return A.a5 && A.a5.assigned ? A.a5 : null; }
+function findingOf(c, src){
+  const f = c.flags, n = f.length;
+  if (!n) return c.decision.split(/(?<=\.)\s+/).slice(0, 3).join(' ') || 'The work submitted was found not to be your own.';
+  const N = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'], num = k => N[k] || String(k);
+  const web = f.filter(x => x.kind === 'web'), cand = f.filter(x => x.kind === 'lite'), para = f.filter(x => x.kind === 'paraphrase');
+  const parts = [];
+  if (web.length) parts.push((web.length === 1 ? 'one passage matches' : num(web.length) + ' passages match') + ' text published online' + (web[0].title ? ' (\u201c' + web[0].title + '\u201d)' : ''));
+  if (cand.length) parts.push((cand.length === 1 ? 'one passage matches' : num(cand.length) + ' passages match') + ' work submitted by another candidate on a CELTA course');
+  if (para.length) parts.push((para.length === 1 ? 'one passage says' : num(para.length) + ' passages say') + ' the same, in other words, as another candidate\u2019s work');
+  const said = parts.join('; ');
+  /* what the decision adds that only a person knows: when the trainee was shown it, and when they answered */
+  const told = c.decision.split(/(?<=\.)\s+/).filter(x => /\b(showed you|were shown|was shown|you answered|you responded|in writing|your answer|spoke to you|meeting)\b/i.test(x)
+    || (/\bsections?\b/i.test(x) && /\b(match|copied|same)\b/i.test(x))).join(' ');
+  return said.charAt(0).toUpperCase() + said.slice(1) + '.' + (told ? ' ' + told : '');
 }
 /* The letter in Ramy's wording (31 Oct 2026). What changes from one trainee to the next is drawn from the record:
    the date the agreement was signed, the assignment and the day it was recorded as a Fail, and the opening of the
@@ -223,10 +253,11 @@ function draft(r){
   lines.push('This is a written warning under the candidate agreement' + (signed ? ' you signed on ' + signed : '') + '. It records what has happened and the requirements that apply to all remaining coursework.');
   lines.push('');
   if (cs.length) {
+    const src = sourceOf(who.tr.tracker || {});
     cs.forEach(c => {
-      const first = c.decision.split(/(?<=\.)\s+/).slice(0, 3).join(' ');
-      lines.push('Your ' + c.name + ' assignment was recorded as a Fail' + (c.at ? ' on ' + when(c.at) : '') + '. ' + (first || 'The work submitted was found not to be your own.'));
+      lines.push('Your ' + c.name + ' assignment was recorded as a Fail' + (c.at ? ' on ' + when(c.at) : '') + '. ' + findingOf(c, src));
     });
+    if (src === 'ai') { lines.push(''); lines.push('The work was generated with AI and submitted as your own. The candidate agreement treats this as plagiarism, in the same way as copying from a published source.'); }
   } else {
     lines.push('An assignment of yours has been found not to be your own work.');
   }
@@ -237,6 +268,11 @@ function draft(r){
   lines.push('');
   lines.push('Under Cambridge English regulations, a candidate who fails more than one written assignment is not eligible for a Pass. A second failed assignment for plagiarism would therefore result in a Fail for the course, regardless of teaching-practice performance. Cambridge English may also apply its own sanctions where plagiarized work is submitted to it.');
   lines.push('');
+  const a5 = a5Of();
+  if (a5) {
+    lines.push('As a further requirement under the candidate agreement, you have been set Assignment 5, a reflection on academic integrity' + (a5.assignedAfter ? ' following the ' + (AS_NAME[a5.assignedAfter] || String(a5.assignedAfter).toUpperCase()) + ' decision' : '') + '. You will find it with your written assignments. It is in addition to your four assignments and does not replace any of them.');
+    lines.push('');
+  }
   lines.push('From this point onward, every assignment must be entirely your own work and include appropriate acknowledgment of any sources used. If you are unsure whether particular material or support is acceptable, ask your tutor before submitting your work.');
   lines.push('');
   lines.push('This letter is not a final course-grade decision. It will be kept in your portfolio and is the only formal warning of this kind that will be issued.');
@@ -285,7 +321,9 @@ function caseHTML(man){
     <label class="tick"><input type="checkbox" data-case="evidence"${c.evidence ? ' checked' : ''}> The evidence has been reviewed</label>
     <label class="tick"><input type="checkbox" data-case="conversation"${c.conversation ? ' checked' : ''}> The trainee has been spoken to about it</label>
     <label class="f" for="caseby">Decided by</label><input id="caseby" data-case="by" value="${esc(c.by || '')}" placeholder="Who made the decision">
-    <label class="f" for="casebasis">On what basis</label><input id="casebasis" data-case="basis" value="${esc(c.basis || '')}" placeholder="For example Administration Handbook 9.2.4 and the centre's own-work policy"></div>`;
+    <label class="f" for="casebasis">On what basis</label><input id="casebasis" data-case="basis" value="${esc(c.basis || '')}" placeholder="For example Administration Handbook 9.2.4 and the centre's own-work policy">
+    <label class="f" for="casesrc">Where the work came from</label><select id="casesrc" data-case="source">${['', 'web', 'candidate', 'ai', 'other'].map(k => `<option value="${k}"${sourceOf(man) === k ? ' selected' : ''}>${k ? SOURCES[k] : 'Choose'}</option>`).join('')}</select>
+    <p class="status" style="margin-top:8px;">${a5Of() ? 'Assignment 5 is set for this trainee, so the letter says so and the trainee\u2019s home shows it beside the warning.' : 'Assignment 5 is not set. It is set from the marking page (Plagiarism found? Set Assignment 5); the letter then mentions it.'} After changing these, Start again from the record puts them in the letter.</p></div>`;
 }
 function render(){
   if (!who) { $('doc').innerHTML = '<div class="empty">Name a trainee in the link to open their warning.</div>'; return; }

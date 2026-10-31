@@ -257,6 +257,23 @@ function priorities(){
   return out.sort((a, b) => (b.star ? 1 : 0) - (a.star ? 1 : 0)).slice(0, 6).map(x => x.text);
 }
 
+/* THE WRITTEN WORK, ALWAYS (Ramy, 31 Oct 2026: "part of the TP fail warning letter should just make reference that
+   they also need to pass at least 3 assignments, even if they're not failing assignments"). 11.6: a candidate who
+   fails more than one assignment is not eligible for a Pass, so of the four, three must pass. Where each stands,
+   from the marking record. */
+function assignmentsLine(){
+  const A = recOf('assignments') || {}, said = [];
+  ['lrt', 'lsrt', 'fol', 'lfc'].forEach(k => {
+    const a = A[k], fb = a && a.feedback, out = fb && fb.outcome;
+    const st = out === 'Pass' ? (a.usedResubmission ? 'passed on resubmission' : 'passed')
+      : out === 'Fail' ? 'recorded as a Fail'
+      : out === 'Resubmission needed' ? (a.sub2 ? 'resubmitted, awaiting marking' : 'to be resubmitted')
+      : a && (a.sub1At || a.sub1) ? 'submitted, awaiting marking' : 'still to come';
+    said.push(AS_NAME[k] + ': ' + st);
+  });
+  return 'Your written assignments also count towards the result. To pass the course you need to pass at least three of the four written assignments; under Cambridge English regulations a candidate who fails more than one is not eligible for a Pass. As things stand: ' + said.join('; ') + '.';
+}
+
 function draft(r){
   const lines = [];
   lines.push('Dear ' + (who.name.split(/\s+/)[0] || who.name) + ',');
@@ -280,6 +297,8 @@ function draft(r){
     lines.push('');
     ap.forEach(a => lines.push('• ' + a));
   } else lines.push('Your tutors will go through the areas to work on with you; they are recorded in your CELTA 5.');
+  lines.push('');
+  lines.push(assignmentsLine());
   lines.push('');
   const left = r.lessonsLeft > 0 ? 'You have ' + r.lessonsLeft + ' assessed ' + (r.lessonsLeft === 1 ? 'lesson' : 'lessons') + ' remaining. ' : '';
   lines.push(left + 'We will discuss these points at your next tutorial and agree a plan for the rest of the course' + (failedAssignments().length ? ', including planning and referencing for your remaining assignments' : '') + '.');
