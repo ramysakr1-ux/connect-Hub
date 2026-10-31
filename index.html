@@ -1658,6 +1658,35 @@ if (fbBack){
   w.innerHTML = when;
   ul.innerHTML = list.map(it => '<li' + (it.tone ? ' class="' + it.tone + '"' : '') + '><a href="' + esc2(it.href) + '"' + (it.sign ? ' class="sign"' : it.locked ? ' class="locked"' : '')
     + (it.out ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + esc2(it.text) + '</a></li>').join('');
+  /* YOUR PLACE ON A TUTORIAL OR CONSULTATION SHEET (Ramy, 31 Oct 2026: "add it to the home"). Booked on the timetable;
+     on the day and the day before, the home says when and with whom, at the top of the list. The bookings arrive a
+     moment after the page, so the line is put in when they do. */
+  (function(){
+    if (ASK_NAME || beforeStart || afterEnd || !TODAY || !window.HubStore || !HubStore.token || !HubStore.token()) return;
+    const days = (TT.days || []), soon = days.map(d => d && d.date).filter(d => d && d >= TODAY).slice(0, 2);
+    if (!soon.length) return;
+    const tutorsAll = window.hubTutorNames ? (hubTutorNames(CS) || []) : String(CS.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
+    const at = (s, n, x) => { const m = String(s || '').match(/^(\d{1,2}):(\d{2})/); if (!m) return ''; const pl = [10, 15, 20, 30, 45, 60].indexOf(+(x && x.pl)) >= 0 ? +x.pl : 15; const t = +m[1] * 60 + +m[2] + (n - 1) * pl; return ('0' + Math.floor(t / 60)).slice(-2) + ':' + ('0' + (t % 60)).slice(-2); };
+    HubStore.call({ op: 'bookings', token: HubStore.token() }).then(r => {
+      const B = (r && r.bookings) || {}, lines = [];
+      soon.forEach(date => {
+        const day = days.find(d => d && d.date === date);
+        ((day && day.sessions) || []).forEach(x => {
+          if (!x || !/tutorial|consultation/i.test(x.t || '')) return;
+          const raw = B[date + '|' + x.id] || {}, mine = raw.mine || [];
+          if (!mine.length) return;
+          const who = (x.by !== undefined && x.by !== '' && tutorsAll[+x.by]) ? ' with ' + tutorsAll[+x.by].split(/\s+/)[0] : '';
+          const kindW = /consultation/i.test(x.t) ? 'consultation' : 'tutorial';
+          const pn = +((mine[0] && typeof mine[0] === 'object') ? mine[0].n : mine[0]) || 1;
+          const next = (function(){ const d = new Date(TODAY + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); })();
+          const whenW = date === TODAY ? ' today' : date === next ? ' tomorrow' : ' on ' + new Date(date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' });
+          lines.push({ text: 'Your ' + kindW + whenW + ' at ' + hubClock(at(x.s, pn, x)) + who, href: '23_timetable.html', tone: date === TODAY ? 'red' : '' });
+        });
+      });
+      if (!lines.length || !ul) return;
+      ul.insertAdjacentHTML('afterbegin', lines.map(it => '<li' + (it.tone ? ' class="' + it.tone + '"' : '') + '><a href="' + esc2(it.href) + '">' + esc2(it.text) + '</a></li>').join(''));
+    }).catch(() => {});
+  })();
   if (window.NEEDS_SIGN && !ASK_NAME) door = { href: '29_candidate_agreement.html?first=1' };
   if (door) { go.href = door.href; go.textContent = beforeStart ? 'Start here' : 'Open it'; go.hidden = false; }
   tiny.textContent = note;

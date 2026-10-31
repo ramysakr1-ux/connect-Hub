@@ -1651,7 +1651,7 @@ case 'inbox': {
         if (!got) throw new Error('No places left on this sheet.');
         all[key] = sh; return all;
       });
-      return { booked: got, from: placeTime_(sheet.tile.s, got) };
+      return { booked: got, from: placeTime_(sheet.tile.s, got, sheet.tile) };
     }
     case 'releaseSlot': {
       if (!course) throw new Error('This link is not on a course');
@@ -3300,10 +3300,12 @@ function bookableTile_(courseId, date, id) {
   var tile = null; (day.sessions || []).forEach(function (x) { if (x && x.id === id) tile = x; });
   if (!tile || !/consultation|tutorial/i.test(tile.t || '')) throw new Error('That is not a sheet you can book.');
   var len = mins_(tile.e) - mins_(tile.s);
-  return { tile: tile, places: Math.max(1, Math.floor(len / 15)) };
+  /* the place length the tutor chose for this sheet (31 Oct 2026); 15 minutes when none was set */
+  return { tile: tile, places: Math.max(1, Math.floor(len / placeLen_(tile))) };
 }
 function mins_(hm) { var m = /^(\d{1,2}):(\d{2})/.exec(String(hm || '')); return m ? +m[1] * 60 + +m[2] : 0; }
-function placeTime_(s, n) { var m = mins_(s) + (n - 1) * 15; return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2); }
+function placeLen_(tile) { var p = +(tile && tile.pl); return [10, 15, 20, 30, 45, 60].indexOf(p) >= 0 ? p : 15; }
+function placeTime_(s, n, tile) { var m = mins_(s) + (n - 1) * placeLen_(tile); return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2); }
 function tutorName_(set, by) {
   if (by === undefined || by === null || by === '') return '';
   var names = String((set && set.tutorNames) || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);

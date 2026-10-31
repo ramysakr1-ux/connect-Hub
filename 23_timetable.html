@@ -3342,9 +3342,13 @@ function wireBoard(){
    assignment's first submission, any tutor's consultation; after it, their own tutor's only; tutorials with their own
    tutor. The store holds the sheets and judges the rule; this page shows them. */
 let BOOK = null, BOOK_AT = 0;
-const isSheet = x => x && /consultation|tutorial/i.test(x.t || '') && toMin(x.e) - toMin(x.s) >= 15;
-const placesOf = x => Math.max(1, Math.floor((toMin(x.e) - toMin(x.s)) / 15));
-const placeAt = (x, n) => toHM(toMin(x.s) + (n - 1) * 15);
+/* A PLACE IS AS LONG AS THE TUTOR SAYS (Ramy, 31 Oct 2026: "the 15 minutes ... trainers should be able to decide on
+   the time themselves"). Each tutorial or consultation tile carries its place length (x.pl, minutes; 15 when not
+   set, so every sheet made before keeps its places). */
+const placeLen = x => [10, 15, 20, 30, 45, 60].indexOf(+x.pl) >= 0 ? +x.pl : 15;
+const isSheet = x => x && /consultation|tutorial/i.test(x.t || '') && toMin(x.e) - toMin(x.s) >= placeLen(x);
+const placesOf = x => Math.max(1, Math.floor((toMin(x.e) - toMin(x.s)) / placeLen(x)));
+const placeAt = (x, n) => toHM(toMin(x.s) + (n - 1) * placeLen(x));
 function loadBookings(force){
   if (!window.HubStore || !HubStore.call || (!force && BOOK && Date.now() - BOOK_AT < 60000)) return;
   BOOK_AT = Date.now();
@@ -3507,6 +3511,7 @@ function openTile(date, id, fresh){
     <label>Category<select name="k">${KIND_ORDER.map(k => `<option value="${k}"${x0.k === k ? ' selected' : ''}>${esc(KIND_LABEL[k])}</option>`).join('')}</select></label>
     <div class="two"><label>Tutor initials<select name="by"><option value="">Unassigned</option>${TUTORS.map((n, i) => `<option value="${i}"${by === String(i) ? ' selected' : ''}>${esc(initialsOf(n))} · ${esc(n)}</option>`).join('')}</select></label>
       <label>Group<select name="g"><option value="">Whole course</option>${groupsOpt.map(g => `<option value="${esc(g)}"${String(x0.g || '') === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></label></div>
+    <label class="plrow"${/consultation|tutorial/i.test(x0.t || '') ? '' : ' hidden'}>Each place<select name="pl">${[10, 15, 20, 30, 45, 60].map(m => `<option value="${m}"${placeLen(x0) === m ? ' selected' : ''}>${m} minutes</option>`).join('')}</select></label>
     <label>Preparation<textarea name="d" placeholder="What trainees read or bring. They see this when they open the session.">${esc(x0.d || '')}</textarea></label>
     <label>Session or resources link<input name="url" type="url" placeholder="https://" value="${esc(x0.url && x0.url !== 'https://' ? x0.url : '')}"></label>
     ${!isNew && isSheet(x0) && BOOK ? `<div class="sheetin">${sheetHTML(day0, x0)}</div>` : ''}
@@ -3519,6 +3524,7 @@ function openTile(date, id, fresh){
   asDrawer(el, isNew ? 'Schedule session' : 'Edit session');
   const F = $('sesForm');
   F.elements.k.addEventListener('change', () => { $('tpOrTitle').innerHTML = tpField(F.elements.k.value); });
+  F.addEventListener('input', ev => { if (ev.target && ev.target.name === 't') { const r = F.querySelector('.plrow'); if (r) r.hidden = !/consultation|tutorial/i.test(ev.target.value); } });
   const err = t => { $('tErr').textContent = t; };
   F.addEventListener('submit', async ev => {
     ev.preventDefault(); err('');
@@ -3543,6 +3549,8 @@ function openTile(date, id, fresh){
     if (k === 'tp') { delete x.t; x.room = 'Teaching practice'; } else { if (t) x.t = t; else delete x.t; if (x.room === 'Teaching practice') delete x.room; }
     if (byN === '') delete x.by; else x.by = +byN;
     if (g) x.g = g; else delete x.g;
+    /* a tutorial or consultation sheet keeps the length of its places; any other tile has none */
+    if (/consultation|tutorial/i.test(x.t || '') && +v('pl') && +v('pl') !== 15) x.pl = +v('pl'); else delete x.pl;
     const d = v('d').trim(); if (d) x.d = d; else delete x.d;
     if (url) x.url = url; else delete x.url;
     if (k !== 'input') delete x.lib;   /* a session that is no longer input no longer opens a session page */
