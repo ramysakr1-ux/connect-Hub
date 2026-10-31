@@ -687,6 +687,10 @@
   @media print{ body.print-map > *:not(#mapPrint){display:none !important;} body.print-map #mapPrint{display:block !important; font:10pt/1.4 'Karla',sans-serif; color:var(--ink);}
     #mapPrint h1{font:600 16pt 'Newsreader',Georgia,serif; margin:0 0 4px;} #mapPrint h2{font:600 12pt 'Newsreader',Georgia,serif; margin:14px 0 6px; break-after:avoid;}
     #mapPrint table{width:100%; border-collapse:collapse; break-inside:avoid;} #mapPrint th, #mapPrint td{border:1px solid var(--grey); padding:4px 6px; text-align:left; vertical-align:top;} #mapPrint small{color:var(--grey);} }
+  /* R5: a reader's link shows the rotation, not the controls that change it */
+  .tp-ro details.letters, .tp-ro .gacts button:not([data-mats]), .tp-ro #rebuild, .tp-ro #applyset, .tp-ro .relbar, .tp-ro .tcard.own, .tp-ro .tcard.lib, .tp-ro .ggrid > .hint, .tp-ro .tpout, .tp-ro .cvdeal, .tp-ro .cbpill, .tp-ro .cblink, .tp-ro [data-rel], .tp-ro a[href^="28_tp_point_sets"], .tp-ro .gob{display:none !important;}
+  .tp-ro .cvpick select:disabled, .tp-ro input:disabled{opacity:1; color:var(--ink); background-image:none; cursor:default; -webkit-text-fill-color:var(--ink);}
+  .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202611010046">
 <style>
@@ -948,6 +952,22 @@ document.addEventListener('click', function(e){
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose \u2014 this is one of the course\u2019s own pages.');
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
+/* THE ASSESSOR READS THIS PAGE, NOTHING MORE (1 Nov 2026, the role-by-role review's R5). The shared read-only layer guessed
+   from a button's words and missed Earlier, Later, Own lesson and the dealing controls, and Your own set led to a tutor's
+   page. Here the page itself decides by role: on a reader's link every control that changes the rotation, the sets or
+   the materials is refused before its handler runs, hidden, and nothing is saved. */
+const IS_READER = !IS_TUTOR && !IS_TRAINEE;
+if (IS_READER) {
+  document.documentElement.classList.add('tp-ro');
+  const CHANGES = '[data-gmove],[data-gown],[data-gfree],[data-gchip],[data-gcard],[data-mk],[data-mrm],[data-m],[data-rel],[data-cbset],[data-cblen],[data-stlink],#applyset,#rebuild,#cbdeal,#sdeal,#build,.tcard.own,.tcard.lib,.cbpill,a[href^="28_tp_point_sets"]';
+  ['click', 'dragstart', 'drop', 'change', 'input', 'keydown'].forEach(ev => document.addEventListener(ev, e => {
+    const t = e.target && e.target.closest && e.target.closest(CHANGES);
+    if (t && !(ev === 'keydown' && e.key === 'Tab')) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true));
+  // the fields that would change a set or a length are shown as plain values, not as boxes that refuse
+  new MutationObserver(() => document.querySelectorAll('#app select, #app input, #app textarea').forEach(f => { f.disabled = true; }))
+    .observe(document.documentElement, { childList: true, subtree: true });
+}
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -1224,6 +1244,7 @@ function setsMoved(gs){
   });
 }
 function build(keepEdits){
+  if (IS_READER) return;   // R5
   const gs = groups();
   const lib = library();
   /* Carry forward everything this version does not know about. A build used to
@@ -1284,6 +1305,7 @@ function build(keepEdits){
 }
 
 function persist(word){
+  if (IS_READER) return;   // R5: a reader's link saves nothing
   /* A SILENT CATCH LIES TO THE TUTOR. This swallowed every failure, so a save
      that never happened still lit the button up as Applied and said "Built
      from the sets" -- Ramy pressed Apply five times on 4 Oct 2026 against a
@@ -1516,6 +1538,7 @@ function wireMats(){
       else if (k === 'bookRef') { c.book = c.book || {}; c.book.ref = v; }
       else if (k === 'bookPage') { c.book = c.book || {}; c.book.page = v; }
       else if (k === 'audioUrl') { c.audio = c.audio || {}; c.audio.url = v; }
+      if (IS_READER) return;   // R5
       c.edited = true;
       try { localStorage.setItem(KEY, JSON.stringify(P)); } catch(e) {}
       const st = document.querySelector('.status'); if (st) st.textContent = 'Saved';
@@ -1979,11 +2002,12 @@ function renderCore(){
   /* THE TOP IS THE BOARD (Ramy, 30 Oct 2026, beside the spec pack's
      tp-points-and-sets-mockup.html): one line, then the Courseboard. The
      Getting to know you door and the rotation note sit under the board. */
-  const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${(IS_TRAINEE || VIEW_AS) ? '' :
-    '<p class="lede">Choose the TP point set each group uses, then deal each trainee their lessons. The order stays balanced; your changes stay yours.</p>'}`;
+  const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${(IS_TRAINEE || VIEW_AS) ? '' : IS_READER
+    ? '<p class="lede">The TP point set each group uses and the lessons dealt to each trainee. This page is read-only on your link.</p>'
+    : '<p class="lede">Choose the TP point set each group uses, then deal each trainee their lessons. The order stays balanced; your changes stay yours.</p>'}`;
   const gtky = IS_TRAINEE ? '' : '<a class="gtkydoor" href="31_getting_to_know_you.html?view=bank"><span class="gk-k">The first afternoon</span><b>Getting to know you: the activities</b><span class="gk-l">Connect’s bank of short first-lesson activities, three for each level. Each trainee picks one before day one.</span><span class="gk-go">Open the activities</span></a>';
   const gridLede = (IS_TRAINEE || VIEW_AS) ? '' :
-    `<p class="gridlede" style="margin:0 0 6px;"><button type="button" class="btn quiet" onclick="printMap()">Print the practice map</button></p><p class="lede gridlede">The lesson type for each trainee, TP 1 to ${TPS}. It deals so nobody in a teaching set teaches the same type on the same day and nobody meets a type twice within a level. Change any cell; the check below reads what is on the page, not what was generated. The last two TPs are the trainees\u2019 own on the planning grid.</p>`;
+    `<p class="gridlede" style="margin:0 0 6px;"><button type="button" class="btn quiet" onclick="printMap()">Print the practice map</button></p><p class="lede gridlede">The lesson type for each trainee, TP 1 to ${TPS}. It deals so nobody in a teaching set teaches the same type on the same day and nobody meets a type twice within a level. ${IS_READER ? '' : 'Change any cell; the check below reads what is on the page, not what was generated. '}The last two TPs are the trainees\u2019 own on the planning grid.</p>`;
 
   if (IS_TRAINEE || VIEW_AS) {
     /* A TUTOR'S VIEW OF THE TRAINEE'S PAGE (Ramy, 21 Oct 2026). The same page,

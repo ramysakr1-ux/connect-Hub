@@ -40,6 +40,14 @@ window.HubStore = (function(){
   function akey(){ try { return localStorage.getItem('hub:a') || ''; } catch (e) { return ''; } }
   function vtoken(){ try { return localStorage.getItem('hub:v') || ''; } catch (e) { return ''; } }
   function passId(){ try { return sessionStorage.getItem('hub:p') || ''; } catch (e) { return ''; } }
+  /* THE PAGE KEEPS THE LINK IT OPENED WITH (1 Nov 2026, the role-by-role review's R1). The links live in this browser's
+     shared storage, so opening another person's or another course's link in a second tab changed what an older page
+     sent: its next save went out under the new link (trainee A's plan with trainee B's token, course A's settings with
+     course B's key). The page now remembers its link as it loads; once the stored link differs, it saves nothing and
+     says to reload. Reads still answer, so the page does not break while it says so. */
+  function linkNow(){ return [token(), key(), akey(), vtoken()].join('|'); }
+  var BOUND = linkNow();
+  function moved(){ return linkNow() !== BOUND; }
   /* THE PIN (v87, 15 Oct 2026). Course admin can put a PIN on a trainee's
      link and one on the tutor link; the store then refuses every call
      without it. The PIN this device knows rides on each call; when the store
@@ -91,6 +99,7 @@ window.HubStore = (function(){
   async function call(body, timeoutMs){
     var payload = Object.assign({}, body);
     if (!payload.owner && !READS[payload.op] && isDemo()) return { demo: true, saved: true };
+    if (!payload.owner && !READS[payload.op] && moved()) throw new Error('Another Lite link was opened in this browser since this page loaded. Reload this page before saving, so your work goes to the right place.');
     // An owner call carries its own credential and nothing else. The console
     // used to pick up whatever link this browser had opened last -- an
     // assessor key from a pack, say -- and the store, seeing the assessor key
@@ -184,7 +193,9 @@ window.HubStore = (function(){
     assessorLink: function(){ return call({ op: 'assessorLink' }); },
     rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
     assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
-    rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} return true; }); },
+    rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} BOUND = linkNow(); return true; }); },
+    /* true once another link has replaced this page's in the browser (R1); hub-sync asks before it schedules or beacons */
+    moved: moved,
     /* PINs (v87, 15 Oct 2026): people choose their own on first open (the
        choose flow above). Course admin sees who has one and gives a trainee
        who lost theirs a NEW link; the old token dies with its PIN. */

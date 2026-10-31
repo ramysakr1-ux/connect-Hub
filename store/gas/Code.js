@@ -113,6 +113,16 @@ function comingFor_(courseId) {
   (reg.students || []).forEach(function (s) { if (!s) return; var r = (s.replies || {})[nx.day]; if (r && r.coming === 'yes') yes++; else if (r && r.coming === 'no') no++; else none++; });
   return { day: nx.day, tp: nx.tp, label: nx.label || '', from: nx.from, yes: yes, no: no, noAnswer: none, total: yes + no + none };
 }
+/* THE TIMETABLE A NON-TUTOR IS SENT (1 Nov 2026, the role-by-role review's R4). The record holds the published days and,
+   beside them, the tutor's unpublished changes (draft); before the first publish the whole record is the tutors' work in
+   progress. The pages hid the draft, but hiding is not withholding: a trainee, volunteer or assessor is now sent the
+   published timetable only, without its draft, and nothing before it is published. */
+function timetableFor_(tt, tutor) {
+  if (tutor || !tt) return tt;
+  if (!tt.published) return { published: false };
+  var out = {}; Object.keys(tt).forEach(function (k) { if (k !== 'draft') out[k] = tt[k]; });
+  return out;
+}
 function withoutVolunteerEmails_(reg, strip) {
   if (!strip || !reg || !reg.students) return reg;
   var out = {}; Object.keys(reg).forEach(function (k) { out[k] = reg[k]; });
@@ -1481,14 +1491,14 @@ case 'inbox': {
                                           names for its volunteer students on Course admin -- whoever is in
                                           charge of them -- never a tutor. Name and address only. */
                                        volunteerContact: (vset.volunteerContact && vset.volunteerContact.email) ? { name: vset.volunteerContact.name || '', email: vset.volunteerContact.email } : null },
-                           timetable: courseRead_(course.id, 'timetable'),
+                           timetable: timetableFor_(courseRead_(course.id, 'timetable'), false),
                            shared: courseRead_(course.id, 'shared') } };
       }
       /* The course's own id rides along for a tutor: the register mints a
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
+      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
       if (tutor) boot.course.courseFeedback = courseFeedbackFor_(course.id);
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
@@ -1523,6 +1533,11 @@ case 'inbox': {
     // ---- trainee's own records -------------------------------------------
     case 'me': {
       if (!me) throw new Error('No token');
+      /* A TRAINEE'S OWN RECORD, FOR THE TRAINEE ONLY (1 Nov 2026, the role-by-role review's R2). 'me' read the trainee
+         from the token alone, so a tutor's or assessor's key sent beside a trainee's token returned the trainee's whole
+         record, the private notebook and (to the assessor) the about record with it, which 'get' refuses. Readers read
+         through 'get' and the roster, with their own limits; 'me' is the trainee's door. */
+      if (reader) throw new Error('Not yours to read');
       return { token: me.token, name: me.name, group: me.group, email: me.email || '', records: recordsFor_(course.id, me.token, TRAINEE_READS) };
     }
     case 'get': {
@@ -1596,7 +1611,7 @@ case 'inbox': {
     // ---- course-level, readable by all on the course, written by tutors ----
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
-      var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: courseRead_(course.id, 'timetable'), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? courseRead_(course.id, 'volunteers') : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
+      var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
       if (tutor) cres.courseFeedback = courseFeedbackFor_(course.id);
       /* briefs: every version of each assignment brief, by its key, so the marking page opens the one an attempt answered (R30, 31 Oct 2026) */
       if (tutor || assessor) cres.briefs = courseRead_(course.id, 'briefs') || null;

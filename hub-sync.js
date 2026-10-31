@@ -335,7 +335,11 @@
 
   function payloadFor(job){ var pl = Object.assign({}, job); if (key()) pl.key = key(); return pl; }
   function key(){ return S.key(); }
-  function schedule(id, job){ queue[id] = job; remember(id, job); clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy'); }
+  function schedule(id, job){
+    /* R1 (1 Nov 2026): a page whose link has been replaced in this browser saves nothing, not even into its ledger */
+    if (S.moved && S.moved()) { status('Not saved \u2014 another Lite link was opened in this browser. Reload this page.', 'error'); return; }
+    queue[id] = job; remember(id, job); clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy');
+  }
   /* One flush at a time. Each flush used to start the moment it was asked,
      so a Return clicked while the last autosave was still on its way sent the
      returned record alongside the draft, and Apps Script finished them in
@@ -377,6 +381,7 @@
   window.HubSync = { flushNow: function(wait){ var f = flush(); return wait ? f : Promise.race([f, new Promise(function(r){ setTimeout(r, 2500); })]); }, mode: mode };
   function flushBeacon(){
     if (DEMO) { queue = {}; clearTimeout(timer); timer = null; return; }
+    if (S.moved && S.moved()) return;   // R1: the beacon never carries another link's credentials; the ledger keeps the work
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     Object.keys(jobs).forEach(function(k){
       var body = JSON.stringify(payloadFor(jobs[k]));
