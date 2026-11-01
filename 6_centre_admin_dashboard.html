@@ -1563,12 +1563,18 @@ function readyHTML(nTrainees){
      and then you check it. And then you send the links"; "after TP points, it should be the last card"). The tab is now
      the last one, so every line is something that should be done by the time you reach it: the settings, the
      assignments, the timetable, the TP points, and last of all the trainees on the roster. */
+  /* ONE AGREEMENT LINE (Ramy, 1 Nov 2026: "should be just one agreement"). Connect's agreement leaves refunds and facilities
+     to the center (Handbook 6.3 asks for both), so when those two are empty the same line says so; a center that links its
+     own document has nothing to write here. And the assignments are never "still to do": a course gets Connect's four by
+     default and editing them is optional, so the line is always ready and says which set it is. */
+  const ownAgr = !!String(((cs.docs || {}).docAgreement) || '').trim();
+  const centreOwnDone = ownAgr || AGR_CENTRES_OWN.every(k => String(agr[k] || '').trim());
+  const agrText = !hasAgr ? 'The candidate agreement, for them to sign on their first visit'
+    : (centreOwnDone ? 'The candidate agreement, for them to sign on their first visit' : 'The candidate agreement: your refunds and facilities are still to write');
   const items = [
     [!!(cs.courseName && cs.start && cs.end), 'The course’s name and dates', '#panel-settings', 'settings'],
-    [hasAgr, 'The candidate agreement, for them to sign on their first visit', '#panel-settings', 'settings'],
-    /* Connect's agreement leaves refunds and facilities to the center (Handbook 6.3 asks for both); a center's own linked document is its own business */
-    ...(hasAgr && !String(((cs.docs || {}).docAgreement) || '').trim() ? [[AGR_CENTRES_OWN.every(k => String(agr[k] || '').trim()), 'The agreement’s refunds and facilities, in your center’s own words', '#agreementBlock', 'settings']] : []),
-    [!!w, 'The assignments, as the center sets them', '#panel-assignments', 'assignments'],
+    [hasAgr && centreOwnDone, agrText, hasAgr ? '#agreementBlock' : '#panel-settings', 'settings'],
+    [true, w ? 'The assignments, as your center set them' : 'The assignments: Connect’s, unless you change them', '#panel-assignments', 'assignments'],
     [!!(tt && tt.published), 'The timetable, published', '23_timetable.html', ''],
     [dealt, 'TP points dealt, so each trainee has their first lesson', '24_tp_points.html', ''],
     [nTrainees > 0, 'The trainees on the roster, below', '#storeRoster', '']
