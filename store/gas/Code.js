@@ -1537,7 +1537,8 @@ case 'inbox': {
          from the token alone, so a tutor's or assessor's key sent beside a trainee's token returned the trainee's whole
          record, the private notebook and (to the assessor) the about record with it, which 'get' refuses. Readers read
          through 'get' and the roster, with their own limits; 'me' is the trainee's door. */
-      if (reader) throw new Error('Not yours to read');
+      /* The owner key too (1 Nov 2026, Ramy: "close it"): the console never calls 'me', and Connect's own key does not open a trainee's notebook. */
+      if (reader || owner) throw new Error('Not yours to read');
       return { token: me.token, name: me.name, group: me.group, email: me.email || '', records: recordsFor_(course.id, me.token, TRAINEE_READS) };
     }
     case 'get': {

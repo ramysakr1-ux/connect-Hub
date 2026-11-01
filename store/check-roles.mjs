@@ -164,7 +164,7 @@ check('the assessor writes nothing', OPS.every((op) => ['ping', 'boot', 'me', 'g
 check('nobody opens nothing that names a course', ['boot', 'me', 'course', 'roster', 'get', 'put', 'putCourse', 'ownerCourses', 'stats', 'inbox'].every((op) => matrix[op].nobody !== 'ok'));
 if (ROLES.cross) check('another course\'s tutor key with this course\'s token opens nothing', OPS.every((op) => op === 'ping' || matrix[op].cross !== 'ok'));
 /* The role-by-role review, 1 Nov 2026 (R2-R4) */
-check('a tutor or assessor key beside a trainee token cannot read the me record (R2)', !replies.assessor.me.ok && !replies.tutor.me.ok);
+check('a tutor, assessor or owner key beside a trainee token cannot read the me record (R2)', !replies.assessor.me.ok && !replies.tutor.me.ok && !replies.owner.me.ok);
 const emailIn = (r) => /"email":"[^"]+@/.test(JSON.stringify(((r || {}).result || {})));
 check('the assessor gets the register without emails (R3)', !emailIn({ result: (replies.assessor.course.result || {}).volunteers }) && !emailIn({ result: ((replies.assessor.boot.result || {}).course || {}).volunteers }));
 check('the timetable draft reaches the tutor (R4)', JSON.stringify(replies.tutor.course || {}).includes(DRAFT_MARK));
