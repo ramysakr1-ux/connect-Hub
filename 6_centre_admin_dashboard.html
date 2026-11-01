@@ -699,10 +699,13 @@
        the page opened and could never be anything else -- Lite has one shared
        tutor link and no per-tutor invitation for the app to watch. -->
   <div class="tabs" id="tabs">
+    <!-- ROSTER AND LINKS IS THE LAST STEP (Ramy, 1 Nov 2026: "the roster and links should be the final stage of the course
+         admin, not the second stage after settings ... and then you check it. And then you send the links"). It opens
+         on "Before the links go out", the check, and the links are sent from the same place. -->
     <button class="tab active" data-tab="settings"><span class="dot">1</span>Settings</button>
-    <button class="tab" data-tab="roster"><span class="dot">2</span>Roster and links</button>
-    <button class="tab" data-tab="assignments"><span class="dot">3</span>Assignments</button>
-    <button class="tab" data-tab="observations"><span class="dot">4</span>Observations</button>
+    <button class="tab" data-tab="assignments"><span class="dot">2</span>Assignments</button>
+    <button class="tab" data-tab="observations"><span class="dot">3</span>Observations</button>
+    <button class="tab" data-tab="roster"><span class="dot">4</span>Roster and links</button>
   </div>
 
   <!-- ================= Settings ================= -->
@@ -1285,6 +1288,7 @@ function showTab(key){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===key));
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('panel-'+key).style.display='';
+  if (key === 'roster' && typeof repaintReady === 'function') repaintReady();
 }
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab'); if(!btn) return; showTab(btn.dataset.tab);
@@ -1555,20 +1559,32 @@ function readyHTML(nTrainees){
   const agr = cs.agreement || {};
   const hasAgr = !!(String(((cs.docs || {}).docAgreement) || '').trim() || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(agr[k] || '').trim()));
   const dealt = !!(P && P.groups && Object.keys(P.groups).some(g => Object.keys(P.groups[g] || {}).length));
+  /* ONE LIST, IN THE ORDER YOU WORK (Ramy, 1 Nov 2026: "roster and links should be the final stage of the course admin ...
+     and then you check it. And then you send the links"; "after TP points, it should be the last card"). The tab is now
+     the last one, so every line is something that should be done by the time you reach it: the settings, the
+     assignments, the timetable, the TP points, and last of all the trainees on the roster. */
   const items = [
     [!!(cs.courseName && cs.start && cs.end), 'The course’s name and dates', '#panel-settings', 'settings'],
     [hasAgr, 'The candidate agreement, for them to sign on their first visit', '#panel-settings', 'settings'],
     /* Connect's agreement leaves refunds and facilities to the center (Handbook 6.3 asks for both); a center's own linked document is its own business */
     ...(hasAgr && !String(((cs.docs || {}).docAgreement) || '').trim() ? [[AGR_CENTRES_OWN.every(k => String(agr[k] || '').trim()), 'The agreement’s refunds and facilities, in your center’s own words', '#agreementBlock', 'settings']] : []),
+    [!!w, 'The assignments, as the center sets them', '#panel-assignments', 'assignments'],
     [!!(tt && tt.published), 'The timetable, published', '23_timetable.html', ''],
     [dealt, 'TP points dealt, so each trainee has their first lesson', '24_tp_points.html', ''],
-    [!!w, 'The assignments, as the center sets them', '#panel-assignments', 'assignments'],
     [nTrainees > 0, 'The trainees on the roster, below', '#storeRoster', '']
   ];
   const todo = items.filter(x => !x[0]).length;
   return `<section class="setcard ready"><div class="sectionhead"><h2>Before the links go out</h2><span class="readyn">${todo ? todo + ' still to do' : 'All set'}</span></div>
-    <p class="lede">The course is saved as you type. This is what a trainee meets when their link opens; none of it stops a link being sent.</p>
+    <p class="lede">The course is saved as you type. Check this, then send the links below. This is what a trainee meets when their link opens; none of it stops a link being sent.</p>
     <ul class="readylist">${items.map(([ok, text, href, tab]) => `<li class="${ok ? 'ok' : ''}"><span class="rk">${ok ? 'Ready' : 'Still to do'}</span><span>${text}</span>${ok ? '' : `<a href="${href}"${tab ? ` data-gotab="${tab}"` : ''}>Open</a>`}</li>`).join('')}</ul></section>`;
+}
+/* The panel is drawn when the roster arrives, so a name, a date or an agreement typed afterwards left it showing
+   "Still to do" until the page was reloaded (Ramy, 1 Nov 2026, after Fill in). Redrawn after every save and on
+   opening the Roster tab. */
+function repaintReady(){
+  const el = document.querySelector('section.setcard.ready'); if (!el) return;
+  let n = 0; try { n = (typeof TRAINEE_COUNT === 'number' && TRAINEE_COUNT !== null) ? TRAINEE_COUNT : Object.keys(loadRoster().trainees || {}).length; } catch (e) {}
+  el.outerHTML = readyHTML(n);
 }
 function renderSetup(){
   let cs = null, w = null;
@@ -1812,7 +1828,7 @@ function saveSettings(how){
   const cn = document.getElementById('courseName').value.trim();
   const at = window.hubTimeOf(new Date());
   document.getElementById('settingsStatus').textContent = (how === 'auto' ? 'Saved automatically at ' + at : 'Saved at ' + at) + (cn ? ' \u2014 ' + cn + '.' : '.');
-  renderTitle(); renderSetup();
+  renderTitle(); renderSetup(); repaintReady();
 }
 document.getElementById('saveSettings').addEventListener('click', () => saveSettings('click'));
 let SAVE_T = null;
