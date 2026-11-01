@@ -510,6 +510,25 @@ window.hubCentreRoomOnly = function(){
    that swept the assessor out with them. Read-only is enforced separately, by
    the page's own RO flag and by the store, which refuses every write from an
    assessor key. */
+/* THE FINAL COURSE REPORT'S OWN WORDS (Ramy, 1 Nov 2026: "it should be editable anyway"). The printed headings and
+   lines a center may want in its own words or spelling. Course admin keeps a center's version in settings.reportWording;
+   a box left empty prints these. Read by 16_final_report.html; shown as each box's placeholder in Course admin.
+   WORD FOR WORD the center's end-of-course report template (Ramy, 1 Nov 2026: "Cambridge insists that the final reports
+   should read that way. Word for word"), British spelling included: this is a Cambridge document, not Lite's American. */
+window.HUB_REPORT_WORDING = {
+  areasHeading: 'Achievements in Individual Assessment Areas',
+  intro: 'The grades in this section refer to the two assessment areas in the Cambridge CELTA Syllabus and Assessment Guidelines. Please note that written assignments are graded Pass or Fail. Classroom teaching skills are graded as Pass A, Pass B, Pass or Fail. A full description of topics covered in each area can be found on the Cambridge website (www.cambridgeesol.org)',
+  areaTeaching: 'Preparing, planning and practising teaching',
+  areaWritten: 'Written assignments',
+  overall: 'Overall recommended grade',
+  tutorRole: 'CELTA course Tutor',
+  disclaimer: 'Please note that this is an internal course report and that the final grade has not yet been confirmed by Cambridge English.'
+};
+window.hubReportWord = function(cs, k){
+  var own = cs && cs.reportWording && String(cs.reportWording[k] || '').trim();
+  return own || window.HUB_REPORT_WORDING[k] || '';
+};
+
 window.hubTutorRoomOnly = function(opts){
   var mode = window.HubMode;
   if (mode === 'tutor' || !mode) return false;

@@ -1122,6 +1122,13 @@
     </div>
     </section>
     <section class="setcard">
+    <!-- THE FINAL COURSE REPORT'S WORDING (Ramy, 1 Nov 2026: "it should be editable anyway"). The report prints these
+         headings and lines; a box left empty keeps the wording shown in it (HUB_REPORT_WORDING in hub-shared.js). -->
+    <h3 class="docsh">The final course report</h3>
+    <p class="hintline" style="margin:0 0 12px;">The words printed on each trainee’s final course report. They are the wording of the CELTA end-of-course report template, word for word. Change one only if your center’s own template says it differently. A box left empty prints what it shows.</p>
+    <div class="fields" id="reportWording"></div>
+    </section>
+    <section class="setcard">
     <!-- 7 Oct 2026: one section, last on the tab, for everything that is the
          assessor's -- the date, the six documents the center alone holds, and
          which trainees they will watch. It was three things in three places,
@@ -1324,6 +1331,19 @@ function paintAssessorPicks(chosen){
 /* The four sections Cambridge names for the candidate agreement. The ids are
    the keys, so adding a section means adding a box and nothing else. */
 /* Handbook 6.3's list, in its order (the 7 Oct 2026 audit: the CELTA 5's four were a subset). */
+/* The final course report's wording: one box per line, the default as its placeholder (see HUB_REPORT_WORDING). */
+const REPORT_WORDING_LABELS = { areasHeading: 'Heading over the grades', intro: 'Under that heading', areaTeaching: 'The teaching area', areaWritten: 'The written area',
+  overall: 'The overall line', tutorRole: 'Under each tutor’s signature', disclaimer: 'The line under the grade' };
+function paintReportWording(own){
+  const box = document.getElementById('reportWording'); if (!box || !window.HUB_REPORT_WORDING) return;
+  const e = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  box.innerHTML = Object.keys(window.HUB_REPORT_WORDING).map(k => `<div${k === 'disclaimer' || k === 'areaTeaching' || k === 'areasHeading' || k === 'intro' ? ' class="wide"' : ''}>
+    <label for="rw-${k}">${e(REPORT_WORDING_LABELS[k] || k)}</label>
+    ${k === 'intro' || k === 'disclaimer'
+      ? `<textarea id="rw-${k}" data-rw="${k}" rows="${k === 'intro' ? 4 : 2}" maxlength="600" placeholder="${e(window.HUB_REPORT_WORDING[k])}">${e(own[k] || '')}</textarea>`
+      : `<input type="text" id="rw-${k}" data-rw="${k}" maxlength="200" value="${e(own[k] || '')}" placeholder="${e(window.HUB_REPORT_WORDING[k])}">`}</div>`).join('');
+}
+paintReportWording({});
 const AGREEMENT_FIELDS = ['agrExpectations','agrSpecialRequirements','agrPreCourse','agrAttendance','agrPlagiarism','agrResubmissions','agrSpecialConsideration','agrFromUs','agrComplaints','agrData','agrCentre'];
 /* 7 Oct 2026: Connect's wording on offer, one box or all four. A box with
    the center's own words in it is asked before it is replaced; the rest just
@@ -1601,6 +1621,7 @@ try {
     if(cs.notificationRef) document.getElementById('notificationRef').value = cs.notificationRef;
     if(cs.courseNumber) document.getElementById('courseNumber').value = cs.courseNumber;
     if(cs.agreement) AGREEMENT_FIELDS.forEach(k=>{ if(cs.agreement[k]) document.getElementById(k).value = cs.agreement[k]; });
+    paintReportWording(cs.reportWording || {});
     if (typeof agrButtons === 'function') agrButtons();
     if(cs.docs) DOC_FIELDS.forEach(k=>{ if(cs.docs[k]) document.getElementById(k).value = cs.docs[k]; });
     if (typeof agrPaint === 'function') { AGR_OWN = null; agrPaint('load'); }
@@ -1749,6 +1770,7 @@ function saveSettings(how){
     courseNumber: document.getElementById('courseNumber').value.trim(),
     assessorVisit: [...document.querySelectorAll('.avpick:checked')].map(b=>b.value),
     agreement: AGREEMENT_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
+    reportWording: [...document.querySelectorAll('#reportWording [data-rw]')].reduce((o, el) => { const v = el.value.trim(); if (v) o[el.dataset.rw] = v; return o; }, {}),
     docs: DOC_FIELDS.reduce((o,k)=>{ const v = document.getElementById(k).value.trim(); if (v) o[k] = v; return o; }, {}),
     preCourseConnect: document.getElementById('preCourseConnect').checked,
     gtkyWhen: document.getElementById('gtkyWhen').value.trim(),

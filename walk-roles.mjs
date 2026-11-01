@@ -182,8 +182,11 @@ await step('tutor: settings saved to the store (TR073, the two turn-in lines)', 
   await T.p.fill('#courseStart', '2026-10-05'); await T.p.fill('#courseEnd', '2026-10-30'); await T.p.fill('#tpCount', '8');
   await T.p.fill('#planFrom', '1');   // unset, the plan starts at TP 2 (TP1 is taught from the TP points); this walk plans TP1
   await T.p.fill('#planDueNote', 'Turn in by 6pm the day before you teach'); await T.p.fill('#selfDueNote', 'Turn in before your feedback session');
+  await T.p.fill('#rw-areaTeaching', 'Planning and teaching');   // a center's own wording for the report (1 Nov 2026)
   await T.p.click('#saveSettings'); await settle(T.p, 2500);
   const s = STORE.course.settings || {};
+  must((s.reportWording || {}).areaTeaching === 'Planning and teaching' && !('areaWritten' in (s.reportWording || {})),
+    'the report wording did not save as set: ' + JSON.stringify(s.reportWording));
   must(s.centreNumber === 'TR073' && s.planDueNote && s.selfDueNote && s.courseName === 'C/18 2026', 'store settings: ' + JSON.stringify(s).slice(0, 200));
   return 'store has ' + Object.keys(s).length + ' settings';
 });
@@ -713,8 +716,9 @@ await step('tutor: the final course report, from the grade just saved', async ()
   must(/This is to confirm that\s+Amara Nwosu/.test(body), 'the cover does not confirm her: ' + body.slice(0, 200));
   must(/attended 118 hours of a 120-hour initial teacher training course/.test(body) && /1\.5 hours of assessed classroom-based and online teaching practice across 2 lessons/.test(body)   /* the hours are counted off her two returned TPs, 45 minutes each, since 1 Oct 2026 */, 'hours or mode missing: ' + body.slice(0, 700));
   must(/Ramy Sakr[\s\S]*Pelin Korkmaz[\s\S]*CELTA course Tutor/.test(body), 'signatures missing');
-  must(/Preparing, planning and practi[cs]ing teaching\s+Grade: Pass/.test(body), 'the teaching area grade is not the final grade');
-  must(/Written assignments\s+Grade: (Pass|Fail|\u2014|—)/.test(body), 'the assignments area is missing');
+  must(/Planning and teaching:\s+Grade: Pass/.test(body), 'the teaching area grade is not the final grade, under the center\'s own wording');
+  must(/Written assignments:\s+Grade:/.test(body) && /has not yet been confirmed by Cambridge English/.test(body), 'the template\'s own lines are not on the report');
+  must(/Written assignments:\s+Grade: (Pass|Fail|\u2014|—)/.test(body), 'the assignments area is missing');
   // innerText carries the heading's text-transform, so the heading arrives in capitals
   must(/Performance Descriptor for a Pass Grade/i.test(body) && /continue to need guidance/.test(body), 'the descriptor for the grade is missing');
   must(/A confident, well-prepared teacher/.test(body), 'the overall comment is missing');

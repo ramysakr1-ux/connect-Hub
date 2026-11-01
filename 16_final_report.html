@@ -184,28 +184,28 @@ const T = window.HubTracker;
    listed here so nobody restores them by accident. */
 const DESCRIPTORS = [
   { name: 'Planning',
-    'Pass':   'Trainees can plan effectively with guidance. They can analyze target language adequately and generally select appropriate resources and tasks for successful language and language skills development.',
-    'Pass B': 'Trainees can plan effectively with some guidance. They can analyze target language well and select appropriate resources and tasks for successful language and language skills development.',
-    'Pass A': 'Trainees can plan effectively with minimal guidance. They can analyze target language thoroughly and select appropriate resources and tasks for successful language and language skills development.' },
+    'Pass':   'Candidates can plan effectively with guidance. They can analyse target language adequately and generally select appropriate resources and tasks for successful language and language skills development.',
+    'Pass B': 'Candidates can plan effectively with some guidance. They can analyse target language well and select appropriate resources and tasks for successful language and language skills development.',
+    'Pass A': 'Candidates can plan effectively with minimal guidance. They can analyse target language thoroughly and select appropriate resources and tasks for successful language and language skills development.' },
   { name: 'Teaching',
-    'Pass':   'Trainees can generally deliver effective language and skills lessons, using a variety of classroom teaching techniques with a degree of success.',
-    'Pass B': 'Trainees can deliver effective language and skills lessons, using a variety of classroom teaching techniques successfully.',
-    'Pass A': 'Trainees can deliver effective language and skills lessons, using a variety of classroom teaching techniques successfully.' },
+    'Pass':   'Candidates can generally deliver effective language and skills lessons, using a variety of classroom teaching techniques with a degree of success.',
+    'Pass B': 'Candidates can deliver effective language and skills lessons, using a variety of classroom teaching techniques successfully.',
+    'Pass A': 'Candidates can deliver effective language and skills lessons, using a variety of classroom teaching techniques successfully.' },
   { name: 'Awareness of learners',
-    'Pass':   'Trainees show some awareness of learners and some ability to respond so that learners benefit from the lessons.',
-    'Pass B': 'Trainees show good awareness of learners and can respond so that learners benefit from the lessons.',
-    'Pass A': 'Trainees show very good awareness of learners and can respond so that learners benefit from the lessons.' },
+    'Pass':   'Candidates show some awareness of learners and some ability to respond so that learners benefit from the lessons.',
+    'Pass B': 'Candidates show good awareness of learners and can respond so that learners benefit from the lessons.',
+    'Pass A': 'Candidates show very good awareness of learners and can respond so that learners benefit from the lessons.' },
   { name: 'Reflection',
-    'Pass':   'Trainees can reflect on some key strengths and weaknesses and generally use these reflections to develop their teaching skills.',
-    'Pass B': 'Trainees can reflect on key strengths and weaknesses and generally use these reflections to develop their teaching skills.',
-    'Pass A': 'Trainees can reflect on key strengths and weaknesses and consistently use these reflections to develop their teaching skills.' }
+    'Pass':   'Candidates can reflect on some key strengths and weaknesses and generally use these reflections to develop their teaching skills.',
+    'Pass B': 'Candidates can reflect on key strengths and weaknesses and generally use these reflections to develop their teaching skills.',
+    'Pass A': 'Candidates can reflect on key strengths and weaknesses and consistently use these reflections to develop their teaching skills.' }
 ];
 const OVERALL = {
-  'Pass':   'Trainees’ planning and teaching show satisfactory understanding of English language learning and teaching processes at CELTA level.',
-  'Pass B': 'Trainees’ planning and teaching show good understanding of English language learning and teaching processes at CELTA level.',
-  'Pass A': 'Trainees’ planning and teaching show excellent understanding of English language learning and teaching processes at CELTA level.'
+  'Pass':   'Candidates’ planning and teaching show satisfactory understanding of English language learning and teaching processes at CELTA level.',
+  'Pass B': 'Candidates’ planning and teaching show good understanding of English language learning and teaching processes at CELTA level.',
+  'Pass A': 'Candidates’ planning and teaching show excellent understanding of English language learning and teaching processes at CELTA level.'
 };
-const FAIL_TEXT = 'Trainees’ performance does not match all of the Pass descriptors. Some CELTA assessment criteria are not achieved and/or requirements for written work are not met.';
+const FAIL_TEXT = 'Candidates’ performance does not match all of the Pass descriptors. Some CELTA assessment criteria are not achieved and/or requirements for written work are not met.';
 const CLOSING = {
   'Pass':   'They will continue to need guidance to help them develop and broaden their range of skills as teachers in post.',
   'Pass B': 'They will continue to need some guidance to help them develop and broaden their range of skills as teachers in post.',
@@ -322,6 +322,33 @@ if (!who) {
          29 Sep 2026 -- this clause had survived the six-hours fix). */
       let tutored = lessons > 0;
       try { Object.values(T.tpHistory(who) || {}).forEach(fb => { if (!String((((fb.state || {}).f) || {}).fTutor || '').trim()) tutored = false; }); } catch (e) { tutored = false; }
+      /* THE TEMPLATE'S PARAGRAPH, WORD FOR WORD (Ramy, 1 Nov 2026: "use the template word for word, hours from the
+         course"). The hours are the course's teaching practice on its timetable: every TP session on an open day, time
+         two groups teach side by side counted once (a trainee is in one group), and on a mixed course a session in one
+         of the course's online rooms counted as online. A report prints only for a trainee with a final grade, who has
+         taught Cambridge's six hours (Handbook 9.1.1), so the last sentence is the template's as it stands. Without TP
+         on the timetable there are no hours to state, and the paragraph below, read off the trainee's record, stands. */
+      const course = (function(){
+        let tt = {}; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || '{}') || {}; } catch (e) {}
+        const toMin = hm => { const m = /^(\d{1,2}):(\d{2})/.exec(String(hm || '')); return m ? +m[1] * 60 + +m[2] : null; };
+        const onlineRooms = new Set((cs.onlineRooms || []).map(r => String((r && r.label) || '').trim()).filter(Boolean));
+        /* minute by minute through each day: a minute any TP session runs in counts once, as classroom-based if any
+           session at that minute is in a room, otherwise as online */
+        let room = 0, online = 0;
+        (tt.days || []).filter(d => d && !d.closed).forEach(d => {
+          const mode = new Uint8Array(1440);   // 0 none, 1 online, 2 room
+          (d.sessions || []).filter(x => x && x.k === 'tp').forEach(x => { const a = toMin(x.s), b = toMin(x.e); if (a == null || b == null || b <= a) return;
+            const isOnline = cs.deliveryMode === 'online' || (cs.deliveryMode === 'mixed' && onlineRooms.has(String(x.room || 'Teaching practice').trim()));
+            for (let m = a; m < Math.min(b, 1440); m++) mode[m] = Math.max(mode[m], isOnline ? 1 : 2); });
+          mode.forEach(v => { if (v === 2) room++; else if (v === 1) online++; });
+        });
+        const h = m => String(Math.round((m / 60) * 4) / 4).replace(/\.0$/, '');
+        if (!room && !online) return '';
+        const what = room && online ? `${h(room)} hours of classroom-based and ${h(online)} hours of online teaching practice`
+          : room ? `${h(room)} hours of classroom-based teaching practice` : `${h(online)} hours of online teaching practice`;
+        return `Participants on this course completed ${what}. This included collaborative planning, peer observation and shared evaluation and feedback. Within this framework each participant completed 6 hours of individual teaching which was observed and assessed by an experienced trainer.`;
+      })();
+      if (course) return course;
       const shared = 'This included collaborative planning, peer observation and shared evaluation and feedback' + (tutored ? ', and every assessed lesson was observed and assessed by an experienced trainer.' : '.');
       if (!lessons) return `Teaching practice on this course is assessed throughout. ${shared}`;
       const hrs = mins ? (Math.round((mins / 60) * 10) / 10).toString().replace(/\.0$/, '') : null;
@@ -349,10 +376,10 @@ if (!who) {
         ${cs.start && cs.end ? `<p class="body">from ${esc(longDate(cs.start))} to ${esc(longDate(cs.end))}</p>` : ''}
         <p class="gradelabel">The following provisional grade was awarded</p>
         <div class="badge ${gradeCls(finalGrade)}">${esc(finalGrade)}</div>
-        <p class="disclaimer">This is an internal course report. The final grade is subject to confirmation by Cambridge English.</p>
+        <p class="disclaimer">${esc(hubReportWord(cs, 'disclaimer'))}</p>
         <p class="para">${tpPara}</p>
-        <p class="para">A full report is set out on the reverse of this document.</p>
-        ${tutors.length ? `<div class="signrow">${tutors.map(t => `<div class="signblock"><div class="signature">${esc(t)}</div><div class="signname">${esc(t)}</div><div class="signrole">CELTA course Tutor</div></div>`).join('')}</div>` : ''}
+        <p class="para">A full report can be found on the reverse of this document.</p>
+        ${tutors.length ? `<div class="signrow">${tutors.map(t => `<div class="signblock"><div class="signature">${esc(t)}</div><div class="signname">${esc(t)}</div><div class="signrole">${esc(hubReportWord(cs, 'tutorRole'))}</div></div>`).join('')}</div>` : ''}
       </div>
     </div>
 
@@ -362,11 +389,11 @@ if (!who) {
         ${cs.logo ? `<img src="${esc(cs.logo)}" alt="">` : ''}
       </div>
       <div class="section">
-        <h2>Achievements in Individual Assessment Areas</h2>
-        <p class="intro">These grades refer to the two assessment areas in the Cambridge CELTA Syllabus and Assessment Guidelines. Written assignments are graded Pass or Fail. Classroom teaching skills are graded Pass A, Pass B, Pass, or Fail.</p>
-        <div class="grow"><span class="lab">Preparing, planning and practicing teaching</span><span class="val ${gradeCls(finalGrade)}">Grade: ${esc(word)}</span></div>
-        <div class="grow"><span class="lab">Written assignments</span><span class="val ${assignments === 'Fail' ? 'fail' : assignments === 'Pass' ? 'set' : ''}">Grade: ${esc(assignments)}</span></div>
-        <div class="grow last"><span class="lab">Overall recommended grade</span><span class="val ${gradeCls(finalGrade)}">${esc(finalGrade)}</span></div>
+        <h2>${esc(hubReportWord(cs, 'areasHeading'))}</h2>
+        <p class="intro">${esc(hubReportWord(cs, 'intro'))}</p>
+        <div class="grow"><span class="lab">${esc(hubReportWord(cs, 'areaTeaching'))}:</span><span class="val ${gradeCls(finalGrade)}">Grade: ${esc(word)}</span></div>
+        <div class="grow"><span class="lab">${esc(hubReportWord(cs, 'areaWritten'))}:</span><span class="val ${assignments === 'Fail' ? 'fail' : assignments === 'Pass' ? 'set' : ''}">Grade: ${esc(assignments)}</span></div>
+        <div class="grow last"><span class="lab">${esc(hubReportWord(cs, 'overall'))}:</span><span class="val ${gradeCls(finalGrade)}">${esc(finalGrade)}</span></div>
       </div>
       <div class="section">
         <!-- The descriptors below are THIS CENTRE'S, read off its own report
@@ -376,7 +403,7 @@ if (!who) {
              Descriptor" heading beneath a paragraph citing the Cambridge
              syllabus, so a reader took them for Cambridge's own text (audit,
              29 Sep 2026). The heading now says whose words they are. -->
-        <h2>Performance Descriptor for a ${esc(word)} Grade <span class="whose">as this center describes it</span></h2>
+        <h2>Performance Descriptor for a ${esc(word)} Grade</h2>
         ${banded
           ? `<p class="desc-intro">${esc(OVERALL[word])}</p>` +
             DESCRIPTORS.map(d => `<div class="bullet"><span class="tick">✓</span><span>${esc(d[word])}</span></div>`).join('') +
