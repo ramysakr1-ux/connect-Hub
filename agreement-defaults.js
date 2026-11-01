@@ -13,9 +13,11 @@
 // (same section, last paragraphs) the security of personal information, its
 // sharing with Cambridge, and a signed Candidate Declaration on special
 // consideration -- which 29_candidate_agreement takes at signing.
-// Since the 7 Oct 2026 audit the agreement has a section for each, in the
-// Handbook's order, so a center that fills them all meets 6.3; the booklet's
-// four are among them. Connect has had a full
+// Since 1 Nov 2026 (checked against 6.3 line by line: refunds, deferrals,
+// facilities, technology, online delivery and the course mode had no section)
+// the agreement has a section for every name on 6.3's list, in its order, so a
+// center that fills them all meets 6.3; the booklet's four are among them.
+// Refunds and facilities are the center's own policies and have no wording here. Connect has had a full
 // agreement since August; this is that wording, cut to the four sections
 // (Ramy, 7 Oct 2026: "let's use Connect, and give an option so they can use
 // their own or they can use Connect's. For all the policies").
@@ -67,7 +69,7 @@ window.CONNECT_HUB_AGREEMENT_DEFAULTS = {
     'A candidate who fails one assignment after resubmission may still pass the course on the evidence of the rest, but cannot be awarded a Pass A; a candidate who fails two cannot pass.',
   agrSpecialConsideration:
     'Special consideration is different from a special requirement: it is for something serious and unforeseen that happens during the course — a serious illness, a bereavement, or a technical failure outside your control — and affects your work or your assessment. Tell us at the time, not afterwards. There is a process for taking it into account, and it works far better while the course is running.\n\n' +
-    'If you cannot complete within the course dates, talk to us early. An extension beyond the end of the course can only be granted by Cambridge, in advance, in exceptional circumstances and for at most one month. You can ask to withdraw at any point; we will talk to you before it is actioned.',
+    'If you cannot complete within the course dates, see Extensions and deferrals below, and talk to us early.',
   agrFromUs:
     'From us you can expect tutors qualified and approved by Cambridge; written feedback on every assessed lesson; at least one tutorial on your progress and at least two progress reports, so you will never reach the final week and be surprised; clear deadlines set at the start; and an end-of-course report, which Cambridge requires us to give every candidate.\n\n' +
     'Your tutors are there to teach and assess you. They are not there to decide complaints about themselves; see the next section.',
@@ -77,5 +79,27 @@ window.CONNECT_HUB_AGREEMENT_DEFAULTS = {
   agrData:
     'Your course record is kept on Connect Lite: your lesson plans, self-evaluations, feedback, assignments and CELTA 5, under a private link that is yours alone. Your tutors read it. Your portfolio is shared with Cambridge English for assessment and moderation: the Cambridge assessor reads it during the visit, and Cambridge’s moderators may read it at Grade Review. Nobody else can, and the link stays open for the whole course. We keep the record for six months after the course ends, as Cambridge requires, and then it is deleted, unless you ask us for a copy first.\n\n' +
     'Cambridge English receives your name and your grades, which is how your certificate is issued. Your end-of-course report is issued to you by the center. By signing this agreement you agree to this.',
+  /* THE SIX 6.3 NAMES THAT HAD NO SECTION (1 Nov 2026, the agreement checked against Cambridge). The course mode and
+     contact hours (6.3: centers "are required to include a section"), extensions and deferrals (7.8, 7.9) and the
+     technology are Lite's to write, and Course admin fills the mode and the hours from the course as it drops them in
+     (connectWording). Refunds and facilities are the center's own policies, so they have no wording here: Course admin
+     shows them as still to write until the center has. */
+  agrMode_f2f:
+    'Your course is face-to-face. The input sessions, teaching practice and feedback take place in person at {center}, at the times on the timetable, and all {hours} hours of the course are contact hours with your tutors. You chose this mode when you applied. It does not appear on your certificate, but Cambridge requires your end-of-course report to state it, so that employers can see which course type you took.',
+  agrMode_online:
+    'Your course is online. The input sessions, teaching practice and feedback take place live, in the course’s online rooms, at the times on the timetable. Input is live with your tutors, not recorded, so all {hours} hours of the course are contact hours. You teach your teaching practice lessons online, to real learners. You chose this mode when you applied. It does not appear on your certificate, but Cambridge requires your end-of-course report to state it, so that employers can see which course type you took.',
+  agrMode_mixed:
+    'Your course is mixed mode: some of it takes place in person at {center} and some live in the course’s online rooms, and the timetable shows where each session is. Input is live with your tutors, in the room or online, so all {hours} hours of the course are contact hours. You chose this mode when you applied. It does not appear on your certificate, but Cambridge requires your end-of-course report to state it, so that employers can see which course type you took.',
+  agrDeferrals:
+    'If you cannot finish the course within its dates, talk to us as early as you can.\n\n' +
+    'An extension lets you finish the assessment after the course ends, in exceptional circumstances, if you have completed a substantial part of the course or were granted additional time for a special requirement. The most it allows is one month after the end of the course. We register it with Cambridge in advance, and Cambridge confirms it.\n\n' +
+    'A deferral is for a candidate who has completed part of the course but cannot finish it because of exceptional circumstances. You join a later course, normally starting no later than six months after this one ends (12 months for a part-time course), in the same mode unless you agree otherwise in writing. We consult Cambridge before we agree a deferral. If you have to leave in the first half of the course, we may let you start a new course from the beginning and carry over any assessment you have already passed.\n\n' +
+    'You can ask to withdraw at any point; we will talk to you before it is actioned.',
+  agrTechnology:
+    'Your course record, lesson plans and written assignments are on Connect Lite, which runs in a web browser. You need a laptop or computer with a current browser (Chrome, Safari, Edge or Firefox) and a reliable internet connection. A phone is fine for checking, but plans and assignments are written on a laptop. You also need a word processor or Google Docs for your written work.',
+  agrTechnologyOnline:
+    'For the parts of the course that are online you also need a camera, a microphone or headset, and a quiet space to teach from where you will not be interrupted, and enough confidence with video calls to run a class. If you are unsure about any of this, tell us before the course starts and we will help you practise.',
+  agrRefunds: '',
+  agrFacilities: '',
   agrCentre: ''
 };
