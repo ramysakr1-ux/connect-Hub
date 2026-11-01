@@ -312,7 +312,12 @@
     page.drawText('candidate was given these documents and confirmed reading them.', { x: LEFT, y, size: 8.5, font: f.regular }); y -= 34;
     const block = (title, statement, name, at, ink) => {
       page.drawText(title, { x: LEFT, y, size: 10, font: f.bold }); y -= 15;
-      page.drawText(statement, { x: LEFT, y, size: 8.5, font: f.regular }); y -= 20;
+      /* the confirmation as the booklet words it, whole, wrapped to the page (1 Nov 2026: "word for word") */
+      const words = String(statement).split(/\s+/); let line = '';
+      words.forEach(w => { const t = line ? line + ' ' + w : w;
+        if (f.regular.widthOfTextAtSize(t, 8.5) > 475 && line) { page.drawText(line, { x: LEFT, y, size: 8.5, font: f.regular }); y -= 11.5; line = w; } else line = t; });
+      if (line) page.drawText(line, { x: LEFT, y, size: 8.5, font: f.regular });
+      y -= 20;
       if (at) {
         let sx = LEFT + 12; page.drawText('Signed: ', { x: sx, y, size: 9.5, font: f.regular }); sx += f.regular.widthOfTextAtSize('Signed: ', 9.5);
         if (ink) { const w = drawInk(page, ink, sx, page.getHeight() - y, 240); if (w) sx += w + 8; }
@@ -322,8 +327,10 @@
       else page.drawText('Not confirmed by the candidate.', { x: LEFT + 12, y, size: 9.5, font: f.regular });
       y -= 34;
     };
-    block('Candidate portfolio requirements', 'I confirm that I have understood and accept the requirements for the CELTA portfolio.', d.portfolioSignatureName, d.portfolioConfirmedAt, d.portfolioSignatureInk);
-    block('Cambridge English appeals procedure', 'I confirm that I have read the Cambridge English Appeals Procedure.', d.appealsSignatureName, d.appealsConfirmedAt, d.appealsSignatureInk);
+    /* Cambridge's own two confirmations (CELTA 5, July 2023), from celta5-text.js where the page has it. */
+    const said = k => ((window.CONNECT_HUB_CELTA5_TEXT || []).find(x => x && x.key === k) || {}).confirm;
+    block('Candidate portfolio requirements', said('portfolio') || 'I confirm that I have understood and accept the above requirements for the CELTA portfolio and that without meeting these requirements, it will not be possible for my work on the course to be assessed for the purpose of awarding the certificate. I understand that if my portfolio is not available at the times specified by the centre, I will be considered as having withdrawn from assessment and will not receive a final recommended grade.', d.portfolioSignatureName, d.portfolioConfirmedAt, d.portfolioSignatureInk);
+    block('Cambridge English appeals procedure', said('appeals') || 'I confirm that I have read the Cambridge English Appeals Procedure.', d.appealsSignatureName, d.appealsConfirmedAt, d.appealsSignatureInk);
   }
 
   // ---- the booklet ---------------------------------------------------------
