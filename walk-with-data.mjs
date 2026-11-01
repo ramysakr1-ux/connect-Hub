@@ -40,7 +40,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdtempSync, cpSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, cpSync, existsSync, mkdirSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -51,6 +51,10 @@ if (SHOTS && !existsSync(SHOTS)) mkdirSync(SHOTS, { recursive: true });
 /* ---- the copy, and the dead store ------------------------------------- */
 const DIR = mkdtempSync(join(tmpdir(), 'lite-walk-'));
 cpSync(HERE, DIR, { recursive: true, filter: s => !/node_modules|\.git$|\.git\/|_walk-shots/.test(s) });
+/* The copy is the whole site, docs and films included (1.9 GB): it goes when the walk ends, however it ends. Left behind,
+   21 runs filled the Mac's disk on 1 Nov 2026. */
+process.on('exit', () => { try { rmSync(DIR, { recursive: true, force: true }); } catch (e) {} });
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(130));
 const storePath = join(DIR, 'hub-store.js');
 const store = readFileSync(storePath, 'utf8');
 const dead = store.replace(/var URL = 'https:\/\/script\.google\.com[^']*'/, "var URL = 'http://127.0.0.1:9/dead'");
@@ -221,7 +225,10 @@ const VIEW = process.env.VIEW || '';            // '1' = the foot, 'top' = the t
    no candidate at all -- the store never sends one -- so a candidate screen
    opened on that link has nobody to show. Named here so the run is green
    and anything new stands out. */
-const EXPECTED = new Set(['trainee · 22_fail_letter.html', 'volunteer · 20_celta5.html', 'volunteer · 22_fail_letter.html']);
+/* invite.html is the card a course link is sent as: a title and an Open button, on every link. The visitor count
+   (cloudflareinsights) is refused by the walk's local server and is filtered with the other network noise. */
+const EXPECTED = new Set(['trainee · 22_fail_letter.html', 'volunteer · 20_celta5.html', 'volunteer · 22_fail_letter.html',
+  ...ROLES.map(r => r + ' · invite.html')]);
 
 /* ---- the link each screen is really opened with ------------------------- */
 /* Half the record screens name their subject in the link -- the tutor opens
@@ -325,11 +332,25 @@ for (const role of ROLES) {
     const where = `${role} · ${screen}`;
     if (ONLY && !ONLY.test(where)) continue;
     const ctx = await browser.newContext({ viewport: { width: parseInt(process.env.WIDTH, 10) || 390, height: 860 }, deviceScaleFactor: 1 });
+    /* TWO PAGES READ THE COURSE STRAIGHT FROM THE STORE (1 Nov 2026): the handover and the TP feedback page ask for
+       'course' and 'roster' and wait for the answer, so on the walk's made-up keys they sat on "Loading the course…"
+       for good. Those two reads are answered here from the seed, in the store's shape; every other call still
+       meets the dead store. */
+    await ctx.route('http://127.0.0.1:9/dead', route => {   // the dead store the walk serves (see `dead` above)
+      let req = {}; try { req = JSON.parse(route.request().postData() || '{}') || {}; } catch (e) {}
+      const op = req.op;
+      /* Only a call carrying the seeded key: before the seed, the page has no link and the store would refuse it. */
+      const tutorish = (role === 'tutor' && req.key === 'KEY') || (role === 'assessor' && req.a === 'AKEY');
+      const result = op === 'course' && tutorish ? { settings: SETTINGS, timetable: TIMETABLE, volunteers: VOLUNTEERS, shared: SHARED, observations: {} }
+                   : op === 'roster' && tutorish ? roster : null;
+      if (!result) return route.continue();
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, result }) });
+    });
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => { const t = String(e); if (!/stopping this page on purpose/.test(t)) errs.push('threw: ' + t.slice(0, 120)); });
     page.on('console', c => { if (c.type() === 'error') { const t = c.text();
-      if (!/ERR_UNSAFE_PORT|Failed to load resource|net::|ERR_CONNECTION|ServiceWorker/.test(t)) errs.push('console: ' + t.slice(0, 120)); } });
+      if (!/ERR_UNSAFE_PORT|Failed to load resource|net::|ERR_CONNECTION|ServiceWorker|cloudflareinsights/.test(t)) errs.push('console: ' + t.slice(0, 120)); } });
     try {
       /* HASH='#roster' opens a tab or anchor on the screens walked (8 Oct 2026). */
       await page.goto(`http://127.0.0.1:${PORT}/${screen}${PARAMS[screen] || ''}${process.env.HASH || ''}`, { waitUntil: 'domcontentloaded' });
@@ -355,6 +376,9 @@ for (const role of ROLES) {
         /* a fixed or sticky thing sitting on top of a button */
         /* A thing a tap passes straight through (pointer-events:none -- the
            sync status chip) covers nothing that matters. */
+        /* AT THE FOOT (1 Nov 2026): the notebook pen floats over the page as it scrolls, and anything it sits on at the
+           top scrolls out from under it. A button is truly covered only where the page can scroll no further. */
+        window.scrollTo(0, document.documentElement.scrollHeight);
         const floats = [...body.querySelectorAll('*')].filter(el => {
           const cs = getComputedStyle(el);
           return (cs.position === 'fixed' || cs.position === 'sticky') && cs.pointerEvents !== 'none' && el.offsetHeight && el.offsetWidth;
