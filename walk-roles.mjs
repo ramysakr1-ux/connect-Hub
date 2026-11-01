@@ -713,7 +713,7 @@ await step('tutor: the final course report, from the grade just saved', async ()
   must(/This is to confirm that\s+Amara Nwosu/.test(body), 'the cover does not confirm her: ' + body.slice(0, 200));
   must(/attended 118 hours of a 120-hour initial teacher training course/.test(body) && /1\.5 hours of assessed classroom-based and online teaching practice across 2 lessons/.test(body)   /* the hours are counted off her two returned TPs, 45 minutes each, since 1 Oct 2026 */, 'hours or mode missing: ' + body.slice(0, 700));
   must(/Ramy Sakr[\s\S]*Pelin Korkmaz[\s\S]*CELTA course Tutor/.test(body), 'signatures missing');
-  must(/Preparing, planning and practising teaching\s+Grade: Pass/.test(body), 'the teaching area grade is not the final grade');
+  must(/Preparing, planning and practi[cs]ing teaching\s+Grade: Pass/.test(body), 'the teaching area grade is not the final grade');
   must(/Written assignments\s+Grade: (Pass|Fail|\u2014|—)/.test(body), 'the assignments area is missing');
   // innerText carries the heading's text-transform, so the heading arrives in capitals
   must(/Performance Descriptor for a Pass Grade/i.test(body) && /continue to need guidance/.test(body), 'the descriptor for the grade is missing');
