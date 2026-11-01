@@ -138,7 +138,7 @@ function watch(page, who){
   // reporting that the unsaved-writes guard asked to prompt and headless
   // Chrome, which never has a user gesture, refused to show it. That is the
   // guard working, not the app failing; a real browser shows the prompt.
-  page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|UNSAFE_PORT|favicon|beforeunload' confirmation panel/.test(m.text())) findings.push(`[${who}] console on ${page.url().replace(BASE, '').replace(/\?.*$/, '')} (step ${n}): ${m.text().slice(0, 160)}`); });
+  page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|UNSAFE_PORT|favicon|cloudflareinsights|beforeunload' confirmation panel/.test(m.text())) findings.push(`[${who}] console on ${page.url().replace(BASE, '').replace(/\?.*$/, '')} (step ${n}): ${m.text().slice(0, 160)}`); });
 }
 const PAGES = {};
 async function ctx(who){ const c = await browser.newContext({ viewport: { width: 1340, height: 1000 } }); const p = await c.newPage(); watch(p, who); PAGES[who] = p; return { c, p }; }
@@ -160,6 +160,8 @@ async function step(name, fn){
   n++; try { const note = await fn(); passed++; console.log(`  ok  ${n}. ${name}${note ? ' — ' + note : ''}`); }
   catch (e) { findings.push(`step ${n} (${name}): ${e.message}`); console.log(`  FAIL ${n}. ${name} — ${e.message}`); }
   await snap();
+  /* UNTIL=12 node walk-roles.mjs stops after step 12, to check a fix without the whole walk (1 Nov 2026). */
+  if (process.env.UNTIL && n >= +process.env.UNTIL) { console.log(findings.length ? '\n' + findings.join('\n') : '\nno findings'); process.exit(0); }
 }
 const must = (cond, msg) => { if (!cond) throw new Error(msg); };
 const settle = (p, ms = 1500) => p.waitForTimeout(ms);
@@ -178,6 +180,7 @@ await step('tutor: course admin opens on an empty course', async () => {
 await step('tutor: settings saved to the store (TR073, the two turn-in lines)', async () => {
   await T.p.fill('#courseName', 'C/18 2026'); await T.p.fill('#centreName', 'IH Istanbul'); await T.p.fill('#centreNumber', 'TR073');
   await T.p.fill('#courseStart', '2026-10-05'); await T.p.fill('#courseEnd', '2026-10-30'); await T.p.fill('#tpCount', '8');
+  await T.p.fill('#planFrom', '1');   // unset, the plan starts at TP 2 (TP1 is taught from the TP points); this walk plans TP1
   await T.p.fill('#planDueNote', 'Turn in by 6pm the day before you teach'); await T.p.fill('#selfDueNote', 'Turn in before your feedback session');
   await T.p.click('#saveSettings'); await settle(T.p, 2500);
   const s = STORE.course.settings || {};
@@ -208,11 +211,10 @@ await step('tutor: assignment deadlines set on the wording (one ahead, one alrea
      COURSE order, not Object.keys order, which follows the file. */
   const plain = await T.p.evaluate(() => eval('hubAssignmentOrder(DATA).filter(k => k !== "a5" && DATA[k] && DATA[k].sections && !DATA[k].sections.some(s => s.type === "picker") && DATA[k].sections.some(s => s.type === "text" && !hubIsReference(s)))'));
   assignKey = plain[0]; lateKey = plain[1] || keys.find(k => k !== assignKey);
+  /* The dates moved to the timetable on 29 Oct 2026 (the wording page shows them as a line); the wording page's own
+     updateDue still sets one, at once, the way the timetable does. */
   for (const [k, off] of [[assignKey, 3 * DAY], [lateKey, -2 * DAY]]) {
-    await T.p.evaluate(k => eval(`CURRENT='${k}'; renderList(); renderEditor();`), k); await settle(T.p, 300);
-    const local = await T.p.evaluate(off => HubDue.toLocalInput(new Date(Date.now() + off).toISOString()), off);
-    await T.p.fill('input[type="datetime-local"]', local); await T.p.dispatchEvent('input[type="datetime-local"]', 'change'); await settle(T.p, 300);
-    await T.p.fill('input[type="number"][max="30"]', '5'); await T.p.dispatchEvent('input[type="number"][max="30"]', 'change');
+    await T.p.evaluate(([k, off]) => eval(`CURRENT='${k}'; render(); updateDue(HubDue.toLocalInput(new Date(Date.now() + ${off}).toISOString()));`), [k, off]); await settle(T.p, 500);
   }
   await T.p.evaluate(() => eval('persist()')); await settle(T.p, 2500);
   const w = STORE.course.wording || {};
@@ -265,8 +267,10 @@ await step('tutor: a course still on the superseded criteria adopts the correcte
   must(JSON.stringify(after) === JSON.stringify(expect),
     'store not healed: ' + JSON.stringify({ before, after, expect }));
   must(STORE.course.wording.lsrt.title === 'Language Skills Related Tasks', 'lsrt title still singular');
-  must(STORE.course.wording.lrt.criteria[0].text === 'Analysing language correctly for teaching purposes',
-    'lrt criterion 1 is not the syllabus wording: ' + STORE.course.wording.lrt.criteria[0].text);
+  /* read off the shipped defaults, like the counts above: Lite spells the American way since 26 Oct 2026 ("Analyzing") */
+  const lrt1 = await T.p.evaluate(() => { const c = window.CONNECT_HUB_DEFAULT_WORDING.lrt.criteria[0]; return typeof c === 'string' ? c : c.text; });
+  must(STORE.course.wording.lrt.criteria[0].text === lrt1,
+    'lrt criterion 1 is not the shipped wording: ' + STORE.course.wording.lrt.criteria[0].text);
   // Untouched end to end, so the course gets the whole shipped brief and not
   // just corrected criteria: the reading text, the picker, the three texts.
   const lrtJson = JSON.stringify(STORE.course.wording.lrt);
@@ -345,6 +349,10 @@ await step('tutor: a pasted brief lands in the boxes; returned to her via the st
 /* ===== TRAINEE reads it ===== */
 await step('trainee: her record opens the returned feedback, read-only, landscape', async () => {
   await A.p.goto(`${BASE}4_feedback_returned.html?t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 3500);
+  /* It arrives sealed the first time (the envelope, 30-31 Oct 2026, the specification's R15): no grade until it is opened. */
+  must(!/To standard/.test(await text(A.p)), 'the grade shows before the envelope is opened');
+  must(await A.p.$('#fv2Open'), 'no envelope on the first open');
+  await A.p.evaluate(() => document.getElementById('fv2Open').click()); await settle(A.p, 3800);   // it sits under the record's float bar at this size
   const t = await text(A.p);
   must(/To standard/.test(t) && /Good hook/.test(t), 'feedback not shown: ' + t.slice(0, 200));
   must((await A.p.$$('#content textarea, #content input, #content [contenteditable="true"]')).length === 0, 'editable controls on the record');
@@ -434,7 +442,8 @@ await step('tutor: TP2 returned from the same browser, to a slow store: "Returne
 });
 await step('trainee: both sheets on the desk, the current one in front of the pile', async () => {
   await A.p.goto(`${BASE}4_feedback_returned.html?t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 3500);
-  const t = await text(A.p);
+  if (await A.p.$('#fv2Open')) { await A.p.evaluate(() => document.getElementById('fv2Open').click()); await settle(A.p, 3800); }   // TP2's envelope
+  const t = await A.p.evaluate(() => document.getElementById('content').textContent);   // earlier TPs are folded, so read the text, not what shows
   must(/Clear instructions/.test(t), 'TP2 not shown'); must(/Good hook/.test(t), 'TP1 no longer shown');
   // Newest first: the front sheet is the one at the top of the page, and the
   // earlier ones lie behind it. This asserted the opposite until 26 Sep 2026,
@@ -558,7 +567,10 @@ await step('trainee: assignment shows its deadline, submits to the store', async
   for (let i = 0; i < 6; i++) { const box = await A.p.$('[data-role="decl-check"]:not(:checked)'); if (!box) break; await box.click(); await settle(A.p, 250); }
   const no = await A.p.$('[data-role="ai"][value="no"]'); if (no) { await no.click(); await settle(A.p, 300); }
   must(!(await A.p.$eval('#submitBtn', b => b.disabled)), 'Submit still off: ' + await A.p.$eval('#emptyHint', n => n.textContent).catch(() => ''));
-  await A.p.click('#submitBtn'); await settle(A.p, 500); const c = await A.p.$('.confirm-action'); if (c) await c.click(); await settle(A.p, 3000);
+  await A.p.click('#submitBtn'); await settle(A.p, 800);
+  /* "Before you submit" (the own-work and length check) lists what it found and never stops a submission */
+  const go = await A.p.$('#psGo'); if (go) { await go.click(); await settle(A.p, 500); }
+  const c = await A.p.$('.confirm-action'); if (c) await c.click(); await settle(A.p, 3000);
   const sub = (STORE.trainees[amaraToken].records.assignments || {})[assignKey];
   must(sub && sub.stage === 'submitted', 'not submitted on the store: ' + JSON.stringify(sub && sub.stage));
   must(sub.sub1 && sub.sub1.materialsLink, 'materials link not on the submission');
@@ -655,21 +667,23 @@ await step('tutor: the tracker shows her, with the assignment states', async () 
 });
 await step('tutor: a grade saved to the store', async () => {
   await T.p.goto(tutorUrl('13_grades_report.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  /* Her own row: by this step the course has a second trainee (step 19), and the rows are in the course's order. */
+  const ME = `.cand[data-id="${amaraToken}"]`;
   /* The Classroom shape (25 Sep 2026): the cohort in two tables at the top,
      every trainee down the page. A grade chosen in the cohort table must
      show on the trainee's own row, and the other way round. */
-  const inTable = await T.p.$('.cohort select.grade[data-grade="final"]'); must(inTable, 'no final-grade select in the cohort table');
+  const inTable = await T.p.$(`.cohort select.grade[data-id="${amaraToken}"][data-grade="final"]`); must(inTable, 'no final-grade select in the cohort table');
   await inTable.selectOption('PASS'); await settle(T.p, 300);
-  const onRow = await T.p.$eval('.cand .grow.final select.grade', el => el.value);
+  const onRow = await T.p.$eval(`${ME} .grow.final select.grade`, el => el.value);
   must(onRow === 'PASS', 'the trainee row did not follow the cohort table: ' + onRow);
-  await T.p.selectOption('.cand .grow select.grade[data-grade="provisional"]', 'PASS / PASS B'); await settle(T.p, 300);
-  const inTable2 = await T.p.$eval('.cohort select.grade[data-grade="provisional"]', el => el.value);
+  await T.p.selectOption(`${ME} .grow select.grade[data-grade="provisional"]`, 'PASS / PASS B'); await settle(T.p, 300);
+  const inTable2 = await T.p.$eval(`.cohort select.grade[data-id="${amaraToken}"][data-grade="provisional"]`, el => el.value);
   must(inTable2 === 'PASS / PASS B', 'the cohort table did not follow the trainee row: ' + inTable2);
   // a strength, with its criterion code, and the section's copy button
-  await T.p.click('.cand [data-sec="teachS"] [data-add]'); await settle(T.p, 300);
-  await T.p.fill('.cand [data-sec="teachS"] .pt textarea', 'Establishes good rapport with the group from the outset');
-  await T.p.selectOption('.cand [data-sec="teachS"] .pt select', '1d'); await settle(T.p, 200);
-  const copied = await T.p.evaluate(() => eval('sectionText(ORDER[0].id, "teachS")'));
+  await T.p.click(`${ME} [data-sec="teachS"] [data-add]`); await settle(T.p, 300);
+  await T.p.fill(`${ME} [data-sec="teachS"] .pt textarea`, 'Establishes good rapport with the group from the outset');
+  await T.p.selectOption(`${ME} [data-sec="teachS"] .pt select`, '1d'); await settle(T.p, 200);
+  const copied = await T.p.evaluate(id => eval(`sectionText(${JSON.stringify(id)}, "teachS")`), amaraToken);
   must(copied === 'Establishes good rapport with the group from the outset (1d)', 'section copy text: ' + JSON.stringify(copied));
   await T.p.click('#saveBtn'); await settle(T.p, 3000);
   const g = (STORE.trainees[amaraToken].records.tracker || {}).grades;
@@ -689,10 +703,10 @@ await step('tutor: the final course report, from the grade just saved', async ()
   await T.p.click('#saveSettings'); await settle(T.p, 3000);
   must((STORE.course.settings || {}).tutorNames === 'Ramy Sakr, Pelin Korkmaz', 'tutor names not on the store: ' + JSON.stringify(STORE.course.settings));
   await T.p.goto(tutorUrl('13_grades_report.html'), { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
-  await T.p.fill('.cand [data-field="hoursAttended"]', '118');
-  await T.p.fill('.cand [data-field="overall"]', 'A confident, well-prepared teacher by the end of the course.');
+  await T.p.fill(`.cand[data-id="${amaraToken}"] [data-field="hoursAttended"]`, '118');
+  await T.p.fill(`.cand[data-id="${amaraToken}"] [data-field="overall"]`, 'A confident, well-prepared teacher by the end of the course.');
   await T.p.click('#saveBtn'); await settle(T.p, 3000);
-  const door = await T.p.$eval('.cand .frrow a.btn', a => a.getAttribute('href'));
+  const door = await T.p.$eval(`.cand[data-id="${amaraToken}"] .frrow a.btn`, a => a.getAttribute('href'));
   await T.p.goto(`${BASE}${door}&k=${STORE.key}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
   const body = await text(T.p);
   // The centre's own wording (its Pass A / Pass B templates and a real Pass report, 25 Sep 2026)
@@ -722,7 +736,7 @@ await step('assessor: the final report opens from the pack; the trainee is refus
   /* the pack is doors since 27 Sep 2026: the grades report is one of them,
      and the final report opens from there */
   await S.p.click('a[href="13_grades_report.html"]'); await settle(S.p, 3000);
-  const door = await S.p.$('a[href^="16_final_report.html"]'); must(door, 'no final-report door on the grades report');
+  const door = await S.p.$(`.cand[data-id="${amaraToken}"] a[href^="16_final_report.html"]`);   // hers: the course has two trainees by now must(door, 'no final-report door on the grades report');
   await door.click(); await settle(S.p, 3000);
   must(/This is to confirm that\s+Amara Nwosu/.test(await text(S.p)), 'the assessor could not open the report');
   await A.p.goto(`${BASE}16_final_report.html?id=${encodeURIComponent(amaraToken)}&t=${amaraToken}`, { waitUntil: 'domcontentloaded' }); await settle(A.p, 2500);
