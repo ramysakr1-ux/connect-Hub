@@ -1550,7 +1550,7 @@ function paintDateWarn(){
 }
 ['courseStart', 'courseEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', paintDateWarn); });
 setTimeout(paintDateWarn, 800);
-function readyHTML(nTrainees){
+function readyItems(nTrainees){
   let cs = {}, tt = null, P = null, w = null;
   try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
   try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {}
@@ -1572,13 +1572,17 @@ function readyHTML(nTrainees){
   const agrText = !hasAgr ? 'The candidate agreement, for them to sign on their first visit'
     : (centreOwnDone ? 'The candidate agreement, for them to sign on their first visit' : 'The candidate agreement: your refunds and facilities are still to write');
   const items = [
-    [!!(cs.courseName && cs.start && cs.end), 'The course’s name and dates', '#panel-settings', 'settings'],
-    [hasAgr && centreOwnDone, agrText, hasAgr ? '#agreementBlock' : '#panel-settings', 'settings'],
-    [true, w ? 'The assignments, as your center set them' : 'The assignments: Connect’s, unless you change them', '#panel-assignments', 'assignments'],
-    [!!(tt && tt.published), 'The timetable, published', '23_timetable.html', ''],
-    [dealt, 'TP points dealt, so each trainee has their first lesson', '24_tp_points.html', ''],
-    [nTrainees > 0, 'The trainees on the roster, below', '#storeRoster', '']
+    [!!(cs.courseName && cs.start && cs.end), 'The course’s name and dates', '#panel-settings', 'settings', 'the course name and dates'],
+    [hasAgr && centreOwnDone, agrText, hasAgr ? '#agreementBlock' : '#panel-settings', 'settings', 'the agreement'],
+    [true, w ? 'The assignments, as your center set them' : 'The assignments: Connect’s, unless you change them', '#panel-assignments', 'assignments', 'the assignments'],
+    [!!(tt && tt.published), 'The timetable, published', '23_timetable.html', '', 'the timetable'],
+    [dealt, 'TP points dealt, so each trainee has their first lesson', '24_tp_points.html', '', 'the TP points'],
+    [nTrainees > 0, 'The trainees on the roster, below', '#storeRoster', '', 'the trainees']
   ];
+  return items;
+}
+function readyHTML(nTrainees){
+  const items = readyItems(nTrainees);
   const todo = items.filter(x => !x[0]).length;
   return `<section class="setcard ready"><div class="sectionhead"><h2>Before the links go out</h2><span class="readyn">${todo ? todo + ' still to do' : 'All set'}</span></div>
     <p class="lede">The course is saved as you type. Check this, then send the links below. This is what a trainee meets when their link opens; none of it stops a link being sent.</p>
@@ -3140,6 +3144,23 @@ document.getElementById('storeRoster').addEventListener('change', async e=>{
   try { const res = await window.HubStore.renameTrainee(box.dataset.emailFor, null, null, email); renderStoreRoster(res.trainees); }
   catch(err){ box.disabled = false; alert(err.message); }
 });
+/* A WARNING, NOT A BLOCK, WHEN A LINK IS HANDED OUT TOO EARLY (Ramy, 1 Nov 2026: "if you try to actually send the link, it will
+   tell you ... come back when you have finalized it"; advisory, as R04 has it: nothing here stops a link being sent).
+   The first time in a visit a link is copied, or emailed, while something on the checklist is still open, one box
+   lists what is open and offers Go back or Send anyway. After Send anyway it stays quiet until the page is reopened. */
+var SEND_WARNED = false;
+document.getElementById('storeRoster').addEventListener('click', async e => {
+  if (SEND_WARNED) return;
+  const hit = e.target.closest('[data-copy], #copyRosterList, a.pillbtn.mail'); if (!hit) return;
+  let n = 0; try { n = (typeof TRAINEE_COUNT === 'number' && TRAINEE_COUNT !== null) ? TRAINEE_COUNT : Object.keys(loadRoster().trainees || {}).length; } catch (err) {}
+  const open = readyItems(n).filter(x => !x[0]); if (!open.length) return;
+  e.preventDefault(); e.stopPropagation();
+  const names = open.map(x => x[4] || x[1]);
+  const list = names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0];
+  const ok = await confirmModal(`${open.length === 1 ? 'One thing is' : open.length + ' things are'} still open: ${list}. You can go back and finish ${open.length === 1 ? 'it' : 'them'} first, or send the link anyway. This is asked once.`, 'Send anyway', { cancel: 'Go back' });
+  if (!ok) return;
+  SEND_WARNED = true; hit.click();
+}, true);
 document.getElementById('storeRoster').addEventListener('click', async e=>{
   const S = window.HubStore;
   const l = e.target.closest('#copyRosterList');

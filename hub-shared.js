@@ -368,6 +368,7 @@ window.hubObservationHours = function(records){
           + (want==null ? '' : '<label class="confirm-type"><span></span><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>')
           + '<div class="confirm-actions"><button type="button" class="confirm-cancel">Cancel</button><button type="button" class="confirm-action"></button></div></div>';
         overlay.querySelector('.confirm-message').textContent=message;
+        if(opts.cancel) overlay.querySelector('.confirm-cancel').textContent=opts.cancel;   /* a name for the cancel button, e.g. Go back (1 Nov 2026) */
         var actionBtn=overlay.querySelector('.confirm-action');
         actionBtn.textContent=actionLabel||'Continue';
         var input=overlay.querySelector('.confirm-type input');
