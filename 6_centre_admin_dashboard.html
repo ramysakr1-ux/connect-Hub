@@ -1886,7 +1886,12 @@ function renderContacts(){
   const rows = CONTACTS.concat(SUG.filter(([n, g]) => !haveG.includes(g)).map(([n, g], i) => ({ name: typed[CONTACTS.length + i] || '', email: '', group: g })));
   /* One choice until the roster has groups on it, and it says so (Ramy, 7 Oct
      2026, on an empty course: "the drop down menu does not give a choice"). */
-  const whoSel = (c, i) => `<div class="house-sel"><select class="tc-group" data-i="${i}" title="Whose tutor"><option value="">The whole course</option>${groups.map(g => `<option value="${esc(g)}"${c.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
+  /* GROUPS 1 TO 4 ARE ALWAYS ON OFFER (Ramy, 1 Nov 2026: "as a trainer, you already know how many groups you will have").
+     Trainees go into a fixed menu of Group 1 to 4 on the Roster tab, so the same four are offered here before a single
+     trainee is added, plus any other group name already on the roster or in a saved contact. Only the groups that exist
+     get a suggested empty row; the menu is not a list of rows to fill. */
+  const offered = [...new Set(['1', '2', '3', '4'].concat(groups))].sort();
+  const whoSel = (c, i) => `<div class="house-sel"><select class="tc-group" data-i="${i}" title="Whose tutor"><option value="">The whole course</option>${offered.map(g => `<option value="${esc(g)}"${c.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
   /* Ramy, 30 Sep 2026: the distinction belongs here, where a course is set up,
      and nowhere near a trainee -- "just say course tutor... so the trainees
      don't have to get confused". Cambridge's own MCT and ACT never appear on a
@@ -1912,7 +1917,7 @@ function renderContacts(){
      ${roleSel(c, i)}
      ${whoSel(c, i)}
      <input type="email" class="tc-email" data-i="${i}" value="${esc(c.email)}" placeholder="name@center.org">
-   </div>`).join('') + (groups.length ? '' : '<div class="wide"><small class="muted">The whole course is the only choice until trainees are on the Roster; then each group appears.</small></div>');
+   </div>`).join('') + (groups.length ? '' : '<div class="wide"><small class="muted">Choose the whole course, or one of Groups 1 to 4. Trainees go into the same groups on the Roster tab. A trainee sees their group’s tutor first, then the course’s.</small></div>');
 }
 function readContacts(){
   const names = [...document.querySelectorAll('.tc-name')], emails = [...document.querySelectorAll('.tc-email')], grp = [...document.querySelectorAll('.tc-group')], rol = [...document.querySelectorAll('.tc-role')];
@@ -1988,7 +1993,7 @@ function renderRooms(){
   const have = ROOMS.map(r => r.label);
   const perGroup = ['Teaching practice', 'Tutorials'];
   const rows = ROOMS.concat(SUG.filter(([label, url, group]) => !haveG.includes(label + '|' + group) && !(!perGroup.includes(label) && have.includes(label))).map(([label, url, group]) => ({ label, url, group })));
-  const whoSel = (r, i) => `<div class="house-sel"><select class="or-group" data-i="${i}" title="Whose room"><option value="">The whole course</option>${groups.map(g => `<option value="${esc(g)}"${r.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
+  const whoSel = (r, i) => `<div class="house-sel"><select class="or-group" data-i="${i}" title="Whose room"><option value="">The whole course</option>${[...new Set(['1', '2', '3', '4'].concat(groups))].sort().map(g => `<option value="${esc(g)}"${r.group === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></div>`;
   /* One line each: the room, whose it is, the level, the link, the assessor's tick. */
   document.getElementById('onlineRooms').innerHTML = rows.map((r, i) =>
     `<div class="wide ilrow">
