@@ -342,9 +342,13 @@
         next.t, ok ? 'Open it here, or print the handout.' : 'Not in Connect’s library: it is taught from the center’s own material.', ok ? next.slug : '');
     } else setStrip(true, 'Input sessions', 'The course’s input sessions are done', 'Every session stays in the library below.', '');
     var w = weekOf(now);
+    /* A WEEK WITH NONE, BEFORE THE NEXT ONE (Ramy, 3 Nov 2026, the demo's Friday before: "why does it read no input sessions
+       this week?"). When this week has no session and more are to come, the list shows the week of the next one. */
+    if (next && !list.some(function(x){ return x.date >= w.mon && x.date <= w.sun; })) w = weekOf(next.date);
     var seen = {};
     var week = list.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seen[k]) return false; seen[k] = 1; return true; });
-    $('weekHead').textContent = (w.mon <= now && now <= w.sun) ? 'This week' : 'The week of ' + w.monDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+    var nextMon = weekOf(now).monDate; nextMon.setDate(nextMon.getDate() + 7);
+    $('weekHead').textContent = (w.mon <= now && now <= w.sun) ? 'This week' : w.mon === iso(nextMon) ? 'Next week' : 'The week of ' + w.monDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     $('weekList').innerHTML = week.length ? week.map(function(x){
       var cls = x.date < now ? 'done' : x.date === now ? 'now' : '', cx = !!(x.slug && NAMES[x.slug] != null);
       var name = cx ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug] || x.t) + '</a>' : esc(x.t);
@@ -462,8 +466,11 @@
     else if (next) setStrip(true, 'Next · ' + dayName(next.date, true) + (next.s ? ' · ' + clockOf(next.s, cs) : ''),
       nameOf(next), 'It opens here ' + L.whenText(cs) + '.', '');
     else { setStrip(false); return; }
-    var week = all.filter(function(x){ return x.date >= wk.mon && x.date <= wk.sun; });
-    $('weekHead').textContent = 'This week';
+    var wk2 = wk;
+    if (next && !all.some(function(x){ return x.date >= wk.mon && x.date <= wk.sun; })) wk2 = weekOf(next.date);   /* none this week: the next one's week (3 Nov 2026) */
+    var week = all.filter(function(x){ return x.date >= wk2.mon && x.date <= wk2.sun; });
+    var nm2 = weekOf(now).monDate; nm2.setDate(nm2.getDate() + 7);
+    $('weekHead').textContent = wk2 === wk ? 'This week' : wk2.mon === iso(nm2) ? 'Next week' : 'The week of ' + wk2.monDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     /* One row each: the day, the session, where it stands, in the three columns the strip is laid out in. The rows
        had two spans, so the title fell into the narrow day column and broke a word to a line (31 Oct 2026). A
        session already given is open, so it reads as a link and Given, not dimmed as if it were locked. */
