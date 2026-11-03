@@ -844,6 +844,10 @@
     /* a tutor's or assessor's copy with no trainees in it is never taken as current (3 Nov 2026): the roster only
        arrives with a boot, and a browser that added the trainees from a page has the version and not the roster */
     if (sameCopy && (mode === 'tutor' || mode === 'assessor')) { try { var r0 = parse(current('connect_roster_v1')); if (!r0 || !r0.trainees || !Object.keys(r0.trainees).length) sameCopy = false; } catch (e) {} }
+    /* ...nor one without the course's settings (3 Nov 2026, walking the Connect demo: switching from a trainee back to the tutor
+       left this browser holding the version and not the settings, so the tutor home asked for the course again and the demo
+       bar lost its day). The settings are the course; a copy without them boots. */
+    if (sameCopy && mode !== 'volunteer' && !current('connect_course_settings')) sameCopy = false;
     if (sameCopy && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
     status('Checking the course\u2026', 'busy');
     (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(){ return false; /* any trouble, an older store included: boot as before, and the boot says if the link is dead */ }) : Promise.resolve(false)).then(function(fresh){
