@@ -696,3 +696,27 @@ NOTES['tense-and-aspect'] = '''
 <li>CCQs in Your turn that check the words of the sentence, not the aspect. "Is she painting?" checks nothing about the perfect.</li>
 <li>Stative verbs: anyone who says the continuous is "wrong" with love. The corpus pair shows it is not; it is marked.</li>
 </ul>'''
+
+NOTES['flipped-classroom'] = '''
+<h4>Before</h4>
+<p>Nothing to print; the handout prints from the page. This session is not flipped, on purpose: they meet the idea in the room and are asked at the end what it would have been like the other way round. If your course has the library set to open the day before, say so in part 7; it is the one live example they have.</p>
+<h4>Running it</h4>
+''' + T([
+    (6, 'At school', 'Two columns from their own schooldays, then the swap. Do not define anything yet.'),
+    (5, 'Predict', 'Six statements, true or false, no key. They are the gist task for the reading.'),
+    (12, 'Read', 'Seven parts, seven headings. Alone, then pairs, then Check. The one they argue over: part 3 against part 4.'),
+    (6, 'Check', 'The six against the text, then one sentence without the word flip. Take three aloud.'),
+    (15, 'Flip a page', 'Pairs. Home and class for the Work spread, then the ninety minutes. Push on the order at home: the words before the text, the text before the box.'),
+    (8, 'When they don\'t', 'Four learners, four responses. Marco is the one they want to punish; hold them to the article.'),
+    (8, 'This course', 'Six parts of their own CELTA. The input sessions row is the live one: tell them what your course does.'),
+    (15, 'Your turn', 'A TP of their own, flipped, four boxes. Partners ask about the student who did not open it. Close on the last line of the key: not every lesson wants flipping.'),
+]) + '''
+<h4>The key</h4>
+<p>Under each task. The headings, in order: What is flipped learning; How did it come about; What if the learners don\'t do the work; What is class time used for; Can it apply in ELT; What would be an example; To sum up. The predictions: true, true, false, false, true, false. The four learners: pair her, he does it now, change the flip, carry on. This course: before, in the room, before, in the room, before, in the room.</p>
+<h4>Watch for</h4>
+<ul>
+<li>"Flipped" heard as "online". The input goes home; the lesson is still in the room.</li>
+<li>Plans where everything goes home and the lesson is an exercise check. Class time is for what needs the room: speaking, feedback, the teacher.</li>
+<li>Sending a lead-in home. A prediction task dies if the text has been read.</li>
+<li>The student who did nothing, sent out or shamed. The article is clear: in class, now, or with a partner.</li>
+</ul>'''
