@@ -51,6 +51,7 @@
   .pill{display:inline-flex; align-items:center; font-family:'Karla',sans-serif; font-size:.68rem; font-weight:700; padding:2px 9px; border-radius:999px; border:1px solid var(--sand-line); color:var(--grey); background:var(--paper);}
   .pill.wait{color:var(--teal); border-color:color-mix(in oklab, var(--teal) 35%, var(--paper));}
   .pill.now{color:var(--paper); background:var(--teal); border-color:var(--teal);}
+  .pill.room{color:var(--gold-deep); border-color:color-mix(in oklab, var(--gold-deep) 40%, var(--paper));}   /* a session for the room, not an online course (Ramy, 4 Nov 2026) */
   @media(max-width:640px){ .next{grid-template-columns:1fr;} }
   .back{display:inline-block; margin:0 0 16px; font-size:.84rem; font-weight:600; color:var(--teal); text-decoration:none;} .back:hover{text-decoration:underline; text-underline-offset:3px;}
   .libcard{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--gold); border-radius:var(--r-card); padding:18px 20px 6px; margin:0 0 24px;}
@@ -245,7 +246,7 @@
     <div class="cards">
       <a class="s" href="classroom-management/"><p class="k">Classroom skills</p><h3>Classroom management</h3><p class="m"></p><p class="who">Would you rather, who is talking, the wheel, yes or no, spot the problem, grade your language.</p></a>
       <a class="s" href="error-correction/"><p class="k">Classroom skills</p><h3>Error correction</h3><p class="m"></p><p class="who">Attitudes, the decision flow, types of error, twelve ways to correct, two practice tables.</p></a>
-      <a class="s" href="drama-in-the-elt-classroom/"><p class="k">Classroom skills</p><h3>Drama in the ELT classroom</h3><p class="m"></p><p class="who">Warm-ups, getting started, cooling down, and a party to finish.</p></a>
+      <a class="s" href="drama-in-the-elt-classroom/"><p class="k">Classroom skills</p><h3>Drama in the ELT classroom</h3><p class="m"><span class="pill room">Face-to-face courses</span></p><p class="who">Warm-ups, getting started, cooling down, and a party to finish.</p></a>
     </div>
   </div>
 
@@ -346,7 +347,7 @@
        this week?"). When this week has no session and more are to come, the list shows the week of the next one. */
     if (next && !list.some(function(x){ return x.date >= w.mon && x.date <= w.sun; })) w = weekOf(next.date);
     var seen = {};
-    var week = list.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seen[k]) return false; seen[k] = 1; return true; });
+    var week = list.filter(function(x){ return x.date >= w.mon && x.date <= w.sun; }).filter(function(x){ var k = x.date + '|' + x.s + '|' + (x.slug || x.t); if (seen[k]) return false; seen[k] = 1; return true; });
     var nextMon = weekOf(now).monDate; nextMon.setDate(nextMon.getDate() + 7);
     $('weekHead').textContent = (w.mon <= now && now <= w.sun) ? 'This week' : w.mon === iso(nextMon) ? 'Next week' : 'The week of ' + w.monDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     $('weekList').innerHTML = week.length ? week.map(function(x){
@@ -371,7 +372,9 @@
      or the center's own. */
   function paintWeeks(list, now, cs){
     var box = $('weeksCard'); if (!box) return;
-    var seen = {}, rows = list.filter(function(x){ var k = x.date + '|' + x.s + '|' + x.t; if (seen[k]) return false; seen[k] = 1; return true; });
+    /* One card per page a title names (Ramy, 4 Nov 2026: "by week and by topic, make sure they are obviously the same"):
+       "PPP & guided discovery" is two cards here because it is two dated cards there. */
+    var seen = {}, rows = list.filter(function(x){ var k = x.date + '|' + x.s + '|' + (x.slug || x.t); if (seen[k]) return false; seen[k] = 1; return true; });
     if (!rows.length) { box.hidden = true; $('views').hidden = true; return; }
     var weeks = [], byMon = {};
     rows.forEach(function(x){ var w = weekOf(x.date); if (!byMon[w.mon]) { byMon[w.mon] = { mon: w.mon, sun: w.sun, monDate: w.monDate, items: [] }; weeks.push(byMon[w.mon]); } byMon[w.mon].items.push(x); });

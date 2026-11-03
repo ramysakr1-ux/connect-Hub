@@ -27,6 +27,10 @@ window.InputLib = (function(){
     [/guided practice|less.guided|\bdrill/, 'guided-to-less-guided-practice'],
     [/speaking/, 'teaching-speaking'],
     [/\bexam/, 'teaching-exam-classes'],
+    /* "Lesson planning" alone is the day's planning slot, not the session; it opens nothing (Ramy, 4 Nov 2026: the
+       demo's This week read "Writing the lesson plan" five times). A title that says more, "Intro to lesson planning",
+       "Lesson planning: the plan", still opens it. */
+    [/^(lesson )?planning(\s*[:·–-].*)?$/, ''],
     [/lesson plan|^lp\b/, 'writing-the-lesson-plan'],   /* LP, the timetable's short name (30 Oct 2026) */
     /* the language analysis sheets (28 Oct 2026): Connect's "Language analysis 1", "Analysing language" */
     [/language analysis|analys[iz]ing language|analy[sz]e (the )?language|la sheets?/, 'language-analysis'],
@@ -45,6 +49,7 @@ window.InputLib = (function(){
   function slugsFor(title){
     var t = String(title || '').toLowerCase(), out = [];
     for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(t) && out.indexOf(RULES[i][1]) === -1) out.push(RULES[i][1]);
+    if (out[0] === '') return [];   /* a title the rules say is no session at all */
     return out;
   }
   function rd(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
