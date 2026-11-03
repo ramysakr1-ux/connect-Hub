@@ -109,6 +109,12 @@
     if (t === null) return { has:false, past:false, soon:false, due:'', text:'' };
     now = now || (typeof window !== 'undefined' && window.hubNow ? window.hubNow() : Date.now());
     var ms = t - now, past = ms <= 0;
+    /* ON A COURSE WHOSE DAY IS SET BY HAND (a demo or a presentation, 3 Nov 2026): a deadline that falls on that day
+       stays open all day. The Connect demo's LSRT was due at 11 in the morning of its TP 4 day, and the room, at three
+       in the afternoon, found Submit closed. Only the day is the course's; the clock is the room's. */
+    if (past && typeof window !== 'undefined' && window.hubCourseDay && window.hubCourseDay()) {
+      try { var dz = courseZone(), dd = new Intl.DateTimeFormat('en-CA', dz ? { timeZone: dz } : {}).format(new Date(t)); if (dd >= window.hubCourseDay()) { past = false; ms = Math.max(ms, 1); } } catch (e) {}
+    }
     return {
       has: true, at: t, past: past,
       soon: !past && ms <= DAY,

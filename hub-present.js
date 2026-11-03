@@ -342,8 +342,11 @@
 
   /* Deal the rotation from the two books and release it to both groups, so the trainees see their full TP points. */
   FILL['24_tp_points.html'] = { who: 'tutor', label: 'Fill in', run: async function(){
-    var b = $('build');
-    if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(500); b.click(); for (var w = 0; w < 40 && !document.querySelector('button[data-rel]'); w++) await sleep(250); }
+    /* the Courseboard's Deal is #cbdeal (the Rotation tab's is #build); dealt already, deal again only if nothing is dealt */
+    var b = $('cbdeal') || $('build');
+    var dealt = function(){ var Pp = g('P'); return !!(Pp && Pp.groups && Object.keys(Pp.groups).some(function(k){ return Object.keys(Pp.groups[k] || {}).length; })); };
+    if (b && !dealt()) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(500); b.click(); for (var w = 0; w < 60 && !dealt(); w++) await sleep(250); await sleep(600); }
+    if (!document.querySelector('button[data-rel]')) { var rt = document.querySelector('button[data-tab="rotation"]'); if (rt) { rt.click(); for (var w1 = 0; w1 < 40 && !document.querySelector('button[data-rel]'); w1++) await sleep(250); } }
     var rel = [].slice.call(document.querySelectorAll('button[data-rel][data-on="1"]'));
     if (!rel.length && !document.querySelector('button[data-rel]')) { say('Put the trainees and a TP point set on the course first.'); return; }
     /* THE AUDIO IS BUILT IN (Ramy, 28 Oct 2026: "this is very important ... to show that the audio is built in, that the pages
@@ -517,6 +520,9 @@
     + '@media (max-width:640px){ .hp-bar{top:auto; bottom:84px; border-radius:999px; flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; width:calc(100vw - 24px); scrollbar-width:none;} .hp-bar::-webkit-scrollbar{display:none;} .hp-bar > *{flex:0 0 auto;} .hp-bar .hp-tag{display:none;} body.hp-on{padding-top:0; padding-bottom:150px;} #hpSay{top:auto; bottom:142px;} }';   /* one row on a phone, and room under the page so nothing stays behind it (30 Oct 2026) */
   function paint(){
     var bar = $('hpBar'); if (!bar) return;
+    /* who you are is read again each time the bar is drawn (3 Nov 2026): on a trainee's page the script came in after
+       hub:ready, read the role before the link had settled, and drew the bar without Fill in or a lit button */
+    ROLE = role();
     var c = cs(), today = c.presentToday, ds = days(), tr = trainees(), who = localStorage.getItem('hub:present:who') || '';
     var me = (S.token && S.token()) || '';
     var dayHtml = ROLE === 'tutor' && ds.length
@@ -565,5 +571,6 @@
   }
   window.HubPresent = { paint: paint, fill: FILL, say: say };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
+  setTimeout(paint, 1500);   /* once more when the page has settled */
   document.addEventListener('hub:ready', function(){ ROLE = role(); paint(); });
 })();
