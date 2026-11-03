@@ -6,3 +6,4 @@
 3. Volunteer register: no Fill in on the demo bar. hub-present ran before hub-store.js on that page, so the tutor read as nobody; the role now reads the store each time. The same timing had switched off the step that gives demo volunteers a level and the agreed joining note on that page; it now asks each time too.
 4. Tutor home: the button reads "Pin a notice", then you write an announcement and pin it. Ramy expected "Make an announcement"  Renamed: the button reads Make an announcement.
 5. Input sessions (demo on the Friday before): "No input sessions this week." When this week has none and more are to come, the list now shows the next one's week, headed Next week (or The week of ...). Tutor and trainee views.
+6. Agreement: Read and sign seemed to do nothing for Aiko. It was waiting for the special-requirements answer, said in small grey under the button. Now red and bold, the question's box gets a red edge, and the cursor goes to No.
