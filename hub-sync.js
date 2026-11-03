@@ -826,6 +826,9 @@
       status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
     };
     var sameCopy = !!(V0 && V0.cred === CRED && V0.v && !Object.keys(held).length);
+    /* a tutor's or assessor's copy with no trainees in it is never taken as current (3 Nov 2026): the roster only
+       arrives with a boot, and a browser that added the trainees from a page has the version and not the roster */
+    if (sameCopy && (mode === 'tutor' || mode === 'assessor')) { try { var r0 = parse(current('connect_roster_v1')); if (!r0 || !r0.trainees || !Object.keys(r0.trainees).length) sameCopy = false; } catch (e) {} }
     if (sameCopy && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
     status('Checking the course\u2026', 'busy');
     (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(){ return false; /* any trouble, an older store included: boot as before, and the boot says if the link is dead */ }) : Promise.resolve(false)).then(function(fresh){
