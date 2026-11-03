@@ -2502,7 +2502,8 @@ window.hubTrapFocus = function(dlg, opts){
   var items = function(){ return Array.prototype.filter.call(dlg.querySelectorAll(FOC), function(e){ return e.offsetWidth || e.offsetHeight || e.getClientRects().length; }); };
   var top = dlg; while (top.parentElement && top.parentElement !== document.body) top = top.parentElement;
   var muted = Array.prototype.filter.call(document.body.children, function(e){
-    return e !== top && !e.inert && !e.hidden && e.tagName !== 'SCRIPT' && !(opts.keep && e.matches(opts.keep));
+    /* the Connect demo's bar stays live over any dialog: the presenter moves between roles with it (3 Nov 2026) */
+    return e !== top && e.id !== 'hpBar' && !e.inert && !e.hidden && e.tagName !== 'SCRIPT' && !(opts.keep && e.matches(opts.keep));
   });
   muted.forEach(function(e){ e.inert = true; });
   var first = (opts.focus && dlg.querySelector(opts.focus)) || items()[0];
