@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611031846">
+<link rel="stylesheet" href="hub-tokens.css?v=202611031952">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -661,7 +661,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611031846">
+<link rel="stylesheet" href="hub-house.css?v=202611031952">
 </head>
 <body>
 <div class="board">
@@ -1256,19 +1256,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611031846"></script>
-<script src="hub-store.js?v=202611031846"></script>
-<script src="hub-xlsx.js?v=202611031846"></script>
-<script src="hub-say.js?v=202611031846"></script>
-<script src="agreement-defaults.js?v=202611031846"></script>
-<script src="observation-defaults.js?v=202611031846"></script>
-<script src="hub-shared.js?v=202611031846"></script>
-<script src="hub-rotation.js?v=202611031846"></script>
-<script src="hub-due.js?v=202611031846"></script>
-<script src="hub-sync.js?v=202611031846"></script>
-<script src="hub-notebook.js?v=202611031846"></script>
-<script src="hub-hand.js?v=202611031846"></script>
-<script src="hub-ink.js?v=202611031846"></script>
+<script src="assignment-defaults.js?v=202611031952"></script>
+<script src="hub-store.js?v=202611031952"></script>
+<script src="hub-xlsx.js?v=202611031952"></script>
+<script src="hub-say.js?v=202611031952"></script>
+<script src="agreement-defaults.js?v=202611031952"></script>
+<script src="observation-defaults.js?v=202611031952"></script>
+<script src="hub-shared.js?v=202611031952"></script>
+<script src="hub-rotation.js?v=202611031952"></script>
+<script src="hub-due.js?v=202611031952"></script>
+<script src="hub-sync.js?v=202611031952"></script>
+<script src="hub-notebook.js?v=202611031952"></script>
+<script src="hub-hand.js?v=202611031952"></script>
+<script src="hub-ink.js?v=202611031952"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2520,17 +2520,31 @@ function rosterList(trainees){
   const S = window.HubStore;
   return ['Name\tEmail\tLink'].concat(trainees.map(t => [t.name || '', t.email || '', S.inviteFor('trainee', t.token)].join('\t'))).join('\n');
 }
+let FRESH_PINS = null;
 async function renderStoreRoster(next){
   const box = document.getElementById('storeRoster'); if (!box) return;
   const S = window.HubStore;
   if (!S || !S.isTutor()){ box.innerHTML = ''; return; }
   if (next) ROSTER = next;
+  /* THE ROSTER AT ONCE (3 Nov 2026; Ramy: "the roster loading slowly"). The tab waited for two store calls one after
+     the other, the roster and then the PINs, about seven seconds after the page had opened. This browser's own copy
+     of the course already has every trainee's name, group and email, so the list is drawn from it straight away; the
+     two calls go out together, and the store's answer redraws it when it comes. */
   if (!ROSTER){
-    box.innerHTML = '<p class="lede">Loading the roster from the store…</p>';
-    try { ROSTER = await S.roster(); }
-    catch (err) { box.innerHTML = `<p class="lede brick">${esc(err.message)}</p>`; return; }
+    let local = [];
+    try { const r = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}'); local = Object.keys(r.trainees || {}).map(k => ({ token: k, name: r.trainees[k].name, group: r.trainees[k].group, email: r.trainees[k].email || '' })).filter(t => t.name); } catch (e) {}
+    const fresh = Promise.all([S.roster(), S.pins().catch(() => ({ on: false, tutor: false, trainees: {} }))]);
+    if (local.length) {
+      fresh.then(([r, p]) => { FRESH_PINS = p; renderStoreRoster(r); }).catch(() => {});
+      ROSTER = local; FRESH_PINS = PINS || { on: false, tutor: false, trainees: {} };
+    } else {
+      box.innerHTML = '<p class="lede">Loading the roster from the store…</p>';
+      try { const [r, p] = await fresh; ROSTER = r; FRESH_PINS = p; }
+      catch (err) { box.innerHTML = `<p class="lede brick">${esc(err.message)}</p>`; return; }
+    }
   }
-  try { PINS = await S.pins(); } catch (e) { PINS = { on: false, tutor: false, trainees: {} }; }
+  if (FRESH_PINS) { PINS = FRESH_PINS; FRESH_PINS = null; }
+  else { try { PINS = await S.pins(); } catch (e) { PINS = { on: false, tutor: false, trainees: {} }; } }
   /* One order, everywhere. Course admin showed the roster in the order people
      were ADDED while the dashboard, the tracker, the grades report and the
      assessor pack all sort by name -- so the tutor who typed the six names met
