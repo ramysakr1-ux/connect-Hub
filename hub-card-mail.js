@@ -142,6 +142,22 @@
   }
 
 
+  /* The trainers' card (Ramy, 3 Nov 2026: "give it a name and add it to the drop-down"). The ticket at
+     for-trainers.html, as an email: the film's last page as its picture, one button to the ticket, where the film
+     plays and one door opens the demo course as a tutor. An email cannot play a film, so the picture is the door. */
+  function trainersDoc(letter, ctx) {
+    var url = ctx.ticket || '';
+    var face = (ctx.still
+          ? '<a href="' + esc(url) + '" style="display:block; text-decoration:none;"><img src="' + esc(ctx.still) + '" width="100%" alt="Congratulations, Aiko: the last page of a CELTA course on Connect Lite. Press to watch the film." style="display:block; width:100%; max-width:100%; height:auto; border:0; border-radius:10px;"></a>'
+          : '')
+      + '<p style="font-family:' + SANS + '; font-size:14.5px; line-height:1.65; color:' + C.ink + '; margin:16px 0 0;">One CELTA course, from the lesson to the last day, in a minute and ten seconds. Then open the demo course as a tutor and look around; nothing you do changes a record.</p>'
+      + '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:18px 0 0;"><tr><td align="center" bgcolor="' + C.teal + '" style="border-radius:12px;">'
+      + '<a href="' + esc(url) + '" style="display:inline-block; padding:13px 30px; font-family:' + SANS + '; font-size:16px; font-weight:700; color:#ffffff; text-decoration:none;">Watch the film and open the demo</a>'
+      + '</td></tr></table>';
+    var stub = contact('Questions, or a course of your own:');
+    return page('Connect Lite — for CELTA trainers', letter, wrap(ctx, 'For CELTA trainers', 'Teach the course. Let Lite carry the record.', '', face, stub));
+  }
+
   /* The rates, as a block an email can carry: a center that asked what it
      costs gets the answer in the message, not behind a link. NO FIGURE LIVES
      IN THIS FILE (Ramy, 7 Oct 2026: the rates are not public, and the code
@@ -235,6 +251,7 @@
         '</td></tr></table>'
       : '';
     if (ctx.only === 'film') return filmDoc(letter, ctx);
+    if (ctx.only === 'trainers') return trainersDoc(letter, ctx);
     if (ctx.only === 'price') return priceDoc(letter, ctx);
     var li = function(t){ return '<li style="margin:0 0 3px;">' + esc(t) + '</li>'; };
     var h2 = function(t, top){ return '<h2 style="font-family:' + SERIF + '; font-weight:600; font-size:17px; color:' + C.inkWarm + '; margin:' + (top || 0) + ' 0 4px;">' + esc(t) + '</h2>'; };

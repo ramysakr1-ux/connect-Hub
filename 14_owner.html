@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611031952">
+<link rel="stylesheet" href="hub-tokens.css?v=202611031954">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -263,7 +263,7 @@
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
   .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611031952">
+<link rel="stylesheet" href="hub-house.css?v=202611031954">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -286,10 +286,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202611031952"></script>
-<script src="hub-store.js?v=202611031952"></script>
-<script src="hub-say.js?v=202611031952"></script>
-<script src="hub-card-mail.js?v=202611031952"></script>
+<script src="hub-shared.js?v=202611031954"></script>
+<script src="hub-store.js?v=202611031954"></script>
+<script src="hub-say.js?v=202611031954"></script>
+<script src="hub-card-mail.js?v=202611031954"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -327,7 +327,7 @@ function rateNum(v){ const n = Number(String(v == null ? '' : v).replace(/[^0-9.
 function ratesList(){ const r = ratesSaved(); const list = RATE_ROWS.map(([k, n, label]) => ({ label, n, total: rateNum(r[k]) })); return list.every(x => x.total > 0) ? list : null; }
 /* The film is on every card (Ramy, 25 Oct 2026): the course film unless another link is typed under Settings. */
 function filmLink(){ let v = (ls.get(FILM_KEY) || '').trim(); if (/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i.test(v)) { v = v.replace(/\/film\/(connect-lite-film\.(webm|mp4)|watch\.html)$/i, '/film/course-journey.html'); ls.set(FILM_KEY, v); } return v || base() + 'film/course-journey.html'; }
-function cardKind(){ const v = ls.get(CARD_KIND_KEY); return (v === 'film' || v === 'price') ? v : ''; }
+function cardKind(){ const v = ls.get(CARD_KIND_KEY); return (v === 'film' || v === 'price' || v === 'trainers') ? v : ''; }
 function cardStyle(){ return ls.get(CARD_STYLE_KEY) === 'ticket' ? 'ticket' : 'welcome'; }
 function cardCopyTo(){ return (ls.get(CARD_CC_KEY) || '').trim(); }
 let SHOW_URLS = ls.get(URLS_KEY) === '1';
@@ -352,6 +352,16 @@ const DEFAULT_NOTES = {
     'Rather than describe it, I filmed it. One course, start to finish, in three minutes.',
     '',
     'If it looks useful, reply and I’ll send you the demo: a real course you can open and type in yourself.',
+  ].join('\n'),
+  /* The trainers' card (3 Nov 2026): the ticket at for-trainers.html, the film and one door into the demo. */
+  trainers: [
+    'Hello,',
+    '',
+    'I run CELTA courses, and I built Connect Lite for the people who teach them.',
+    '',
+    'Below is a short film, a minute and ten seconds, and a demo course you can open as a tutor.',
+    '',
+    'If it looks like something your center could use, just reply.',
   ].join('\n'),
   price: [
     'Hello,',
@@ -439,11 +449,14 @@ function cardLink(c){ const film = filmLink(); return base() + 'offer.html?k=' +
 function cardSubject(){
   if (cardKind() === 'film') return 'Connect Lite — a film of a whole CELTA course';
   if (cardKind() === 'price') return 'Connect Lite — what it costs';
+  if (cardKind() === 'trainers') return 'Connect Lite — for CELTA trainers';
   return 'Connect Lite — a real course to look around, and a film';
 }
 async function cardHtml(mint){
   if (cardKind() === 'film') return hubCardMail({ note: demoNote(), film: filmLink(), only: 'film', cardStyle: cardStyle() });
   if (cardKind() === 'price') return hubCardMail({ note: demoNote(), rates: ratesList(), only: 'price', cardStyle: cardStyle() });
+  /* always a ticket: it is the ticket at for-trainers.html, sent */
+  if (cardKind() === 'trainers') return hubCardMail({ note: demoNote(), only: 'trainers', ticket: base() + 'for-trainers.html', still: base() + 'film/share/carry-the-record-still.jpg?v=20261103b', cardStyle: 'ticket' });
   const d = theDemo(); const doors = [];
   if (d) {
     const k = await doorsFor(d);
@@ -608,7 +621,7 @@ function sendCard(){
   return `<div class="card send" id="sendcard">
     <h3>Send Lite to someone</h3>
     <div class="row">
-      <select id="cardKind" aria-label="Which card"><option value="">The offer card</option><option value="film"${kind === 'film' ? ' selected' : ''}>Just the film</option><option value="price"${kind === 'price' ? ' selected' : ''}>Just the price</option></select>
+      <select id="cardKind" aria-label="Which card"><option value="">The offer card</option><option value="film"${kind === 'film' ? ' selected' : ''}>Just the film</option><option value="price"${kind === 'price' ? ' selected' : ''}>Just the price</option><option value="trainers"${kind === 'trainers' ? ' selected' : ''}>The trainers’ card</option></select>
       <input type="email" id="cardTo" placeholder="Their email address" autocomplete="off">
       ${passSelect()}
       <button class="btn primary" type="button" id="cardSend">Send</button>
@@ -621,7 +634,7 @@ function sendCard(){
         <select id="cardStyleSel" aria-label="How the card looks"><option value="welcome">Welcome look</option><option value="ticket"${cardStyle() === 'ticket' ? ' selected' : ''}>Ticket look</option></select>
         <input type="email" id="cardCopyTo" placeholder="A copy to you (optional)" value="${esc(cardCopyTo())}" style="flex:0 1 220px">
       </div>
-      <p class="note">The offer card carries your letter, the four questions, the doors into the demo and the film, the same as the card on the web. Just the film goes to someone who has never seen Lite. Just the price is the only one with figures in it; the rates are under Settings below. Each kind keeps its own letter.</p>
+      <p class="note">The offer card carries your letter, the four questions, the doors into the demo and the film, the same as the card on the web. Just the film goes to someone who has never seen Lite. The trainers’ card is the ticket for CELTA trainers: the one-minute film and one door into the demo, as a tutor. Just the price is the only one with figures in it; the rates are under Settings below. Each kind keeps its own letter.</p>
     </details>
   </div>`;
 }
