@@ -379,6 +379,21 @@
   // and a 2.5 s cap would have let the screen say "Returned" with a 100 KB
   // document still on its way (26 Sep 2026).
   window.HubSync = { flushNow: function(wait){ var f = flush(); return wait ? f : Promise.race([f, new Promise(function(r){ setTimeout(r, 2500); })]); }, mode: mode };
+  /* A QUIET REFRESH (3 Nov 2026). A roster write (Add all, Remove, Rename) leaves this browser's copy behind, and the
+     next page used to boot from scratch: it showed the old copy ("No trainees on the roster yet" on TP points), then
+     reloaded itself a few seconds later, and a click made in between was lost (Ramy: "I have to click four or five
+     times" to get back). The page that wrote now boots the course behind itself, without reloading, so the next page
+     is current the moment it opens. Only what this page has not touched is laid down, as a full boot does. */
+  window.HubSync.refresh = function(){
+    return bootWithRetries().then(function(boot){
+      if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() });
+      var p = plan(boot);
+      if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
+      apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; });
+      rebuildSnapshot();
+      return true;
+    });
+  };
   function flushBeacon(){
     if (DEMO) { queue = {}; clearTimeout(timer); timer = null; return; }
     if (S.moved && S.moved()) return;   // R1: the beacon never carries another link's credentials; the ledger keeps the work

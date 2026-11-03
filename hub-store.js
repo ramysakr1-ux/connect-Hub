@@ -161,7 +161,9 @@ window.HubStore = (function(){
            here left the next page sure it was current, with the roster it had before (the Connect demo's TP points said
            "No trainees on the roster yet" after twelve were added). Those three forget the version: the next page boots. */
         var ROSTER_OPS = { addTrainees: 1, removeTrainee: 1, renameTrainee: 1 };
-        if (out.ver.before && ROSTER_OPS[payload.op]) { try { localStorage.removeItem('hub:ver'); } catch (e2) {} }
+        if (out.ver.before && ROSTER_OPS[payload.op]) { try { localStorage.removeItem('hub:ver'); } catch (e2) {}
+          /* ...and the page that wrote boots the course behind itself (HubSync.refresh), so the next page needs no boot */
+          setTimeout(function(){ try { if (window.HubSync && window.HubSync.refresh) window.HubSync.refresh().catch(function(){}); } catch (e3) {} }, 0); }
         else if (out.ver.before && V && V.cred === cred() && V.v === out.ver.before) verPut({ cred: V.cred, v: out.ver.after, at: V.at });
       } catch (e) {}
     }
