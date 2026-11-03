@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en" class="gating">
+<head>
+<!--
+  Connect Lite — input session: Test-teach-test
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Built on 4 Nov 2026 (Ramy: "I need a test teach test input ... find something on
+  test teach test and then you design the input around it"). The lesson the
+  trainees sit in as learners (the present continuous: the twenty sentences and
+  their responses, the five uses, the ten choices), the stage text, the stages to
+  sort and the ten quotations are the tutor's own handout "Guided Discovery vs
+  TTT"; the thinking behind test-first is Scrivener's (Learning Teaching, 3rd ed.,
+  chapter 7 section 5) and Harmer's "deep-end strategy" (Essential Teacher
+  Knowledge, unit 45). Hand-built like teaching-one-to-one; _house.py hand()
+  adds the notes frame, the gate and the film script.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../library.js"></script>
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Test-teach-test — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  :root{--ok-l:color-mix(in oklab, var(--teal) 10%, transparent); --no-l:color-mix(in oklab, var(--brick) 9%, transparent);}
+  section{padding:0; margin:0 0 14px;}
+  .card{padding:20px 22px 22px;}
+  h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem; margin:20px 0 6px;}
+  h4{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:14px 0 6px;}
+  p{margin:8px 0; font-size:.95rem; line-height:1.6;}
+  .lead{margin:0 0 10px;}
+  ul, ol{margin:8px 0; padding-left:22px; font-size:.95rem;} li{margin:4px 0;}
+  .tip, .note, .key{border-radius:var(--r-control); padding:12px 16px; margin:14px 0; font-size:.9rem; line-height:1.6; background:var(--paper); border:1px solid var(--sand-line);}
+  .tip{border-left:4px solid var(--teal);} .note{border-left:4px solid var(--gold);} .key{border-left:4px solid var(--gold); background:var(--gold-wash); border-color:var(--amber-edge);}
+  .tip b:first-child, .note b:first-child, .key b:first-child{display:block; margin-bottom:3px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600;}
+  .tip b:first-child{color:var(--teal);} .note b:first-child, .key b:first-child{color:var(--gold-deep);}
+  .btn.t{background:var(--teal); color:var(--paper); border-color:var(--teal);} .btn.t:hover{background:var(--teal-lifted); border-color:var(--teal-lifted);}
+  .btn.ghost{background:none;}
+  .btns{display:flex; gap:9px; flex-wrap:wrap; margin-top:12px;}
+  .hidden{display:none;}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .mini{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px;}
+  .mini h4{margin-top:0;} .mini p{font-size:.92rem;}
+  table{width:100%; border-collapse:collapse; margin:12px 0; font-size:.88rem;}
+  th, td{border:1px solid var(--sand-line); padding:8px 12px; text-align:left; vertical-align:top; background:var(--paper);}
+  th{background:var(--gold-wash); color:var(--gold-deep); font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:600;}
+  @media(max-width:780px){ .two{grid-template-columns:1fr;} }
+
+  /* a question with its options: right turns teal, wrong turns brick, Show answers marks them all */
+  .qrow{border-top:1px solid var(--row-line); padding:12px 0;} .qrow:first-child{border-top:0; padding-top:0;}
+  .qrow .q{font-size:.95rem; line-height:1.6; margin-bottom:8px;}
+  .qrow .q i{color:var(--ink);}
+  .opts{display:flex; gap:8px; flex-wrap:wrap;}
+  .opt{background:var(--field); border:1.5px solid var(--sand-line); border-radius:999px; padding:5px 14px; font-size:.82rem; font-weight:700; color:var(--grey); cursor:pointer; min-height:34px; transition:border-color .12s ease; font-family:'Karla',sans-serif;}
+  .opt:hover{border-color:var(--gold);}
+  .opt.good{background:var(--ok-l); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
+  .opt.bad{background:var(--no-l); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
+  .opt.dim{opacity:.45;}
+  .why{margin-top:8px; font-size:.86rem; color:var(--grey); display:none;} .why.show{display:block;}
+
+  /* the lesson the trainees sit in: a pair of sentences, two responses, which goes with which */
+  .pair{border-top:1px solid var(--row-line); padding:12px 0; display:grid; grid-template-columns:1fr 1fr; gap:10px 18px;}
+  .pair:first-child{border-top:0; padding-top:0;}
+  .pair .resp{font-size:.9rem; color:var(--grey); line-height:1.5;} .pair .resp b{color:var(--teal); margin-right:4px;}
+  .pair .sent{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; line-height:1.45;}
+  .pair .sent .n{color:var(--teal); font-weight:700; margin-right:6px; font-family:'Karla',sans-serif; font-size:.85rem;}
+  .pair .opts{margin-top:6px;}
+  @media(max-width:640px){ .pair{grid-template-columns:1fr;} }
+
+  /* the gap text and its word box, as on Language through text versus PPP */
+  .wordbox{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px;}
+  .wordbox span{background:var(--field); border:1px solid var(--sand-line); border-radius:999px; padding:4px 11px; font-size:.84rem;}
+  .gaptext{font-size:.95rem; line-height:2; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 16px; margin:0 0 10px;}
+  .gaptext h4{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:0 0 4px; color:var(--teal);}
+  .gaptext p{margin:0 0 8px;}
+  .gaptext select.blank{min-width:7em;}
+  .choice{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; line-height:1.5;}
+  .shape{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:12px 0;}
+  .shape div{background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 14px; font-size:.9rem; line-height:1.5;}
+  .shape b{display:block; font-family:'Newsreader',Georgia,serif; font-size:1.1rem; color:var(--teal); margin-bottom:4px;}
+  @media(max-width:640px){ .shape{grid-template-columns:1fr;} }
+  .plan .write-area{margin:6px 0 10px;}
+  .plan h4{margin-top:10px;}
+  @media print{ .opt{border-color:#999;} .why{display:none !important;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="chrome">
+    <a class="lockup" href="../index.html" title="The library">
+      <span class="tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"/></svg></span>
+      <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+    </a>
+    <div class="role" id="roleLabel">Trainee</div>
+  </div>
+  <a class="back" href="../index.html">Back to the library</a>
+
+  <header class="header">
+    <p class="eyebrow">Input session · two ways to teach language</p>
+    <h1>Test-teach-test</h1>
+    <p class="sub">A lesson that starts with the task. You sit in one as a learner, then take it apart: what the first test told the teacher, what the teach stage did with it, and what the second test was for. Then you plan one of your own.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#deep">The deep end</a>
+    <a href="#test1">Test</a>
+    <a href="#teach">Teach</a>
+    <a href="#test2">Test again</a>
+    <a href="#name">What just happened</a>
+    <a href="#stages">The stages</a>
+    <a href="#sort">Which stage</a>
+    <a href="#who">Which approach</a>
+    <a href="#when">When it works</a>
+    <a href="#yours">Your turn</a>
+    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+<section id="deep">
+  <div class="card">
+    <div class="stage-title">The deep end <span class="badge">Lead-in</span></div>
+    <p class="lead">Three teachers, three opinions. Which do you agree with? Decide alone, then argue it out in threes.</p>
+    <div id="deepTask"></div>
+    <div class="note"><b>Hold your answer</b>Keep your three decisions. You will come back to them at the end, after you have been thrown in yourself.</div>
+  </div>
+</section>
+
+<section id="test1">
+  <div class="card">
+    <div class="stage-title">Test <span class="badge">You are the learners</span></div>
+    <p class="lead">For the next three parts you are a class of intermediate learners, and your tutor is the teacher. Books closed, no explanations. Each pair of sentences has two responses, <b>a</b> and <b>b</b>. Decide which response goes with which sentence.</p>
+    <div id="pairs"></div>
+    <div class="btns"><button class="btn t" id="pairsCheck">Check</button><button class="btn ghost" id="pairsShow">Show answers</button><span class="feedback" id="pairsFb"></span></div>
+    <p class="lead" style="margin-top:14px">Before anyone explains anything: <b>where did you hesitate?</b> Tell your partner which pairs you were unsure of, and why.</p>
+  </div>
+</section>
+
+<section id="teach">
+  <div class="card">
+    <div class="stage-title">Teach <span class="badge">Still the learners</span></div>
+    <p class="lead">Five of the sentences use the present continuous for five different reasons. Match each sentence to what it is doing.</p>
+    <div id="usesTask"></div>
+    <div class="btns"><button class="btn ghost" id="usesReveal">Show answers</button></div>
+    <div class="tip"><b>Say it in your own words</b>With your partner, give each use a name of your own, in five words or fewer. Which of the five did you not know before the test?</div>
+  </div>
+</section>
+
+<section id="test2">
+  <div class="card">
+    <div class="stage-title">Test again <span class="badge">Last time as learners</span></div>
+    <p class="lead">Choose the better form in each sentence. Then compare with your first test: did you hesitate in the same places?</p>
+    <div id="chooseTask"></div>
+    <div class="btns"><button class="btn ghost" id="chooseReveal">Show answers</button></div>
+  </div>
+</section>
+
+<section id="name">
+  <div class="card">
+    <div class="stage-title">What just happened <span class="badge">Teachers again</span></div>
+    <p class="lead">You have just been through a lesson in three stages. Back in your own seat, answer with a partner, then reveal.</p>
+    <ol>
+      <li>What did the first task tell the teacher that a presentation would not have? <textarea class="write-area" rows="1" aria-label="Question 1"></textarea></li>
+      <li>What did the teacher do with what the first task showed? <textarea class="write-area" rows="1" aria-label="Question 2"></textarea></li>
+      <li>Why was the last task so like the first one? <textarea class="write-area" rows="1" aria-label="Question 3"></textarea></li>
+      <li>Give the three stages a name each. <textarea class="write-area" rows="1" aria-label="Question 4"></textarea></li>
+    </ol>
+    <div class="btns"><button class="btn t revealBtn" data-target="nameKey">Reveal answer</button></div>
+    <div id="nameKey" class="reveal-block">
+      <h4>Test, teach, test</h4>
+      <p><b>1.</b> Who already knew what. Some pairs went in without a thought; others made everyone stop. The teacher found out which of the five uses the class could already handle and which they could not, before teaching any of them.</p>
+      <p><b>2.</b> Taught to the gaps. The uses the class had got right were named and moved past; the ones that caused the hesitation got the time. The teaching came out of your mistakes, not out of a plan written before the teacher had met you.</p>
+      <p><b>3.</b> To measure the difference. The same kind of task, after the teaching, shows the learners and the teacher what has changed. A different kind of task would show something else.</p>
+      <p><b>4.</b> <b>Test</b>, <b>teach</b>, <b>test</b>. Harmer calls the first stage the deep end: the learners are put in the water before they have been taught to swim, and then taught what the swimming showed they needed.</p>
+    </div>
+  </div>
+</section>
+
+<section id="stages">
+  <div class="card">
+    <div class="stage-title">The stages <span class="badge">Fill the gaps</span></div>
+    <p class="lead">The three stages, described. Fill the gaps with words from the box. Two words are not needed.</p>
+    <div class="wordbox" id="gapWords"></div>
+    <div class="gaptext" id="gapTtt">
+      <h4>Test-teach-test</h4>
+      <p><b>Stage 1.</b> The teacher introduces the target language and <select class="blank" data-key="tests"></select> the students’ current knowledge of it. The teacher could do this in <select class="blank" data-key="several"></select> ways: getting the students to select the correct word or structure to complete a sentence from a choice, filling gaps with a suitable word or structure, discussing the differences in meaning between similar sentences with different structures, or finding matching responses for sentences from a choice of several.</p>
+      <p><b>Stage 2.</b> The teacher then uses the <select class="blank" data-key="mistakes"></select> from the first stage to teach or revise the target language. The teacher could do this by getting the students to arrange words or structures on a cline, draw their own <select class="blank" data-key="timelines"></select>, or discuss the answers to concept checking questions on a handout.</p>
+      <p><b>Stage 3.</b> The teacher then gets the students to do <select class="blank" data-key="further"></select> controlled practice exercises. Having <select class="blank" data-key="learnt"></select> from their correction and had their awareness raised in the teach stage, the students should do the exercises better. They will often do activities like the ones in stage 1. After this controlled stage the teacher will usually go on to freer speaking.</p>
+    </div>
+    <div class="btns"><button class="btn t" type="button" data-check="#gapTtt">Check</button><button class="btn ghost" type="button" id="gapReveal">Show the answers</button><span class="feedback"></span></div>
+  </div>
+</section>
+
+<section id="sort">
+  <div class="card">
+    <div class="stage-title">Which stage? <span class="badge">Sort them</span></div>
+    <p class="lead">Fourteen things a teacher might do. Which stage of a test-teach-test lesson could each one be, and which three have no place in one at all? A test task can be the first test or the controlled second test, so those two share an answer.</p>
+    <div id="sortTask"></div>
+    <div class="btns"><button class="btn ghost" id="sortReveal">Show answers</button></div>
+    <div class="note"><b>The three that do not belong</b>Reading a text for the gist is how a text-based lesson starts, not a test of one structure. A teacher repeating the rules from the front is a lecture, not a teach stage built on what the test showed. Five random sentences test nothing and say nothing: a second test has to let the learners use the language for something.</div>
+  </div>
+</section>
+
+<section id="who">
+  <div class="card">
+    <div class="stage-title">Which approach? <span class="badge">Guided discovery or test-teach-test</span></div>
+    <p class="lead">Ten things teachers have said about these two ways of teaching grammar. Which approach is each one about? Decide with a partner, then check.</p>
+    <div id="whoTask"></div>
+    <div class="btns"><button class="btn ghost" id="whoReveal">Show answers</button></div>
+    <div class="tip"><b>What they share</b>Both put the learners to work before the teacher explains. Guided discovery gives them a text and questions that lead to the rule; test-teach-test gives them a task and teaches from how it went. Neither is for skills lessons: both are ways of teaching grammar or vocabulary.</div>
+  </div>
+</section>
+
+<section id="when">
+  <div class="card">
+    <div class="stage-title">When it works <span class="badge">True or false</span></div>
+    <p class="lead">Decide, then check. Each answer says why.</p>
+    <div id="whenTask"></div>
+    <div class="btns"><button class="btn ghost" id="whenReveal">Show answers</button></div>
+    <div class="shape">
+      <div><b>Test</b>A task the learners cannot do well without the target language. You watch and listen, and note who can do what.</div>
+      <div><b>Teach</b>What the test showed they need. Elicit it from their own attempts: their sentences on the board, a cline, a timeline, CCQs. Skip what they already had.</div>
+      <div><b>Test</b>A task like the first, then something freer. The difference between the two tests is the lesson.</div>
+    </div>
+  </div>
+</section>
+
+<section id="yours">
+  <div class="card plan">
+    <div class="stage-title">Your turn <span class="badge">Plan one</span></div>
+    <p class="lead">In pairs, plan a test-teach-test lesson for a class of elementary adults on <b>prepositions of place</b> (<i>on, in, under, next to, opposite, between</i>). Forty-five minutes. Write each stage, then explain your plan to another pair: they should be able to say what your first test will tell you.</p>
+    <h4>Test</h4>
+    <textarea class="write-area" rows="3" aria-label="The first test" placeholder="The task, and what you will be listening and looking for while they do it"></textarea>
+    <h4>Teach</h4>
+    <textarea class="write-area" rows="3" aria-label="The teach stage" placeholder="What you do with what the first test showed. How you get the language from them, not to them"></textarea>
+    <h4>Test</h4>
+    <textarea class="write-area" rows="3" aria-label="The second test" placeholder="The controlled task, then the freer one. How you will see the difference"></textarea>
+    <div class="btns"><button class="btn t revealBtn" data-target="yoursKey">Reveal answer</button></div>
+    <div id="yoursKey" class="reveal-block">
+      <h4>One way to do it</h4>
+      <p><b>Test.</b> Pairs. Each student has a picture of the same hotel room, and must not show it. The pictures are the same except that five everyday objects are in picture A and not in B, and five others in B and not in A. They describe where their objects are, and draw what the partner describes. You walk round and note what they say: which prepositions they reach for, which they avoid, which they get wrong, and who says <i>in the wall</i> for a picture.</p>
+      <p><b>Teach.</b> Pairs compare pictures and remember how they described each place. Some sentences go on the board, theirs and yours from your notes. The class decides which are right and which are not, and why. You steer, and only settle what the class cannot settle. A quick drawing or the room itself clears up <i>opposite</i> and <i>between</i>. Nothing is taught that the test showed they already had.</p>
+      <p><b>Test.</b> The same task with a different room, and then something freer: describe your own kitchen to your partner, who draws it. You listen for the five objects that went wrong the first time.</p>
+      <p>Scrivener’s own example lesson, in <i>Learning Teaching</i>. His warning with it: a first test that is a free speaking task will throw up problems you did not plan for, which is why teachers tend to try test-teach-test once they know the grammar well enough to teach what comes up.</p>
+      <h4>Back to the deep end</h4>
+      <p>Look at your three decisions from the start. Would you change any of them now?</p>
+    </div>
+  </div>
+</section>
+
+  <p class="sources"><b>Sources.</b> The lesson the trainees sit in (the twenty sentences and their responses, the five uses, the ten choices), the stage text, the stages to sort and the ten quotations are the tutor's own handout, with names changed. The hotel-room lesson and the point about exposure before testing are from Jim Scrivener, <i>Learning Teaching</i>, 3rd edition (Macmillan, 2011), chapter 7 section 5. The deep-end strategy is from Jeremy Harmer, <i>Essential Teacher Knowledge</i> (Pearson, 2012), unit 45. The definition of test-teach-test follows Scott Thornbury and Peter Watkins, <i>The CELTA Course</i>, 2nd edition (Cambridge University Press, 2023).</p>
+
+  <section id="trainer" class="trainer-notes" data-slug="test-teach-test" hidden>
+    <div class="card">
+      <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
+    </div>
+  </section>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var links = Array.prototype.slice.call(document.querySelectorAll('#stickyNav a[href^="#"]:not(.tn-link)'));
+  var secs = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+  function onScroll(){
+    var cur = 0;
+    for (var i = 0; i < secs.length; i++) { if (secs[i].getBoundingClientRect().top <= 140) cur = i; }
+    links.forEach(function(a, i){ a.classList.toggle('on', i === cur); });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  document.querySelectorAll('.revealBtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var box = document.getElementById(b.dataset.target); if (!box) return;
+      var open = box.classList.toggle('shown');
+      b.textContent = open ? 'Hide answer' : 'Reveal answer';
+      if (open) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+
+  /* one task: each item a question with its options; a click says right or wrong; Show answers marks them all */
+  function buildTask(mountId, items, revealId, shared){
+    var host = document.getElementById(mountId); if (!host) return;
+    items.forEach(function(it, i){
+      var row = document.createElement('div'); row.className = 'qrow';
+      var q = document.createElement('div'); q.className = 'q'; q.innerHTML = (items.length > 1 ? (i + 1) + '. &nbsp;' : '') + it.q;
+      var opts = document.createElement('div'); opts.className = 'opts';
+      var why = document.createElement('div'); why.className = 'why'; why.textContent = it.why || '';
+      (it.options || shared).forEach(function(o){
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+        b.addEventListener('click', function(){
+          var right = (o === it.answer);
+          opts.querySelectorAll('.opt').forEach(function(x){ x.classList.remove('good', 'bad', 'dim'); });
+          b.classList.add(right ? 'good' : 'bad');
+          if (right) { opts.querySelectorAll('.opt').forEach(function(x){ if (x !== b) x.classList.add('dim'); }); if (it.why) why.classList.add('show'); }
+        });
+        opts.appendChild(b);
+      });
+      row.appendChild(q); row.appendChild(opts); if (it.why) row.appendChild(why);
+      host.appendChild(row);
+    });
+    var rb = document.getElementById(revealId); if (!rb) return;
+    rb.addEventListener('click', function(){
+      host.querySelectorAll('.qrow').forEach(function(row, i){
+        var it = items[i];
+        row.querySelectorAll('.opt').forEach(function(x){ x.classList.remove('good', 'bad', 'dim'); x.classList.add(x.textContent === it.answer ? 'good' : 'dim'); });
+        var w = row.querySelector('.why'); if (w) w.classList.add('show');
+      });
+    });
+  }
+
+  /* the deep end: no key, so no Show answers; a click only records the choice */
+  var AG = 'Agree', DIS = 'Disagree';
+  (function(){
+    var host = document.getElementById('deepTask');
+    [
+      '“You can’t ask students to use language you haven’t taught them yet. Teach it first, then let them try.”',
+      '“Most of what I teach, half the class already half-knows. I’d rather find that out first than present it to everyone.”',
+      '“A lesson I can’t plan in full before I walk in is a lesson I shouldn’t be teaching.”'
+    ].forEach(function(t, i){
+      var row = document.createElement('div'); row.className = 'qrow';
+      row.innerHTML = '<div class="q">' + (i + 1) + '. &nbsp;<i>' + t + '</i></div><div class="opts"></div>';
+      [AG, DIS].forEach(function(o){ var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+        b.addEventListener('click', function(){ row.querySelectorAll('.opt').forEach(function(x){ x.classList.toggle('good', x === b); x.classList.toggle('dim', x !== b); }); });
+        row.querySelector('.opts').appendChild(b); });
+      host.appendChild(row);
+    });
+  })();
+
+  /* the first test: ten pairs of sentences, two responses each, the tutor's own set with the names changed */
+  var PAIRS = [
+    { a: 'Short stories mostly, and a bit of journalism.', b: 'A shopping list.', s: ['What are you writing?', 'What do you write?'], k: ['b', 'a'] },
+    { a: 'I never realized she was a New Zealander.', b: 'She’ll be here by Friday evening.', s: ['Mei comes from Auckland.', 'Mei’s coming from Auckland.'], k: ['a', 'b'] },
+    { a: 'She’s been posted there for a year.', b: 'Her husband’s French.', s: ['My sister lives in Paris.', 'My sister’s living in Paris.'], k: ['b', 'a'] },
+    { a: 'A comment on your clothes, probably!', b: 'Yes, they never seem to do a scrap of work!', s: ['They’re always talking away in Arabic to each other when I arrive.', 'They always talk away in Arabic to each other when I arrive.'], k: ['b', 'a'] },
+    { a: 'That must look lovely reflected in the pool.', b: 'Yes, it’ll soon be winter!', s: ['The leaves are turning red.', 'The leaves turn red.'], k: ['b', 'a'] },
+    { a: 'I know. It’s so disruptive, and he only lives ten minutes away!', b: 'So there’s no need to worry about him yet, then.', s: ['Tomas always arrives late.', 'Tomas is always arriving late.'], k: ['b', 'a'] },
+    { a: 'Oh, don’t worry, I’ll call back.', b: 'Shouldn’t that be your job?', s: ['Amira’s washing the car.', 'Amira washes the car.'], k: ['a', 'b'] },
+    { a: 'Every year? I try to forget mine.', b: 'Is that an invitation?', s: ['I’m having a party on my birthday.', 'I have a party on my birthday.'], k: ['b', 'a'] },
+    { a: 'About 55 kilos.', b: 'Mum’s parcel.', s: ['What do you weigh?', 'What are you weighing?'], k: ['a', 'b'] },
+    { a: 'OK, so we’ll schedule lunch for twelve thirty.', b: 'So it won’t be a good time to drop in, then.', s: ['They’re usually having lunch at twelve thirty.', 'They usually have lunch at twelve thirty.'], k: ['b', 'a'] }
+  ];
+  (function(){
+    var host = document.getElementById('pairs'), n = 0;
+    PAIRS.forEach(function(p){
+      var row = document.createElement('div'); row.className = 'pair';
+      var left = document.createElement('div'); var right = document.createElement('div');
+      right.innerHTML = '<div class="resp"><b>a</b>' + p.a + '</div><div class="resp"><b>b</b>' + p.b + '</div>';
+      p.s.forEach(function(s, i){
+        n++;
+        var d = document.createElement('div'); d.className = 'sent'; d.innerHTML = '<span class="n">' + n + '</span>' + s;
+        var opts = document.createElement('div'); opts.className = 'opts'; opts.dataset.key = p.k[i];
+        ['a', 'b'].forEach(function(o){ var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+          b.addEventListener('click', function(){ opts.querySelectorAll('.opt').forEach(function(x){ x.classList.remove('good', 'bad', 'dim', 'picked'); }); b.classList.add('picked'); b.style.borderColor = 'var(--gold)'; });
+          opts.appendChild(b); });
+        d.appendChild(opts); left.appendChild(d);
+      });
+      row.appendChild(left); row.appendChild(right); host.appendChild(row);
+    });
+    function mark(show){
+      var right = 0, total = 0;
+      host.querySelectorAll('.opts').forEach(function(o){
+        total++;
+        o.querySelectorAll('.opt').forEach(function(x){ x.style.borderColor = ''; x.classList.remove('good', 'bad', 'dim');
+          if (show) { x.classList.add(x.textContent === o.dataset.key ? 'good' : 'dim'); return; }
+          if (x.classList.contains('picked')) { var ok = x.textContent === o.dataset.key; x.classList.add(ok ? 'good' : 'bad'); if (ok) right++; } });
+      });
+      document.getElementById('pairsFb').textContent = show ? '' : right + ' of ' + total + ' right';
+    }
+    document.getElementById('pairsCheck').addEventListener('click', function(){ mark(false); });
+    document.getElementById('pairsShow').addEventListener('click', function(){ mark(true); });
+  })();
+
+  /* the teach stage: the five uses */
+  var U1 = 'In progress now', U2 = 'A future arrangement', U3 = 'Temporary, for a period', U4 = 'Always doing it (and it annoys me)', U5 = 'Regularly in progress around a time';
+  buildTask('usesTask', [
+    { q: '<i>They’re always talking away in Arabic to each other when I arrive.</i>', answer: U4, why: 'A very frequent action, with always: the speaker is complaining about it.' },
+    { q: '<i>What are you writing?</i>', answer: U1, why: 'An action in progress at the moment of speaking.' },
+    { q: '<i>They’re usually having lunch at twelve thirty.</i>', answer: U5, why: 'An action regularly in progress around a point in time, with usually.' },
+    { q: '<i>My sister’s living in Paris.</i>', answer: U3, why: 'A temporary state for a limited period: she has been posted there.' },
+    { q: '<i>Mei’s coming from Auckland.</i>', answer: U2, why: 'A fixed arrangement in the future.' }
+  ], 'usesReveal', [U1, U2, U3, U4, U5]);
+
+  /* the second test: the better form */
+  buildTask('chooseTask', [
+    { q: '<span class="choice">Sales of electric cars ___ these days.</span>', options: ['increase', 'are increasing'], answer: 'are increasing', why: 'A change in progress around now.' },
+    { q: '<span class="choice">I ___ my mother more or less once a month.</span>', options: ['visit', 'am visiting'], answer: 'visit', why: 'A habit.' },
+    { q: '<span class="choice">I’m out here on the balcony! I ___ the plants.</span>', options: ['water', '’m watering'], answer: '’m watering', why: 'In progress at the moment of speaking.' },
+    { q: '<span class="choice">Oh, sorry, I can’t come. I ___ my mother this weekend.</span>', options: ['visit', '’m visiting'], answer: '’m visiting', why: 'A future arrangement.' },
+    { q: '<span class="choice">In this city people ___ suddenly in front of you on the pavement.</span>', options: ['always stop', 'are always stopping'], answer: 'are always stopping', why: 'A frequent habit the speaker is complaining about.' },
+    { q: '<span class="choice">She ___ around the park every morning at six.</span>', options: ['runs', '’s running'], answer: 'runs', why: 'A routine.' },
+    { q: '<span class="choice">On the coast, tourist numbers ___ dramatically every summer.</span>', options: ['increase', 'are increasing'], answer: 'increase', why: 'A regular, repeated fact: every summer.' },
+    { q: '<span class="choice">If you ___ plants too much, it’s bad for them.</span>', options: ['water', '’re watering'], answer: 'water', why: 'A general truth.' },
+    { q: '<span class="choice">In Thailand people ___ when the national anthem starts playing.</span>', options: ['always stop', 'are always stopping'], answer: 'always stop', why: 'A habit, stated plainly: nobody is complaining.' },
+    { q: '<span class="choice">Don’t ask the trainees then: they ___ around in a last-minute flap at that time.</span>', options: ['usually run', '’re usually running'], answer: '’re usually running', why: 'Regularly in progress around a point in time.' }
+  ], 'chooseReveal');
+
+  /* the stage text */
+  var GAP_WORDS = ['tests', 'several', 'mistakes', 'timelines', 'further', 'learnt', 'marker', 'context'];
+  document.getElementById('gapWords').innerHTML = GAP_WORDS.map(function(w){ return '<span>' + w + '</span>'; }).join('');
+  document.querySelectorAll('#gapTtt select.blank').forEach(function(s){ s.innerHTML = '<option value="">…</option>' + GAP_WORDS.map(function(w){ return '<option>' + w + '</option>'; }).join(''); });
+  document.querySelectorAll('[data-check]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var scope = document.querySelector(btn.dataset.check), right = 0, total = 0;
+      scope.querySelectorAll('select.blank').forEach(function(s){
+        total++; s.classList.remove('ok', 'no'); if (!s.value) return;
+        var ok = s.value.toLowerCase() === s.dataset.key.toLowerCase(); s.classList.add(ok ? 'ok' : 'no'); if (ok) right++;
+      });
+      var fb = btn.parentNode.querySelector('.feedback'); if (fb) fb.textContent = right + ' of ' + total + ' right';
+    });
+  });
+  document.getElementById('gapReveal').addEventListener('click', function(){
+    document.querySelectorAll('#gapTtt select.blank').forEach(function(s){ s.value = s.dataset.key; s.classList.remove('no'); s.classList.add('ok'); });
+  });
+
+  /* which stage */
+  var ST = 'A test (first, or the controlled second)', TE = 'Teach', FR = 'The freer second test', NO = 'Not in a test-teach-test lesson';
+  buildTask('sortTask', [
+    { q: 'Students fill gaps with a suitable word or structure.', answer: ST },
+    { q: 'Students discuss the answers to concept checking questions on a handout.', answer: TE },
+    { q: 'Students read a text and answer gist questions.', answer: NO, why: 'That is the first stage of a text-based lesson. A test is a task on the target language.' },
+    { q: 'Students do a role-play.', answer: FR },
+    { q: 'Students select the correct word or structure to complete a sentence from a choice.', answer: ST },
+    { q: 'Students draw their own timelines.', answer: TE },
+    { q: 'Students conduct a survey.', answer: FR },
+    { q: 'The teacher stands at the front and repeats the grammar rules.', answer: NO, why: 'The teach stage is built on what the test showed. Repeating the rules to everyone ignores it.' },
+    { q: 'Students discuss the differences in meaning between similar sentences.', answer: ST },
+    { q: 'Students complete an information gap.', answer: FR, why: 'They choose their own words to close the gap, so it is freer than a gap-fill, and it is a real reason to use the language.' },
+    { q: 'Students arrange words or structures on a cline.', answer: TE },
+    { q: 'Students write five random sentences using the target language.', answer: NO, why: 'Random sentences have no reason to exist. A second test lets the learners use the language for something.' },
+    { q: 'Students find matching responses for sentences from a choice.', answer: ST },
+    { q: 'Students do a discussion activity.', answer: FR }
+  ], 'sortReveal', [ST, TE, FR, NO]);
+
+  /* which approach */
+  var GD = 'Guided discovery', TTT = 'Test-teach-test';
+  buildTask('whoTask', [
+    { q: '“By incorporating elements of discovery and problem solving, it fosters a collaborative atmosphere.”', answer: GD },
+    { q: '“Some learners may find the approach dry and unmotivating.”', answer: TTT, why: 'A test with no text and no story around it can feel like an exercise, because it is one.' },
+    { q: '“Its direct and uncompromising grammar focus suits adult students who are not put off by an analytical approach.”', answer: TTT },
+    { q: '“It is an economical use of time, as students are communicating in English and it brings in other skills.”', answer: GD, why: 'The language comes out of a text the learners have read or listened to for meaning.' },
+    { q: '“Sometimes there is a tendency for teachers to start lecturing the students.”', answer: TTT, why: 'The teach stage is the danger: it can turn into the presentation the lesson was built to avoid.' },
+    { q: '“It encourages learners to take responsibility for their own learning.”', answer: GD },
+    { q: '“The mental work involved in explaining grammar points to each other has a powerful effect on the memory.”', answer: GD },
+    { q: '“It is economical of time, through getting straight to the point.”', answer: TTT },
+    { q: '“In the absence of context, sentences may become leached of meaning, and the discussion of differences becomes theoretical and hard to grasp.”', answer: TTT, why: 'The weakness of a test built from single sentences. The remedy is a test task with a situation around it.' },
+    { q: '“It enables learners to see the patterns in English and to understand its use in their own language.”', answer: GD }
+  ], 'whoReveal', [GD, TTT]);
+
+  /* when it works */
+  var T = 'True', F = 'False';
+  buildTask('whenTask', [
+    { q: 'A test-teach-test lesson only works if the learners have met the language before, in texts, in listening, in life.', answer: T, why: 'Scrivener calls it exposure-test-teach-test: learners cannot be tested on what they have never seen. Half-known language is what the first test finds.' },
+    { q: 'The first test has to be a controlled exercise.', answer: F, why: 'It can be a free speaking task. Then the problems that come up are far less predictable, and the teach stage is harder to plan.' },
+    { q: 'If the first test shows that the whole class can use the language, you still teach the full teach stage.', answer: F, why: 'You teach what the test showed. If it showed nothing missing, name the point, move to the freer task, and use the time.' },
+    { q: 'A test-teach-test lesson is harder to plan in full before the lesson than a PPP lesson.', answer: T, why: 'You do not know exactly what the teach stage will need until the first test has run. Plan for the likely problems; keep the rest in your head.' },
+    { q: 'Test-teach-test suits a writing skills lesson.', answer: F, why: 'It is a way of teaching grammar or vocabulary. A skills lesson has its own shape.' },
+    { q: 'The second test should be like the first, so the difference can be seen.', answer: T, why: 'A similar task after the teaching shows the learners, and you, what has changed.' },
+    { q: 'Beginners can never be taught with test-teach-test.', answer: F, why: 'Most “beginners” are false beginners with years of half-remembered English. With enough exposure first, the approach works at low levels too.' }
+  ], 'whenReveal', [T, F]);
+})();
+</script>
+<script>
+(function(){
+  /* A film with an end time in its address (end=108) is cut there by the
+     page itself: YouTube's own end parameter ran on into the rest of the
+     video and then into the next one (14 Oct 2026). The player is asked to
+     report its clock; at the end time, or when it ends by itself, the frame
+     closes, so nothing follows. */
+  var open = null;
+  window.addEventListener('message', function(e){
+    if (!open || !open.iframe || e.source !== open.iframe.contentWindow) return;
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (!d || d.event !== 'infoDelivery' || !d.info) return;
+    var t = d.info.currentTime, st = d.info.playerState;
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="26.5-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
+    function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
+      i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
+<script src="../../hub-store.js"></script>
+<script src="../../hub-notebook.js"></script>
+<script src="../../hub-rec.js"></script>
+<script src="../../hub-ask.js"></script>
+<script>
+(function(){
+  if (window.InputLib) InputLib.gate();
+  if (!window.HubStore || !HubStore.isTutor()) return;
+  HubStore.ping().then(function(r){
+    if (!r || !r.tutor) return;
+    document.body.classList.add('tutor');
+    var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
+    var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
+    var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
+    var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>

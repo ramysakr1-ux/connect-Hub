@@ -644,3 +644,30 @@ NOTES['teaching-one-to-one'] = '''
 <li>A first lesson that is all questionnaire and no English used for something real.</li>
 <li>Forcing what the student "needs" on a student who does not want it.</li>
 </ul>'''
+
+NOTES['test-teach-test'] = '''
+<h4>Before</h4>
+<p>Nothing to print; the handout prints from the page. For parts 2 to 4 you are the teacher and they are a class of intermediate learners: run those three parts as a lesson, not as a session, and say nothing about test-teach-test until part 5 (the nav says Test, Teach, Test again for that reason). If the room has had Language through text versus PPP, part 8 lands harder; if not, it still works as a first meeting with both names.</p>
+<h4>Running it</h4>
+''' + T([
+    (5, 'The deep end', 'Three opinions, agree or disagree, alone and then in threes. No key, on purpose. Tell them to keep their three answers: the last part comes back to them.'),
+    (10, 'Test', 'Books closed, no help. Ten pairs, twenty sentences, a or b. Check, then the question that matters: where did you hesitate? Walk round during it and note which pairs stop people. That is your teach stage.'),
+    (10, 'Teach', 'The five uses, matched. Then their own five-word names for each use. Give most of the time to the two uses that caused the hesitation (always talking, usually having) and almost none to the ones they got.'),
+    (8, 'Test again', 'Ten choices. Then the comparison with the first test: same places, or different? Still no name for what they have just done.'),
+    (8, 'What just happened', 'Back as teachers. Four questions in pairs, then reveal. The third one is the point: why was the last task so like the first?'),
+    (10, 'The stages', 'The gap text, alone then pairs, then Check. The two spare words, marker and context, belong to guided discovery; ask why they do not fit here.'),
+    (8, 'Which stage', 'Fourteen things, four answers. Hold the room on the three that do not belong and on the information gap (freer, not controlled: they choose their own words).'),
+    (8, 'Which approach', 'Ten quotations, guided discovery or test-teach-test. The two that start arguments: economical of time (both, for different reasons) and the tendency to lecture.'),
+    (6, 'When it works', 'Seven true or false. The one to stop on: a lesson you cannot plan in full. Ask who is comfortable with that and who is not.'),
+    (15, 'Your turn', 'Pairs plan prepositions of place for elementary adults, three boxes. Pairs swap: can the other pair say what the first test will tell you? Then reveal Scrivener\'s hotel room, and the three opinions from the start.'),
+]) + '''
+<h4>The key</h4>
+<p>Under each task (Check, Show answers, Reveal answer). The pairs: 1b 2a, 3a 4b, 5b 6a, 7b 8a, 9b 10a, 11b 12a, 13a 14b, 15b 16a, 17a 18b, 19b 20a. The uses: always talking is the frequent action with a complaint; what are you writing is in progress now; usually having lunch is regularly in progress around a time; living in Paris is temporary; coming from Auckland is an arrangement. The choices: are increasing, visit, ’m watering, ’m visiting, are always stopping, runs, increase, water, always stop, ’re usually running. The gaps: tests, several, mistakes, timelines, further, learnt; marker and context are spare. Which stage: tests are 1, 5, 9, 13; teach is 2, 6, 11; freer is 4, 7, 10, 14; not in the lesson 3, 8, 12. Which approach: guided discovery 1, 4, 6, 7, 10; test-teach-test 2, 3, 5, 8, 9. When it works: true, false, false, true, false, true, false.</p>
+<h4>Watch for</h4>
+<ul>
+<li>Trainees who name the approach during part 2. Let it pass; the comparison in part 5 is the point, not the guess.</li>
+<li>A teach stage in their plan that teaches all six prepositions to everyone. Ask what the first test was for, then.</li>
+<li>A first test that is a gist reading. That is the start of a text-based lesson, not a test of the language.</li>
+<li>A second test that is a different kind of task from the first. Nothing can be compared.</li>
+<li>Anyone who hears "test" as an exam. The learners are not graded; the teacher is finding out.</li>
+</ul>'''
