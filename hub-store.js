@@ -262,6 +262,8 @@ window.HubStore = (function(){
     addTrainee: function(name, group, email){ return call({ op: 'addTrainee', name: name, group: group, email: email || '' }); },
     // A pasted class list in one call, rather than one call per name.
     addTrainees: function(list){ return call({ op: 'addTrainees', trainees: list }); },
+    /* the trainee's own name for the certificate, once (3 Nov 2026) */
+    confirmName: function(name){ return call({ op: 'confirmName', name: name }); },
     renameTrainee: function(tok, name, group, email){ var b = { op: 'renameTrainee', token: tok, name: name, group: group }; if (email != null) b.email = email; return call(b); },
     removeTrainee: function(tok){ return call({ op: 'removeTrainee', token: tok }); },
     traineeLink: function(tok){ return base() + 'index.html?t=' + encodeURIComponent(tok); },

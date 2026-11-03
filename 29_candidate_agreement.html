@@ -26,7 +26,7 @@
 <title>Candidate agreement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611032221">
+<link rel="stylesheet" href="hub-tokens.css?v=202611032229">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -62,8 +62,16 @@
   .signed{display:flex; gap:14px; align-items:center; flex-wrap:wrap; background:var(--box);
     border:1px solid var(--sand-line); border-radius:8px; padding:14px 16px; font-size:0.9rem;}
   .signed svg{display:block;}
+  /* the house paints .signed white for a dark badge elsewhere; on this pale box the name and the signature vanished (3 Nov 2026) */
+  body .signbox .signed, body .signbox .signed b, body .signbox .signed .hand, body .signbox .signed .ink{color:var(--ink) !important;}
   .ro{font-size:0.88rem; color:var(--grey);}
   .status{font-size:0.8rem; color:var(--grey);}
+  .certname{margin:14px 0 4px; padding:14px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--teal); border-radius:8px;}
+  .certname h3{margin:0 0 6px; font-family:'Newsreader',Georgia,serif; font-size:1.02rem; font-weight:600;}
+  .certname p{margin:0 0 10px; font-size:0.86rem; line-height:1.6; color:var(--ink);}
+  .certname input{width:100%; box-sizing:border-box; font:inherit; font-size:1.05rem; font-weight:600; padding:10px 12px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
+  .certname .done{font-size:1.05rem; font-weight:700; color:var(--teal-deep);}
+  .certname .small{font-size:0.8rem; color:var(--grey); margin:8px 0 0;}
   .decl{margin:14px 0 4px; padding:14px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:8px;}
   .decl h3{margin:0 0 6px; font-family:'Newsreader',Georgia,serif; font-size:1.02rem; font-weight:600;}
   .decl p{margin:0 0 10px; font-size:0.88rem; line-height:1.55; color:var(--ink-warm);}
@@ -73,20 +81,20 @@
   .decl textarea:disabled{opacity:0.55;}
   @media print{ body{background:#fff; padding:0;} .back,.signbox .row,.btn{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611032221">
+<link rel="stylesheet" href="hub-house.css?v=202611032229">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611032221"></script>
-<script src="hub-store.js?v=202611032221"></script>
-<script src="hub-hand.js?v=202611032221"></script>
-<script src="hub-ink.js?v=202611032221"></script>
-<script src="hub-say.js?v=202611032221"></script>
-<script src="hub-sync.js?v=202611032221"></script>
-<script src="hub-notebook.js?v=202611032221"></script>
+<script src="hub-shared.js?v=202611032229"></script>
+<script src="hub-store.js?v=202611032229"></script>
+<script src="hub-hand.js?v=202611032229"></script>
+<script src="hub-ink.js?v=202611032229"></script>
+<script src="hub-say.js?v=202611032229"></script>
+<script src="hub-sync.js?v=202611032229"></script>
+<script src="hub-notebook.js?v=202611032229"></script>
 <script type="text/x-hub-app">
 /* A volunteer student is not on the course. They come in off the street to be
    taught, and what the center asks of its TRAINEES -- attendance, plagiarism,
@@ -150,7 +158,34 @@ function record(){
     return ((roster.trainees || {})[TRAINEE_ID] || {}).agreement || {};
   } catch (e) { return {}; }
 }
-function saveRecord(r){ if (!IS_TRAINEE) return; try { localStorage.setItem(KEY, JSON.stringify(r)); } catch(e){} }
+function saveRecord(r){ if (!IS_TRAINEE) return; const was = record(); if (was.certName && !r.certName) r.certName = was.certName; try { localStorage.setItem(KEY, JSON.stringify(r)); } catch(e){} }
+
+/* THE NAME ON THE CERTIFICATE (Ramy, 3 Nov 2026: a certificate came with a name the trainee did not want, from the
+   center's list). Cambridge, Administration Handbook (June 2025) 7.6: names on the Appian entry form "should be entered
+   exactly as the candidate wishes them to appear when certificates are issued". The trainee confirms or corrects the name
+   the center gave, once, here; it becomes their one name in Lite (roster, CELTA 5, the pack, the grades) and the
+   signature is written from it. After that only a tutor can change it. Not on a demo kept on the device. */
+const CERT_ON = (function(){ const c = settings(); return IS_TRAINEE && !c.demoToday; })();
+function certName(){ const c = record().certName; return c && c.at ? c : null; }
+function certForm(){
+  const c = certName();
+  if (c) return `<div class="certname"><h3>Your name on your CELTA certificate</h3><p class="done">${esc(c.name)}</p>
+    <p class="small">Confirmed ${esc(when(c.at))}${c.by === 'tutor' ? ' by your tutor' : ''}. If it needs to change, ask your tutor.</p></div>`;
+  return `<div class="certname"><h3>Your name on your CELTA certificate</h3>
+    <p>This is how your center has your name. Write it exactly as you want it printed on your certificate: the spelling, the accents, the capital letters and the order. It is also your name on your CELTA 5, your reports and everywhere in Lite. You confirm it once; after that, only your tutor can change it.</p>
+    <input id="certInput" type="text" autocomplete="name" maxlength="120" value="${esc(MY_NAME)}" aria-label="Your name as it should be printed on your certificate"></div>`;
+}
+/* confirms the name with the store, then holds it here too: hub:me (the name the signature is written from) and this record */
+async function confirmCert(){
+  const inp = $('certInput'); if (!inp) return certName() ? certName().name : MY_NAME;
+  const nm = String(inp.value || '').replace(/\s+/g, ' ').trim();
+  if (nm.length < 2) throw new Error('Write your full name, as it should be printed on your certificate.');
+  const r = await HubStore.confirmName(nm);
+  const c = (r && r.certName) || { name: nm, at: new Date().toISOString(), by: 'trainee' };
+  try { const rec = record(); rec.certName = c; localStorage.setItem(KEY, JSON.stringify(rec)); } catch (e) {}
+  try { const me = JSON.parse(localStorage.getItem('hub:me') || '{}') || {}; me.name = c.name; localStorage.setItem('hub:me', JSON.stringify(me)); localStorage.setItem('hub:name', c.name); } catch (e) {}
+  return c.name;
+}
 
 /* Handbook 6.3's sections, in its order (7 Oct 2026); the CELTA 5's four are among them. A section the center left empty is not shown. */
 const SECTIONS = [
@@ -263,10 +298,12 @@ function render(){
       ${stale ? `<p class="lead" style="margin:12px 0 0">Your center has changed the agreement since you signed it. Read it again and sign the new wording; your signature is the same one.</p>
         ${IS_TRAINEE ? declForm(rec) : ''}
         <div class="row"><button class="btn primary" type="button" id="signBtn">Sign the new wording</button></div>
-        <p class="status" id="status"></p>` : ''}</div>`;
+        <p class="status" id="status"></p>` : ''}
+      ${CERT_ON && !stale ? certForm() + (certName() ? '' : '<div class="row"><button class="btn primary" type="button" id="certBtn">Confirm my name</button></div><p class="status" id="certStatus"></p>') : ''}</div>`;
   } else if (IS_TRAINEE) {
     sign = (MY_NAME || ASKS_HERE) ? `<div class="signbox"><h2>Sign it</h2>
       <p class="lead">Signing records that you have read the agreement above and accept it, including how your information is kept and shared with Cambridge. Your name and the date are kept with your course record; your tutor and the assessor can see that you signed and when.</p>
+      ${CERT_ON ? certForm() : ''}
       ${declForm(rec)}
       <div class="row"><button class="btn primary" type="button" id="signBtn">Read and sign</button></div>
       <p class="status" id="status"></p></div>`
@@ -281,6 +318,11 @@ function render(){
   const dg = $('demoGo');
   if (dg) dg.addEventListener('click', () => { try { sessionStorage.setItem('hub:demoAgreed', '1'); } catch (e) {} location.replace('index.html'); });
 
+  const cb = $('certBtn');
+  if (cb) cb.addEventListener('click', async () => {
+    const st = $('certStatus'); cb.disabled = true; if (st) st.textContent = 'Confirming your name…';
+    try { await confirmCert(); render(); } catch (e) { cb.disabled = false; if (st) st.textContent = (e && e.message) || String(e); }
+  });
   const btn = $('signBtn');
   if (btn) btn.addEventListener('click', async () => {
     /* THE DAY-ONE DEMO (Ramy, 25 Oct 2026: "they sign an agreement, they write their name, and then it turns
@@ -296,8 +338,13 @@ function render(){
        center can make reasonable adjustments before the course starts. */
     if (IS_TRAINEE && !readDecl()) { const st = $('status'); if (st) st.textContent = 'Answer the declaration first: do you have a special requirement?'; const f = document.querySelector('.decl'); if (f) f.scrollIntoView({ block: 'center' }); return; }
     let ink = '', signedAs = name;
+    if (CERT_ON && $('certInput')) {
+      const st = $('status'); if (st) st.textContent = 'Confirming your name…';
+      try { signedAs = await confirmCert(); } catch (e) { if (st) st.textContent = (e && e.message) || String(e); return; }
+      if (st) st.textContent = '';
+    }
     /* the name from the card writes itself; a visitor who gave none writes it here */
-    try { ink = await window.hubInk.confirm(ASKS && !name ? { askName: true, name: '', title: 'Sign the candidate agreement' } : { name, title: 'Sign the candidate agreement' }); } catch(e) { ink = null; }
+    try { ink = await window.hubInk.confirm(ASKS && !name ? { askName: true, name: '', title: 'Sign the candidate agreement' } : { name: signedAs, title: 'Sign the candidate agreement' }); } catch(e) { ink = null; }
     if (ink === null) return;               // canceled
     if (ASKS && ink && typeof ink === 'object' && 'ink' in ink) {
       signedAs = String(ink.name || '').trim(); ink = ink.ink;

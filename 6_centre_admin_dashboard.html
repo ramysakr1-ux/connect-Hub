@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611032221">
+<link rel="stylesheet" href="hub-tokens.css?v=202611032229">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -378,6 +378,11 @@
   .grid.roster .temail::placeholder{color:var(--field-ph);}
   .grid.roster .temail:focus{outline:2px solid var(--teal); outline-offset:1px; background:var(--field-focus);}
   .rnote{margin:2px 0 14px; font-size:0.84rem; color:var(--grey); line-height:1.5;}
+  /* the certificate name (3 Nov 2026) */
+  .roster .nm em.certok, .roster .nm em.certno{display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; font-style:normal; font-size:0.68rem; font-weight:700; letter-spacing:.02em; vertical-align:middle;}
+  .roster .nm em.certok{background:var(--a-mint-wash); color:var(--a-forest);}
+  .roster .nm em.certno{background:var(--box); color:var(--grey);}
+  .certline .linkbtn{margin-left:6px;}
   .rset{margin:20px 4px 2px; font-size:0.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gold-deep);}
   /* THE ASSIGNMENT AND OBSERVATION CARDS (27 Oct 2026) */
   .obsfam{margin:0 0 30px; padding:0 0 4px;}
@@ -661,7 +666,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611032221">
+<link rel="stylesheet" href="hub-house.css?v=202611032229">
 </head>
 <body>
 <div class="board">
@@ -1256,19 +1261,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611032221"></script>
-<script src="hub-store.js?v=202611032221"></script>
-<script src="hub-xlsx.js?v=202611032221"></script>
-<script src="hub-say.js?v=202611032221"></script>
-<script src="agreement-defaults.js?v=202611032221"></script>
-<script src="observation-defaults.js?v=202611032221"></script>
-<script src="hub-shared.js?v=202611032221"></script>
-<script src="hub-rotation.js?v=202611032221"></script>
-<script src="hub-due.js?v=202611032221"></script>
-<script src="hub-sync.js?v=202611032221"></script>
-<script src="hub-notebook.js?v=202611032221"></script>
-<script src="hub-hand.js?v=202611032221"></script>
-<script src="hub-ink.js?v=202611032221"></script>
+<script src="assignment-defaults.js?v=202611032229"></script>
+<script src="hub-store.js?v=202611032229"></script>
+<script src="hub-xlsx.js?v=202611032229"></script>
+<script src="hub-say.js?v=202611032229"></script>
+<script src="agreement-defaults.js?v=202611032229"></script>
+<script src="observation-defaults.js?v=202611032229"></script>
+<script src="hub-shared.js?v=202611032229"></script>
+<script src="hub-rotation.js?v=202611032229"></script>
+<script src="hub-due.js?v=202611032229"></script>
+<script src="hub-sync.js?v=202611032229"></script>
+<script src="hub-notebook.js?v=202611032229"></script>
+<script src="hub-hand.js?v=202611032229"></script>
+<script src="hub-ink.js?v=202611032229"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2532,7 +2537,7 @@ async function renderStoreRoster(next){
      two calls go out together, and the store's answer redraws it when it comes. */
   if (!ROSTER){
     let local = [];
-    try { const r = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}'); local = Object.keys(r.trainees || {}).map(k => ({ token: k, name: r.trainees[k].name, group: r.trainees[k].group, email: r.trainees[k].email || '' })).filter(t => t.name); } catch (e) {}
+    try { const r = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}'); local = Object.keys(r.trainees || {}).map(k => ({ token: k, name: r.trainees[k].name, group: r.trainees[k].group, email: r.trainees[k].email || '', certName: ((r.trainees[k].agreement || {}).certName) || null })).filter(t => t.name); } catch (e) {}
     const fresh = Promise.all([S.roster(), S.pins().catch(() => ({ on: false, tutor: false, trainees: {} }))]);
     if (local.length) {
       fresh.then(([r, p]) => { FRESH_PINS = p; renderStoreRoster(r); }).catch(() => {});
@@ -2642,6 +2647,11 @@ async function renderStoreRoster(next){
 
     <div style="margin-top:14px;" id="rosterRows" class="${SHOW_URLS ? 'urls' : ''}">
       ${overNote}
+      ${trainees.length ? (function(){ const ok = trainees.filter(t => t.certName && t.certName.at).length;
+        /* THE NAMES FOR APPIAN (3 Nov 2026). Cambridge, Administration Handbook (June 2025) 7.6: names on the entry form "should
+           be entered exactly as the candidate wishes them to appear when certificates are issued". Each trainee confirms theirs
+           when they sign the agreement; this is the list to type into Appian, and who has not confirmed yet. */
+        return `<p class="rnote certline"><b>${ok} of ${trainees.length}</b> ha${ok === 1 ? 's' : 've'} confirmed the name for their certificate.${ok < trainees.length ? ' The rest confirm it when they sign the agreement. Wait for them before the Appian entry.' : ''} <button class="linkbtn" type="button" id="copyAppianNames">Copy the names for Appian</button></p>`; })() : ''}
       <!-- THE ROSTER, REDRAWN (Ramy, 11 Oct 2026: "any chance we can make this
            whole page look a little better?"). Grouped the way the course runs:
            by group, then by teaching set, each trainee under the letter the TP
@@ -2653,7 +2663,7 @@ async function renderStoreRoster(next){
       ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>${trainees.length > 1 ? `<p class="rnote rhow"><b>To move a trainee</b>, click their name, then click the trainee to swap places with, in either group. To put them in a set’s free place instead, click that set’s heading. Click them again, or press Esc, to stop. <button type="button" class="linkbtn" id="mixOpen">Or let Lite mix the groups</button></p><div id="mixHost" hidden></div>` : ''}
       <div class="grid roster ghead"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
       ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
-        <div class="name">${t.letter ? `<span class="grip" title="Click, then click another trainee to swap places, or a set to move there" aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
+        <div class="name">${t.letter ? `<span class="grip" title="Click, then click another trainee to swap places, or a set to move there" aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${t.certName && t.certName.at ? `<em class="certok" title="Confirmed ${esc(String(t.certName.at).slice(0, 10))}${t.certName.by === 'tutor' ? ' by a tutor' : ' by the trainee'}">Name confirmed</em>` : `<em class="certno" title="The trainee confirms it when they sign the agreement">Name not confirmed</em>`}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
         <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
         <div class="acts col-link">
           <button class="pillbtn" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
@@ -3181,6 +3191,9 @@ document.getElementById('storeRoster').addEventListener('click', async e=>{
   const S = window.HubStore;
   const l = e.target.closest('#copyRosterList');
   if (l){ const list = Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {}); await hubCopyButton(l, rosterList(list)); return; }
+  const an = e.target.closest('#copyAppianNames');
+  if (an){ const list = (Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {})).slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    await hubCopyButton(an, list.map(t => (t.name || '') + (t.certName && t.certName.at ? '' : '\t(not confirmed yet)')).join('\n')); return; }
   const c = e.target.closest('[data-copy]');
   if (c){
     // Shared helper: clipboard, then execCommand, then the link on screen to

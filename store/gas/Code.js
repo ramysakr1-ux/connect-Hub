@@ -1562,8 +1562,29 @@ case 'inbox': {
       // tutor's own copy lives on in tpHistory. That is the one write a trainee
       // may make to a tutor-owned kind: clearing it.
       if (!TRAINEE_WRITES[k2] && !(k2 === 'feedback' && req.data == null)) throw new Error('Not yours to write: ' + k2);
+      /* the certificate name rides on the agreement record but is set only by confirmName (and a tutor's rename): a page
+         saving its copy of the agreement never drops it or changes it (3 Nov 2026) */
+      if (k2 === 'agreement') { var agWas = read_(course.id, me.token, 'agreement') || {}; if (agWas.certName) { var agNew = (req.data && typeof req.data === 'object') ? req.data : {}; agNew.certName = agWas.certName; req.data = agNew; } }
       write_(course.id, me.token, k2, req.data);
       return { saved: true };
+    }
+    /* THE NAME ON THE CERTIFICATE (Ramy, 3 Nov 2026: a C/17 trainee's certificate came with a name he did not want; "they
+       write their name how they would like it to be on the certificate"). Cambridge, Administration Handbook (June 2025)
+       7.6: names on the Appian entry form "should be entered exactly as the candidate wishes them to appear when
+       certificates are issued". The trainee confirms or corrects the name the center gave, once; it becomes their one name
+       everywhere (roster, CELTA 5, the pack, the grades), and it locks: after that only a tutor's rename changes it. */
+    case 'confirmName': {
+      if (!me) throw new Error('No token');
+      if (reader || owner || tutor) throw new Error('A trainee confirms their own name');
+      var cn = String(req.name == null ? '' : req.name).replace(/\s+/g, ' ').trim();
+      if (cn.length < 2 || cn.length > 120) throw new Error('Write your full name, as it should be printed.');
+      var agr = read_(course.id, me.token, 'agreement') || {};
+      if (agr.certName && agr.certName.at) throw new Error('Your name is already confirmed. Ask your tutor if it needs to change.');
+      var tsh3 = sheet_(SHEET_TRAINEES), trows3 = tsh3.getDataRange().getValues(), was3 = me.name || '';
+      for (var r3 = 1; r3 < trows3.length; r3++) if (String(trows3[r3][0]) === course.id && String(trows3[r3][1]) === String(me.token)) { tsh3.getRange(r3 + 1, 3).setValue(cn); break; }
+      agr.certName = { name: cn, at: new Date().toISOString(), by: 'trainee', was: was3 };
+      write_(course.id, me.token, 'agreement', agr);
+      return { name: cn, certName: agr.certName };
     }
 
     // ---- a candidate's materials file ------------------------------------
@@ -2783,7 +2804,12 @@ case 'inbox': {
       var sh2 = sheet_(SHEET_TRAINEES);
       var rows = sh2.getDataRange().getValues();
       for (var i = 1; i < rows.length; i++) if (String(rows[i][0]) === course.id && String(rows[i][1]) === String(req.token)) {
-        if (req.name != null) sh2.getRange(i + 1, 3).setValue(String(req.name).trim());
+        if (req.name != null) {
+          var nn = String(req.name).trim(), wasN = String(rows[i][2] || '');
+          sh2.getRange(i + 1, 3).setValue(nn);
+          /* a name the trainee confirmed and a tutor then changes says so: the tutor's, with the date (3 Nov 2026) */
+          if (nn && nn !== wasN) { var agT = read_(course.id, String(req.token), 'agreement') || {}; if (agT.certName && agT.certName.at) { agT.certName = { name: nn, at: new Date().toISOString(), by: 'tutor', was: wasN }; write_(course.id, String(req.token), 'agreement', agT); } }
+        }
         if (req.group != null) sh2.getRange(i + 1, 4).setValue(String(req.group).trim());
         if (req.email != null) { var em2 = cleanEmail_(req.email); if (em2) emailHeader_(); sh2.getRange(i + 1, 6).setValue(em2); }
         return { saved: true, trainees: rosterWithRecords_(course.id, TUTOR_WRITES) };
@@ -3225,7 +3251,9 @@ function rosterWithRecords_(courseId, kinds) {
     });
   }
   return people.map(function (t) {
-    return { token: t.token, name: t.name, group: t.group, created: t.created, email: t.email || '', records: finishBucket_(byToken[t.token]) };
+    var recs = finishBucket_(byToken[t.token]) || {}, ag = recs.agreement || {};
+    /* the certificate name, said beside the name (3 Nov 2026) */
+    return { token: t.token, name: t.name, group: t.group, created: t.created, email: t.email || '', certName: (ag && ag.certName) || null, records: recs };
   });
 }
 function recordsFor_(courseId, token, kinds) {
