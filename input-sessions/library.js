@@ -35,6 +35,7 @@ window.InputLib = (function(){
     [/lesson plan|^lp\b/, 'writing-the-lesson-plan'],   /* LP, the timetable's short name (30 Oct 2026) */
     /* the language analysis sheets (28 Oct 2026): Connect's "Language analysis 1", "Analysing language" */
     [/language analysis|analys[iz]ing language|analy[sz]e (the )?language|la sheets?/, 'language-analysis'],
+    [/\btenses?\b|\baspect\b|verb forms/, 'tense-and-aspect'],   /* 4 Nov 2026 */
     /* Teaching vocabulary (29 Oct 2026): "Teaching vocabulary", "Vocabulary 1", "Lexis" */
     [/vocab|\blexis\b|lexical/, 'teaching-vocabulary'],
     /* Teaching one-to-one (29 Oct 2026): "one-to-one", "one to one", "1:1", "private lessons" */

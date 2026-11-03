@@ -671,3 +671,28 @@ NOTES['test-teach-test'] = '''
 <li>A second test that is a different kind of task from the first. Nothing can be compared.</li>
 <li>Anyone who hears "test" as an exam. The learners are not graded; the teacher is finding out.</li>
 </ul>'''
+
+NOTES['tense-and-aspect'] = '''
+<h4>Before</h4>
+<p>Nothing to print; the handout prints from the page. Trainees should have their next TP's target language to hand for the last part. Keep the two words apart all session: tense is when, aspect is how the speaker sees it. If you hear "the present perfect tense" from the room, say "present tense, perfect aspect" back, every time.</p>
+<h4>Running it</h4>
+''' + T([
+    (8, 'Time or tense', 'Nine sentences, the time only. Most are now; let them discover that most are not in a present form. The note under the task says it; do not say it first.'),
+    (6, 'The grid', 'Two tenses, two aspects, eight cells. Then the tip: where is the future? Let the room argue before you confirm there is none.'),
+    (12, 'Three families', 'Pairs, one set at a time: meaning, form, pronunciation, then a name. Reveal after each. Set C is the futures, not a family: ask why it does not fit the grid.'),
+    (15, 'The thirteen', 'Thirteen forms, four meanings each. The ones that stop people: going to for a prediction from evidence, and the three perfects of the past. Say the names properly as you check.'),
+    (10, 'What aspect adds', 'Six corpus pairs, written before they reveal. Pair 3, I\'m loving it, is the one to hold: a state made temporary.'),
+    (6, 'The futures', 'Four sentences, four jobs. Quick.'),
+    (6, 'The passive', 'The transformation, then four true or false. Keep it short: it is here so they see be carrying the tense and aspect.'),
+    (8, 'A learner\'s sentences', 'Six corrections with a reason each. Ask at the end how many were tense and how many aspect: four of six are aspect.'),
+    (12, 'Your turn', 'Their own TP structure through six boxes, or the kitchen if they have none. Pairs compare; you read the CCQs, which is where it goes wrong.'),
+]) + '''
+<h4>The key</h4>
+<p>Under each task (Check, Show answers, Reveal answer). Time or tense: future, now, now, all time, now, future, now, now, now. The grid: work, are working, have worked, have been working; worked, were working, had worked, had been working. The thirteen: habit, arrangement, experience, recent activity with a result, completed at a point, in progress at a point in the past, completed before a past point, continued up to a past point, prediction from evidence, spontaneous decision, in progress at a future point, complete by a future point, continuing up to a future point. The futures: evidence, arrangement, decision now, intention. The passive: true, false, true, false. The learner: have lived, wanted, finished, moved, know, had already started.</p>
+<h4>Watch for</h4>
+<ul>
+<li>"Tense" used for everything. Correct it gently and often; the name is the system.</li>
+<li>The future taught as three parallel tenses. It is a modal, a phrase and two present forms.</li>
+<li>CCQs in Your turn that check the words of the sentence, not the aspect. "Is she painting?" checks nothing about the perfect.</li>
+<li>Stative verbs: anyone who says the continuous is "wrong" with love. The corpus pair shows it is not; it is marked.</li>
+</ul>'''

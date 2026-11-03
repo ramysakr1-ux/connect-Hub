@@ -2131,7 +2131,7 @@ RECIPES.append(dict(
 
 
 # ---- the two pages built by hand take the same notes and gate --------------
-HAND = ('teaching-literacy', 'teaching-productive-skills', 'guided-discovery-vs-ppp', 'language-analysis', 'teaching-vocabulary', 'teaching-one-to-one', 'test-teach-test')
+HAND = ('teaching-literacy', 'teaching-productive-skills', 'guided-discovery-vs-ppp', 'language-analysis', 'teaching-vocabulary', 'teaching-one-to-one', 'test-teach-test', 'tense-and-aspect')
 
 CHROME = '''  <div class="chrome">
     <a class="lockup" href="../index.html" title="The library">
