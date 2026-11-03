@@ -720,3 +720,28 @@ NOTES['flipped-classroom'] = '''
 <li>Sending a lead-in home. A prediction task dies if the text has been read.</li>
 <li>The student who did nothing, sent out or shamed. The article is clear: in class, now, or with a partner.</li>
 </ul>'''
+
+NOTES['mixed-ability-classes'] = '''
+<h4>Before</h4>
+<p>Nothing to print; the handout prints from the page. Seat trainees with someone from the same TP group for the lead-in, and with someone from a different group for Your turn. If two of your trainees have swapped groups mid-course, they are your Maria and Salim: ask them before you reveal.</p>
+<h4>Running it</h4>
+''' + T([
+    (6, 'Your TP group', 'Four lines, two ends each, nothing saved. The question that matters: is it the same student at the bottom of every line? It never is. Then the note: how close are you standing.'),
+    (6, 'Why mixed', 'Seven statements, five causes. The two that are not: the teacher\'s speed and the book\'s level. Both are real problems; neither changes the mix.'),
+    (8, 'Two trainees', 'Seven comments, Maria or Salim. Then pairs on their own group. Take two surprises aloud.'),
+    (12, 'One text, three levels', 'Read the story aloud yourself, once, as the recording. Three lessons, three levels. Draw out what changed: support before, the task, the playings, what came after. The material did not change; say that sentence and leave it on the board.'),
+    (12, 'What you can vary', 'Ten moves, five answers. Hold the room on 4 (nothing, on purpose) and 7 (choice is content). Then the tip on cost.'),
+    (8, 'Early finishers', 'Four extensions, two real. Ask who has had six students finish early in a TP and what they did.'),
+    (8, 'Everyone in', 'Six moves, two that exclude. Numbered heads is the one to take away; try it on them in the next part.'),
+    (6, 'What is realistic', 'Six true or false. The once-a-week mixed class is the one that surprises.'),
+    (15, 'Your turn', 'One stage of their next TP, four ways, pairs from different groups. The partner names the cheapest. Reveal the gap-fill at the end.'),
+]) + '''
+<h4>The key</h4>
+<p>Under each task (Show answers, Reveal answer). Why mixed: cause, not, cause, cause, not, cause, cause. Two trainees: Maria, Maria, Salim, Salim, Maria, Salim, Salim. One text: advanced, elementary, intermediate. What you can vary: task, content, support, nothing, response, task, content, response, support, support. Early finishers: more of the same, challenge, more of the same, challenge. Everyone in: in, out, in, out, in, in. Realistic: true, false, true, false, true, true.</p>
+<h4>Watch for</h4>
+<ul>
+<li>"Mixed ability" heard as "weak students". The stronger ones are the ones who leave.</li>
+<li>Differentiation planned as three worksheets. Push them back to one material, three tasks.</li>
+<li>The weaker students given the easy half. It looks kind; it is exclusion.</li>
+<li>Extension tasks that are the workbook. An early finisher who gets more of the same stops finishing early.</li>
+</ul>'''

@@ -43,6 +43,7 @@ window.InputLib = (function(){
     [/\bwriting\b(?! the lesson)/, 'teaching-writing'],
     [/alternative|third conditional/, 'alternative-teaching-techniques'],
     [/flip/, 'flipped-classroom'],   /* 4 Nov 2026 */
+    [/mixed.(ability|level)|different levels|differentiat/, 'mixed-ability-classes'],   /* 4 Nov 2026 */
     [/receptive|reading|listening/, 'receptive-skills'],
     [/life after|jobs|interview|professional development/, 'life-after-celta'],
     [/drama|games/, 'drama-in-the-elt-classroom'],

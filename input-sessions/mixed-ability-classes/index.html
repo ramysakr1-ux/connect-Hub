@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en" class="gating">
+<head>
+<!--
+  Connect Lite — input session: Teaching mixed-ability classes
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Built on 4 Nov 2026 (Ramy: "an input session on teaching mixed ability classes
+  or mixed level ... find some literature on that"). From the tutor's digital
+  library: Harmer, The Practice of English Language Teaching, 5th ed., 7.2
+  (differentiation: content, tasks, roles, early finishers, flexible tasks,
+  responding, inclusion, realistic differentiation); Scrivener, Learning
+  Teaching, 3rd ed., chapter 4 (every class is a mixed-level class; how close
+  are you standing); Harmer, Essential Teacher Knowledge, unit 42; Thornbury and
+  Watkins, The CELTA Course, unit 36 (the two trainees who swapped levels, one
+  text at three levels). The story, the task sets and the TP stage are written
+  for this page. Hand-built like teaching-one-to-one; _house.py hand() adds the
+  notes frame, the gate and the film script.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../library.js"></script>
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Teaching mixed-ability classes — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+  :root{--ok-l:color-mix(in oklab, var(--teal) 10%, transparent); --no-l:color-mix(in oklab, var(--brick) 9%, transparent);}
+  section{padding:0; margin:0 0 14px;}
+  .card{padding:20px 22px 22px;}
+  h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem; margin:20px 0 6px;}
+  h4{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:14px 0 6px;}
+  p{margin:8px 0; font-size:.95rem; line-height:1.6;}
+  .lead{margin:0 0 10px;}
+  ul, ol{margin:8px 0; padding-left:22px; font-size:.95rem;} li{margin:4px 0;}
+  .tip, .note, .key{border-radius:var(--r-control); padding:12px 16px; margin:14px 0; font-size:.9rem; line-height:1.6; background:var(--paper); border:1px solid var(--sand-line);}
+  .tip{border-left:4px solid var(--teal);} .note{border-left:4px solid var(--gold);} .key{border-left:4px solid var(--gold); background:var(--gold-wash); border-color:var(--amber-edge);}
+  .tip b:first-child, .note b:first-child, .key b:first-child{display:block; margin-bottom:3px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; text-transform:uppercase; font-weight:600;}
+  .tip b:first-child{color:var(--teal);} .note b:first-child, .key b:first-child{color:var(--gold-deep);}
+  .btn.t{background:var(--teal); color:var(--paper); border-color:var(--teal);} .btn.t:hover{background:var(--teal-lifted); border-color:var(--teal-lifted);}
+  .btn.ghost{background:none;}
+  .btns{display:flex; gap:9px; flex-wrap:wrap; margin-top:12px;}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .mini{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px;}
+  .mini h4{margin-top:0;} .mini p{font-size:.92rem;} .mini ol{margin:0; padding-left:20px; font-size:.9rem;}
+  @media(max-width:780px){ .two{grid-template-columns:1fr;} }
+  .qrow{border-top:1px solid var(--row-line); padding:12px 0;} .qrow:first-child{border-top:0; padding-top:0;}
+  .qrow .q{font-size:.95rem; line-height:1.6; margin-bottom:8px;}
+  .opts{display:flex; gap:8px; flex-wrap:wrap;}
+  .opt{background:var(--field); border:1.5px solid var(--sand-line); border-radius:999px; padding:5px 14px; font-size:.82rem; font-weight:700; color:var(--grey); cursor:pointer; min-height:34px; transition:border-color .12s ease; font-family:'Karla',sans-serif; text-align:left;}
+  .opt:hover{border-color:var(--gold);}
+  .opt.good{background:var(--ok-l); border-color:color-mix(in oklab, var(--teal) 30%, transparent); color:var(--teal);}
+  .opt.bad{background:var(--no-l); border-color:color-mix(in oklab, var(--brick) 28%, transparent); color:var(--brick);}
+  .opt.dim{opacity:.45;}
+  .why{margin-top:8px; font-size:.86rem; color:var(--grey); display:none;} .why.show{display:block;}
+  /* the spread lines */
+  .lines{display:grid; gap:10px; margin:10px 0;}
+  .line{display:grid; grid-template-columns:9em 1fr; gap:10px; align-items:center; font-size:.92rem;}
+  .line .lab{font-weight:600;}
+  .line .track{position:relative; height:30px; border-radius:999px; background:var(--field); border:1.5px solid var(--sand-line);}
+  .line .track input{position:absolute; inset:0; width:100%; margin:0; opacity:0; cursor:pointer;}
+  .line .track i{position:absolute; top:3px; bottom:3px; left:var(--lo, 20%); right:calc(100% - var(--hi, 60%)); background:var(--teal); opacity:.35; border-radius:999px; pointer-events:none;}
+  .line .ends{display:flex; justify-content:space-between; font-size:.72rem; color:var(--grey); margin-top:2px;}
+  @media(max-width:560px){ .line{grid-template-columns:1fr;} }
+  .story{background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--gold); border-radius:var(--r-strip); padding:12px 18px; margin:12px 0;}
+  .story p{font-family:'Newsreader',Georgia,serif; font-size:1.02rem;}
+  .three{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:12px 0;}
+  @media(max-width:780px){ .three{grid-template-columns:1fr;} }
+  .plan .write-area{margin:6px 0 10px;} .plan h4{margin-top:10px;}
+  @media print{ .opt{border-color:#999;} .why{display:none !important;} .line .track{border-color:#999;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="chrome">
+    <a class="lockup" href="../index.html" title="The library">
+      <span class="tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"/></svg></span>
+      <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+    </a>
+    <div class="role" id="roleLabel">Trainee</div>
+  </div>
+  <a class="back" href="../index.html">Back to the library</a>
+
+  <header class="header">
+    <p class="eyebrow">Input session · Classroom skills</p>
+    <h1>Teaching mixed-ability classes</h1>
+    <p class="sub">Every class is a mixed-level class; the question is how close you are standing. Why classes are mixed, what one text can do at three levels, the ten things a teacher can vary, early finishers, keeping everyone in, what is realistic, and then one stage of your own TP, differentiated three ways.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#group">Your TP group</a>
+    <a href="#why">Why mixed</a>
+    <a href="#swap">Two trainees</a>
+    <a href="#text">One text, three levels</a>
+    <a href="#ten">What you can vary</a>
+    <a href="#early">Early finishers</a>
+    <a href="#in">Everyone in</a>
+    <a href="#real">What is realistic</a>
+    <a href="#yours">Your turn</a>
+    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+<section id="group">
+  <div class="card">
+    <div class="stage-title">Your TP group <span class="badge">Lead-in</span></div>
+    <p class="lead">Think of the group you teach now. On each line, where is your weakest student, and where is your strongest? Drag the two ends. Then compare with someone who teaches the same group.</p>
+    <div class="lines" id="lines"></div>
+    <p class="lead" style="margin-top:12px">What is the widest gap? Is it the same student at the bottom of every line?</p>
+    <textarea class="write-area" rows="2" aria-label="The widest gap" placeholder="The gap is widest in … The weakest in grammar is not the weakest in …"></textarea>
+    <div class="note"><b>How close are you standing?</b>From across the room a class is “pre-intermediate”. Stand nearer and it is weak, middling and strong pre-intermediate, with a couple from the level above and below. Stand next to one person and she has good grammar, thinner vocabulary and much weaker listening. Every learner has a range of levels, so every class is a mixed-level class. Planning gives you one lesson for all of them; teaching is noticing and adjusting, person by person, as it runs.</div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="card">
+    <div class="stage-title">Why classes are mixed <span class="badge">Causes</span></div>
+    <p class="lead">Seven things said about a mixed-level class. Which of them actually make a class mixed, and which are something else?</p>
+    <div id="whyTask"></div>
+    <div class="btns"><button class="btn ghost" id="whyReveal">Show answers</button></div>
+  </div>
+</section>
+
+<section id="swap">
+  <div class="card">
+    <div class="stage-title">Two trainees swap <span class="badge">Who said it?</span></div>
+    <p class="lead">Maria moved from an elementary TP group (A1 to A2) to an upper-intermediate one (B2). Salim went the other way. Seven things they said afterward: who said each?</p>
+    <div id="swapTask"></div>
+    <div class="btns"><button class="btn ghost" id="swapReveal">Show answers</button></div>
+    <div class="tip"><b>Then in pairs</b>Have you had any of these with your own group? What else has surprised you about the level you teach?</div>
+  </div>
+</section>
+
+<section id="text">
+  <div class="card">
+    <div class="stage-title">One text, three levels <span class="badge">Match the lesson to the level</span></div>
+    <p class="lead">A short story a teacher recorded, and three teachers who used the same recording with three different classes. Which lesson is for which level, and what tells you?</p>
+    <div class="story"><p>The most important day of my life was the day I met Hana. A friend was having a party, but it was raining so hard that I nearly stayed at home. My friend introduced us and we talked all evening. Hana was only in the city for a few days; she lives in Osaka, and she was flying home the next morning. But that morning the airport closed because of a storm. She called me, we had lunch, and by the time she flew home two days later we knew. We got married eighteen months after that.</p></div>
+    <div id="textTask"></div>
+    <div class="btns"><button class="btn ghost" id="textReveal">Show answers</button></div>
+    <div class="note"><b>What changed, and what did not</b>The recording was the same. What changed was the support before listening, what the learners had to do with it, how many times they heard it, and what they did afterward. That is the pattern for everything in this session: keep the material, vary the task.</div>
+  </div>
+</section>
+
+<section id="ten">
+  <div class="card">
+    <div class="stage-title">What you can vary <span class="badge">Sort them</span></div>
+    <p class="lead">Ten things teachers do in mixed classes. What is being varied in each?</p>
+    <div id="tenTask"></div>
+    <div class="btns"><button class="btn ghost" id="tenReveal">Show answers</button></div>
+    <div class="tip"><b>The cheap ones and the dear ones</b>Different content costs you a second set of materials and a harder feedback stage. Different tasks on the same content cost a line on the plan. Different support and different responses cost nothing but attention. Harmer’s advice is to spend most of your effort on the cheap ones.</div>
+  </div>
+</section>
+
+<section id="early">
+  <div class="card">
+    <div class="stage-title">Early finishers <span class="badge">Challenge or busywork?</span></div>
+    <p class="lead">Six students have finished the gap-fill with five minutes to go. Four things you could give them. Which are a real challenge, and which are just more of the same?</p>
+    <div id="earlyTask"></div>
+    <div class="btns"><button class="btn ghost" id="earlyReveal">Show answers</button></div>
+    <div class="note"><b>The early finisher</b>“The early finisher is on the way to becoming a discipline problem; the slow learner never finishes anything and gets demoralised.” Plan the extension before the lesson, make it feel like a reward, and let the slower students finish the main task properly: both halves of the class need something.</div>
+  </div>
+</section>
+
+<section id="in">
+  <div class="card">
+    <div class="stage-title">Everyone in <span class="badge">Group work</span></div>
+    <p class="lead">Groups of four are preparing a short presentation. In every group the two strongest students do the work and the other two watch. Six things you could do. Which keep everyone in, and which leave someone out?</p>
+    <div id="inTask"></div>
+    <div class="btns"><button class="btn ghost" id="inReveal">Show answers</button></div>
+    <div class="tip"><b>Who gets your time</b>Spend it all with the weaker students and the stronger ones switch off; spend it all with the stronger ones and the weaker feel ignored. Start every task at a level everyone can join, then differentiate. Students who feel excluded soon behave as if they are.</div>
+  </div>
+</section>
+
+<section id="real">
+  <div class="card">
+    <div class="stage-title">What is realistic <span class="badge">True or false</span></div>
+    <p class="lead">Decide, then check.</p>
+    <div id="realTask"></div>
+    <div class="btns"><button class="btn ghost" id="realReveal">Show answers</button></div>
+  </div>
+</section>
+
+<section id="yours">
+  <div class="card plan">
+    <div class="stage-title">Your turn <span class="badge">One stage, three ways</span></div>
+    <p class="lead">Take one stage from your next TP: a controlled practice exercise or a reading task. Keep the material. Differentiate the stage four ways, then show a partner, who should say which of the four costs you the least.</p>
+    <h4>The stage as it is</h4>
+    <textarea class="write-area" rows="2" aria-label="The stage" placeholder="What the material is and what everyone does with it"></textarea>
+    <h4>For the stronger students</h4>
+    <textarea class="write-area" rows="2" aria-label="For the stronger" placeholder="The same material, a harder task or less support"></textarea>
+    <h4>For the weaker students</h4>
+    <textarea class="write-area" rows="2" aria-label="For the weaker" placeholder="The same material, more support or a lighter task"></textarea>
+    <h4>For early finishers</h4>
+    <textarea class="write-area" rows="2" aria-label="Early finishers" placeholder="An extension that feels like a reward"></textarea>
+    <h4>A flexible version</h4>
+    <textarea class="write-area" rows="2" aria-label="A flexible version" placeholder="One task everyone can do, to a different extent"></textarea>
+    <div class="btns"><button class="btn t revealBtn" data-target="yoursKey">Reveal answer</button></div>
+    <div id="yoursKey" class="reveal-block">
+      <h4>A present perfect gap-fill, for example</h4>
+      <p><b>As it is.</b> Eight sentences, a verb in brackets at the end of each, present perfect for experience: <i>I ___ (never / eat) sushi.</i></p>
+      <p><b>Stronger.</b> No brackets: the verbs are gone and they choose their own. Then two sentences of their own that are true.</p>
+      <p><b>Weaker.</b> The eight verbs in a box at the top, the first one done, and the participles given for the two irregular ones.</p>
+      <p><b>Early finishers.</b> Turn four of the sentences into questions and ask your partner. A reason to stand up, and real use.</p>
+      <p><b>Flexible.</b> “In three minutes, write as many true sentences as you can with <i>ever</i> or <i>never</i>. Twelve is the record.” Everyone writes; nobody is finished.</p>
+      <p>The material did not change. The plan gained three lines. The feedback stage is the same for everyone, because the sentences are.</p>
+    </div>
+  </div>
+</section>
+
+  <p class="sources"><b>Sources.</b> The ways of differentiating, the early finisher, inclusion and numbered heads, and what is realistic follow Jeremy Harmer, <i>The Practice of English Language Teaching</i>, 5th edition (Pearson, 2015), section 7.2, which quotes Prodromou and Clandfield (2007) on the early finisher. “Every class is a mixed-level class” and the causes of mixed classes are from Jim Scrivener, <i>Learning Teaching</i>, 3rd edition (Macmillan, 2011), chapter 4. The two trainees who swapped levels and one text at three levels are adapted from Scott Thornbury and Peter Watkins, <i>The CELTA Course</i>, 2nd edition (Cambridge University Press, 2023), unit 36. The story, the task sets and the TP stage are written for this session.</p>
+
+  <section id="trainer" class="trainer-notes" data-slug="mixed-ability-classes" hidden>
+    <div class="card">
+      <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
+    </div>
+  </section>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var links = Array.prototype.slice.call(document.querySelectorAll('#stickyNav a[href^="#"]:not(.tn-link)'));
+  var secs = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+  function onScroll(){
+    var cur = 0;
+    for (var i = 0; i < secs.length; i++) { if (secs[i].getBoundingClientRect().top <= 140) cur = i; }
+    links.forEach(function(a, i){ a.classList.toggle('on', i === cur); });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  document.querySelectorAll('.revealBtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var box = document.getElementById(b.dataset.target); if (!box) return;
+      var open = box.classList.toggle('shown');
+      b.textContent = open ? 'Hide answer' : 'Reveal answer';
+      if (open) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+
+  function buildTask(mountId, items, revealId, shared){
+    var host = document.getElementById(mountId); if (!host) return;
+    items.forEach(function(it, i){
+      var row = document.createElement('div'); row.className = 'qrow';
+      var q = document.createElement('div'); q.className = 'q'; q.innerHTML = (items.length > 1 ? (i + 1) + '. &nbsp;' : '') + it.q;
+      var opts = document.createElement('div'); opts.className = 'opts';
+      var why = document.createElement('div'); why.className = 'why'; why.textContent = it.why || '';
+      (it.options || shared).forEach(function(o){
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.textContent = o;
+        b.addEventListener('click', function(){
+          var right = (o === it.answer);
+          opts.querySelectorAll('.opt').forEach(function(x){ x.classList.remove('good', 'bad', 'dim'); });
+          b.classList.add(right ? 'good' : 'bad');
+          if (right) { opts.querySelectorAll('.opt').forEach(function(x){ if (x !== b) x.classList.add('dim'); }); if (it.why) why.classList.add('show'); }
+        });
+        opts.appendChild(b);
+      });
+      row.appendChild(q); row.appendChild(opts); if (it.why) row.appendChild(why);
+      host.appendChild(row);
+    });
+    var rb = document.getElementById(revealId); if (!rb) return;
+    rb.addEventListener('click', function(){
+      host.querySelectorAll('.qrow').forEach(function(row, i){
+        var it = items[i];
+        row.querySelectorAll('.opt').forEach(function(x){ x.classList.remove('good', 'bad', 'dim'); x.classList.add(x.textContent === it.answer ? 'good' : 'dim'); });
+        var w = row.querySelector('.why'); if (w) w.classList.add('show');
+      });
+    });
+  }
+
+  /* the lead-in: four lines, two ends each; nothing is saved, it is for the conversation */
+  (function(){
+    var host = document.getElementById('lines');
+    ['Grammar', 'Vocabulary', 'Speaking', 'Listening'].forEach(function(n){
+      var d = document.createElement('div'); d.className = 'line';
+      d.innerHTML = '<div class="lab">' + n + '</div><div><div class="track" style="--lo:25%;--hi:65%"><i></i><input type="range" min="0" max="100" value="25" aria-label="' + n + ', the weakest student"><input type="range" min="0" max="100" value="65" aria-label="' + n + ', the strongest student" style="pointer-events:none"></div><div class="ends"><span>Weakest</span><span>Strongest</span></div></div>';
+      var tr = d.querySelector('.track'), ins = tr.querySelectorAll('input'), lo = ins[0], hi = ins[1];
+      function paint(){ var a = +lo.value, b = +hi.value; if (a > b) { var t = a; a = b; b = t; } tr.style.setProperty('--lo', a + '%'); tr.style.setProperty('--hi', b + '%'); }
+      /* one slider moves whichever end is nearer the press */
+      lo.addEventListener('input', paint); hi.addEventListener('input', paint);
+      tr.addEventListener('pointerdown', function(e){ var r = tr.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 100; var nearHi = Math.abs(x - hi.value) < Math.abs(x - lo.value); lo.style.pointerEvents = nearHi ? 'none' : ''; hi.style.pointerEvents = nearHi ? '' : 'none'; });
+      host.appendChild(d);
+    });
+  })();
+
+  /* why classes are mixed */
+  var CA = 'Makes the class mixed', NC = 'Something else';
+  buildTask('whyTask', [
+    { q: 'The school groups students by age, not by level.', answer: CA, why: 'Common in schools; a class of fourteen-year-olds is every level at once.' },
+    { q: 'The teacher speaks too fast for some of them.', answer: NC, why: 'A grading problem, and yours to fix. It does not make the class more mixed; it makes the mix show.' },
+    { q: 'The same group moves up together, course after course.', answer: CA, why: 'Learners progress at different speeds, so the gap widens every course.' },
+    { q: 'The placement test gave one overall level, but one student reads at B2 and speaks at A2.', answer: CA, why: 'A single level hides a range of levels in each person; that is Scrivener\'s point about standing closer.' },
+    { q: 'The coursebook is a level too high for most of the class.', answer: NC, why: 'A materials problem. The class is as mixed as it was; the book is wrong for all of them.' },
+    { q: 'The school has only three levels, so A2 and B1 share a class.', answer: CA, why: 'Not enough levels to fine-tune the classes.' },
+    { q: 'Two students joined late and missed the first four weeks.', answer: CA, why: 'They are at a different point in the course, and will be until someone closes the gap.' }
+  ], 'whyReveal', [CA, NC]);
+
+  /* two trainees */
+  var MA = 'Maria (now B2)', SA = 'Salim (now A1 to A2)';
+  buildTask('swapTask', [
+    { q: '“With the other group I didn’t mind a bit of their own language. Now I keep it to an absolute minimum.”', answer: MA, why: 'At B2 there is no need for it, and plenty to say in English.' },
+    { q: '“These learners can already say most of what they want to. My job is partly to give them other ways of saying it.”', answer: MA },
+    { q: '“I got a real shock in the first lesson. I don’t think they understood anything I said. There was an easy activity and I just couldn’t get across what they had to do.”', answer: SA, why: 'Instructions have to be graded, demonstrated and checked at low levels.' },
+    { q: '“I have more activities in a lesson now, and they’re shorter. Pair work doesn’t last as long.”', answer: SA, why: 'Lower levels run out of language sooner; the lesson has more, shorter stages.' },
+    { q: '“I really have to research the grammar now. They ask quite difficult questions, and the research makes me feel confident.”', answer: MA },
+    { q: '“I had to remember to show them what to click on and where to type, not just tell them.”', answer: SA },
+    { q: '“I can’t just chat to this group and find out about them so easily. I don’t think I have such good rapport.”', answer: SA, why: 'Rapport at low levels is built differently: through the tasks, names, humor that does not need words.' }
+  ], 'swapReveal', [MA, SA]);
+
+  /* one text, three levels */
+  var EL = 'Elementary', IN = 'Intermediate', AD = 'Advanced';
+  buildTask('textTask', [
+    { q: '<b>Teacher A.</b> “They’re at a party and overhear the story. The next day they tell it to a friend. They listened once, retold it in pairs, listened again for what they had forgotten, then discussed what in the way it was told made some parts easier to remember than others.”', answer: AD, why: 'One listening, no pictures, no questions; the task is the retelling and the discussion of style.' },
+    { q: '<b>Teacher B.</b> “I put up pictures of the events: a party, two people meeting, a snowy airport, a wedding. They predicted the order, listened and checked. I played it two or three times with pair talk between, then gave out the transcript for one last listening.”', answer: EL, why: 'Pictures before, a prediction to listen for, several playings, the transcript at the end: support at every step.' },
+    { q: '<b>Teacher C.</b> “I dictated four questions: where did they meet, where is Hana from, why couldn’t she fly, when did they marry. Played it, checked, replayed the hard bits. Then they listened for the phrases that helped the storytelling, and talked in pairs about a memorable moment of their own.”', answer: IN, why: 'Detail questions they can hold in their heads, a second listening for language, then a speaking task.' }
+  ], 'textReveal', [EL, IN, AD]);
+
+  /* what you can vary */
+  var VC = 'The content', VT = 'The task', VS = 'The support or the role', VR = 'Your response', VN = 'Nothing: everyone the same';
+  buildTask('tenTask', [
+    { q: 'The same reading text; group A turns the information into a chart, group B answers open questions, group C answers multiple-choice questions.', answer: VT },
+    { q: 'Four students get a newspaper article on the topic; four get a simplified reader; four get a short text you wrote yourself.', answer: VC },
+    { q: 'In the role-play, the police officers get their questions on a card; the witnesses have to find their own words.', answer: VS },
+    { q: 'You give the instructions for the next task to the whole class, once, with a demonstration.', answer: VN, why: 'Instructions and presentation are for everyone. Harmer: there are times when we do not want to differentiate at all.' },
+    { q: 'When a nervous student makes a mistake you note it for later; when a confident one makes the same mistake you stop him and ask him to try again.', answer: VR },
+    { q: '“Write up to twelve true sentences using these six words in three minutes.”', answer: VT, why: 'A flexible task: everyone does the same thing to a different extent.' },
+    { q: 'Students choose which of three grammar exercises to do.', answer: VC, why: 'Offering a choice of material is content differentiation, and the students know their own level better than you do.' },
+    { q: 'While monitoring, you give one group a model answer to look at and ask another group how they could say it more precisely.', answer: VR },
+    { q: 'The student who draws well leads the poster; the one who knows about engines explains the diagram before the class reads about it.', answer: VS, why: 'Different roles that use non-linguistic strengths, so everyone is best at something.' },
+    { q: 'Before a debate, group A gets a list of suggested arguments; group B has to come up with their own.', answer: VS }
+  ], 'tenReveal', [VC, VT, VS, VR, VN]);
+
+  /* early finishers */
+  var CH = 'A real challenge', BW = 'More of the same';
+  buildTask('earlyTask', [
+    { q: 'Another eight gap-fill sentences from the workbook.', answer: BW, why: 'Finishing early is rewarded with more of the thing they have just shown they can do.' },
+    { q: 'Turn four of the sentences into questions and ask your partner; note anything surprising.', answer: CH, why: 'New operation, real use, and it ends in talk.' },
+    { q: 'Write the eight sentences out again in your best handwriting.', answer: BW },
+    { q: 'Find the two sentences that could be said another way, and write the other way.', answer: CH, why: 'It asks for judgment, not repetition, and it is short enough to finish in five minutes.' }
+  ], 'earlyReveal', [CH, BW]);
+
+  /* everyone in */
+  var KI = 'Keeps everyone in', LO = 'Leaves someone out';
+  buildTask('inTask', [
+    { q: 'Each group numbers its members one to four in secret; at the end you call a group and a number, and that person presents.', answer: KI, why: 'Numbered heads. Nobody knows who will be chosen, so the group has to make sure everyone could.' },
+    { q: 'Ask the strongest student in each group to present first, so the others hear a model.', answer: LO, why: 'The others have just been told they are not the model. They will listen; they will not prepare.' },
+    { q: 'Give the stronger students the role of chair, responsible for getting a contribution from everyone.', answer: KI },
+    { q: 'Give the weaker two the easy half of the presentation, the introduction and the thanks.', answer: LO, why: 'A smaller part is still a part; a part that needs no English is exclusion with a kind face.' },
+    { q: 'Tell the groups the task is not complete until every member has written one point and can explain it.', answer: KI, why: 'The stronger students now have a reason to help the weaker ones.' },
+    { q: 'Wait a few seconds before nominating anyone, so everyone has a chance to think of an answer.', answer: KI }
+  ], 'inReveal', [KI, LO]);
+
+  /* what is realistic */
+  var T = 'True', F = 'False';
+  buildTask('realTask', [
+    { q: 'Responding to individuals differently, as you monitor and give feedback, counts as differentiation.', answer: T, why: 'Harmer calls it one of the main aspects of differentiation, and it is the one that costs nothing.' },
+    { q: 'Differentiation means preparing a different worksheet for each student.', answer: F, why: 'Twenty-five worksheets is not realistic for a teacher with nine classes. Flexible tasks and different responses are.' },
+    { q: 'There are times when the whole class should do exactly the same thing.', answer: T, why: 'Instructions, presentation, building the class’s identity.' },
+    { q: 'A mixed-level class is always a problem to be solved.', answer: F, why: 'One school taught mixed levels together once a week on purpose: the stronger revisited and polished, the weaker saw what to aim for.' },
+    { q: 'A flexible task is one that everyone can do, to a different extent.', answer: T },
+    { q: 'The ultimate differentiation is learners taking responsibility for their own learning.', answer: T, why: 'If each student is working on what they need, the differentiation has happened without you.' }
+  ], 'realReveal', [T, F]);
+})();
+</script>
+<script>
+(function(){
+  /* A film with an end time in its address (end=108) is cut there by the
+     page itself: YouTube's own end parameter ran on into the rest of the
+     video and then into the next one (14 Oct 2026). The player is asked to
+     report its clock; at the end time, or when it ends by itself, the frame
+     closes, so nothing follows. */
+  var open = null;
+  window.addEventListener('message', function(e){
+    if (!open || !open.iframe || e.source !== open.iframe.contentWindow) return;
+    var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+    if (!d || d.event !== 'infoDelivery' || !d.info) return;
+    var t = d.info.currentTime, st = d.info.playerState;
+    if ((open.end && t != null && t >= open.end) || st === 0) { open.close(); return; }
+    /* data-skip="26.5-89": a stretch of the film the session does not need
+       (Ramy, 20 Oct 2026: the Hamlet sketch's first conversation). The
+       player jumps past it; nothing is cut from the film itself. */
+    if (open.skip && t != null && t >= open.skip[0] && t < open.skip[1]) {
+      try { open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [open.skip[1], true] }), '*'); } catch (x) {}
+    }
+  });
+  /* A film kept beside the page: a native player in the same frame. */
+  document.querySelectorAll('.film[data-video]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var hide = (btn.textContent || '').replace(/^Watch/, 'Hide');
+    function close(){ var v = f.querySelector('video'); if (v) { try { v.pause(); } catch (x) {} } f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';
+      v.addEventListener('ended', close); f.appendChild(v);
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = hide; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+  document.querySelectorAll('.film[data-src]').forEach(function(f){
+    var btn = f.querySelector('.film-btn'); if (!btn) return;
+    var end = (f.dataset.src.match(/[?&]end=(\d+)/) || [])[1];
+    var skip = (f.dataset.skip || '').split('-').map(Number); if (skip.length !== 2 || isNaN(skip[0]) || isNaN(skip[1])) skip = null;
+    function close(){ try { if (open && open.iframe) open.iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'stopVideo', args: [] }), '*'); } catch (x) {} open = null; f.innerHTML = ''; f.classList.add('closed'); f.appendChild(btn); var a = f.parentNode.querySelector('.film-acts'); if (a) a.remove(); }
+    btn.addEventListener('click', function(){
+      f.classList.remove('closed'); f.innerHTML = '';
+      var i = document.createElement('iframe'); i.src = f.dataset.src + (f.dataset.src.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin); i.title = f.dataset.title || 'Film';
+      i.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture'; i.allowFullscreen = true; f.appendChild(i);
+      open = { iframe: i, end: end ? +end : 0, skip: skip, close: close };
+      i.addEventListener('load', function(){ try { i.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (x) {} });
+      var acts = document.createElement('p'); acts.className = 'film-acts';
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'btn'; c.textContent = 'Hide the film'; c.addEventListener('click', close);
+      acts.appendChild(c); f.parentNode.insertBefore(acts, f.nextSibling);
+    });
+  });
+})();
+</script>
+<script src="../../hub-store.js"></script>
+<script src="../../hub-notebook.js"></script>
+<script src="../../hub-rec.js"></script>
+<script src="../../hub-ask.js"></script>
+<script>
+(function(){
+  if (window.InputLib) InputLib.gate();
+  if (!window.HubStore || !HubStore.isTutor()) return;
+  HubStore.ping().then(function(r){
+    if (!r || !r.tutor) return;
+    document.body.classList.add('tutor');
+    var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
+    var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
+    var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
+    var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
