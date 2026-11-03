@@ -26,6 +26,9 @@
   var PAGE = (location.pathname.split('/').pop() || 'index.html');
   var S = window.HubStore || {};
   var role = function(){
+    /* the store is read again each time (3 Nov 2026): on the volunteer register hub-present ran before hub-store.js had
+       defined HubStore, so S stayed empty, the tutor read as nobody, and the bar had no Fill in */
+    S = window.HubStore || S;
     try {
       if (S.isTutor && S.isTutor()) return 'tutor';
       if (S.isAssessor && S.isAssessor()) return 'assessor';
@@ -271,7 +274,8 @@
      them has agreed to the joining note, which holds back the FoL interviews. So, as they are added: a level (the two
      elementary groups' A2, the two B2), and, all but the first, the joining note agreed, the same stamp their own press leaves.
      The first is the one the Volunteer button opens, so its consent card is still there to show, and Ramy agrees it himself. */
-  if (PAGE === '25_volunteer_register.html' && ROLE === 'tutor') setInterval(function(){
+  if (PAGE === '25_volunteer_register.html') setInterval(function(){
+    if (role() !== 'tutor') return;   /* asked each time: the store may not have been there when this script ran (3 Nov 2026) */
     var R = g('REG'); if (!R || !Array.isArray(R.students)) return;
     var withLink = R.students.filter(function(x){ return x && x.token; }), LV = ['A2', 'A2', 'B2', 'B2', 'A2'], lv = 0, ag = 0;
     withLink.forEach(function(x, i){
