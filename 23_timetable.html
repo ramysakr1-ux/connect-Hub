@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611031318">
+<link rel="stylesheet" href="hub-tokens.css?v=202611031428">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -690,6 +690,12 @@
      the input library beside the board while editing */
   .smode{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 16px;}
   .smode .chip{font-size:0.72rem;}
+  /* PUBLISH is the one button that reaches everyone on the course (Ramy, 3 Nov 2026: "it needs to be separated from the other tabs ... clear, maybe red"): red, set apart from the quiet row */
+  /* !important: hub-house's body :is(.btn ...) rule paints every button paper; the one that reaches the course is red */
+  .sacts .btn.publish{margin-left:18px;}
+  .sacts .btn.publish, .ttpop .btn.publish{background:var(--a-red) !important; color:var(--paper) !important;}
+  .sacts .btn.publish:hover, .ttpop .btn.publish:hover{background:var(--brick) !important; color:var(--paper) !important; filter:brightness(1.12);}
+  .ttpop .dt1.warn{padding:10px 14px; border-left:3px solid var(--a-red); background:var(--box); color:var(--ink);}
   .swk{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 6px; margin:0 0 18px;}
   .swk button{flex:0 0 auto; min-width:104px; text-align:left; padding:8px 12px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--paper); color:var(--ink); font:600 0.86rem 'Karla',sans-serif; cursor:pointer;}
   .swk button small{display:block; font-weight:500; font-size:0.72rem; color:var(--grey);}
@@ -780,25 +786,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611031318">
+<link rel="stylesheet" href="hub-house.css?v=202611031428">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611031318"></script>
-<script src="hub-tracker.js?v=202611031318"></script>
-<script src="hub-rotation.js?v=202611031318"></script>
-<script src="hub-xlsx.js?v=202611031318"></script>
-<script src="hub-docx.js?v=202611031318"></script>
-<script src="hub-timetable-parse.js?v=202611031318"></script>
-<script src="assignment-defaults.js?v=202611031318"></script>
-<script src="hub-shared.js?v=202611031318"></script>
-<script src="hub-store.js?v=202611031318"></script>
-<script src="hub-say.js?v=202611031318"></script>
-<script src="hub-sync.js?v=202611031318"></script>
-<script src="hub-notebook.js?v=202611031318"></script>
+<script src="hub-due.js?v=202611031428"></script>
+<script src="hub-tracker.js?v=202611031428"></script>
+<script src="hub-rotation.js?v=202611031428"></script>
+<script src="hub-xlsx.js?v=202611031428"></script>
+<script src="hub-docx.js?v=202611031428"></script>
+<script src="hub-timetable-parse.js?v=202611031428"></script>
+<script src="assignment-defaults.js?v=202611031428"></script>
+<script src="hub-shared.js?v=202611031428"></script>
+<script src="hub-store.js?v=202611031428"></script>
+<script src="hub-say.js?v=202611031428"></script>
+<script src="hub-sync.js?v=202611031428"></script>
+<script src="hub-notebook.js?v=202611031428"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1863,7 +1869,7 @@ function render(){
      starts a page, and no day is ever split across the fold. */
   const pubNow = !!(TT && TT.published);
   /* read only or editing, said in a word, and the one switch between them (Ramy's design, 29 Oct 2026) */
-  const mode = IS_TUTOR && TT && TT.days && TT.days.length ? `<div class="smode"><span class="chip${EDIT ? ' draft' : ' on'}">${EDIT ? (pubNow ? 'Editing · the course sees the published one' : 'Editing · not set for the course yet') : 'Read only · what the course sees'}</span><button type="button" class="btn quiet" id="preview">${EDIT ? 'Trainee view' : 'Edit timetable'}</button></div>` : '';
+  const mode = IS_TUTOR && TT && TT.days && TT.days.length ? `<div class="smode"><span class="chip${EDIT ? ' draft' : ' on'}">${EDIT ? (pubNow ? 'Editing · the course sees the published one' : 'Editing · not published yet') : 'Read only · what the course sees'}</span><button type="button" class="btn quiet" id="preview">${EDIT ? 'Trainee view' : 'Edit timetable'}</button></div>` : '';
   const head = `<p class="eyebrow">Course</p><h1>Timetable${TT && TT.days && TT.days.length ? '<button type="button" class="printpill" id="ttPrint">Print week</button>' : ''}</h1>
     <p class="lede">${EDIT
       ? 'The course’s timetable. Click a session to change it; trainees see it once you publish. The course’s dates and time zone are set on <a href="6_centre_admin_dashboard.html">Course admin</a>; the days, rooms and sessions are set here.'   /* R02 (30 Oct 2026): who owns what, said where both show */
@@ -1945,8 +1951,8 @@ function render(){
   const used2 = [...new Set((TT.days || []).flatMap(d => (d.sessions || []).filter(x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by]).map(x => String(+x.by))))];
   if (TFILTER !== '' && used2.indexOf(TFILTER) === -1) TFILTER = '';
   const filt = used2.length > 1 ? `<select id="tFilter" aria-label="Show one tutor’s sessions"><option value="">All tutors</option>${used2.map(i => `<option value="${i}"${TFILTER === i ? ' selected' : ''}>${esc(initialsOf(TUTORS[+i]))} · ${esc(TUTORS[+i])}</option>`).join('')}</select>` : '';
-  const pubBtn = !IS_TUTOR || !EDIT ? '' : !pub ? `<button type="button" class="btn" id="setBtn">Set it for the course</button>`
-    : CHANGES.length ? `<button type="button" class="btn" id="pubBtn">Publish changes</button>` : '';   /* shown only when there is something to publish (Ramy, 30 Oct 2026) */
+  const pubBtn = !IS_TUTOR || !EDIT ? '' : !pub ? `<button type="button" class="btn publish" id="setBtn">Publish</button>`
+    : CHANGES.length ? `<button type="button" class="btn publish" id="pubBtn">Publish changes</button>` : '';   /* shown only when there is something to publish (Ramy, 30 Oct 2026) */
   const tool = `<div class="stool"><div><h2>Week ${two(WEEK + 1)}</h2><p class="wkd">${esc(DOW[wa.getDay()] + ' ' + dm(wa))} – ${esc(DOW[wb.getDay()] + ' ' + dm(wb))}</p>${changeNote(w)}</div>
     <div class="sacts">${filt}<button type="button" class="btn quiet" id="tOrient" title="Switch the board round">${ACROSS() ? 'Days down' : 'Days across'}</button>
       ${EDIT ? `<button type="button" class="btn quiet" id="libBtn" aria-pressed="${LIB_OPEN}">Input library</button><button type="button" class="btn quiet" id="addSes">+ Session</button><button type="button" class="btn quiet" id="setupBtn">Course setup</button><button type="button" class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>${pubBtn}` : ''}
@@ -1957,10 +1963,10 @@ function render(){
     + '';   /* nothing written under the board (Ramy, 30 Oct 2026: "remove the writing underneath ... it's crowded") */
   if ($('preview')) $('preview').addEventListener('click', () => { PREVIEW = !PREVIEW; try { sessionStorage.setItem('tt:preview', PREVIEW ? '1' : ''); } catch (e) {} closePop(); render(); });
   wireStudio(weeks);
-  if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); });
+  if ($('publish')) $('publish').addEventListener('click', () => { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Published \u2014 the course can see it'); render(); });
   /* One press hid the timetable from every candidate (9 Oct 2026): it asks. */
   if ($('unpublish')) $('unpublish').addEventListener('click', async () => {
-    if (!(await ask('Take the timetable back from the course? Candidates and tutors stop seeing it until you set it for the course again.', 'Take it back'))) return;
+    if (!(await ask('Take the timetable back from the course? Trainees and tutors stop seeing it until you publish it again.', 'Take it back'))) return;
     TT.published = false; CHANGES = []; save('Taken back'); render();
   });
   wireStatus(); wireUpdated();
@@ -2231,7 +2237,7 @@ function cxApply(){
     setAsgDate(k, 'due', dates[due - 1] + 'T11:00');
     setAsgDate(k, 'resub', dates[resub - 1] + 'T11:00'); });
   save('Built', { text: 'Connect’s timetable (' + shape[1] + '): 20 days, 16 with teaching practice, ' + inputs + ' input sessions' });
-  note = 'Connect’s timetable is on the board (' + shape[1] + '), ' + dayName(dates[0]) + ' to ' + dayName(dates[19]) + '. Drag a tile to move it, click one to change it, then set it for the course. The assignments’ dates are placed too: Assignment dates, above, to change them.'
+  note = 'Connect’s timetable is on the board (' + shape[1] + '), ' + dayName(dates[0]) + ' to ' + dayName(dates[19]) + '. Drag a tile to move it, click one to change it, then publish it. The assignments’ dates are placed too: Assignment dates, above, to change them.'
     + (end && last && last > end ? ' The course ends ' + dayName(SETTINGS.end) + ' on Course admin, before the last day here: change the end date there.' : '');
   render();
 }
@@ -2610,7 +2616,7 @@ function wireBuild(){
     BUILD_OPEN = false;
     const n = made.days.length, inputs = made.days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input').length, 0);
     save('Built', { text: 'Connect built the timetable: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + inputs + ' input sessions', effects: made.left ? [made.left + ' ticked session' + (made.left === 1 ? ' did' : 's did') + ' not fit: untick some, or add days'] : [] });
-    note = 'Built: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + inputs + ' input sessions' + (made.left ? ' · ' + made.left + ' did not fit' : '') + '. Drag anything to swap it; set it for the course when it looks right.';
+    note = 'Built: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + inputs + ' input sessions' + (made.left ? ' · ' + made.left + ' did not fit' : '') + '. Drag anything to swap it; publish it for the course when it looks right.';
     render();
   });
 }
@@ -3120,13 +3126,13 @@ function openSetup(){
 function openPublish(first){
   closePop();
   const el = pop('ttpop'), c = first ? null : draftCounts();
-  el.innerHTML = `${c ? `<p class="dt1"><b>${c.add}</b> added · <b>${c.ed}</b> changed · <b>${c.rm}</b> removed</p>` : '<p class="dt1">The course sees the timetable from now on, and every change after this waits for Publish changes.</p>'}
+  el.innerHTML = `${c ? `<p class="dt1"><b>${c.add}</b> added · <b>${c.ed}</b> changed · <b>${c.rm}</b> removed</p>` : '<p class="dt1 warn">Once it is published, everyone on the course sees it: every trainee, every tutor and the assessor. You can take it back, and Undo takes back a change.</p>'}
     <h4 class="pch">Checks</h4>${checksHTML() || '<p class="muted">Nothing to check.</p>'}
     <p class="muted">${first ? '' : 'Trainees get a short note of what moved.'}</p>
-    <div class="acts three"><button type="button" class="btn quiet" id="pbNo">Not yet</button><button type="button" class="btn" id="pbGo">${first ? 'Set it for the course' : 'Publish changes'}</button></div>`;
-  el.hidden = false; asDrawer(el, first ? 'Set it for the course' : 'Publish changes');
+    <div class="acts three"><button type="button" class="btn quiet" id="pbNo">Not yet</button><button type="button" class="btn publish" id="pbGo">${first ? 'Publish' : 'Publish changes'}</button></div>`;
+  el.hidden = false; asDrawer(el, first ? 'Publish the timetable' : 'Publish changes');
   $('pbNo').addEventListener('click', () => closePop());
-  $('pbGo').addEventListener('click', () => { closePop(); if (first) { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Set \u2014 the course can see it'); render(); } else publish(); });
+  $('pbGo').addEventListener('click', () => { closePop(); if (first) { TT.published = true; CHANGES = []; LIVE = pickLive(TT); save('Published \u2014 the course can see it'); render(); } else publish(); });
 }
 
 /* HOW THE TIMETABLE WORKS (Ramy, 30 Oct 2026: "a trainer-facing option ... very simple terms ... 1, 2, 3, 4 ... five weeks or
@@ -3142,7 +3148,7 @@ function openHow(){
     ${step(4, 'Change a session', 'Click it. Change the title, the day, the times, the tutor or what trainees prepare, then press <b>Save draft</b>. To move it, drag it to an empty place; drop it on another session to swap the two.')}
     ${step(5, 'Add a session', 'Press <b>+ Session</b>, click an empty place on the board, or open the <b>Input library</b> and drag a session onto the board.', '<button type="button" class="btn quiet" data-how="lib">Open the Input library</button>')}
     ${step(6, 'A day that is different', 'Use <b>⋯</b> on the day: start it later, finish it earlier, close it for a holiday, or copy its shape to other days.')}
-    ${step(7, 'Show it to the course', 'Press <b>Set it for the course</b>. Lite runs its checks first. After that every change is a draft until you press <b>Publish changes</b>, and <b>Undo</b> takes back the last one. <b>Trainee view</b> shows exactly what trainees see.')}`;
+    ${step(7, 'Show it to the course', 'Press <b>Publish</b>. Lite runs its checks first, and says who will see it. After that every change is a draft until you press <b>Publish changes</b>, and <b>Undo</b> takes back the last one. <b>Trainee view</b> shows exactly what trainees see.')}`;
   el.hidden = false; asDrawer(el, 'How the timetable works');
   el.querySelectorAll('[data-how]').forEach(b => b.addEventListener('click', () => {
     const w = b.dataset.how;

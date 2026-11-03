@@ -156,7 +156,13 @@ window.HubStore = (function(){
       try {
         var V = verGet();
         if (out.ver.at && payload.op === 'boot' && out.result && typeof out.result === 'object') out.result.__ver = out.ver.at;
-        if (out.ver.before && V && V.cred === cred() && V.v === out.ver.before) verPut({ cred: V.cred, v: out.ver.after, at: V.at });
+        /* THE ROSTER IS NOT MIRRORED (3 Nov 2026). addTrainees, removeTrainee and renameTrainee write the store's roster
+           straight from a page, and connect_roster_v1 in this browser is only ever written by a boot. Taking the "to"
+           here left the next page sure it was current, with the roster it had before (the Connect demo's TP points said
+           "No trainees on the roster yet" after twelve were added). Those three forget the version: the next page boots. */
+        var ROSTER_OPS = { addTrainees: 1, removeTrainee: 1, renameTrainee: 1 };
+        if (out.ver.before && ROSTER_OPS[payload.op]) { try { localStorage.removeItem('hub:ver'); } catch (e2) {} }
+        else if (out.ver.before && V && V.cred === cred() && V.v === out.ver.before) verPut({ cred: V.cred, v: out.ver.after, at: V.at });
       } catch (e) {}
     }
     if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; refusal.pin = /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')); throw refusal; }
