@@ -1425,13 +1425,55 @@ if (fbBack){
      on the welcome card"). The timetable's input session for today, when the
      library has its page, straight to it; the same rule the library's own gate
      uses, so the card never offers a session the page would keep shut. */
+  /* THE TIMETABLE'S LINES FOLLOW THE CLOCK (Ramy, 4 Nov 2026: "link them to the timetable time so they don't see
+     too many things on their to-do list"). Today's input sessions and demo lessons are gathered first, with the
+     slot's start and end on the course's clock; then ONE goes on the card: the slot running now, or else the next
+     one to start. A slot that has ended leaves the card. */
+  const clockLines = [];
+  const slotInstant = function(date, hhmm){
+    if (!date || !hhmm) return null;
+    if (window.hubZonedInstant && CS.timeZone) { const v = hubZonedInstant(date, hhmm, CS.timeZone); if (v != null) return v; }
+    const m = String(date).match(/^(\d{4})-(\d{2})-(\d{2})/), h = String(hhmm).match(/^(\d{1,2}):(\d{2})/);
+    return m && h ? new Date(+m[1], +m[2] - 1, +m[3], +h[1], +h[2]).getTime() : null;
+  };
+  const tileEnd = function(date, s, kind){
+    const d = (TT.days || []).find(x => x && x.date === date);
+    const tile = ((d && (d.sessions || d.slots)) || []).find(x => x && x.s === s && (!kind || x.k === kind));
+    return (tile && tile.e) || '';
+  };
   if (!beforeStart && !afterEnd && !lastWrap && window.InputLib && TT && TT.days && (!InputLib.connectOn || InputLib.connectOn(CS))) {
     const seen = {};
     (InputLib.inputsOf(TT) || []).filter(x => x && x.slug && x.date === TODAY).forEach(function(x){
       if (seen[x.slug]) return; seen[x.slug] = 1;
-      add('Today\u2019s input session' + (x.s && window.hubClock ? ', ' + hubClock(x.s) : '') + ': ' + x.t, 'input-sessions/' + x.slug + '/');
+      clockLines.push({ text: 'Today\u2019s input session' + (x.s && window.hubClock ? ', ' + hubClock(x.s) : '') + ': ' + x.t, href: 'input-sessions/' + x.slug + '/',
+        from: slotInstant(x.date, x.s), to: slotInstant(x.date, tileEnd(x.date, x.s, 'input')) });
     });
   }
+  /* TODAY'S DEMO LESSON, WITH ITS OBSERVATION SHEET (Ramy, 4 Nov 2026: "it's a demo lesson, so it should be on the
+     card ... it should have its own card. Demo lesson, observation"). The timetable's demo-lesson tiles for today
+     open the live observation sheet for that lesson: the first demo lesson of the course is Live 1, the second Live 2.
+     Student interviews sit on the same kind of tile and are not lessons, so they do not count. */
+  if (!beforeStart && !afterEnd && !lastWrap && TT && TT.days && window.hubDemoLessons) {
+    (hubDemoLessons(TT) || []).filter(x => x.date === TODAY).forEach(function(x){
+      clockLines.push({ text: 'Today’s demo lesson' + (x.from && window.hubClock ? ', ' + hubClock(x.from) : '') + ': ' + x.title + ' — your observation sheet', href: '18_observation_tasks.html?task=live' + x.n,
+        from: slotInstant(x.date, x.from), to: slotInstant(x.date, x.to) });
+    });
+  }
+  /* What is on the card: every slot that has started (or starts within a quarter of an hour), and the one coming
+     next, so the morning's first session is there when they open the page and the end-of-day one waits its turn.
+     A line stays after its slot ends: a slot ending is not the thing being done (Ramy, 4 Nov 2026: "I don't think
+     we need to hide something when the slot ends. We could hide it once it's completed"). A demo lesson's line goes
+     once its observation sheet is turned in. */
+  (function(){
+    const now = window.hubNow ? hubNow() : Date.now();
+    const OBS = rec('connect_observations_v1') || {};
+    const open = clockLines
+      .filter(l => { const m = /task=(live\d+)/.exec(l.href || ''); return !(m && OBS[m[1]] && OBS[m[1]].turnedInAt); })
+      .sort((a, b) => (a.from || 0) - (b.from || 0));
+    const started = open.filter(l => l.from == null || l.from - 15 * 60000 <= now);
+    const next = open.filter(l => started.indexOf(l) < 0)[0];
+    started.concat(next ? [next] : []).forEach(l => add(l.text, l.href));
+  })();
   /* Day one: the getting-to-know-you activity is picked today if it was not picked before the course
      (Ramy, 25 Oct 2026, the day-one demo: "they see the getting to know you"). A pick is a share of kind gtky. */
   if (CS.preCourseConnect && CS.gtkyFormat !== 'interview' && TODAY && START && TODAY === START
@@ -1498,9 +1540,24 @@ if (fbBack){
       for (let n = tpTotal; n >= 2; n--) { const t = opensAt(n); if (t <= now) return (now - t < 36 * 3600 * 1000 || (O.mode === 'hand' && n > filed + 1)) && (((PTS.points || {})[ME.token] || {})['tp' + n] || {}).aim ? n : 0; }
       return 0;
     })();
+    /* NOT BEFORE LESSON PLANNING TIME (Ramy, 4 Nov 2026: "at the beginning of day one ... they don't need to learn about
+       their TP points until it's lesson planning time"). Until the course's first lesson-planning slot has begun on the
+       clock, the card says nothing about TP points or a plan; from that moment on, as before. A timetable with no
+       planning slot keeps the old behaviour. */
+    const planOpen = (function(){
+      let first = null;
+      (TT.days || []).filter(d => d && ymd(d.date)).forEach(d => (d.sessions || d.slots || []).forEach(x => {
+        if (!x || x.k !== 'plan' || !x.s) return;
+        const at = (window.hubZonedInstant && CS.timeZone) ? hubZonedInstant(d.date, x.s, CS.timeZone) : null;
+        const p = d.date.split('-'), hm = String(x.s).split(':');
+        const t = at != null ? at : new Date(+p[0], +p[1] - 1, +p[2], +hm[0], +hm[1] || 0).getTime();
+        if (first == null || t < first) first = t;
+      }));
+      return first == null || (window.hubNow ? hubNow() : Date.now()) >= first;
+    })();
     /* the TP points first: what they teach, with its pages and its audio */
-    if (NEXT === 'plan' && HERO_TP && PTS.released) add((NEW_TP === HERO_TP ? 'New: y' : 'Y') + 'our TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
-    if (NEXT === 'plan') add(HERO_TP ? (matOnly(HERO_TP) ? 'Prepare your material for TP ' + HERO_TP + ' and send it to your tutor' : 'Write your lesson plan for TP ' + HERO_TP) : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
+    if (planOpen && NEXT === 'plan' && HERO_TP && PTS.released) add((NEW_TP === HERO_TP ? 'New: y' : 'Y') + 'our TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
+    if (planOpen && NEXT === 'plan') add(HERO_TP ? (matOnly(HERO_TP) ? 'Prepare your material for TP ' + HERO_TP + ' and send it to your tutor' : 'Write your lesson plan for TP ' + HERO_TP) : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
     /* NOT BEFORE THE LESSON (Ramy, 31 Oct 2026, walking the mid-course demo: Dmitri teaches TP4 at 3:00 today and was asked
        for its self-evaluation at lunchtime). On the day of the TP, until it starts, the line is the lesson itself. */
     const lessonAhead = NEXT === 'self' && !fbBack && tpDay === TODAY && (function(){

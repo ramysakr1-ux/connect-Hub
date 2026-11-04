@@ -284,7 +284,7 @@ window.CONNECT_HUB_OBSERVATION_DEFAULTS = {
       "minutes": 90,
       "shape": "questions",
       "rows": [
-        "Before you watch: from the input session, write down in your own words what classroom management covers. Keep the list in front of you while you watch.",
+        "Before you watch: write down in your own words what classroom management covers. Keep the list in front of you while you watch.",
         "How does the teacher use the space — where do they stand, when do they move, when do they get out of the way?",
         "How are learners grouped, and how do the groupings change? Note how the teacher sets up each change and how long it takes.",
         "What does the teacher do while learners are working? Note what they are listening for, and what they do with what they hear.",

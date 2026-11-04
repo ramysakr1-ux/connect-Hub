@@ -400,6 +400,42 @@ const field = (k, name, label, fallback, hint) => {
 let SHARED = []; try { SHARED = JSON.parse(localStorage.getItem('connect_peer_sheets_v1') || '[]') || []; } catch (e) {}
 let TT = null, CSET = {}; try { TT = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {} try { CSET = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
 let CNOTE = '';
+/* WHAT LITE ALREADY KNOWS ABOUT A DEMO LESSON (Ramy, 4 Nov 2026: "the top part should be automatically filled
+   in ... Lite knows the level the trainee is on, the name of the trainer, that it's 90 minutes from the timetable
+   ... the only thing Lite doesn't know is how many learners are present"). For Live N: the course's Nth demo
+   lesson on the timetable gives the lesson, the date and the length; the course's first tutor is the teacher;
+   the level is the TP point set the trainee's group teaches from. Each is only a starting value: the field()
+   below fills a box with it when the box is empty, and the trainee can still change it. */
+function demoFacts(t){
+  if (!t || !/^live/.test(String(t.id || ''))) return {};
+  const n = posOf(t) || 0;
+  const out = {};
+  try {
+    const list = window.hubDemoLessons ? hubDemoLessons(TT) : [];
+    const d = list.find(x => x.n === n) || list[n - 1];
+    if (d) {
+      /* a tile can carry more than the lesson ("Demo lesson 2 + getting to know you", 150 minutes): then the name is
+         the demo part, and the length is the sheet's own, not the tile's */
+      const parts = String(d.title).split(/\s+(?:\+|&|and|then)\s+/i);
+      const own = parts.find(x => /\bdemo/i.test(x)) || d.title;
+      out.lesson = own.trim();
+      if (d.minutes && parts.length === 1) out.length = String(d.minutes);
+      try { out.date = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { out.date = d.date; }
+    }
+  } catch (e) {}
+  try {
+    const names = window.hubTutorNames ? (hubTutorNames(CSET) || []) : String(CSET.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
+    if (names[0]) out.teacher = String(names[0]);
+  } catch (e) {}
+  try {
+    const pts = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null') || {};
+    const setFor = (pts.set && pts.set.setFor) || {}, lib = (pts.set && pts.set.library) || {};
+    const id = setFor[VIEWER.group];
+    const level = id && lib[id] && lib[id].level;
+    if (level) out.level = String(level);
+  } catch (e) {}
+  return out;
+}
 function instantOf(date, hhmm){
   const tz = CSET.timeZone || '';
   if (tz && window.hubZonedInstant) { const v = window.hubZonedInstant(date, hhmm, tz); if (v != null) return v; }
@@ -565,7 +601,7 @@ function sheet(t, sit){
   /* The filmed and live sheets open with the lesson's particulars; the peer
      ones do not -- the trainee was in the room. */
   const header = /^(notes|parts|questions)$/.test(t.shape)
-    ? `<div class="hdrow">${t.id.startsWith('live') ? field(k,'hTeacher','Teacher observed') : ''}${field(k,'hLesson','Lesson')}${field(k,'hLevel','Level')}${field(k,'hLength','Length',t.minutes)}${field(k,'hLearners','Learners present')}${field(k,'hDate', t.id.startsWith('live') ? 'Date' : 'Date watched')}${field(k,'hSigned','Signature of observed teacher', null, 'if your center asks')}</div>` : '';
+    ? (function(){ const df = demoFacts(t); return `<div class="hdrow">${t.id.startsWith('live') ? field(k,'hTeacher','Teacher observed', df.teacher) : ''}${field(k,'hLesson','Lesson', df.lesson)}${field(k,'hLevel','Level', df.level)}${field(k,'hLength','Length', df.length || t.minutes)}${field(k,'hLearners','Learners present')}${field(k,'hDate', t.id.startsWith('live') ? 'Date' : 'Date watched', df.date)}${field(k,'hSigned','Signature of observed teacher', null, 'if your center asks')}</div>`; })() :'';
 
   $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
   $('app').innerHTML = `

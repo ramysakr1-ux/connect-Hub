@@ -780,6 +780,38 @@ window.hubSetIndexOf = function(token, group){
   } catch (e) {}
   return -1;
 };
+/* THE COURSE'S DEMO LESSONS, IN ORDER (4 Nov 2026). Read off the timetable: the demo-kind tiles whose title says
+   demo (student interviews share the kind and are not lessons). Two 45-minute tiles with the same title on one day
+   are one 90-minute lesson. The first demo lesson of the course is Live 1 on the observation tasks, the second Live
+   2, unless the title itself carries a number ("Demo lesson 2"). Each entry: n, date, title, from, to, minutes. */
+window.hubDemoLessons = function(TT){
+  var out = [];
+  var days = ((TT && TT.days) || []).filter(function(d){ return d && /^\d{4}-\d{2}-\d{2}$/.test(String(d.date || '')); })
+    .slice().sort(function(a, b){ return String(a.date).localeCompare(String(b.date)); });
+  var mins = function(s){ var m = /^(\d{1,2}):(\d{2})/.exec(String(s || '')); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+  var seq = 0;
+  days.forEach(function(d){
+    var byTitle = {};
+    (d.sessions || d.slots || []).forEach(function(x){
+      if (!x || x.k !== 'demo') return;
+      var t = String(x.t || x.title || '').trim();
+      if (!/\bdemo/i.test(t) || /interview/i.test(t)) return;
+      var key = t.toLowerCase();
+      var e = byTitle[key] || (byTitle[key] = { date: d.date, title: t, from: x.s || '', to: x.e || '', minutes: 0 });
+      var a = mins(x.s), b = mins(x.e);
+      if (a != null && b != null && b > a) e.minutes += b - a;
+      if (x.s && (!e.from || String(x.s) < String(e.from))) e.from = x.s;
+      if (x.e && (!e.to || String(x.e) > String(e.to))) e.to = x.e;
+    });
+    Object.keys(byTitle).sort(function(p, q){ return String(byTitle[p].from).localeCompare(String(byTitle[q].from)); }).forEach(function(key){
+      var e = byTitle[key], m = /(\d+)/.exec(e.title);
+      seq++;
+      e.n = m ? +m[1] : seq;
+      out.push(e);
+    });
+  });
+  return out;
+};
 /* The deadline that applies to one trainee before any extension. */
 window.hubDueFor = function(a, token, group){
   if (!a) return '';
