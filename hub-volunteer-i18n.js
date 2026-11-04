@@ -67,7 +67,8 @@
         'Your attendance is marked by the tutor, not by you. A class counts when you were there for most of it. Your hours add up on your page.',
         'When your hours reach the center’s number, your certificate appears on your page, already signed by the center. Print it, or save it as a PDF.',
         'Add the page to your phone: Add to Home Screen in Safari, or Install in Chrome. Then it opens like an app.',
-        'If you cannot come to a class, press No under “Are you coming?” at the top of your page.'
+        'If you cannot come to a class, press No under “Are you coming?” at the top of your page.',
+        'The self-study card and Build up your vocab are for you, in your own time. They are not homework: nobody checks them and nobody marks them.'
       ],
       howLink: 'How your page works',
       backLink: 'Back to your page'
@@ -95,7 +96,8 @@
         'Devamınızı siz değil, eğitmen işaretler. Dersin çoğunda oradaysanız ders sayılır. Saatleriniz sayfanızda toplanır.',
         'Saatleriniz merkezin belirlediği sayıya ulaşınca sertifikanız, merkez tarafından imzalanmış olarak sayfanızda görünür. Yazdırın ya da PDF olarak kaydedin.',
         'Sayfayı telefonunuza ekleyin: Safari’de Ana Ekrana Ekle, Chrome’da Yükle. Sonra bir uygulama gibi açılır.',
-        'Bir derse gelemeyecekseniz, sayfanızın en üstündeki “Are you coming?” sorusunun altında No düğmesine basın.'
+        'Bir derse gelemeyecekseniz, sayfanızın en üstündeki “Are you coming?” sorusunun altında No düğmesine basın.',
+        'Kendi kendine çalışma kartı ve Kelime dağarcığını geliştir sizin içindir, kendi zamanınızda. Ödev değildir: kimse kontrol etmez, kimse not vermez.'
       ],
       howLink: 'Sayfanız nasıl çalışır',
       backLink: 'Sayfanıza dönün'
@@ -123,7 +125,8 @@
         'يسجّل المدرّب حضورك، لا أنت. يُحتسب الدرس إذا حضرت معظمه. تتجمع ساعاتك على صفحتك.',
         'عندما تبلغ ساعاتك العدد الذي حدده المركز، تظهر شهادتك على صفحتك موقّعةً من المركز. اطبعها أو احفظها بصيغة PDF.',
         'أضف الصفحة إلى هاتفك: «إضافة إلى الشاشة الرئيسية» في Safari، أو «تثبيت» في Chrome. بعدها تُفتح كتطبيق.',
-        'إذا لم تستطع الحضور إلى درس، اضغط No تحت “Are you coming?” في أعلى صفحتك.'
+        'إذا لم تستطع الحضور إلى درس، اضغط No تحت “Are you coming?” في أعلى صفحتك.',
+        'بطاقة الدراسة الذاتية و«نمِّ مفرداتك» لك أنت، في وقتك الخاص. ليسا واجبًا: لا أحد يتحقق منهما ولا أحد يصحّحهما.'
       ],
       howLink: 'كيف تعمل صفحتك',
       backLink: 'العودة إلى صفحتك'
@@ -151,7 +154,8 @@
         'Посещаемость отмечает тьютор, а не вы. Занятие засчитывается, если вы были на большей его части. Ваши часы суммируются на странице.',
         'Когда ваши часы достигнут числа, установленного центром, на странице появится ваш сертификат, уже подписанный центром. Распечатайте его или сохраните в PDF.',
         'Добавьте страницу на телефон: «На экран Домой» в Safari или «Установить» в Chrome. Тогда она открывается как приложение.',
-        'Если вы не можете прийти на занятие, нажмите No под вопросом «Are you coming?» вверху вашей страницы.'
+        'Если вы не можете прийти на занятие, нажмите No под вопросом «Are you coming?» вверху вашей страницы.',
+        'Карточка для самостоятельной работы и «Пополняй словарный запас» — для вас, в ваше свободное время. Это не домашнее задание: никто его не проверяет и не оценивает.'
       ],
       howLink: 'Как работает ваша страница',
       backLink: 'Вернуться на вашу страницу'
@@ -179,7 +183,8 @@
         'حضور شما را مربی ثبت می‌کند، نه شما. اگر بیشترِ کلاس را حاضر بوده باشید، آن کلاس حساب می‌شود. ساعت‌هایتان در صفحه‌تان جمع می‌شود.',
         'وقتی ساعت‌هایتان به عددی که مرکز تعیین کرده برسد، گواهی‌تان با امضای مرکز در صفحه‌تان ظاهر می‌شود. آن را چاپ کنید یا به‌صورت PDF ذخیره کنید.',
         'صفحه را به تلفن خود اضافه کنید: «افزودن به صفحه‌ی اصلی» در Safari یا «نصب» در Chrome. سپس مانند یک برنامه باز می‌شود.',
-        'اگر نمی‌توانید به کلاسی بیایید، در بالای صفحه‌تان زیر «Are you coming?» دکمهٔ No را بزنید.'
+        'اگر نمی‌توانید به کلاسی بیایید، در بالای صفحه‌تان زیر «Are you coming?» دکمهٔ No را بزنید.',
+        'کارت خودآموزی و «واژگانت را بساز» برای خود شماست، در وقت آزادتان. تکلیف نیستند: کسی آن‌ها را بررسی یا نمره‌گذاری نمی‌کند.'
       ],
       howLink: 'صفحه‌ی شما چگونه کار می‌کند',
       backLink: 'بازگشت به صفحه‌ی شما'
@@ -207,7 +212,8 @@
         'Відвідуваність відмічає тьютор, а не ви. Заняття зараховується, якщо ви були на більшій його частині. Ваші години підсумовуються на сторінці.',
         'Коли ваші години сягнуть числа, встановленого центром, на сторінці з’явиться ваш сертифікат, уже підписаний центром. Роздрукуйте його або збережіть у PDF.',
         'Додайте сторінку на телефон: «На Початковий екран» у Safari або «Встановити» в Chrome. Тоді вона відкривається як застосунок.',
-        'Якщо ви не можете прийти на заняття, натисніть No під питанням «Are you coming?» угорі вашої сторінки.'
+        'Якщо ви не можете прийти на заняття, натисніть No під питанням «Are you coming?» угорі вашої сторінки.',
+        'Картка для самостійної роботи та «Поповнюй словниковий запас» — для вас, у ваш вільний час. Це не домашнє завдання: ніхто його не перевіряє й не оцінює.'
       ],
       howLink: 'Як працює ваша сторінка',
       backLink: 'Повернутися на вашу сторінку'
