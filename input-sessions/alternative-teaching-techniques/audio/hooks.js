@@ -9,7 +9,7 @@
   /* the deepest element whose own text holds the words */
   var find = function(root, text){ var best = null; (root || document).querySelectorAll('*').forEach(function(e){ if (e.textContent.indexOf(text) !== -1 && !Array.prototype.some.call(e.children, function(c){ return c.textContent.indexOf(text) !== -1; })) best = best || e; }); return best; };
 
-  var L1 = ["safe", "have been safe", "would have been safe", "she'd have been safe"], L2 = ["home", "at home", "stayed at home", "if she'd stayed at home"], FULL = "If she'd stayed at home, she'd have been safe.", LEARNER = "If she stay home, she not be hurt.";
+  var L1 = ["survived", "have survived", "would have survived", "she'd have survived"], L2 = ["home", "at home", "stayed at home", "if she'd stayed at home"], FULL = "If she'd stayed at home, she'd have survived.", LEARNER = "If she stay home, she not be hurt.";
   var lad = [L1, L2];
   document.querySelectorAll('.bcBtn').forEach(function(b, i){
     if (!lad[i]) return; var s = document.createElement('button'); s.type = 'button'; s.className = 'say-btn'; s.textContent = 'Hear the drill';
