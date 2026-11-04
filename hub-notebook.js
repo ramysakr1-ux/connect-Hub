@@ -197,6 +197,11 @@
   var CSS = ''
     + '.nbk-arc{position:fixed;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent;right:18px;bottom:var(--nbk-bottom,var(--sync-bottom,16px));z-index:880;width:52px;height:52px;border-radius:50%;border:0;background:var(--a-forest);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(35,34,32,.1),0 14px 30px -12px rgba(35,34,32,.45);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease;background-image:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);}'
     + '.nbk-arc:focus-visible{outline:3px solid var(--a-gold-ink);outline-offset:2px;}'
+    /* OUT OF THE WAY (Ramy, 4 Nov 2026: the pen sat over the lunch tile and a field label on a phone). While the page
+       scrolls, and while a field has the keyboard, the arc tucks to the edge, a third of it showing; it comes back when
+       the scrolling stops or the field is left, and a tap on the tucked edge opens it as ever. */
+    + '.nbk-arc.nbk-tuck{transform:translateX(66%) !important;opacity:.72;}'
+    + '.nbk-arc.nbk-tuck:hover{transform:translateX(0) !important;opacity:1;}'
     + '.nbk-arc:hover{transform:translateY(-3px);background-color:var(--a-forest-2);box-shadow:0 2px 4px rgba(35,34,32,.1),0 20px 36px -14px rgba(35,34,32,.5) !important;}'
     + '.nbk-arc svg{display:block;}'
     + '.nbk-arc .nbk-n{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:var(--paper);color:var(--a-forest);font:700 11px/20px Karla,sans-serif;text-align:center;padding:0 5px;box-shadow:0 1px 3px rgba(35,34,32,.25);}'
@@ -370,6 +375,14 @@
     paintCount(); place();
     window.addEventListener('resize', place); window.addEventListener('orientationchange', place);
     setTimeout(place, 600); setTimeout(place, 2500);
+    /* tucked while scrolling and while typing, on a phone or a tablet; a desktop has the room */
+    var tuckTimer = null, typing = false;
+    var narrow = function(){ return window.innerWidth <= 900; };
+    var tuck = function(on){ if (!arc) return; if (on && narrow()) arc.classList.add('nbk-tuck'); else if (!on && !typing) arc.classList.remove('nbk-tuck'); };
+    window.addEventListener('scroll', function(){ if (!narrow()) return; tuck(true); clearTimeout(tuckTimer); tuckTimer = setTimeout(function(){ tuck(false); }, 650); }, { passive: true });
+    var isField = function(el){ return !!(el && (el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea, select, [contenteditable=""], [contenteditable="true"]'))); };
+    document.addEventListener('focusin', function(e){ if (isField(e.target)) { typing = true; tuck(true); } });
+    document.addEventListener('focusout', function(e){ if (isField(e.target)) { typing = false; setTimeout(function(){ if (!typing) tuck(false); }, 250); } });
     document.addEventListener('hub:ready', function(){ setTimeout(place, 50); paintCount(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
