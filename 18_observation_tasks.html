@@ -424,8 +424,16 @@ function demoFacts(t){
     }
   } catch (e) {}
   try {
+    /* WHO TEACHES IT (Ramy, 4 Nov 2026: "TP points decide the level, and the TP points are linked to a tutor"). The
+       demo lesson is taught to the trainee's own group, at that group's level, by that group's tutor: the tutor whom
+       Course admin's tutor list gives the trainee's group letter. Without one, the main course tutor; then the first. */
+    const contacts = (CSET.tutorContacts || []).filter(c => c && c.name);
+    const g = String(VIEWER.group || '');
+    const mine = g && contacts.find(c => String(c.group || '') === g);
+    const main = contacts.find(c => /main/i.test(String(c.role || '')));
     const names = window.hubTutorNames ? (hubTutorNames(CSET) || []) : String(CSET.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
-    if (names[0]) out.teacher = String(names[0]);
+    const who = (mine && mine.name) || (main && main.name) || names[0];
+    if (who) out.teacher = String(who);
   } catch (e) {}
   try {
     const pts = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null') || {};
