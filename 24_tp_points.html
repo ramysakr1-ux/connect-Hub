@@ -878,6 +878,12 @@ body.ls-open{overflow:hidden;}
   .ls-print{display:block;}
   body.printpages .ls-head, body.printpages .ls-facts, body.printpages .ls-grid, body.printpages .tpcredit{display:none !important;}
 }
+  /* how it works (4 Nov 2026) */
+  .tphow{background:var(--surface, var(--box)); border:1px solid var(--sand-line); border-radius:12px; padding:4px 16px 8px; margin:0 0 16px;}
+  .tphow .how{display:grid; grid-template-columns:30px minmax(0,1fr); gap:12px; padding:12px 0; border-top:1px solid var(--sand-line);} .tphow .how:first-child{border-top:0;}
+  .tphow .how > div > b{display:block; margin:3px 0 4px;} .tphow .how p{margin:0; font-size:0.86rem; color:var(--grey); line-height:1.55;} .tphow .how p b{color:var(--ink);}
+  .tphow .hn{display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:var(--ink); color:var(--paper); font-weight:700; font-size:.88rem;}
+  .lede .linkish{border:0; background:none; padding:0; font:700 inherit; color:var(--brick, var(--teal)); text-decoration:underline; cursor:pointer;}
 </style>
 </head>
 <body class="hub-grid hub-paper hub-course">
@@ -1084,6 +1090,20 @@ let note = '';
    they are teaching and the embedded audio link". A grid of dropdowns cannot
    hold that, so a cell opens a panel of its own. */
 let OPEN = null, UPLOADING = false;
+/* HOW IT WORKS (Ramy, 4 Nov 2026: "perhaps one with the TP points as well"): the same steps as the timetable's, for staff only. */
+let HOW_OPEN = false;
+function tpHowHTML(){
+  const step = (n, h, body) => `<div class="how"><span class="hn">${n}</span><div><b>${h}</b><p>${body}</p></div></div>`;
+  return `<div class="tphow">
+    ${step(1, 'Choose a set for each group', 'A set is twelve sessions of three lessons, written against one coursebook. Take one from <b>the Pool</b>: Connect’s thirteen cover A1 to B2, and centers offer their own. A taken set is the course’s own copy, so what you change here changes nothing in the library.')}
+    ${step(2, 'Make it yours, or write your own', 'Open the <b>set studio</b> to change a lesson, attach the book’s pages and the audio, or write a set from nothing. The standard fades as the course goes: TP 1 and 2 written in full, one-word aims from TP 3, names only at TP 5, the aim and a few things to watch out for at TP 6.')}
+    ${step(3, 'Deal the TP points', 'Press <b>Deal the TP points</b>. Each trainee gets one lesson a TP; the lesson types spread across the course and the teaching order turns, so nobody always goes first. <b>View the rotation</b> shows the whole course at a glance; the practice map prints it.')}
+    ${step(4, 'Release to a group', 'Nothing reaches a trainee until you press <b>Release</b> for their group. From then on each TP’s points go out on the course’s own rule: all at once, the evening before, or by hand after the lesson. Every trainee sees their own lesson and the other two of the day for reference.')}
+    ${step(5, 'A missed lesson', 'Open the trainee’s cell, tick <b>Missed</b> and give it a make-up day. The lesson stays open on their card, keeps its place in the order, and the timetable shows it on that day.')}
+    ${step(6, 'What the trainee does with it', 'Their plan has <b>Start from your TP point</b>: the aims, the context, the stages with their timing and interaction come in, and nothing they have already written is overwritten. From TP 3 the point says less, so they write more.')}
+    ${step(7, 'Give one back', 'A set you have written can be offered to the Pool with <b>Offer a set</b>: the writing travels, not your files, and every lesson it teaches carries your name.')}
+  </div>`;
+}
 
 function groups(){
   const roster = rec('connect_roster_v1') || {};
@@ -2040,7 +2060,7 @@ function renderCore(){
      Getting to know you door and the rotation note sit under the board. */
   const head = `<p class="eyebrow">Teaching practice</p><h1>TP points</h1>${(IS_TRAINEE || VIEW_AS) ? '' : IS_READER
     ? '<p class="lede">The TP point set each group uses and the lessons dealt to each trainee. This page is read-only on your link.</p>'
-    : '<p class="lede">Choose the TP point set each group uses, then deal each trainee their lessons. The order stays balanced; your changes stay yours.</p>'}`;
+    : '<p class="lede">Choose the TP point set each group uses, then deal each trainee their lessons. The order stays balanced; your changes stay yours. <button type="button" class="linkish" id="tpHow">' + (HOW_OPEN ? 'Hide how it works' : 'How it works') + '</button></p>' + (HOW_OPEN ? tpHowHTML() : '')}`;
   const gtky = IS_TRAINEE ? '' : '<a class="gtkydoor" href="31_getting_to_know_you.html?view=bank"><span class="gk-k">The first afternoon</span><b>Getting to know you: the activities</b><span class="gk-l">Connect’s bank of short first-lesson activities, three for each level. Each trainee picks one before day one.</span><span class="gk-go">Open the activities</span></a>';
   const gridLede = (IS_TRAINEE || VIEW_AS) ? '' :
     `<p class="gridlede" style="margin:0 0 6px;"><button type="button" class="btn quiet" onclick="printMap()">Print the practice map</button></p><p class="lede gridlede">The lesson type for each trainee, TP 1 to ${TPS}. It deals so nobody in a teaching set teaches the same type on the same day and nobody meets a type twice within a level. ${IS_READER ? '' : 'Change any cell; the check below reads what is on the page, not what was generated. '}The last two TPs are the trainees\u2019 own on the planning grid.</p>`;
@@ -2934,6 +2954,7 @@ function wirePoolInline(){
 function tabHTML(k){ return k === 'studio' ? studioTab() : k === 'rotation' ? rotationTab() : k === 'pool' ? poolTab() : k === 'detail' ? detailTab() : k === 'offer' ? offerTab() : liveTab(); }
 function wireTabs(){
   document.querySelectorAll('[data-tab]').forEach(el => el.addEventListener('click', () => goTab(el.dataset.tab)));
+  if (document.getElementById('tpHow')) document.getElementById('tpHow').addEventListener('click', () => { HOW_OPEN = !HOW_OPEN; render(); });
   document.querySelectorAll('[data-plvl]').forEach(el => el.addEventListener('click', () => { POOLLVL = el.dataset.plvl; render(); }));
   document.querySelectorAll('[data-pby]').forEach(el => el.addEventListener('click', () => { POOLBY = POOLBY === el.dataset.pby ? '' : el.dataset.pby; render(); }));
   document.querySelectorAll('[data-pool]').forEach(el => el.addEventListener('click', () => { POOLSEL = POOLSEL === el.dataset.pool ? '' : el.dataset.pool; render(); }));

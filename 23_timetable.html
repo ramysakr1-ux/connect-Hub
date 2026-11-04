@@ -636,6 +636,13 @@
   .su2 .st.sel{box-shadow:0 0 0 2px var(--a-forest), 0 8px 18px -10px rgba(20,40,30,.6); z-index:2;}
   .su2 .st.drag{opacity:.85; z-index:3; cursor:grabbing; transition:none;} .su2 .st.over{box-shadow:inset 0 0 0 2px var(--ink);}
   .su2 .st.late{outline:2px dashed var(--brick);}
+  /* the strip and the chips wear the board's own pastels, one per kind, so the panel reads as the board does
+     (Ramy, 4 Nov 2026: the board looked washed beside the panel's stronger greens) */
+  .su2 .k-input{--c:oklch(91% 0.045 245);} .su2 .k-tp{--c:oklch(91% 0.05 145);} .su2 .k-feedback{--c:oklch(92% 0.05 55);} .su2 .k-reflect{--c:oklch(92% 0.018 285);}
+  .su2 .k-break, .su2 .k-lunch{--c:oklch(94.5% 0.004 260); --on:var(--grey);} .su2 .k-plan{--c:oklch(90% 0.05 300);} .su2 .k-demo{--c:oklch(91% 0.05 190);}
+  .su2 .k-event, .su2 .k-task{--c:oklch(91% 0.04 5);} .su2 .k-assessor{--c:var(--a-navy); --on:#fff;}
+  .su2 .st, .su2 .sh2, .su2 .ch:not(.off){background:var(--c) !important; background-image:none !important; border:0 !important; color:var(--on, var(--ink)) !important;}
+  .su2 .ch .who{background:color-mix(in oklch, white 70%, var(--c));}
   .su2 .tctl{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:10px 0 0; padding:10px 12px; background:var(--field); border-radius:10px; font-size:0.8rem;}
   .su2 .tctl label{display:inline-flex; align-items:center; gap:5px; color:var(--grey);} .su2 .tctl .tm{color:var(--grey);} .su2 .tctl .lt{color:var(--brick); font-weight:700;}
   .su2 .tpcard{border-radius:14px; background:var(--a-forest); color:#F0EEE9; padding:16px 18px; background-image:radial-gradient(120% 90% at 0% 0%, rgba(255,255,255,.10), transparent 55%);}
@@ -2588,7 +2595,7 @@ function buildPanelHTML(){
   const also = ticks.map(([k, l, c]) => `<button type="button" class="ch ${c}${B[k] ? '' : ' off'}" data-btick="${k}">${esc(l)}</button>`).join('');
   const has = !!(TT && TT.days && TT.days.length);
   const acts = has
-    ? `<button type="button" class="btn primary" id="bSave">Save</button><button type="button" class="btn" id="bRelay">Lay it out again</button><button type="button" class="btn quiet" id="bClose">Close</button><span class="hint" style="margin:0">Save keeps every session where it is. Lay it out again builds every teaching day from this; Undo brings the old board back.</span>`
+    ? `<button type="button" class="btn primary" id="bSave">Save</button><button type="button" class="btn" id="bRelay">Lay it out again</button><button type="button" class="btn quiet" id="bScratch">Start from scratch</button><button type="button" class="btn quiet" id="bClose">Close</button><span class="hint" style="margin:0">Save keeps every session where it is. Lay it out again builds every teaching day from this. Start from scratch clears the board and offers the three ways to begin. Undo brings the old board back.</span>`
     : `<button type="button" class="btn primary" id="bGo">Build it</button><button type="button" class="btn quiet" id="bClose">Close</button><span class="hint" style="margin:0">Connect lays every day from this; drag anything after.</span>`;
   return `<div class="imp bld su2"><h3>Set up the timetable</h3>
     <p>Tap anything to change it. The day is shaped by hand: drag a tile to move it, drag its edge to make it longer or shorter.</p>
@@ -2676,6 +2683,20 @@ function wireBuild(){
     BUILD_OPEN = false; SEL = -1; WEEK = 0;
     save('Built', { text: 'The timetable was laid out again: ' + made.days.length + ' days, ' + made.teachDays + ' with teaching practice' });
     note = 'Laid out again: ' + made.days.length + ' days, ' + made.teachDays + ' with teaching practice' + (made.left ? ' · ' + made.left + ' ticked session' + (made.left === 1 ? ' did' : 's did') + ' not fit' : '') + '.'; render();
+  });
+  /* START FROM SCRATCH (Ramy, 4 Nov 2026: "build timetable from scratch, with the timetable built"): the board is
+     cleared and the empty timetable's three ways to begin come back: Connect's, a sheet, or this panel. The course goes
+     on seeing the published timetable until a new one is published; Undo brings the old board back. */
+  if ($('bScratch')) $('bScratch').addEventListener('click', async () => {
+    if (!(await ask('Clear the whole board and start from scratch? The course goes on seeing the published timetable until you publish a new one, and Undo brings this board back.', 'Start from scratch'))) return;
+    remember();
+    keepCourse(B);
+    const keep = TT || {};
+    TT = { v: 3, days: [], slots: [], published: false, pattern: clone(P), meets: keep.meets };
+    ['asgRules', 'pins', 'tpOut'].forEach(k => { if (keep[k] !== undefined) TT[k] = keep[k]; });
+    BUILD = null; BUILD_OPEN = false; SEL = -1; WEEK = 0;
+    save('Cleared', { text: 'The board was cleared to start from scratch' });
+    note = 'The board is empty. Choose how to begin: Connect’s timetable, a sheet of your own, or Set up the timetable.'; render();
   });
   /* BUILD IT: a course with no timetable yet */
   if ($('bGo')) $('bGo').addEventListener('click', () => {
@@ -3181,7 +3202,8 @@ function openHow(){
   const step = (n, h, body, btn) => `<div class="how"><span class="hn">${n}</span><div><b>${h}</b><p>${body}</p>${btn || ''}</div></div>`;
   el.innerHTML = `
     ${step(1, 'Set up the course', 'Open <b>Set up the timetable</b>. Tap the start date, the weeks, the days the course meets and the time zone; shape the usual day by dragging its tiles; tick the sessions. Press <b>Lay it out again</b> and Lite builds every day, with the teaching practices, input sessions and tutorials in their places.', '<button type="button" class="btn quiet" data-how="setup">Open Set up the timetable</button>')}
-    ${step(2, 'Five weeks, or part-time', 'In Set up the timetable, change the number of weeks and tap the days the course meets. A five-week course might meet Monday to Thursday; a part-time course might meet Tuesday and Thursday over twelve weeks. Then press <b>Lay it out again</b>.')}
+    ${step('1b', 'Build it from scratch', 'With a timetable already on the board, open <b>Set up the timetable</b> and press <b>Start from scratch</b>: the board clears and the three ways to begin come back, Connect’s ready-made timetable, a sheet of your own, or the panel. The course goes on seeing the published timetable until you publish a new one, and <b>Undo</b> brings the old board back.')}
+    ${step(2, 'Five weeks, or part-time','In Set up the timetable, change the number of weeks and tap the days the course meets. A five-week course might meet Monday to Thursday; a part-time course might meet Tuesday and Thursday over twelve weeks. Then press <b>Lay it out again</b>.')}
     ${step(3, 'Already have a timetable?', 'Bring it in instead of building one: a Google Sheet, an Excel or Word file, or rows pasted in, one row a day. Lite lays it onto your dates. It is <b>Import from a sheet</b>, above the board, or on the empty timetable.')}
     ${step(4, 'Change a session', 'Click it. Change the title, the day, the times, the tutor or what trainees prepare, then press <b>Save draft</b>. To move it, drag it to an empty place; drop it on another session to swap the two.')}
     ${step(5, 'Add a session', 'Press <b>+ Session</b>, click an empty place on the board, or open the <b>Input library</b> and drag a session onto the board.', '<button type="button" class="btn quiet" data-how="lib">Open the Input library</button>')}
