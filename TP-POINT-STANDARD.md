@@ -19,7 +19,8 @@ Agreed with Ramy on 26 Oct 2026 (TP 6: "TP6 thing as main aim and just like some
 - **Stage aims at TP 1–2 are the example.** One short line under the stage name, starting "To…": the form the trainee writes under "What this stage is for" in their own plan. Example: Lead-in: *To get students interested in the topic and the photo.*
 - **A trainee's first lesson at a new level may be written one level up** (Ramy, 12 Oct 2026).
 - **Making their own material is allowed at any TP**, never a requirement tied to a TP number.
-- **The sub aim is a different family from the main aim** (receptive, productive, language).
+- **The sub aim is a different family from the main aim** (receptive, productive, language). Pronunciation is its own family, so a Grammar or Vocabulary lesson may carry a Pronunciation sub aim (Ramy, 4 Nov 2026).
+- **One name per kind of stage.** Lead-in · Pre-teaching vocabulary · Reading or Listening for gist, for detail · Highlighting TL · Clarifying TL · Controlled practice · Semi-controlled practice · Freer practice · Preparing to speak, to write · Useful language · Speaking task, Writing task · Feedback and correction. A stage that does something else is named for what it does. The MFP reminder lives in the stage aim line, not in the name (4 Nov 2026: "Clarifying TL" replaced six spellings of the same stage).
 - **Imperative, short, not wordy, little jargon.** Page and exercise numbers right.
 - **The prioritization rule.** In a language lesson built on a text, the text stages are short; the language work carries the time.
 - **Nothing copied from a teacher's book.** Name the pages; write your own lesson.
