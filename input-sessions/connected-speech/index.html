@@ -32,6 +32,7 @@
   .maze-grid{display:grid; grid-template-columns:28px repeat(5,1fr) 28px; gap:5px; margin:12px 0; align-items:stretch;}
   .maze-cell{border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:8px 4px; font-size:.72rem; font-weight:600; text-align:center; line-height:1.3; cursor:pointer; background:var(--paper); min-height:60px; display:flex; align-items:center; justify-content:center; transition:border-color .12s ease; color:var(--ink);}
   .maze-cell:hover{border-color:var(--gold);}
+  .maze-cell:not(.exit):not(.blank){min-height:92px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:7px; font-size:.82rem;}
   .maze-cell.blank{visibility:hidden; cursor:default;}
   .maze-cell.exit{background:transparent; border-color:transparent; color:var(--grey); font-weight:800; font-size:.82rem; display:flex; align-items:center; justify-content:center; padding:0; min-height:0;}
   .maze-cell.exit:hover{border-color:var(--gold); border-style:dashed;}
@@ -60,7 +61,7 @@
   .walker-body[style*="scaleX"]{animation:none;}
   @media print{ .walker{display:none;} }
   @keyframes shake{0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);}}
-  @media(max-width:560px){ .maze-cell{font-size:.6rem; min-height:52px; padding:6px 2px;} .maze-grid{gap:3px; grid-template-columns:20px repeat(5,1fr) 20px;} }
+  @media(max-width:560px){ .maze-cell{font-size:.6rem; min-height:52px; padding:6px 2px;} .maze-cell:not(.exit):not(.blank){min-height:88px; padding-top:5px; font-size:.6rem;} .maze-grid{gap:3px; grid-template-columns:20px repeat(5,1fr) 20px;} }
   .linking-para{font-size:1rem; line-height:2.3; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px; margin:10px 0;}
   .word-plain{font-size:1rem;}
   .link-gap{display:inline-block; width:20px; text-align:center; cursor:pointer; color:var(--sand-line); font-weight:700; font-size:1.15rem; transition:.15s; vertical-align:middle;}
@@ -365,7 +366,9 @@ const walker = document.getElementById('mazeWalker');
 const FACE_DEG = { up: 0, right: 90, down: 180, left: 270 };
 function placeWalker(r, c, hop){
   const el = mazeCellEls[mazeKey(r, c)]; if (!el) return;
-  walker.style.left = (el.offsetLeft + el.offsetWidth / 2) + 'px'; walker.style.top = (el.offsetTop + el.offsetHeight / 2) + 'px';
+  /* he stands under the phrase, so the words stay readable (Ramy, 5 Nov 2026); on an exit letter, in the middle */
+  const onExit = el.classList.contains('exit');
+  walker.style.left = (el.offsetLeft + el.offsetWidth / 2) + 'px'; walker.style.top = (onExit ? el.offsetTop + el.offsetHeight / 2 : el.offsetTop + el.offsetHeight - 25) + 'px';
   walker.querySelector('.walker-arrow').style.transform = 'rotate(' + FACE_DEG[mazeFacing] + 'deg)';
   walker.querySelector('.walker-body').style.transform = mazeFacing === 'left' ? 'scaleX(-1)' : '';
   if (hop) { walker.classList.remove('hop'); void walker.offsetWidth; walker.classList.add('hop'); }
