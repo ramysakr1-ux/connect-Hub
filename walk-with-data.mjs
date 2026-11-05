@@ -412,7 +412,7 @@ for (const role of ROLES) {
           const h = a.getAttribute('href');
           if (h === null || h === '' || h === '#') {
             if (!a.offsetWidth || !a.offsetHeight) return false;
-            return !a.hasAttribute('aria-disabled') && !a.id && !a.classList.contains('txtlink');   // ids are wired by script; so is a text link (hub-shared opens the text)
+            return !a.hasAttribute('aria-disabled') && !a.id && !a.classList.contains('txtlink') && !Object.keys(a.dataset).length;   // ids are wired by script; so is a text link (hub-shared opens the text), and so is a data- hook (24_tp_points' data-openpool, 5 Nov 2026)
           }
           return false;
         }).slice(0, 3).map(a => (a.textContent || '').trim().slice(0, 30));
@@ -456,6 +456,74 @@ for (const role of ROLES) {
     await ctx.close();
   }
 }
+/* ---- THE PRIVACY RULES, re-proved on every run (5 Nov 2026) -------------------------------------------------------
+   The role-by-role review of 1 Nov fixed six leaks. Three live in the store and check-roles proves them (R2 to R4).
+   The other three live in the pages and were proved once, by hand, with scripts that are gone. They run here now, on
+   the same dead-store copy, so `npm run check` proves them before every push:
+   R1  a page keeps the link it opened with: once another Lite link is opened in the same browser, an older page's
+       save is refused and nothing is sent; the newer page saves as normal;
+   R5  the assessor's TP points page shows no control that changes the rotation, the sets or the materials;
+   R6  an assessor key left in the browser does not lock the owner's entry page. */
+const PRIV = `http://127.0.0.1:${PORT}`;
+const putProbe = async (page) => page.evaluate(async () => {
+  try { await window.HubStore.put('plan', { probe: 'privacy check' }); return 'saved'; }
+  catch (e) { return String((e && e.message) || e); }
+});
+{
+  /* R1: a real course (no demo date: a demo saves nowhere, so it would prove nothing) */
+  const ctx = await browser.newContext({ viewport: { width: 1100, height: 860 } });
+  const seedFor = tok => ({ ...COMMON, connect_course_settings: { ...SETTINGS, demoToday: '' }, ...booted('trainee', tok),
+    'hub:t': tok, 'hub:me': { token: tok, name: NAMES[TOKENS.indexOf(tok)], group: 'ABC' } });
+  const plant = async (page, seed) => page.evaluate(sd => { localStorage.clear();
+    for (const k of Object.keys(sd)) localStorage.setItem(k, typeof sd[k] === 'string' ? sd[k] : JSON.stringify(sd[k])); }, seed);
+  const a = await ctx.newPage();
+  await a.goto(`${PRIV}/index.html`, { waitUntil: 'domcontentloaded' }); await plant(a, seedFor(TOKENS[0]));
+  await a.goto(`${PRIV}/index.html`, { waitUntil: 'domcontentloaded' }); await a.waitForTimeout(1200);
+  const b = await ctx.newPage();
+  await b.goto(`${PRIV}/index.html`, { waitUntil: 'domcontentloaded' });
+  await b.evaluate(tok => { localStorage.setItem('hub:t', tok); localStorage.setItem('hub:booted', 'trainee:' + tok); }, TOKENS[1]);
+  await b.goto(`${PRIV}/index.html`, { waitUntil: 'domcontentloaded' }); await b.waitForTimeout(1200);
+  let puts = 0;
+  ctx.on('request', r => { if (/127\.0\.0\.1:9\//.test(r.url()) && /"op":"put"/.test(r.postData() || '')) puts++; });
+  const fromA = await putProbe(a); await a.waitForTimeout(400); const sentA = puts; puts = 0;
+  const fromB = await putProbe(b); await b.waitForTimeout(800); const sentB = puts;
+  if (!/Another Lite link was opened/.test(fromA)) found.push(`privacy R1: the older page's save was not refused (it answered "${fromA.slice(0, 80)}")`);
+  if (sentA) found.push(`privacy R1: the older page sent ${sentA} save request(s) under the newer link`);
+  if (!sentB) found.push('privacy R1: the newer page sent nothing, so the test proves nothing (expected one attempt at the dead store)');
+  await ctx.close();
+}
+{
+  /* R5 */
+  const ctx = await browser.newContext({ viewport: { width: 1100, height: 860 } });
+  const page = await ctx.newPage();
+  await page.goto(`${PRIV}/24_tp_points.html`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate(seed => { localStorage.clear(); sessionStorage.setItem('hub:demoVisit', '1'); sessionStorage.setItem('hub:demoSeen', String(Date.now()));
+    for (const k of Object.keys(seed)) localStorage.setItem(k, typeof seed[k] === 'string' ? seed[k] : JSON.stringify(seed[k])); }, SEED.assessor);
+  await page.goto(`${PRIV}/24_tp_points.html`, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(2600);
+  const shown = await page.evaluate(() => {
+    const vis = el => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+    const CHANGE = /^(Earlier|Later|Own lesson|Deal (the )?TP points|Deal TP points again|Your own set|Connect’s library|Release to Group|Write the set|\+ Add a set|Or deal lesson types only|Build)\b/i;
+    return [...document.querySelectorAll('button, a, [role=button]')].filter(vis)
+      .map(el => (el.innerText || '').replace(/\s+/g, ' ').trim()).filter(t => CHANGE.test(t));
+  });
+  if (shown.length) found.push(`privacy R5: the assessor's TP points page shows a changing control: ${[...new Set(shown)].join(', ')}`);
+  if (process.env.PRIVDEBUG) console.log('R5 visible:', await page.evaluate(() => [...document.querySelectorAll('button, a, [role=button], select, input, textarea')].filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; }).map(el => el.tagName + ':' + ((el.innerText || el.value || el.placeholder || '').replace(/\s+/g, ' ').trim().slice(0, 40))).join(' | ')));
+  await ctx.close();
+}
+{
+  /* R6 */
+  const ctx = await browser.newContext({ viewport: { width: 1100, height: 860 } });
+  const page = await ctx.newPage();
+  await page.goto(`${PRIV}/14_owner.html`, { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('hub:a', 'AKEY'); });
+  await page.goto(`${PRIV}/14_owner.html`, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(1500);
+  const box = await page.evaluate(() => { const i = document.getElementById('ownerIn'); return i ? { ro: i.readOnly || i.classList.contains('hub-ro'), shown: i.getBoundingClientRect().width > 0 } : null; });
+  if (!box) found.push('privacy R6: the owner page drew no owner key box with an assessor key in the browser');
+  else if (box.ro) found.push('privacy R6: an assessor key in the browser locked the owner key box');
+  else if (!box.shown) found.push('privacy R6: the owner key box is hidden with an assessor key in the browser');
+}
+console.log('Privacy rules R1, R5 and R6 checked on the dead-store copy.');
+
 await browser.close();
 srv.close();
 
