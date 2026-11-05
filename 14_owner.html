@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611051716">
+<link rel="stylesheet" href="hub-tokens.css?v=202611051725">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -263,7 +263,7 @@
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
   .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611051716">
+<link rel="stylesheet" href="hub-house.css?v=202611051725">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -286,10 +286,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202611051716"></script>
-<script src="hub-store.js?v=202611051716"></script>
-<script src="hub-say.js?v=202611051716"></script>
-<script src="hub-card-mail.js?v=202611051716"></script>
+<script src="hub-shared.js?v=202611051725"></script>
+<script src="hub-store.js?v=202611051725"></script>
+<script src="hub-say.js?v=202611051725"></script>
+<script src="hub-card-mail.js?v=202611051725"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -804,6 +804,7 @@ function render(courses, msg){
 
     ${bin.length ? `<details class="fold binfold" id="foldBin"><summary title="The bin: ${bin.length} course${bin.length === 1 ? '' : 's'}"><span class="vh">The bin</span><span class="fic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9.5 7V4.8c0-.4.4-.8.8-.8h3.4c.4 0 .8.4.8.8V7"/><path d="M6.2 7l.9 12.2c.1 1 .9 1.8 1.9 1.8h6c1 0 1.8-.8 1.9-1.8L17.8 7"/><path d="M10 11v6M14 11v6"/></svg><span class="dot">${bin.length}</span></span></summary>
       <p class="binnote"><b>The bin</b>${bin.length} course${bin.length === 1 ? '' : 's'} · links off · gone for good after 30 days</p>
+      <p class="binnote"><button type="button" class="danger" data-emptybin="1">Empty the bin now</button> <span class="note">Every course here goes for good tonight instead of in 30 days, one by one. Last night’s backup on Drive still has them.</span></p>
       <div class="cards">${bin.map(binRow).join('')}</div></details>` : ''}
     <p id="status"></p>`;
   if (msg) status(msg);
@@ -1104,6 +1105,25 @@ $('app').addEventListener('click', async e => {
     const typed = await confirmModal(`Delete ${d.dataset.label}? ${carries} Its tutor and assessor links stop working now. It sits in the bin for 30 days, where you can put it back; after that it is gone for good.`, 'Delete the course', { type: d.dataset.delete, hint: `Type ${d.dataset.delete} to delete this course` });
     if (!typed) return; BUSY = true; status('Deleting ' + d.dataset.label + '…');
     try { const r = await call({ op: 'deleteCourse', course: d.dataset.delete, confirm: typed }); render(r.courses, `${r.deleted} is in the bin. Its links are off; it goes for good on ${niceDate(r.until)}. Put it back from The bin until then.`); } catch (err) { status(err.message); }
+    BUSY = false; return; }
+  /* EMPTY THE BIN NOW (Ramy, 5 Nov 2026). Every first open of a page reads the whole store, the bin included, so
+     42 binned demo copies were costing every trainee seconds; the nightly purge takes one a night after 30 days.
+     The owner empties it here, typing the words to confirm; each course goes through the store's own purgeCourse,
+     which refuses anything not already in the bin. The nightly backup on Drive still holds them. */
+  const eb = T('[data-emptybin]');
+  if (eb) { if (BUSY) return;
+    const bin = COURSES.filter(c => c.deleted);
+    if (!bin.length) return;
+    const n = bin.reduce((a, c) => a + Number(c.trainees || 0), 0);
+    const typed = await confirmModal(`Empty the bin now? ${bin.length} course${bin.length === 1 ? '' : 's'}${n ? ', with ' + n + ' trainees between them,' : ''} go for good, with every record on them. Nothing on a live course is touched. Last night’s backup on Drive still has them, and they can be put back from it.`, 'Empty the bin', { type: 'empty the bin', hint: 'Type empty the bin to go ahead' });
+    if (!typed || typed.trim().toLowerCase() !== 'empty the bin') return;
+    BUSY = true; let done = 0, last = null;
+    for (const c of bin) {
+      status(`Emptying the bin: ${done + 1} of ${bin.length} (${c.id})…`);
+      try { last = await call({ op: 'purgeCourse', course: c.id, confirm: c.id }); done++; }
+      catch (err) { status(`Stopped at ${c.id}: ${err.message}. ${done} gone; the rest are still in the bin.`); BUSY = false; if (last) render(last.courses); return; }
+    }
+    render(last ? last.courses : COURSES, `The bin is empty: ${done} course${done === 1 ? '' : 's'} gone for good.`);
     BUSY = false; return; }
   const u = T('[data-undelete]');
   if (u) { if (BUSY) return; BUSY = true; status('Putting ' + u.dataset.label + ' back…');
