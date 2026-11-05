@@ -1200,7 +1200,7 @@ window.hubCentreLogo = function(el){
   if (!document.getElementById('hub-centre-mark-css')) {
     var st = document.createElement('style'); st.id = 'hub-centre-mark-css';
     st.textContent = '.hub-with-logo{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}'
-      + '.hub-centre-mark{height:28px; width:auto; max-width:84px; object-fit:contain; display:block; flex:none;}';
+      + '.hub-centre-mark{height:32px; width:auto; max-width:112px; object-fit:contain; display:block; flex:none;}';  /* 5 Nov 2026: a wide logo needs the width */
     document.head.appendChild(st);
   }
   var img = old || document.createElement('img');
