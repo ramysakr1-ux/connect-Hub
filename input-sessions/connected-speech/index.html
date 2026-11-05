@@ -29,21 +29,38 @@
   .pill-col .pill .dc-real div{color:var(--grey) !important;}
   .maze-legend{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;}
   .maze-legend span{font-size:.78rem; font-weight:700; padding:4px 11px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--box); color:oklch(45% 0.02 70);}
-  .maze-grid{display:grid; grid-template-columns:repeat(var(--cols,5),1fr); gap:5px; margin:12px 0;}
+  .maze-grid{display:grid; grid-template-columns:28px repeat(5,1fr) 28px; gap:5px; margin:12px 0; align-items:stretch;}
   .maze-cell{border:1.5px solid var(--sand-line); border-radius:var(--r-control); padding:8px 4px; font-size:.72rem; font-weight:600; text-align:center; line-height:1.3; cursor:pointer; background:var(--paper); min-height:60px; display:flex; align-items:center; justify-content:center; transition:border-color .12s ease; color:var(--ink);}
   .maze-cell:hover{border-color:var(--gold);}
-  .maze-cell.wall{background:var(--sand-deep); border:1.5px dashed var(--sand-line); cursor:default;}
-  .maze-cell.wall:hover{border-color:var(--sand-line);}
-  .maze-cell.start{background:var(--ink-warm); color:var(--paper); border-color:var(--ink-warm); font-size:.66rem;}
-  .maze-cell.start div{line-height:1.5;}
+  .maze-cell.blank{visibility:hidden; cursor:default;}
+  .maze-cell.exit{background:transparent; border-color:transparent; color:var(--grey); font-weight:800; font-size:.82rem; display:flex; align-items:center; justify-content:center; padding:0; min-height:0;}
+  .maze-cell.exit:hover{border-color:var(--gold); border-style:dashed;}
+  .maze-cell.exit.out{background:var(--ink-warm); border-color:var(--ink-warm); color:var(--paper);}
+  .maze-cell.start{background:var(--ink-warm); color:var(--paper); border-color:var(--ink-warm);}
   .maze-cell.current{box-shadow:0 0 0 3px var(--gold); border-color:var(--gold);}
   .maze-cell.visited{background:color-mix(in oklab, var(--teal) 11%, var(--paper)); border-color:var(--teal); color:var(--teal);}
   .maze-cell.start.visited{background:var(--ink-warm); color:var(--paper);}
-  .maze-cell.finish{border-color:var(--brick); color:var(--brick); font-weight:700;}
-  .maze-cell.finish.visited{background:color-mix(in oklab, var(--brick) 10%, var(--paper));}
-  .maze-cell.wrong{animation:shake .3s; border-color:var(--brick);}
+  .maze-cell.route{position:relative; border-color:var(--teal); background:color-mix(in oklab, var(--teal) 18%, var(--paper)); color:var(--teal);}
+  .maze-cell.route::after{content:attr(data-step); position:absolute; top:2px; right:5px; font-size:.6rem; font-weight:800; color:var(--teal);}
+  .maze-route{font-size:.86rem; line-height:1.6; margin:8px 0 0;}
+  .maze-grid{position:relative;}
+  .walker{position:absolute; width:26px; height:46px; margin:-23px 0 0 -13px; pointer-events:none; display:flex; flex-direction:column; align-items:center; transition:left .32s ease, top .32s ease; z-index:2; filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));}
+  .walker-arrow{width:12px; height:10px; fill:var(--gold); transition:transform .25s;}
+  .walker-body{width:24px; height:32px; margin-top:2px;}
+  .walker .w-cap{fill:#C8372D;} .walker .w-skin{fill:#F2C9A0;} .walker .w-shirt{fill:#2E5C8A;} .walker .w-leg{fill:#3A2E26;}
+  .walker.hop .walker-body{animation:walkerHop .32s ease;}
+  .walker.cheer .walker-body{animation:walkerCheer .6s ease 2;}
+  @keyframes walkerHop{0%{transform:translateY(0)} 50%{transform:translateY(-7px)} 100%{transform:translateY(0)}}
+  @keyframes walkerCheer{0%,100%{transform:translateY(0) rotate(0)} 30%{transform:translateY(-9px) rotate(-8deg)} 60%{transform:translateY(-4px) rotate(8deg)}}
+  .walker.fall{animation:walkerFall .9s ease-in forwards;}
+  @keyframes walkerFall{0%{transform:translateY(0) rotate(0); opacity:1} 100%{transform:translateY(160px) rotate(200deg); opacity:0}}
+  .fireworks{position:absolute; width:0; height:0; pointer-events:none; z-index:3;}
+  .fireworks i{position:absolute; left:-3px; top:-3px; width:6px; height:6px; border-radius:50%; animation:spark .95s ease-out forwards;}
+  @keyframes spark{0%{transform:translate(0,0) scale(1); opacity:1} 100%{transform:translate(var(--dx),var(--dy)) scale(0.2); opacity:0}}
+  .walker-body[style*="scaleX"]{animation:none;}
+  @media print{ .walker{display:none;} }
   @keyframes shake{0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);}}
-  @media(max-width:560px){ .maze-cell{font-size:.6rem; min-height:52px; padding:6px 2px;} .maze-grid{gap:3px;} }
+  @media(max-width:560px){ .maze-cell{font-size:.6rem; min-height:52px; padding:6px 2px;} .maze-grid{gap:3px; grid-template-columns:20px repeat(5,1fr) 20px;} }
   .linking-para{font-size:1rem; line-height:2.3; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px; margin:10px 0;}
   .word-plain{font-size:1rem;}
   .link-gap{display:inline-block; width:20px; text-align:center; cursor:pointer; color:var(--sand-line); font-weight:700; font-size:1.15rem; transition:.15s; vertical-align:middle;}
@@ -142,18 +159,20 @@
   <!-- INTRUSIVE SOUNDS: MAZE -->
   <section id="s4" data-n="3">
     <div class="card" data-n="3">
-      <div class="stage-title">The link maze <span class="badge">Escape the grid</span></div>
-      <p class="lead">Your phrase is waiting in the dark start cell. Say it out loud: which sound joins the two words, /j/, /w/ or /r/? That tells you which way to click. Land on a new cell, say its phrase, and move again. Reach the red finish cell to win.</p>
+      <div class="stage-title">The link maze <span class="badge">Find your way out</span></div>
+      <p class="lead">You start in the middle, facing up. Say the phrase in the cell in front of you: the sound that joins its two words tells you which way to go next. Keep going until you leave the maze. Which letter do you come out at? Tap any cell to hear its phrase.</p>
       <div class="maze-legend">
-        <span>/j/ moves left</span>
-        <span>/w/ moves up</span>
-        <span>/r/ moves right</span>
+        <span>/j/ turn left</span>
+        <span>/w/ go straight on</span>
+        <span>/r/ turn right</span>
       </div>
-      <div class="maze-grid" id="mazeGrid"></div>
+      <div class="maze-grid" id="mazeGrid"><div class="walker" id="mazeWalker" aria-hidden="true"><svg class="walker-arrow" viewBox="0 0 12 10"><path d="M6 0 L12 10 H0 Z"/></svg><svg class="walker-body" viewBox="0 0 24 32"><path class="w-cap" d="M5 11 C5 4 19 4 19 11 Z"/><rect class="w-cap" x="3" y="10" width="18" height="3" rx="1.5"/><circle class="w-skin" cx="12" cy="17" r="5"/><rect class="w-shirt" x="7" y="21" width="10" height="7" rx="2"/><rect class="w-leg" x="8" y="27" width="3" height="5" rx="1"/><rect class="w-leg" x="13" y="27" width="3" height="5" rx="1"/></svg></div></div>
       <div class="btn-row">
-        <button class="btn secondary" onclick="resetMaze()">Reset maze</button>
+        <button class="btn secondary" onclick="resetMaze()">Start again</button>
+        <button class="btn secondary" onclick="revealMaze()">Reveal the answer</button>
         <span class="feedback" id="mazeFeedback"></span>
       </div>
+      <p class="maze-route" id="mazeRoute" hidden></p>
     </div>
   </section>
 
@@ -224,7 +243,7 @@
     </div>
   </section>
 
-  <p class="sources"><b>Sources.</b> The lead-in puzzles, the dictation computer sentences, the linking text, the link maze and the elision trivia are made up for this session. The idea of a dictation computer that mishears connected speech follows Mark Hancock, <i>Pronunciation Games</i> (Cambridge University Press, 1995).</p>
+  <p class="sources"><b>Sources.</b> The lead-in puzzles, the dictation computer sentences, the linking text and the elision trivia are made up for this session. The link maze is Mark Hancock's, as printed in <i>Pronunciation Games</i> (Cambridge University Press, 1995, game C1), and the idea of a dictation computer that mishears connected speech follows the same book.</p>
 
   <footer class="hub-brand-foot">
     <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
@@ -321,57 +340,106 @@ document.getElementById('dcReveal').onclick=()=>{
 };
 
 // ---------- Activity 3: The Link Maze ----------
-const mazeData = {"grid": [[{"text": "Where are you?", "snd": "r", "role": "path"}, {"text": "Never again!", "snd": "r", "role": "path"}, {"text": "Score a goal", "snd": "r", "role": "path"}, {"text": "FINISH", "snd": "finish", "role": "finish"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "", "snd": "wall", "role": "wall"}], [{"text": "Go ahead", "snd": "w", "role": "path"}, {"text": "Give me a ring", "snd": "j", "role": "path"}, {"text": "I agree", "snd": "j", "role": "path"}, {"text": "Tea or coffee?", "snd": "j", "role": "path"}, {"text": "We aren't ready", "snd": "j", "role": "path"}, {"text": "Three and a half", "snd": "j", "role": "path"}], [{"text": "", "snd": "wall", "role": "wall"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "She arrived", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Go to England", "snd": "w", "role": "decoy"}, {"text": "Hello everybody!", "snd": "w", "role": "path"}], [{"text": "A few apples", "snd": "w", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Day and night", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "True or false?", "snd": "w", "role": "decoy"}, {"text": "A queue of people", "snd": "w", "role": "path"}], [{"text": "", "snd": "wall", "role": "wall"}, {"text": "Four and a half", "snd": "r", "role": "decoy"}, {"text": "Law and order", "snd": "r", "role": "decoy"}, {"text": "Draw a line", "snd": "r", "role": "start"}, {"text": "We saw a film", "snd": "r", "role": "path"}, {"text": "Two or three", "snd": "w", "role": "path"}], [{"text": "Try again!", "snd": "j", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Answer a question", "snd": "r", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}, {"text": "Blue eyes", "snd": "w", "role": "decoy"}, {"text": "", "snd": "wall", "role": "wall"}]], "finish": [0, 3], "start": [4, 3], "rows": 6, "cols": 6};
+// Mark Hancock's Link maze (Pronunciation Games, Cambridge University Press, 1995, game C1), as printed:
+// five by five, Start in the middle, the exits lettered round the edge, and the turns relative to the way
+// you are facing. Nothing is checked as you go (Ramy, 5 Nov 2026: "they should just follow, and then either
+// they can get out or not"); the route and the exit are there to reveal.
+const mazeData = {
+  grid: [
+    [["Two or three", "w"], ["Three and a half", "j"], ["Draw a line", "r"], ["We saw a film", "r"], ["A queue of people", "w"]],
+    [["We aren't ready", "j"], ["Tea or coffee?", "j"], ["Hello everybody!", "w"], ["I agree", "j"], ["Where are you?", "r"]],
+    [["Go ahead", "w"], ["True or false?", "w"], null, ["Never again!", "r"], ["Blue eyes", "w"]],
+    [["Score a goal", "r"], ["Answer a question", "r"], ["Give me a ring", "j"], ["Try again!", "j"], ["Go to England", "w"]],
+    [["Day and night", "j"], ["She arrived", "j"], ["Four and a half", "r"], ["A few apples", "w"], ["Law and order", "r"]]
+  ],
+  exits: { top: "ABCDE", right: "FGHIJ", bottom: "ONMLK", left: "TSRQP" },
+  route: [[1,2],[0,2],[0,3],[1,3],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2],[3,2],[3,1],[2,1],[1,1],[1,0],[2,0],[3,0]],
+  exit: "Q"
+};
+const MAZE_TURN = { j: 'turn left', w: 'straight on', r: 'turn right' };
 const mazeGridEl = document.getElementById('mazeGrid');
-mazeGridEl.style.setProperty('--cols', mazeData.cols);
-let mazePos = mazeData.start.slice();
+let mazePos = [2, 2], mazeOut = false, mazeFacing = 'up', mazeTimers = [], mazeTrail = [];
 const mazeCellEls = {};
-function mazeKey(r,c){ return r+','+c; }
-mazeData.grid.forEach((row,r)=>{
-  row.forEach((cell,c)=>{
-    const d=document.createElement('div'); d.className='maze-cell';
-    if(cell.role==='wall'){ d.classList.add('wall'); }
-    else if(cell.role==='start'){ d.classList.add('start','current','visited'); d.innerHTML='<div>START<br>'+cell.text+'</div>'; }
-    else if(cell.role==='finish'){ d.classList.add('finish'); d.textContent=cell.text; }
-    else { d.textContent=cell.text; }
-    d.dataset.r=r; d.dataset.c=c;
-    if(cell.role!=='wall') d.onclick=()=>mazeClick(r,c);
-    mazeGridEl.appendChild(d);
-    mazeCellEls[mazeKey(r,c)] = d;
-  });
-});
-const mazeDir = {j:[0,-1], w:[-1,0], r:[0,1]};
-function mazeClick(r,c){
-  const fb=document.getElementById('mazeFeedback');
-  const curCell = mazeData.grid[mazePos[0]][mazePos[1]];
-  const dr=r-mazePos[0], dc=c-mazePos[1];
-  const isAdjacent = Math.abs(dr)+Math.abs(dc)===1;
-  if(!isAdjacent){ return; }
-  if(curCell.role==='finish'){ return; }
-  const needed = mazeDir[curCell.snd];
-  const correct = needed && needed[0]===dr && needed[1]===dc;
-  const targetEl = mazeCellEls[mazeKey(r,c)];
-  if(correct){
-    mazeCellEls[mazeKey(mazePos[0],mazePos[1])].classList.remove('current');
-    mazePos=[r,c];
-    targetEl.classList.add('visited','current');
-    if(r===mazeData.finish[0] && c===mazeData.finish[1]){
-      fb.textContent = 'You escaped the maze.'; fb.className='feedback good';
-    } else {
-      fb.textContent = 'Right. Now say the phrase in this new cell.'; fb.className='feedback good';
-    }
-  } else {
-    targetEl.classList.add('wrong');
-    fb.textContent = 'Not quite. Say the phrase in your current cell (the gold outline) out loud, work out /j/, /w/ or /r/, then click that way.'; fb.className='feedback bad';
-    setTimeout(()=>targetEl.classList.remove('wrong'),400);
-  }
+/* the walker: a little figure on the current cell, the arrow over his head the way he is facing */
+const walker = document.getElementById('mazeWalker');
+const FACE_DEG = { up: 0, right: 90, down: 180, left: 270 };
+function placeWalker(r, c, hop){
+  const el = mazeCellEls[mazeKey(r, c)]; if (!el) return;
+  walker.style.left = (el.offsetLeft + el.offsetWidth / 2) + 'px'; walker.style.top = (el.offsetTop + el.offsetHeight / 2) + 'px';
+  walker.querySelector('.walker-arrow').style.transform = 'rotate(' + FACE_DEG[mazeFacing] + 'deg)';
+  walker.querySelector('.walker-body').style.transform = mazeFacing === 'left' ? 'scaleX(-1)' : '';
+  if (hop) { walker.classList.remove('hop'); void walker.offsetWidth; walker.classList.add('hop'); }
+}
+function faceFrom(dr, dc){ return dr === -1 ? 'up' : dr === 1 ? 'down' : dc === 1 ? 'right' : 'left'; }
+function mazeKey(r, c){ return r + ',' + c; }
+/* a seven-by-seven board: the exit letters round the edge, the Start in the middle */
+for (let r = -1; r <= 5; r++) for (let c = -1; c <= 5; c++) {
+  const d = document.createElement('div'); d.className = 'maze-cell';
+  const edge = r === -1 || r === 5 || c === -1 || c === 5;
+  if (edge) {
+    if ((r === -1 || r === 5) && (c === -1 || c === 5)) { d.classList.add('blank'); mazeGridEl.appendChild(d); continue; }
+    const letter = r === -1 ? mazeData.exits.top[c] : r === 5 ? mazeData.exits.bottom[c] : c === -1 ? mazeData.exits.left[r] : mazeData.exits.right[r];
+    d.classList.add('exit'); d.textContent = letter; d.setAttribute('aria-label', 'Exit ' + letter); d.onclick = () => mazeExit(r, c, letter);
+  } else if (r === 2 && c === 2) { d.classList.add('start', 'current', 'visited'); d.textContent = 'Start'; d.onclick = () => mazeClick(r, c); }
+  else { d.textContent = mazeData.grid[r][c][0]; d.onclick = () => mazeClick(r, c); }
+  mazeGridEl.appendChild(d); mazeCellEls[mazeKey(r, c)] = d;
+}
+function mazeAdjacent(r, c){ return Math.abs(r - mazePos[0]) + Math.abs(c - mazePos[1]) === 1; }
+function mazeStep(r, c){
+  mazeFacing = faceFrom(r - mazePos[0], c - mazePos[1]);
+  mazeCellEls[mazeKey(mazePos[0], mazePos[1])].classList.remove('current');
+  mazePos = [r, c]; mazeTrail.push([r, c]); mazeCellEls[mazeKey(r, c)].classList.add('visited', 'current'); placeWalker(r, c, true);
+}
+/* the fireworks are for the walk the sounds lead, every tile in order, and then the right door (Ramy, 5 Nov 2026: "they have to walk every single tile") */
+function mazeWalkedTheRoute(){ const t = mazeTrail.slice(0, -1); return t.length === mazeData.route.length && t.every(([r, c], i) => mazeData.route[i][0] === r && mazeData.route[i][1] === c); }
+/* a tap on any cell says its phrase, in British English (Ramy, 5 Nov 2026); a tap on the cell next to you is also a step */
+function mazeSay(r, c){ const cell = mazeData.grid[r] && mazeData.grid[r][c]; if (cell && window.LiteVoice) LiteVoice.sayAll([{ text: cell[0], accent: 'uk' }]); }
+function mazeClick(r, c){ mazeSay(r, c); if (mazeOut || !mazeAdjacent(r, c)) return; mazeStep(r, c); }
+/* the right door: fireworks and a fanfare; the wrong door: down he goes (Ramy, 5 Nov 2026: "celebration fireworks ... fall or die") */
+let mazeAudio = null;
+function mazeCtx(){ try { mazeAudio = mazeAudio || new (window.AudioContext || window.webkitAudioContext)(); if (mazeAudio.state === 'suspended') mazeAudio.resume(); return mazeAudio; } catch (e) { return null; } }
+function mazeTone(ctx, f, t0, dur, type, gain){ const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f, t0); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(gain || 0.16, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + dur + 0.05); }
+function mazeFanfare(){ const ctx = mazeCtx(); if (!ctx) return; const t = ctx.currentTime + 0.02; [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => mazeTone(ctx, f, t + i * 0.11, 0.3, 'triangle')); [1046.5, 1318.5, 1568].forEach(f => mazeTone(ctx, f, t + 0.5, 0.9, 'triangle', 0.12)); }
+function mazeFallSound(){ const ctx = mazeCtx(); if (!ctx) return; const t = ctx.currentTime + 0.02; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(520, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.8); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.9); mazeTone(ctx, 80, t + 0.85, 0.2, 'sine', 0.3); }
+function mazeFireworks(r, c){
+  const el = mazeCellEls[mazeKey(r, c)]; if (!el) return;
+  const x = el.offsetLeft + el.offsetWidth / 2, y = el.offsetTop + el.offsetHeight / 2;
+  const cols = ['var(--gold)', 'var(--teal)', 'var(--brick)', '#F2C9A0', '#2E5C8A'];
+  [0, 350].forEach((delay, b) => setTimeout(() => {
+    const fw = document.createElement('div'); fw.className = 'fireworks'; fw.style.left = (x + (b ? 18 : 0)) + 'px'; fw.style.top = (y - (b ? 22 : 0)) + 'px';
+    for (let i = 0; i < 26; i++) { const sp = document.createElement('i'); const a = (i / 26) * Math.PI * 2 + Math.random() * 0.3, d = 36 + Math.random() * 54; sp.style.setProperty('--dx', Math.cos(a) * d + 'px'); sp.style.setProperty('--dy', Math.sin(a) * d + 'px'); sp.style.background = cols[i % cols.length]; fw.appendChild(sp); }
+    mazeGridEl.appendChild(fw); setTimeout(() => fw.remove(), 1200);
+  }, delay));
+}
+function mazeArrive(r, c, letter, revealed){
+  mazeCellEls[mazeKey(r, c)].classList.add('out'); mazeOut = true;
+  const fb = document.getElementById('mazeFeedback');
+  const won = letter === mazeData.exit && mazeWalkedTheRoute();
+  if (won) { walker.classList.add('cheer'); mazeFireworks(r, c); mazeFanfare(); fb.textContent = revealed ? 'Out at ' + letter + '.' : 'Out at ' + letter + ', the way the sounds lead. Congratulations!'; fb.className = 'feedback good'; }
+  else { walker.classList.add('fall'); mazeFallSound(); fb.textContent = letter === mazeData.exit ? 'Out at ' + letter + ', but not the way the sounds lead: down he goes. Start again.' : 'Out at ' + letter + ': the wrong door, and down he goes. Start again.'; fb.className = 'feedback bad'; }
+}
+function mazeExit(r, c, letter){
+  if (mazeOut || !mazeAdjacent(r, c)) return;
+  mazeStep(r, c); mazeArrive(r, c, letter, false);
 }
 function resetMaze(){
-  Object.values(mazeCellEls).forEach(el=>el.classList.remove('visited','current','wrong'));
-  mazePos = mazeData.start.slice();
-  mazeCellEls[mazeKey(mazePos[0],mazePos[1])].classList.add('visited','current');
-  document.getElementById('mazeFeedback').textContent='';
+  mazeTimers.forEach(clearTimeout); mazeTimers = [];
+  Object.values(mazeCellEls).forEach(el => { el.classList.remove('visited', 'current', 'out', 'route'); delete el.dataset.step; });
+  mazePos = [2, 2]; mazeOut = false; mazeFacing = 'up'; mazeTrail = []; mazeCellEls['2,2'].classList.add('visited', 'current'); walker.classList.remove('cheer', 'fall'); mazeGridEl.querySelectorAll('.fireworks').forEach(f => f.remove()); placeWalker(2, 2, false);
+  document.getElementById('mazeFeedback').textContent = ''; document.getElementById('mazeRoute').hidden = true;
 }
+/* the answer: he walks it himself, one cell at a time, and out at the exit */
+function revealMaze(){
+  resetMaze(); mazeOut = true;
+  mazeData.route.forEach(([r, c], i) => { mazeTimers.push(setTimeout(() => { mazeStep(r, c); const el = mazeCellEls[mazeKey(r, c)]; el.classList.add('route'); el.dataset.step = i + 1; }, 420 * (i + 1))); });
+  const [lr, lc] = mazeData.route[mazeData.route.length - 1];
+  const exitEl = Object.entries(mazeCellEls).find(([k, el]) => el.classList.contains('exit') && el.textContent === mazeData.exit);
+  mazeTimers.push(setTimeout(() => { const [er, ec] = exitEl[0].split(',').map(Number); mazeStep(er, ec); exitEl[1].classList.add('route'); mazeArrive(er, ec, mazeData.exit, true);
+    const rt = document.getElementById('mazeRoute');
+    rt.innerHTML = '<b>The way out, facing up from Start:</b> ' + mazeData.route.map(([r, c], i) => { const [t, snd] = mazeData.grid[r][c]; return (i + 1) + '. ' + t + ' /' + snd + '/ ' + MAZE_TURN[snd]; }).join(' · ') + ' · out at ' + mazeData.exit + '.';
+    rt.hidden = false; }, 420 * (mazeData.route.length + 1)));
+}
+placeWalker(2, 2, false); window.addEventListener('resize', () => placeWalker(mazePos[0], mazePos[1], false));
 
 // ---------- Activity 4: Mark the links ----------
 const holmesText = "But before we could leave, the woman had come outside again. In the lamplight we could see that she had something heavy in her arms. She looked around to see if anybody was following her. Then there was a loud bang as she dropped the box on the stone steps. She was so busy that she didn't notice the two of us walking up behind her. Marta stepped in front of her and she stopped suddenly. Omar and I quietly moved closer to help Marta. I had a torch ready and soon it was impossible for the woman to get away.";

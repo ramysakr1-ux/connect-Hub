@@ -39,6 +39,8 @@ window.LiteVoice = window.LiteVoice || (function(){
        named person's sex (Carlos, Ingrid) in whichever accent is chosen. */
     var accent = chosen.split('-')[0];
     var voice = item.speaker === 'b' ? partner(chosen) : item.speaker === 'man' || item.speaker === 'woman' ? accent + '-' + item.speaker : chosen;
+    /* a line that must be heard in one accent whatever the bar says (the link maze is British, Ramy, 5 Nov 2026): same sex, that accent */
+    if (item.accent) voice = item.accent + '-' + voice.split('-')[1];
     player.src = 'audio/' + voice + '/' + fileFor(item.text, item.stress) + '.mp3';
     var p = player.play(); if (p && p.catch) p.catch(function(){ queue = []; fallback(item.text); });
   }
