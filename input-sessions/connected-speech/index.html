@@ -160,7 +160,7 @@
   <section id="s4" data-n="3">
     <div class="card" data-n="3">
       <div class="stage-title">The link maze <span class="badge">Find your way out</span></div>
-      <p class="lead">You start in the middle, facing up. Say the phrase in the cell in front of you: the sound that joins its two words tells you which way to go next. Keep going until you leave the maze. Which letter do you come out at? Tap any cell to hear its phrase.</p>
+      <p class="lead">You start in the middle, facing up. Say the phrase in the cell in front of you: the sound that joins its two words tells you which way to go next. Keep going until you leave the maze. Which letter do you come out at? Say each phrase yourself first; if you are not sure, tap the cell you are standing on to hear it.</p>
       <div class="maze-legend">
         <span>/j/ turn left</span>
         <span>/w/ go straight on</span>
@@ -392,9 +392,10 @@ function mazeStep(r, c){
 }
 /* the fireworks are for the walk the sounds lead, every tile in order, and then the right door (Ramy, 5 Nov 2026: "they have to walk every single tile") */
 function mazeWalkedTheRoute(){ const t = mazeTrail.slice(0, -1); return t.length === mazeData.route.length && t.every(([r, c], i) => mazeData.route[i][0] === r && mazeData.route[i][1] === c); }
-/* a tap on any cell says its phrase, in British English (Ramy, 5 Nov 2026); a tap on the cell next to you is also a step */
+/* say it yourself first (Ramy, 5 Nov 2026): a tap on the cell next to you is a step, in silence; a tap on the cell you
+   are standing on says its phrase, in British English */
 function mazeSay(r, c){ const cell = mazeData.grid[r] && mazeData.grid[r][c]; if (cell && window.LiteVoice) LiteVoice.sayAll([{ text: cell[0], accent: 'uk' }]); }
-function mazeClick(r, c){ mazeSay(r, c); if (mazeOut || !mazeAdjacent(r, c)) return; mazeStep(r, c); }
+function mazeClick(r, c){ if (r === mazePos[0] && c === mazePos[1]) { mazeSay(r, c); return; } if (mazeOut || !mazeAdjacent(r, c)) return; mazeStep(r, c); }
 /* the right door: fireworks and a fanfare; the wrong door: down he goes (Ramy, 5 Nov 2026: "celebration fireworks ... fall or die") */
 let mazeAudio = null;
 function mazeCtx(){ try { mazeAudio = mazeAudio || new (window.AudioContext || window.webkitAudioContext)(); if (mazeAudio.state === 'suspended') mazeAudio.resume(); return mazeAudio; } catch (e) { return null; } }
