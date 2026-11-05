@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611051802">
+<link rel="stylesheet" href="hub-tokens.css?v=202611051812">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -263,7 +263,7 @@
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
   .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611051802">
+<link rel="stylesheet" href="hub-house.css?v=202611051812">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -286,10 +286,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202611051802"></script>
-<script src="hub-store.js?v=202611051802"></script>
-<script src="hub-say.js?v=202611051802"></script>
-<script src="hub-card-mail.js?v=202611051802"></script>
+<script src="hub-shared.js?v=202611051812"></script>
+<script src="hub-store.js?v=202611051812"></script>
+<script src="hub-say.js?v=202611051812"></script>
+<script src="hub-card-mail.js?v=202611051812"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -510,6 +510,8 @@ function tutorSubject(c){ return 'Your CELTA course on Connect Lite — the cour
 /* ---- drawing ---- */
 let COURSES = [], INBOX = null, INBOX_ALL = false, BUSY = false;
 const chip = (cls, t) => `<span class="state ${cls}">${esc(t)}</span>`;
+/* how long emptying the bin takes: each course is one purgeCourse call, about six seconds (5 Nov 2026) */
+const binMinutes = n => { const m = Math.max(1, Math.round(n * 6 / 60)); return m === 1 ? 'a minute' : m + ' minutes'; };
 const kbtn = (attrs, t, primary) => `<button type="button" class="btn small${primary ? ' primary' : ''}" ${attrs}>${t}</button>`;
 
 function demoCard(c){
@@ -804,7 +806,7 @@ function render(courses, msg){
 
     ${bin.length ? `<details class="fold binfold" id="foldBin"><summary title="The bin: ${bin.length} course${bin.length === 1 ? '' : 's'}"><span class="vh">The bin</span><span class="fic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9.5 7V4.8c0-.4.4-.8.8-.8h3.4c.4 0 .8.4.8.8V7"/><path d="M6.2 7l.9 12.2c.1 1 .9 1.8 1.9 1.8h6c1 0 1.8-.8 1.9-1.8L17.8 7"/><path d="M10 11v6M14 11v6"/></svg><span class="dot">${bin.length}</span></span></summary>
       <p class="binnote"><b>The bin</b>${bin.length} course${bin.length === 1 ? '' : 's'} · links off · gone for good after 30 days</p>
-      <p class="binnote"><button type="button" class="btn small danger" data-emptybin="1">Empty the bin now</button> <span class="note" id="binProgress">Every course here goes for good now, one at a time, a few seconds each. Keep this page open until it says the bin is empty. Last night’s backup on Drive still has them.</span></p>
+      <p class="binnote"><button type="button" class="btn small danger" data-emptybin="1">Empty the bin now</button> <span class="note" id="binProgress"><b>Takes about ${binMinutes(bin.length)}. Keep this page open until it says the bin is empty.</b> Every course here goes for good, one at a time. Last night’s backup on Drive still has them.</span></p>
       <div class="cards">${bin.map(binRow).join('')}</div></details>` : ''}
     <p id="status"></p>`;
   if (msg) status(msg);
@@ -1115,7 +1117,7 @@ $('app').addEventListener('click', async e => {
     const bin = COURSES.filter(c => c.deleted);
     if (!bin.length) return;
     const n = bin.reduce((a, c) => a + Number(c.trainees || 0), 0);
-    const typed = await confirmModal(`Empty the bin now? ${bin.length} course${bin.length === 1 ? '' : 's'}${n ? ', with ' + n + ' trainees between them,' : ''} go for good, with every record on them. Nothing on a live course is touched. Last night’s backup on Drive still has them, and they can be put back from it.`, 'Empty the bin', { type: 'empty the bin', hint: 'Type empty the bin to go ahead' });
+    const typed = await confirmModal(`Empty the bin now? ${bin.length} course${bin.length === 1 ? '' : 's'}${n ? ', with ' + n + ' trainees between them,' : ''} go for good, with every record on them. Nothing on a live course is touched. It takes about ${binMinutes(bin.length)}: keep this page open until it says the bin is empty. Last night’s backup on Drive still has them, and they can be put back from it.`, 'Empty the bin', { type: 'empty the bin', hint: 'Type empty the bin to go ahead' });
     if (!typed || typed.trim().toLowerCase() !== 'empty the bin') return;
     /* the progress shows beside the button, not only in the status line under the whole bin (Ramy, 5 Nov 2026: "The
        bin is not listening": with fifty courses the status line was a long scroll away, so the button seemed dead) */
