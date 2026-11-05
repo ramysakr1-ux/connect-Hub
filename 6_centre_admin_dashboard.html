@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611051525">
+<link rel="stylesheet" href="hub-tokens.css?v=202611051551">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -666,7 +666,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611051525">
+<link rel="stylesheet" href="hub-house.css?v=202611051551">
 </head>
 <body>
 <div class="board">
@@ -1266,19 +1266,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611051525"></script>
-<script src="hub-store.js?v=202611051525"></script>
-<script src="hub-xlsx.js?v=202611051525"></script>
-<script src="hub-say.js?v=202611051525"></script>
-<script src="agreement-defaults.js?v=202611051525"></script>
-<script src="observation-defaults.js?v=202611051525"></script>
-<script src="hub-shared.js?v=202611051525"></script>
-<script src="hub-rotation.js?v=202611051525"></script>
-<script src="hub-due.js?v=202611051525"></script>
-<script src="hub-sync.js?v=202611051525"></script>
-<script src="hub-notebook.js?v=202611051525"></script>
-<script src="hub-hand.js?v=202611051525"></script>
-<script src="hub-ink.js?v=202611051525"></script>
+<script src="assignment-defaults.js?v=202611051551"></script>
+<script src="hub-store.js?v=202611051551"></script>
+<script src="hub-xlsx.js?v=202611051551"></script>
+<script src="hub-say.js?v=202611051551"></script>
+<script src="agreement-defaults.js?v=202611051551"></script>
+<script src="observation-defaults.js?v=202611051551"></script>
+<script src="hub-shared.js?v=202611051551"></script>
+<script src="hub-rotation.js?v=202611051551"></script>
+<script src="hub-due.js?v=202611051551"></script>
+<script src="hub-sync.js?v=202611051551"></script>
+<script src="hub-notebook.js?v=202611051551"></script>
+<script src="hub-hand.js?v=202611051551"></script>
+<script src="hub-ink.js?v=202611051551"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2873,8 +2873,15 @@ async function renderStoreRoster(next){
     if (bad.length) { status.textContent = 'Groups are numbered 1 to 4. Check: ' + bad.map(r => r.name + ' (' + r.group + ')').join('; '); return; }
     const count = {}; ['1','2','3','4'].forEach(g => { count[g] = (Array.isArray(ROSTER) ? ROSTER : []).filter(t => String(t.group) === g).length; });
     rows.forEach(r => { if (r.group) { r.group = r.group.replace(/\D/g, ''); count[r.group]++; } });
+    /* Even groups (Ramy, 5 Nov 2026: "make it even, if possible"): as few groups of six as the whole course needs,
+       and each name without a group goes to the smallest of them, so ten become five and five rather than six and
+       four. A group already holding six takes nobody; names given a group keep it. */
+    const total = Object.values(count).reduce((a, n) => a + n, 0) + rows.filter(x => !x.group).length;
+    const used = ['1','2','3','4'].filter(g => count[g] > 0).length;
+    const need = Math.max(used, Math.min(4, Math.ceil(total / 6)));
     for (const r of rows.filter(x => !x.group)) {
-      const g = ['1','2','3','4'].find(x => count[x] < 6);
+      const open = ['1','2','3','4'].slice(0, need).filter(x => count[x] < 6);
+      const g = open.sort((a, b) => count[a] - count[b] || Number(a) - Number(b))[0];
       if (!g) { status.textContent = 'Four groups of six is the most a course holds. Nothing was added.'; return; }
       r.group = g; count[g]++;
     }
