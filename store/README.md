@@ -25,6 +25,20 @@ to that file, and a deploy is, from `store/gas/`:
 
 Never a bare `clasp deploy`. If anything is ever edited in the Apps Script
 editor instead, `clasp pull` before the next change or the repo copy is stale.
+
+**`clasp push --force`** when `appsscript.json` has changed: without it clasp
+asks to overwrite the manifest, takes no answer as no, prints "Skipping push."
+and the deploy that follows ships the OLD code under a new version number
+(5 Nov 2026, @198).
+
+**Apps Script keeps at most 200 versions.** At the limit `clasp deploy` refuses
+("Cannot create more versions"). Old versions are deleted by hand in the
+editor: Project history, the bin icon on a version. Only the version the live
+deployment points at (`clasp deployments`) must stay; keep the last few as
+rollback points.
+
+**Timing a request (5 Nov 2026):** send `prof: 1` with any op and the answer
+carries `prof`, each named step's milliseconds and call count, nothing else.
 The patches below are how the editor's text got to v73.
 
 ## 25 Oct 2026 — peer sheets, connected (store v133)

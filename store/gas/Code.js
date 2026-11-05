@@ -298,9 +298,11 @@ function doPost(e) {
   var req;
   try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return json_({ ok: false, error: 'Bad JSON' }); }
   IN_REQUEST_ = true; CHANGED_ = {}; REQ_COURSE_ = null; REQ_VER_ = '';
+  var prof = req.prof ? profStart_() : null;
   try {
     var out = handle_(req);
     var res = { ok: true, result: out };
+    if (prof) res.prof = profEnd_(prof);
     /* THE COURSE'S VERSION (v179, 29 Oct 2026; Ramy: "it's been a little bit slow"). Every answer about a course
        carries its version: a read says which version it read, a write what it moved the version from and to, so
        the browser that wrote can keep its copy current without booting again. See versionStamp_. */
@@ -357,6 +359,28 @@ function settleVersions_(op) {
   });
   CHANGED_ = {};
   if (!out && cid && REQ_VER_) out = { at: REQ_VER_ };
+  return out;
+}
+
+/* THE TIMING SWITCH (5 Nov 2026; Ramy: "do the long-term fix" before C/21). A request with prof: 1 also gets back how
+   long each named step took, inclusive, in milliseconds, with call counts: step names and numbers only, never data.
+   The wrappers are put on for that one request and taken off again in profEnd_. */
+var PROF_NAMES_ = ['migrate_', 'courseByKey_', 'courseById_', 'traineeAnywhere_', 'courseRead_', 'courseBlock_', 'courseRows_',
+  'rosterWithRecords_', 'recordsFor_', 'comingFor_', 'guidanceFor_', 'sharedNotesFor_', 'peerSheetsFor_', 'courseFeedbackFor_',
+  'settleVersions_', 'versionStamp_', 'spreadsheet_', 'spreadsheetOpen_', 'sheet_', 'settingsFor_', 'streamFor_', 'gridFor_', 'timetableFor_',
+  'tpPointsFor_', 'folPoolFor_', 'folProfilesFor_', 'volunteerNamesFor_', 'withoutEmails_', 'assertAssessorInDate_', 'handle_'];
+function profStart_() {
+  var g = globalThis, st = { t0: Date.now(), orig: {}, sum: {} };
+  PROF_NAMES_.forEach(function (n) {
+    var f = g[n]; if (typeof f !== 'function') return;
+    st.orig[n] = f;
+    g[n] = function () { var t = Date.now(); try { return f.apply(this, arguments); } finally { var r = st.sum[n] || (st.sum[n] = [0, 0]); r[0] += Date.now() - t; r[1]++; } };
+  });
+  return st;
+}
+function profEnd_(st) {
+  var g = globalThis; Object.keys(st.orig).forEach(function (n) { g[n] = st.orig[n]; });
+  var out = { total: Date.now() - st.t0 }; Object.keys(st.sum).forEach(function (n) { out[n] = st.sum[n]; });
   return out;
 }
 
@@ -935,7 +959,7 @@ case 'inbox': {
       var was = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID') || '';
       PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', nid);
       PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID_PREVIOUS', was);
-      COURSE_MEMO_ = null;
+      COURSE_MEMO_ = null; BLOCK_MEMO_ = {}; SS_MEMO_ = null;
       return { pointedAt: nid, was: was, courses: courses_(true).length };
     }
 
@@ -1303,14 +1327,14 @@ case 'inbox': {
         var csh = sheet_(SHEET_COURSE), cw = csh.getLastColumn();
         Object.keys(groups).forEach(function (g) {
           var G = groups[g];
-          COURSE_MEMO_ = null;
+          COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
           if (courseRead_(G.cid, G.base) !== null) return;
           bump(G.cid, 'course:' + G.base, G.rows.length);
           if (!rwrite) return;
           deleteRowsWhere_(SHEET_COURSE, function (r) { return String(r[0]) === G.cid && String(r[1]).split('#')[0] === G.base; });
           csh.getRange(csh.getLastRow() + 1, 1, G.rows.length, cw).setValues(G.rows.map(function (r) { return fit(r, cw); }));
         });
-        COURSE_MEMO_ = null;
+        COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
         return { write: rwrite, backup: bk.getName(), report: report };
       } finally { rlock.releaseLock(); }
     }
@@ -1409,7 +1433,7 @@ case 'inbox': {
       if (!row) throw new Error('No such trainee');
       var newTok = newKey_();
       var lock = LockService.getScriptLock(); lock.waitLock(10000);
-      COURSE_MEMO_ = null;
+      COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
       try {
         // the roster row and every record row of theirs
         var sh = sheet_(SHEET_TRAINEES), rows = sh.getDataRange().getValues();
@@ -2984,7 +3008,16 @@ HEADERS[SHEET_REPORTS]  = ['at', 'kind', 'page', 'where', 'text', 'role', 'cours
    own record of who it has sold to. */
 HEADERS[SHEET_CENTRES] = ['number', 'name', 'first', 'courses'];
 
+/* ONE OPEN A REQUEST (5 Nov 2026). Timing a boot showed spreadsheet_() called five or six times, each one a fresh
+   openById at 0.1 to 14 seconds. Apps Script starts every request with fresh globals, so the handle is kept for the
+   one request only. */
+var SS_MEMO_ = null;
 function spreadsheet_() {
+  if (SS_MEMO_) return SS_MEMO_;
+  SS_MEMO_ = spreadsheetOpen_();
+  return SS_MEMO_;
+}
+function spreadsheetOpen_() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty('SPREADSHEET_ID');
   var ss = null;
@@ -3006,6 +3039,7 @@ function spreadsheet_() {
 function dataSheetUrl() { var u = spreadsheet_().getUrl(); Logger.log(u); return u; }
 function sheet_(name) {
   if (name === SHEET_COURSE) COURSE_MEMO_ = null;   // a writer may be about to change it
+  if (name === SHEET_COURSE || name === SHEET_RECORDS) BLOCK_MEMO_ = {};   // and the one-course blocks read from them
   var header = HEADERS[name];
   var ss = spreadsheet_();
   var sh = ss.getSheetByName(name);
@@ -3241,15 +3275,10 @@ function rosterWithRecords_(courseId, kinds) {
   if (!people.length) return [];
   var byToken = {};
   people.forEach(function (t) { byToken[t.token] = {}; });
-  var sh = sheet_(SHEET_RECORDS);
-  var last = sh.getLastRow();
-  if (last >= 2) {
-    sh.getRange(2, 1, last - 1, 4).getValues().forEach(function (r) {
-      if (String(r[0]) !== String(courseId)) return;
-      var bucket = byToken[String(r[1])]; if (!bucket) return;
-      foldRecord_(bucket, String(r[2]), r[3], kinds);
-    });
-  }
+  courseBlock_(SHEET_RECORDS, courseId, 4).forEach(function (r) {
+    var bucket = byToken[String(r[1])]; if (!bucket) return;
+    foldRecord_(bucket, String(r[2]), r[3], kinds);
+  });
   return people.map(function (t) {
     var recs = finishBucket_(byToken[t.token]) || {}, ag = recs.agreement || {};
     /* the certificate name, said beside the name (3 Nov 2026) */
@@ -3258,11 +3287,8 @@ function rosterWithRecords_(courseId, kinds) {
 }
 function recordsFor_(courseId, token, kinds) {
   var out = {};
-  var sh = sheet_(SHEET_RECORDS);
-  var last = sh.getLastRow();
-  if (last < 2) return out;
-  sh.getRange(2, 1, last - 1, 4).getValues().forEach(function (r) {
-    if (String(r[0]) !== String(courseId) || String(r[1]) !== token) return;
+  courseBlock_(SHEET_RECORDS, courseId, 4).forEach(function (r) {
+    if (String(r[1]) !== token) return;
     foldRecord_(out, String(r[2]), r[3], kinds);
   });
   return finishBucket_(out);
@@ -3330,6 +3356,53 @@ function kindsByCourse_() {
    it away again after they take their lock, so a read under a lock is always
    fresh. */
 var COURSE_MEMO_ = null;
+/* ONE COURSE'S ROWS, NOT THE WHOLE SHEET (5 Nov 2026). Every boot read the whole course sheet and the whole records
+   sheet, every course's rows, the bin's included: 66 courses for a page that wants one, 6 to 7 seconds for a trainee's
+   first open whatever their own course held (Ramy: "if there's a bigger fix, we should do it before the course"). Now
+   the narrow first column is read, the course's rows are found in it, and those rows -- however scattered -- come back
+   in ONE request through the Sheets API. Nothing about how rows are stored changes, so no writer is affected. If that
+   request fails for any reason, the old whole-sheet read answers instead: never slower than before, never different.
+   Per request, like COURSE_MEMO_, and dropped wherever a writer may have changed the sheet. */
+var BLOCK_MEMO_ = {};
+function courseBlock_(name, courseId, width) {
+  var key = name + '|' + courseId + '|' + width;
+  if (BLOCK_MEMO_[key]) return BLOCK_MEMO_[key];
+  var ss = spreadsheet_(), sh = ss.getSheetByName(name);
+  if (!sh) return [];
+  var last = sh.getLastRow();
+  if (last < 2) return (BLOCK_MEMO_[key] = []);
+  var want = String(courseId), ids = sh.getRange(2, 1, last - 1, 1).getValues(), runs = [], s = -1, i;
+  for (i = 0; i < ids.length; i++) {
+    var hit = String(ids[i][0]) === want;
+    if (hit && s < 0) s = i; else if (!hit && s >= 0) { runs.push([s, i]); s = -1; }
+  }
+  if (s >= 0) runs.push([s, ids.length]);
+  if (!runs.length) return (BLOCK_MEMO_[key] = []);
+  var out = null;
+  try {
+    var res = Sheets.Spreadsheets.Values.batchGetByDataFilter({
+      dataFilters: runs.map(function (r) { return { gridRange: { sheetId: sh.getSheetId(), startRowIndex: r[0] + 1, endRowIndex: r[1] + 1, startColumnIndex: 0, endColumnIndex: width } }; }),
+      valueRenderOption: 'UNFORMATTED_VALUE', dateTimeRenderOption: 'SERIAL_NUMBER', majorDimension: 'ROWS'
+    }, ss.getId());
+    var got = res.valueRanges || [];
+    if (got.length !== runs.length) throw new Error('short');
+    out = [];
+    got.forEach(function (vr, n) {
+      var vals = (vr.valueRange && vr.valueRange.values) || [];
+      for (var k = 0; k < runs[n][1] - runs[n][0]; k++) {
+        var row = (vals[k] || []).slice(0, width);
+        while (row.length < width) row.push('');
+        if (String(row[0]) !== want) throw new Error('moved');   // the sheet changed between the two reads: read it whole
+        out.push(row);
+      }
+    });
+  } catch (e) { out = null; }
+  if (!out) {
+    out = [];
+    sh.getRange(2, 1, last - 1, width).getValues().forEach(function (r) { if (String(r[0]) === want) out.push(r); });
+  }
+  return (BLOCK_MEMO_[key] = out);
+}
 function courseRows_() {
   if (COURSE_MEMO_) return COURSE_MEMO_;
   var sh = sheet_(SHEET_COURSE);            // drops any copy; set below
@@ -3364,7 +3437,7 @@ function ownTutor_(set, me) {
   return '';
 }
 function courseRead_(courseId, kind) {
-  var rows = courseRows_();
+  var rows = courseBlock_(SHEET_COURSE, courseId, 3);
   if (!rows.length) return null;
   var parts = [], plain = null, n = 0;
   for (var i = 0; i < rows.length; i++) {
@@ -3403,7 +3476,7 @@ function courseUpdate_(courseId, kind, fn) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    COURSE_MEMO_ = null;   // another request may have written while this one waited
+    COURSE_MEMO_ = null; BLOCK_MEMO_ = {};   // another request may have written while this one waited
     var cur = courseRead_(courseId, kind);
     var next = fn(Array.isArray(cur) ? cur : []);
     courseWriteRaw_(courseId, kind, next);
@@ -3415,7 +3488,7 @@ function courseUpdateObj_(courseId, kind, fn) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    COURSE_MEMO_ = null;   // as above
+    COURSE_MEMO_ = null; BLOCK_MEMO_ = {};   // as above
     var cur = courseRead_(courseId, kind);
     var next = fn(cur && typeof cur === 'object' && !Array.isArray(cur) ? cur : {});
     courseWriteRaw_(courseId, kind, next);
