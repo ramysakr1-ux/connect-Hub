@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611051812">
+<link rel="stylesheet" href="hub-tokens.css?v=202611052015">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -263,7 +263,7 @@
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
   .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611051812">
+<link rel="stylesheet" href="hub-house.css?v=202611052015">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -286,10 +286,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202611051812"></script>
-<script src="hub-store.js?v=202611051812"></script>
-<script src="hub-say.js?v=202611051812"></script>
-<script src="hub-card-mail.js?v=202611051812"></script>
+<script src="hub-shared.js?v=202611052015"></script>
+<script src="hub-store.js?v=202611052015"></script>
+<script src="hub-say.js?v=202611052015"></script>
+<script src="hub-card-mail.js?v=202611052015"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -1126,8 +1126,21 @@ $('app').addEventListener('click', async e => {
     for (const c of bin) {
       const line = `Emptying the bin: ${done + 1} of ${bin.length} (${c.id})… Keep this page open.`;
       status(line); if (prog) prog.textContent = line; eb.textContent = `Emptying ${done + 1} of ${bin.length}`;
-      try { last = await call({ op: 'purgeCourse', course: c.id, confirm: c.id }); done++; }
-      catch (err) { const msg = `Stopped at ${c.id}: ${err.message}. ${done} gone; the rest are still in the bin.`; BUSY = false; if (last) render(last.courses, msg); else { status(msg); if (prog) prog.textContent = msg; eb.disabled = false; eb.textContent = 'Empty the bin now'; } return; }
+      /* A purge can take most of a minute (5 Nov 2026: one took 51 s), and the store's call gave up at 20 s, called it
+         a failure and stopped the whole run while the store finished the purge anyway. Each purge now gets five minutes.
+         A call that still goes quiet is sent again after a pause: that is safe, because the store purges under its
+         lock and answers "No such course" for one that has already gone, which counts as gone. */
+      let tries = 0, failed = null;
+      for (;;) {
+        try { last = await HubStore.call({ owner: ownerKey(), op: 'purgeCourse', course: c.id, confirm: c.id }, 300000); done++; break; }
+        catch (err) {
+          const m = String(err && err.message || err);
+          if (/No such course|Not in the bin/i.test(m)) { done++; break; }
+          if (tries < 3 && /took too long|Could not reach|did not answer|Another change is running/i.test(m)) { tries++; if (prog) prog.textContent = `${c.id} is taking a while; asking the store again…`; await new Promise(r => setTimeout(r, 15000)); continue; }
+          failed = m; break;
+        }
+      }
+      if (failed) { const msg = `Stopped at ${c.id}: ${failed}. ${done} gone; the rest are still in the bin. Press Empty the bin now again to carry on.`; BUSY = false; if (last) render(last.courses, msg); else status(msg); const p2 = $('binProgress'); if (p2) p2.textContent = msg; return; }
     }
     render(last ? last.courses : COURSES, `The bin is empty: ${done} course${done === 1 ? '' : 's'} gone for good.`);
     try { $('status').scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e2) {}
