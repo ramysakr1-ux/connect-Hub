@@ -297,7 +297,7 @@ function installReminderTrigger() {
 function doPost(e) {
   var req;
   try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (err) { return json_({ ok: false, error: 'Bad JSON' }); }
-  IN_REQUEST_ = true; CHANGED_ = {}; REQ_COURSE_ = null; REQ_VER_ = '';
+  IN_REQUEST_ = true; CHANGED_ = {}; REQ_COURSE_ = null; REQ_VER_ = ''; REQ_OP_ = String(req.op || '');
   var prof = req.prof ? profStart_() : null;
   try {
     var out = handle_(req);
@@ -311,7 +311,7 @@ function doPost(e) {
   } catch (err) {
     try { settleVersions_(''); } catch (ve2) {}
     return json_({ ok: false, error: String(err && err.message || err) });
-  } finally { IN_REQUEST_ = false; }
+  } finally { IN_REQUEST_ = false; REQ_OP_ = ''; }
 }
 
 /* ---- THE COURSE'S VERSION (v179, 29 Oct 2026) ---------------------------------------------------------------
@@ -322,7 +322,7 @@ function doPost(e) {
    too often costs a boot; never moving it would be the bug, so the list below names the READS and everything
    else counts as a change. The course's own day is part of the version, so a page whose content follows the
    date (a demo clock, released points) boots once the day turns. */
-var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '';
+var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
   ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1 };
@@ -348,11 +348,15 @@ function bumpVersion_(id) {
 function markChanged_(id) { if (!id) return; if (IN_REQUEST_) { CHANGED_[String(id)] = 1; return; }
   /* outside a request (a timed job) the writer may already hold the script lock, which is not re-entrant: the stamp
      is written without it, which is safe for a random stamp */
+  try { SpreadsheetApp.flush(); } catch (e) {}   /* the write lands before the version moves (see THE COURSE CACHE) */
   try { PropertiesService.getScriptProperties().setProperty(verKey_(String(id)), Date.now().toString(36) + Math.random().toString(36).slice(2, 6)); } catch (e) {} }
 function settleVersions_(op) {
   var cid = REQ_COURSE_ ? String(REQ_COURSE_.id) : '';
   if (cid && op && !READ_OPS_[op]) CHANGED_[cid] = 1;
   var out = null;
+  /* THE COURSE CACHE (5 Nov 2026): Sheets holds a script's writes back until the execution ends, so they are flushed
+     before any version moves; otherwise a read in between could cache the old rows under the new version. */
+  if (Object.keys(CHANGED_).length) { try { SpreadsheetApp.flush(); } catch (e) {} }
   Object.keys(CHANGED_).forEach(function (id) {
     var b = bumpVersion_(id);
     if (id === cid) { var day = REQ_VER_.split('|')[1] || ''; out = { before: b.before + '|' + day, after: b.after + '|' + day }; }
@@ -365,7 +369,7 @@ function settleVersions_(op) {
 /* THE TIMING SWITCH (5 Nov 2026; Ramy: "do the long-term fix" before C/21). A request with prof: 1 also gets back how
    long each named step took, inclusive, in milliseconds, with call counts: step names and numbers only, never data.
    The wrappers are put on for that one request and taken off again in profEnd_. */
-var PROF_NAMES_ = ['migrate_', 'courseByKey_', 'courseById_', 'traineeAnywhere_', 'courseRead_', 'courseBlock_', 'courseRows_',
+var PROF_NAMES_ = ['migrate_', 'courseByKey_', 'courseById_', 'traineeAnywhere_', 'courseRead_', 'courseBlock_', 'courseBlockRead_', 'courseCacheGet_', 'courseCachePut_', 'courseRows_',
   'rosterWithRecords_', 'recordsFor_', 'comingFor_', 'guidanceFor_', 'sharedNotesFor_', 'peerSheetsFor_', 'courseFeedbackFor_',
   'settleVersions_', 'versionStamp_', 'spreadsheet_', 'spreadsheetOpen_', 'sheet_', 'settingsFor_', 'streamFor_', 'gridFor_', 'timetableFor_',
   'tpPointsFor_', 'folPoolFor_', 'folProfilesFor_', 'volunteerNamesFor_', 'withoutEmails_', 'assertAssessorInDate_', 'handle_'];
@@ -946,6 +950,13 @@ case 'inbox': {
       requireOwner_(owner);
       return { courses: ownerList_() };
     }
+    /* THE COURSE CACHE's switch (5 Nov 2026): set: "all", "" (off) or course ids "c1,c9"; without set, says what it is. */
+    case 'courseCache': {
+      requireOwner_(owner);
+      var ccp = PropertiesService.getScriptProperties();
+      if (req.set != null) { var cv = String(req.set).replace(/\s+/g, ''); if (cv && cv !== 'all' && !/^[\w-]+(,[\w-]+)*$/.test(cv)) throw new Error('Which courses? all, or ids like c1,c9'); ccp.setProperty('COURSE_CACHE', cv); }
+      return { on: ccp.getProperty('COURSE_CACHE') || '' };
+    }
 
     /* 28 Oct 2026: point the store back at its data sheet, after the incident above. Owner only; the sheet must open and
        hold the courses sheet with rows in it, so it cannot be pointed at an empty one by mistake. */
@@ -1335,6 +1346,7 @@ case 'inbox': {
           csh.getRange(csh.getLastRow() + 1, 1, G.rows.length, cw).setValues(G.rows.map(function (r) { return fit(r, cw); }));
         });
         COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+        if (rwrite) only.forEach(markChanged_);   /* the restored courses' copies are no longer current (THE COURSE CACHE) */
         return { write: rwrite, backup: bk.getName(), report: report };
       } finally { rlock.releaseLock(); }
     }
@@ -3057,15 +3069,17 @@ function sheet_(name) {
 function deleteRowsWhere_(name, match) {
   var sh = sheet_(name);
   var rows = sh.getDataRange().getValues();
-  var n = 0, i = rows.length - 1;
+  var n = 0, i = rows.length - 1, gone = {};
   while (i >= 1) {
     if (!match(rows[i])) { i--; continue; }
     var end = i;
     while (i >= 1 && match(rows[i])) i--;
     var count = end - i;                 // rows i+1 .. end (0-based) are a run
     sh.deleteRows(i + 2, count);         // sheet rows are 1-based; row 0 is the header
+    for (var g = i + 1; g <= end; g++) gone[String(rows[g][0])] = 1;
     n += count;
   }
+  if (name === SHEET_COURSE || name === SHEET_RECORDS || name === SHEET_TRAINEES) Object.keys(gone).forEach(markChanged_);
   return n;
 }
 function roster_(courseId) {
@@ -3293,7 +3307,12 @@ function recordsFor_(courseId, token, kinds) {
   });
   return finishBucket_(out);
 }
-function write_(courseId, token, kind, data) {
+/* Each writer marks its course before and after it writes (5 Nov 2026, THE COURSE CACHE): inside a request the mark
+   waits for the end; a timed job moves the version at once, so the second mark is the one after the rows changed. */
+function write_(courseId, token, kind, data) { try { return writeInner_(courseId, token, kind, data); } finally { markChanged_(courseId); } }
+function writeHistory_(courseId, token, data) { try { return writeHistoryInner_(courseId, token, data); } finally { markChanged_(courseId); } }
+function courseWriteRaw_(courseId, kind, data) { try { return courseWriteRawInner_(courseId, kind, data); } finally { markChanged_(courseId); } }
+function writeInner_(courseId, token, kind, data) {
   markChanged_(courseId);
   if (kind === 'tpHistory') return writeHistory_(courseId, token, data);
   var lock = LockService.getScriptLock();
@@ -3364,20 +3383,71 @@ var COURSE_MEMO_ = null;
    request fails for any reason, the old whole-sheet read answers instead: never slower than before, never different.
    Per request, like COURSE_MEMO_, and dropped wherever a writer may have changed the sheet. */
 var BLOCK_MEMO_ = {};
+/* THE COURSE CACHE (5 Nov 2026; Ramy: "build it now, test on the demos"). Timing a boot showed most of it is Sheets
+   reads, half a second to three seconds each however few rows they fetch. A course's rows are kept in CacheService
+   under the course's VERSION, the script property every change already moves (THE COURSE'S VERSION, v179), so a copy
+   is never used once anything on the course has changed: a new version is a new key, and the old copy is never read
+   again. The rules that keep it true:
+   - only a read-only request (READ_OPS_) that has written nothing to the course uses the cache, so a write's own
+     answer always comes from the sheet;
+   - the version is read BEFORE the rows, so a copy can hold rows newer than its version, never older;
+   - writes are flushed before any version moves, and every writer marks its course after writing (write_,
+     writeHistory_, courseWriteRaw_, deleteRowsWhere_, restoreFromBackup);
+   - every copy expires after COURSE_CACHE_SECS_ anyway, for a change made by hand in the sheet;
+   - a copy is in pieces (CacheService keeps 100 KB a key); one piece missing or the wrong length is a miss.
+   Any trouble with the cache is a miss, and the sheet is read as before. */
+var COURSE_CACHE_SECS_ = 1800, COURSE_CACHE_PIECE_ = 24000;
+/* Which courses it is on for: the script property COURSE_CACHE, "all" or a list of course ids, set by the owner's op
+   courseCache. Off for any course not named, so it was tried on the demo courses before a real one (5 Nov 2026). */
+function courseCacheOn_(courseId) {
+  var v = String(PropertiesService.getScriptProperties().getProperty('COURSE_CACHE') || '');
+  return v === 'all' || (',' + v.replace(/\s+/g, '') + ',').indexOf(',' + String(courseId) + ',') >= 0;
+}
+function courseCacheKey_(name, courseId, width) {
+  if (!IN_REQUEST_ || !READ_OPS_[REQ_OP_] || CHANGED_[String(courseId)]) return null;
+  if (!courseCacheOn_(courseId)) return null;
+  var ver = PropertiesService.getScriptProperties().getProperty(verKey_(courseId)) || '0';
+  return 'cb|' + name + '|' + courseId + '|' + width + '|' + ver;
+}
+function courseCacheGet_(ckey) {
+  var cache = CacheService.getScriptCache(), head = cache.get(ckey);
+  if (!head) return null;
+  var h = JSON.parse(head), keys = [], i;
+  for (i = 0; i < h.n; i++) keys.push(ckey + '#' + i);
+  var got = h.n ? cache.getAll(keys) : {}, parts = [];
+  for (i = 0; i < h.n; i++) { if (got[keys[i]] == null) return null; parts.push(got[keys[i]]); }
+  var json = parts.join('');
+  if (json.length !== h.len) return null;
+  return JSON.parse(json);
+}
+function courseCachePut_(ckey, rows) {
+  var json = JSON.stringify(rows), cache = CacheService.getScriptCache(), batch = {}, n = 0, i;
+  for (i = 0; i < json.length; i += COURSE_CACHE_PIECE_) { batch[ckey + '#' + n] = json.slice(i, i + COURSE_CACHE_PIECE_); n++;
+    if (n % 20 === 0) { cache.putAll(batch, COURSE_CACHE_SECS_); batch = {}; } }
+  if (Object.keys(batch).length) cache.putAll(batch, COURSE_CACHE_SECS_);
+  cache.put(ckey, JSON.stringify({ n: n, len: json.length }), COURSE_CACHE_SECS_);   // the head last: no head, no copy
+}
 function courseBlock_(name, courseId, width) {
   var key = name + '|' + courseId + '|' + width;
   if (BLOCK_MEMO_[key]) return BLOCK_MEMO_[key];
+  var ckey = null;
+  try { ckey = courseCacheKey_(name, courseId, width); if (ckey) { var hit = courseCacheGet_(ckey); if (hit) return (BLOCK_MEMO_[key] = hit); } } catch (e) { ckey = null; }
+  var rows = courseBlockRead_(name, courseId, width);
+  if (ckey) { try { courseCachePut_(ckey, rows); } catch (e) {} }
+  return (BLOCK_MEMO_[key] = rows);
+}
+function courseBlockRead_(name, courseId, width) {
   var ss = spreadsheet_(), sh = ss.getSheetByName(name);
   if (!sh) return [];
   var last = sh.getLastRow();
-  if (last < 2) return (BLOCK_MEMO_[key] = []);
+  if (last < 2) return [];
   var want = String(courseId), ids = sh.getRange(2, 1, last - 1, 1).getValues(), runs = [], s = -1, i;
   for (i = 0; i < ids.length; i++) {
     var hit = String(ids[i][0]) === want;
     if (hit && s < 0) s = i; else if (!hit && s >= 0) { runs.push([s, i]); s = -1; }
   }
   if (s >= 0) runs.push([s, ids.length]);
-  if (!runs.length) return (BLOCK_MEMO_[key] = []);
+  if (!runs.length) return [];
   var out = null;
   try {
     var res = Sheets.Spreadsheets.Values.batchGetByDataFilter({
@@ -3401,7 +3471,7 @@ function courseBlock_(name, courseId, width) {
     out = [];
     sh.getRange(2, 1, last - 1, width).getValues().forEach(function (r) { if (String(r[0]) === want) out.push(r); });
   }
-  return (BLOCK_MEMO_[key] = out);
+  return out;
 }
 function courseRows_() {
   if (COURSE_MEMO_) return COURSE_MEMO_;
@@ -3837,7 +3907,7 @@ function tpPointsFor_(p, reader, me) {
   Object.keys(pts).forEach(function (t) { mine[hide(t)] = pts[t]; });
   return { released: true, group: grp, points: mine, sets: sets, me: me.token, level: level };
 }
-function courseWriteRaw_(courseId, kind, data) {
+function courseWriteRawInner_(courseId, kind, data) {
   markChanged_(courseId);
   var sh = sheet_(SHEET_COURSE);
   var json = JSON.stringify(data == null ? null : data);
@@ -3942,7 +4012,7 @@ function historyFromRows_(rows, courseId, token) {
 // The history only grows: an entry the caller does not send is kept, and an
 // entry it does send replaces the row for that TP alone. One read of the
 // sheet, one write per TP that changed, one append for the new ones.
-function writeHistory_(courseId, token, data) {
+function writeHistoryInner_(courseId, token, data) {
   markChanged_(courseId);
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
