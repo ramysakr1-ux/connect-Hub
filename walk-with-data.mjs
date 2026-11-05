@@ -502,7 +502,7 @@ const putProbe = async (page) => page.evaluate(async () => {
   await page.goto(`${PRIV}/24_tp_points.html`, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(2600);
   const shown = await page.evaluate(() => {
     const vis = el => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
-    const CHANGE = /^(Earlier|Later|Own lesson|Deal (the )?TP points|Deal TP points again|Your own set|Connect’s library|Release to Group|Write the set|\+ Add a set|Or deal lesson types only|Build)\b/i;
+    const CHANGE = /^(Earlier|Later|Own lesson|Deal (the )?TP points|Deal TP points again|Your own set|Connect’s library|Lite’s library|Release to Group|Write the set|\+ Add a set|Or deal lesson types only|Build)\b/i;
     return [...document.querySelectorAll('button, a, [role=button]')].filter(vis)
       .map(el => (el.innerText || '').replace(/\s+/g, ' ').trim()).filter(t => CHANGE.test(t));
   });
