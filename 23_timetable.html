@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611070026">
+<link rel="stylesheet" href="hub-tokens.css?v=202611070039">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -821,25 +821,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611070026">
+<link rel="stylesheet" href="hub-house.css?v=202611070039">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611070026"></script>
-<script src="hub-tracker.js?v=202611070026"></script>
-<script src="hub-rotation.js?v=202611070026"></script>
-<script src="hub-xlsx.js?v=202611070026"></script>
-<script src="hub-docx.js?v=202611070026"></script>
-<script src="hub-timetable-parse.js?v=202611070026"></script>
-<script src="assignment-defaults.js?v=202611070026"></script>
-<script src="hub-shared.js?v=202611070026"></script>
-<script src="hub-store.js?v=202611070026"></script>
-<script src="hub-say.js?v=202611070026"></script>
-<script src="hub-sync.js?v=202611070026"></script>
-<script src="hub-notebook.js?v=202611070026"></script>
+<script src="hub-due.js?v=202611070039"></script>
+<script src="hub-tracker.js?v=202611070039"></script>
+<script src="hub-rotation.js?v=202611070039"></script>
+<script src="hub-xlsx.js?v=202611070039"></script>
+<script src="hub-docx.js?v=202611070039"></script>
+<script src="hub-timetable-parse.js?v=202611070039"></script>
+<script src="assignment-defaults.js?v=202611070039"></script>
+<script src="hub-shared.js?v=202611070039"></script>
+<script src="hub-store.js?v=202611070039"></script>
+<script src="hub-say.js?v=202611070039"></script>
+<script src="hub-sync.js?v=202611070039"></script>
+<script src="hub-notebook.js?v=202611070039"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2646,7 +2646,7 @@ function buildPanelHTML(){
     : 'Choose a start date, the weeks and the days the course meets'}${dates.length && teaching < need ? ` · <span class="warn">${tpCount} TPs need ${need} teaching days and there are ${teaching}: add a week, or a day</span>` : ''}</span></div>`;
   const has = !!(TT && TT.days && TT.days.length);
   const acts = has
-    ? `<button type="button" class="btn primary" id="bRelay">Lay it out again</button><button type="button" class="btn quiet" id="bSave">Keep the days, save the dates</button>`
+    ? `<button type="button" class="btn primary" id="bRelay">Lay it out again</button><button type="button" class="btn quiet" id="bSave">Keep the days, save the dates</button><button type="button" class="btn quiet" id="bScratch">Start over</button>`
     : `<button type="button" class="btn primary" id="bGo">Build it</button>`;
   const hint = has
     ? 'Lay it out again builds every day afresh from these numbers; Undo brings the board back. Keep the days changes only the course’s dates and leaves every session where it is.'
@@ -2729,6 +2729,18 @@ function wireBuild(){
     TT = { v: 3, days: made.days, slots: made.slots, published: !!keep.published, built: new Date().toISOString(), meets: keep.meets };
     ['asgRules', 'pins', 'updates', 'tpOut'].forEach(k => { if (keep[k] !== undefined) TT[k] = keep[k]; });
     land(made);
+  });
+  /* START OVER (Ramy, 6 Nov 2026: "I want to start fresh ... from the very beginning"): the board is cleared and the three doors come
+     back. The course goes on seeing the published timetable until a new one is published; Undo brings this board back. */
+  if ($('bScratch')) $('bScratch').addEventListener('click', async () => {
+    if (!(await ask('Clear the whole board and start over? The course goes on seeing the published timetable until you publish a new one, and Undo brings this board back.', 'Start over'))) return;
+    remember();
+    const keep = TT || {};
+    TT = { v: 3, days: [], slots: [], published: false, meets: keep.meets };
+    ['asgRules', 'pins', 'tpOut'].forEach(k => { if (keep[k] !== undefined) TT[k] = keep[k]; });
+    BUILD = null; BUILD_OPEN = false; WEEK = 0;
+    save('Cleared', { text: 'The board was cleared to start over' });
+    note = 'The board is empty. Choose how to begin.'; render();
   });
   /* BUILD IT: a course with no timetable yet */
   if ($('bGo')) $('bGo').addEventListener('click', () => {
