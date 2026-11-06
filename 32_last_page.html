@@ -37,7 +37,7 @@
 <title>The last page</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611061329">
+<link rel="stylesheet" href="hub-tokens.css?v=202611061337">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:linear-gradient(180deg,var(--paper) 0,var(--sand) 420px);}
@@ -180,22 +180,22 @@
   @media (max-width:560px){ .present{padding:26px 22px 24px;} .present h2{font-size:1.85rem;} .present .arcs{width:190px;} .present input.pmail{min-width:0; width:100%;} }
   @media print{ .present{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611061329">
+<link rel="stylesheet" href="hub-house.css?v=202611061337">
 </head>
 <body>
 <div id="app"></div>
 <div class="printcard" id="printcard" aria-hidden="true"></div>
-<script src="hub-shared.js?v=202611061329"></script>
-<script src="hub-store.js?v=202611061329"></script>
-<script src="hub-tracker.js?v=202611061329"></script>
-<script src="hub-hand.js?v=202611061329"></script>
-<script src="hub-ink.js?v=202611061329"></script>
-<script src="hub-say.js?v=202611061329"></script>
-<script src="observation-defaults.js?v=202611061329"></script>
-<script src="hub-rotation.js?v=202611061329"></script>
-<script src="hub-peers.js?v=202611061329"></script>
-<script src="hub-sync.js?v=202611061329"></script>
-<script src="hub-notebook.js?v=202611061329"></script>
+<script src="hub-shared.js?v=202611061337"></script>
+<script src="hub-store.js?v=202611061337"></script>
+<script src="hub-tracker.js?v=202611061337"></script>
+<script src="hub-hand.js?v=202611061337"></script>
+<script src="hub-ink.js?v=202611061337"></script>
+<script src="hub-say.js?v=202611061337"></script>
+<script src="observation-defaults.js?v=202611061337"></script>
+<script src="hub-rotation.js?v=202611061337"></script>
+<script src="hub-peers.js?v=202611061337"></script>
+<script src="hub-sync.js?v=202611061337"></script>
+<script src="hub-notebook.js?v=202611061337"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -501,10 +501,25 @@ async function card(R, cs){
   g.globalAlpha = .12; arcs(560, 760, 8.5, '#E6B66A', '#F3EEE4', 9); g.globalAlpha = 1;
   g.textAlign = 'center'; g.fillStyle = '#E6DCA6'; g.font = '600 18px Karla'; g.fillText('C E L T A   ·   ' + (dateOf(cs.end) ? dateOf(cs.end).getFullYear() : ''), 540, 120);
   let y = 170;
+  /* THE TUTOR'S LINE ON THE CARD (Ramy, 6 Nov 2026: "add my line to the card"): the first of the words chosen for
+     this trainee on the tutors' side, under the name, in the card's gold italic, with who said it. Two lines at most;
+     the photo gives up the room it needs. */
+  const line = chosenFor(R)[0] || null;
+  let quote = [], qSize = 38;
+  if (line) {
+    const words = ('“' + line.text.replace(/[\s.]+$/, '') + '.”').split(/\s+/);
+    const wrap = size => { g.font = 'italic ' + size + 'px "Instrument Serif"'; const out = []; let cur = '';
+      words.forEach(wd => { const t = cur ? cur + ' ' + wd : wd; if (g.measureText(t).width > 880 && cur) { out.push(cur); cur = wd; } else cur = t; });
+      if (cur) out.push(cur); return out; };
+    /* their words are never cut: a longer line is set smaller, down to four lines */
+    for (const size of [38, 34, 30, 27]) { qSize = size; quote = wrap(size); if (quote.length <= (size >= 34 ? 3 : 4)) break; }
+  }
+  const qLead = Math.round(qSize * 1.26);
+  const room = quote.length ? 46 + quote.length * qLead + 34 : 0;
   const ph = cs.classPhoto && cs.classPhoto.src;
   if (ph) {
     const im = new Image(); im.src = ph; await new Promise(r => { im.onload = r; im.onerror = r; });
-    const w = 820, h = Math.min(560, Math.round(w * (im.naturalHeight || 9) / (im.naturalWidth || 16)));
+    const w = 820, h = Math.min(560 - room, Math.round(w * (im.naturalHeight || 9) / (im.naturalWidth || 16)));
     g.save(); g.translate(540, y + (h + 120) / 2); g.rotate(-1.5 * Math.PI / 180);
     g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 50; g.shadowOffsetY = 26;
     g.fillStyle = '#FFFFFF'; g.fillRect(-(w + 64) / 2, -(h + 120) / 2, w + 64, h + 120); g.shadowColor = 'transparent';
@@ -517,6 +532,12 @@ async function card(R, cs){
   g.fillStyle = '#E6DCA6'; g.font = 'italic 40px "Instrument Serif"'; g.fillText('finished the CELTA course', 540, y + 92);
   g.fillStyle = '#CC9140'; g.fillRect(470, y + 128, 140, 4);
   g.fillStyle = '#DCE6E0'; g.font = '600 24px Karla'; g.fillText([cs.centreName, span(cs)].filter(Boolean).join(' · '), 540, y + 182);
+  if (quote.length) {
+    g.fillStyle = '#E6DCA6'; g.font = 'italic ' + qSize + 'px "Instrument Serif"';
+    quote.forEach((q, i) => g.fillText(q, 540, y + 250 + i * qLead));
+    g.fillStyle = '#DCE6E0'; g.font = '600 22px Karla';
+    g.fillText([line.by, line.role].filter(Boolean).join(' · '), 540, y + 250 + quote.length * qLead + 10);
+  }
   g.fillStyle = '#F8F6F1'; g.beginPath(); g.roundRect ? g.roundRect(84, 1234, 52, 52, 12) : g.rect(84, 1234, 52, 52); g.fill();
   arcs(84, 1216, .62, '#a8803f', '#2b2218', 13);
   g.textAlign = 'left'; g.fillStyle = '#CC9140'; g.font = 'italic 34px "Instrument Serif"'; g.fillText('Connect', 150, 1272);
