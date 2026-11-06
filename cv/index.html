@@ -396,14 +396,23 @@ const REGION = {
 };
 
 const KEY = 'lite:cv:v1';
+/* A TUTOR'S LOOK AT A TRAINEE'S CV (?as=<name>, from "See their page" on the last page): the CV as that trainee first
+   sees it, with their name, read from nothing kept in this browser and saving nothing to it. */
+const PREVIEW = (() => { try { return (new URLSearchParams(location.search).get('as') || '').trim().slice(0, 80); } catch (e) { return ''; } })();
 let st = { p:'new', pl:'abroad', k:'general', region:'', d:{}, photo:'' };
-try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.d) st = Object.assign(st, s); } catch (e) {}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+if (!PREVIEW) try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && s.d) st = Object.assign(st, s); } catch (e) {}
+const save = () => { if (PREVIEW) return; try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
 /* THE RECORD, left here by the last page of a Connect Lite course (lite:cv:record), and THE THANK-YOU LINK (?g=, kept
    as lite:cv:gift): either opens "Tailor it to the job". Neither is needed for the rest of the page. */
 let REC = null, GIFT = '';
 try { const r = JSON.parse(localStorage.getItem('lite:cv:record') || 'null'); if (r && r.token && Array.isArray(r.tps)) REC = r; } catch (e) {}
 try { const g = new URLSearchParams(location.search).get('g'); if (g && /^[a-z0-9]{8,32}$/i.test(g)) localStorage.setItem('lite:cv:gift', g); GIFT = localStorage.getItem('lite:cv:gift') || ''; } catch (e) {}
+/* WHOSE CV THIS IS (Ramy, 6 Nov 2026: "Their name should be inside, not someone else's name. It's their CV, it's their
+   cover letter"). A trainee who comes from their last page brings their name with their record, and it goes on their CV
+   and letter. It is set once for each trainee: what they change after that stays theirs. In a tutor's look, the
+   trainee's name, and nobody's record or thank-you link. */
+if (PREVIEW) { REC = null; GIFT = ''; st.d.name = PREVIEW; }
+else if (REC && REC.name && st.owner !== REC.token) { st.d.name = REC.name; st.owner = REC.token; save(); }
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
