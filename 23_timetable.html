@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611071826">
+<link rel="stylesheet" href="hub-tokens.css?v=202611071902">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -130,10 +130,9 @@
   .due{color:var(--gold-deep); font-weight:600; font-size:0.72rem; padding:4px 11px;}
   .adrow{display:grid; grid-template-columns:minmax(150px,1fr) repeat(3, minmax(0,1.2fr)); gap:8px 12px; align-items:end; padding:10px 0; border-top:1px solid var(--row-line);}
   .adrow b{align-self:center; font-size:.92rem;} .adrow label{display:flex; flex-direction:column; gap:4px; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
-  .arules{margin:0 0 16px; padding:12px 14px; border:1px solid var(--sand-line); border-radius:10px; background:var(--paper);}
-  .arules h4{margin:0 0 4px;} .arule{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; padding:8px 0; border-top:1px solid var(--row-line); font-size:.86rem;} .arule b{min-width:56px;}
-  .arule input{font:inherit; font-size:.84rem; padding:4px 6px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field);} .arule input[type=number]{width:54px;} .arule small{flex-basis:100%; color:var(--grey);}
   .adrow input{font:inherit; font-size:.86rem; text-transform:none; letter-spacing:0; font-weight:500; color:var(--ink); padding:7px 9px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper);}
+  .adrow .dsets{grid-column:2 / -1; display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px 12px;} .adrow .dsets small{grid-column:1 / -1; color:var(--grey); font-size:.78rem;}
+  @media (max-width:700px){ .adrow .dsets{grid-column:auto;} }
   .adrow.hit{background:var(--gold-wash); box-shadow:0 0 0 2px var(--gold) inset; border-radius:10px; padding-left:10px; padding-right:10px; transition:background .4s;}
   @media (max-width:700px){ .adrow{grid-template-columns:1fr;} }
   .due.late{color:var(--brick);}
@@ -825,25 +824,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611071826">
+<link rel="stylesheet" href="hub-house.css?v=202611071902">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611071826"></script>
-<script src="hub-tracker.js?v=202611071826"></script>
-<script src="hub-rotation.js?v=202611071826"></script>
-<script src="hub-xlsx.js?v=202611071826"></script>
-<script src="hub-docx.js?v=202611071826"></script>
-<script src="hub-timetable-parse.js?v=202611071826"></script>
-<script src="assignment-defaults.js?v=202611071826"></script>
-<script src="hub-shared.js?v=202611071826"></script>
-<script src="hub-store.js?v=202611071826"></script>
-<script src="hub-say.js?v=202611071826"></script>
-<script src="hub-sync.js?v=202611071826"></script>
-<script src="hub-notebook.js?v=202611071826"></script>
+<script src="hub-due.js?v=202611071902"></script>
+<script src="hub-tracker.js?v=202611071902"></script>
+<script src="hub-rotation.js?v=202611071902"></script>
+<script src="hub-xlsx.js?v=202611071902"></script>
+<script src="hub-docx.js?v=202611071902"></script>
+<script src="hub-timetable-parse.js?v=202611071902"></script>
+<script src="assignment-defaults.js?v=202611071902"></script>
+<script src="hub-shared.js?v=202611071902"></script>
+<script src="hub-store.js?v=202611071902"></script>
+<script src="hub-say.js?v=202611071902"></script>
+<script src="hub-sync.js?v=202611071902"></script>
+<script src="hub-notebook.js?v=202611071902"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1450,6 +1449,7 @@ function dayHTML(day, B, idx){
     const late = x.past && x.missing;
     const body = `${esc(x.title)} due${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
     return (EDIT && !x.fixed) ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" data-field="${x.field || 'due'}" style="top:${top}px" title="Move this deadline">${body}</button>`
+                : EDIT ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-asg="${esc(x.key)}" data-field="${x.field || 'due'}" style="top:${top}px" title="Set its dates">${body}</button>`
                 : `<div class="due${late ? ' late' : ''}" style="top:${top}px">${body}</div>`;
   }).join('') + (OUTS[day.date] || []).map((o, j) => {
     const at = toMin(window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '');
@@ -1562,7 +1562,7 @@ function weekBoard(w, n){
       const late = x.past && x.missing;
       const body = `${esc(x.title)} in${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
       const rs = /resub/i.test(x.title || '') ? ' rs' : '';
-      out.push((EDIT && !x.fixed) ? `<button type="button" class="due asbtn${rs}${late ? ' late' : ''}" data-move="${esc(x.key)}" data-field="${x.field || 'due'}" title="Move this deadline"><i class="fl" aria-hidden="true"></i>${body}</button>` : `<div class="due${rs}${late ? ' late' : ''}"><i class="fl" aria-hidden="true"></i>${body}</div>`);
+      out.push((EDIT && !x.fixed) ? `<button type="button" class="due asbtn${rs}${late ? ' late' : ''}" data-move="${esc(x.key)}" data-field="${x.field || 'due'}" title="Move this deadline"><i class="fl" aria-hidden="true"></i>${body}</button>` : EDIT ? `<button type="button" class="due asbtn${rs}${late ? ' late' : ''}" data-asg="${esc(x.key)}" data-field="${x.field || 'due'}" title="Set its dates"><i class="fl" aria-hidden="true"></i>${body}</button>` : `<div class="due${rs}${late ? ' late' : ''}"><i class="fl" aria-hidden="true"></i>${body}</div>`);
     });
     return out;
   };
@@ -1757,47 +1757,32 @@ function asgDatesHTML(){
     return `<div class="adrow" data-k="${esc(k)}"><b>${esc(a.title || k.toUpperCase())}</b>
       <label><span>Opens</span><input type="datetime-local" data-f="open" value="${v(a.releaseFrom || a.outAt)}"></label>
       <label><span>Due</span><input type="datetime-local" data-f="due" value="${v(a.dueAt || a.due)}"></label>
-      <label><span>Resubmission by</span><input type="datetime-local" data-f="resub" value="${v(a.resubDueAt)}"></label></div>`; }).join('');
-  /* THE RULES (Ramy, 29 Oct 2026: "we can't have fixed rules ... an option to say when they're due ... FoL due nine days
-     after ... LRT seven days after it's out"): per assignment, due N course days after the day its session is on, at a
-     time; the resubmission M course days after that. "Lay the dates" reads where each session tile is now. */
-  const R0 = TT.asgRules || {}, def = { fol: [5, '17:00', 5, '17:00'], lrt: [5, '17:00', 2, '17:00'], lsrt: [2, '17:00', 1, '17:00'], lfc: [4, '17:00', 1, '17:00'] };
-  const rule = k => { const r = R0[k] || {}, d = def[k] || [4, '17:00', 3, '17:00']; return { due: r.due != null ? r.due : d[0], dt: r.dt || d[1], re: r.re != null ? r.re : d[2], rt: r.rt || d[3] }; };
-  const rules = ASG_KEYS().map(k => { const r = rule(k), sess = asgSession(k);
-    return `<div class="arule" data-k="${esc(k)}"><b>${esc(asgShort(k, (w[k] || {}).title))}</b>
-      <span>due <input type="number" min="0" max="20" data-r="due" value="${r.due}"> course days after its session, at <input type="time" data-r="dt" value="${esc(r.dt)}"></span>
-      <span>resubmission <input type="number" min="0" max="20" data-r="re" value="${r.re}"> days after that, at <input type="time" data-r="rt" value="${esc(r.rt)}"></span>
-      <small>${sess ? 'Its session: ' + esc(dayName(sess.date)) + ', ' + esc(hubClock(sess.s)) : 'No session tile for it on the timetable yet'}</small></div>`; }).join('');
+      <label><span>Resubmission by</span><input type="datetime-local" data-f="resub" value="${v(a.resubDueAt)}"></label>${bySet(k, a)}</div>`; }).join('');
+  /* NO RULES (Ramy, 7 Nov 2026: "can we just go with setting up date and time, as we go"). The 29 Oct rules (due N
+     course days after its session) only filled these fields on a button press; nothing else read them. Each
+     assignment's date and time is set here, by hand, and every reader (hero card, markers, trainee screens) reads it. */
+  /* DUE BY SET (moved here from Course admin, Ramy, 7 Nov 2026: "the date and time ... you also have like ABC DEF
+     options"). Where a group's two teaching sets hand in on different days (C/18: LRT Monday for DEF, Tuesday for
+     ABC), each set gets its own date and time; an empty one keeps the Due. Stored as dueSets { group: [set 1, set 2] },
+     read by hubDueFor, so each trainee sees their own set's date. */
+  function bySet(k, a){
+    const R = window.hubRotation, gs = (GROUPS || []).filter(g => (g.people || []).length > 1);
+    if (!R || !gs.length) return '';
+    const cur = a.dueSets || {};
+    const rows = gs.map(g => (g.sets || []).map((set, i) => !set.length ? '' : `<label class="dset"><span>Due · ${esc(R.setName(set))}${gs.length > 1 ? ' · Group ' + esc(g.group) : ''}</span><input type="datetime-local" data-f="set" data-g="${esc(g.group)}" data-i="${i}" value="${v((cur[g.group] || [])[i])}"></label>`).join('')).join('');
+    return rows ? `<div class="dsets"><small>Only if the sets hand in on different days. Leave one empty and it keeps the Due.</small>${rows}</div>` : '';
+  }
   return `<div class="imp" id="asgDates"><h3>Assignment dates</h3>
-    <div class="arules"><h4>The rules</h4><p>Counted in course days from the day its session is on, so a weekend or a day off never takes a deadline.</p>${rules}
-      <div class="row"><button class="btn" id="asgLay">Lay the dates from the rules</button><span class="status" id="asgLaid"></span></div></div>
-    <h4>The dates</h4><p>When each assignment opens to the trainees, when it is due, and when a resubmission is due. Change any one by hand here; it shows on the day it falls. The wording is in Course admin.</p>
+    <p>When each assignment opens to the trainees, when it is due, and when a resubmission is due. Set the day and the time; it shows on the timetable on the day it falls. Dragging a marker on the board moves its day. The wording is in Course admin.</p>
     ${rows || '<p class="status">No assignments on this course yet.</p>'}
     <div class="row"><button class="btn quiet" id="asgClose">Done</button></div></div>`;
 }
-/* the session tile an assignment goes out on: its short name or its title, at the start of a tile's name */
-function asgSession(k){
-  const w = rec('connect_assignment_wording_v2') || window.CONNECT_HUB_DEFAULT_WORDING || {}, a = w[k] || {};
-  const names = [asgShort(k, a.title), a.title || '', (window.CONNECT_HUB_DEFAULT_WORDING && (CONNECT_HUB_DEFAULT_WORDING[k] || {}).title) || ''].filter(Boolean).map(x => String(x).toLowerCase());
-  for (const d of (TT.days || [])) { if (d.closed) continue; const x = (d.sessions || []).find(t => { const n = String(t.t || '').toLowerCase(); return n && names.some(m => n.indexOf(m) === 0); }); if (x) return { date: d.date, s: x.s }; }
-  return null;
-}
-function layAsgDates(){
-  const open = (TT.days || []).filter(d => !d.closed).map(d => d.date), laid = [];
-  ASG_KEYS().forEach(k => {
-    const sess = asgSession(k); if (!sess) return;
-    const r = (TT.asgRules || {})[k] || {}, i = open.indexOf(sess.date); if (i < 0) return;
-    const due = open[Math.min(open.length - 1, i + (+r.due || 0))], re = open[Math.min(open.length - 1, open.indexOf(due) + (+r.re || 0))];
-    setAsgDate(k, 'open', sess.date + 'T' + sess.s); setAsgDate(k, 'due', due + 'T' + (r.dt || '17:00')); setAsgDate(k, 'resub', re + 'T' + (r.rt || '17:00'));
-    laid.push(asgShort(k));
-  });
-  return laid;
-}
-function setAsgDate(k, f, local){
+function setAsgDate(k, f, local, g, i){
   const w = rec('connect_assignment_wording_v2') || JSON.parse(JSON.stringify(window.CONNECT_HUB_DEFAULT_WORDING || {}));
   const a = w[k] = w[k] || {}, iso = local && window.HubDue ? HubDue.fromLocalInput(local) : '';
   if (f === 'open') { if (iso) { a.releaseFrom = iso; a.outAt = iso; if (iso > new Date().toISOString()) a.released = false; } else { delete a.releaseFrom; delete a.outAt; } }
   if (f === 'due') { a.dueAt = iso; a.due = iso; }
+  if (f === 'set') { const ds = Object.assign({}, a.dueSets || {}), row = (ds[g] || ['', '']).slice(); row[+i] = iso; if (row.some(Boolean)) ds[g] = row; else delete ds[g]; if (Object.keys(ds).length) a.dueSets = ds; else delete a.dueSets; }
   if (f === 'resub') { if (iso) a.resubDueAt = iso; else delete a.resubDueAt; }
   try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
 }
@@ -1805,23 +1790,13 @@ function wireMove(){
   if (!IS_TUTOR) return;
   if ($('asgOpen')) $('asgOpen').addEventListener('click', () => { ASG_OPEN = !ASG_OPEN; render(); if (ASG_OPEN) { const b = $('asgDates'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
   if ($('asgClose')) $('asgClose').addEventListener('click', () => { ASG_OPEN = false; render(); });
-  document.querySelectorAll('.arule input').forEach(inp => inp.addEventListener('change', () => {
-    const k = inp.closest('.arule').dataset.k, R1 = TT.asgRules = TT.asgRules || {}, r = R1[k] = R1[k] || {};
-    document.querySelectorAll('.arule[data-k="' + k + '"] input').forEach(x => { r[x.dataset.r] = x.type === 'number' ? (+x.value || 0) : x.value; });
-    save('Saved', { key: 'rule:' + k, text: asgShort(k) + ': due ' + r.due + ' days after its session at ' + r.dt + ', resubmission ' + r.re + ' days after' });
-  }));
-  if ($('asgLay')) $('asgLay').addEventListener('click', () => {
-    document.querySelectorAll('.arule').forEach(el => { const k = el.dataset.k, R1 = TT.asgRules = TT.asgRules || {}, r = R1[k] = R1[k] || {}; el.querySelectorAll('input').forEach(x => { r[x.dataset.r] = x.type === 'number' ? (+x.value || 0) : x.value; }); });
-    const laid = layAsgDates(); save('Dates laid', { text: 'Assignment dates laid from the rules: ' + (laid.join(', ') || 'none') });
-    note = laid.length ? 'Laid from the rules: ' + laid.join(', ') + '.' : 'No assignment has a session tile yet.'; render();
-  });
-  document.querySelectorAll('#asgDates input[data-f]').forEach(i => i.addEventListener('change', () => { setAsgDate(i.closest('.adrow').dataset.k, i.dataset.f, i.value); note = 'Assignment dates saved'; render(); }));
+  document.querySelectorAll('#asgDates input[data-f]').forEach(i => i.addEventListener('change', () => { setAsgDate(i.closest('.adrow').dataset.k, i.dataset.f, i.value, i.dataset.g, i.dataset.i); note = 'Assignment dates saved'; render(); }));
   /* A CLICK ON A DEADLINE OPENS ITS DATES (Ramy, 7 Nov 2026: "you click, and then nothing really happens"). The old
      click put a day-only "Move" box at the top of the page, out of sight, so the page jumped and showed nothing. Now
      any marker (out, due, resubmission) opens Assignment dates, scrolls to that assignment's row and puts the cursor
      in the field that was clicked: day AND time. Dragging a marker still moves its day. */
-  document.querySelectorAll('[data-move]').forEach(el => el.addEventListener('click', () => {
-    ASG_OPEN = true; FOCUS_ASG = { k: el.dataset.move, f: el.dataset.field === 'out' ? 'open' : (el.dataset.field || 'due') }; render();
+  document.querySelectorAll('[data-move], [data-asg]').forEach(el => el.addEventListener('click', () => {
+    ASG_OPEN = true; FOCUS_ASG = { k: el.dataset.move || el.dataset.asg, f: el.dataset.field === 'out' ? 'open' : (el.dataset.field || 'due') }; render();
   }));
   if (FOCUS_ASG) {
     const fa = FOCUS_ASG; FOCUS_ASG = null;
@@ -2638,7 +2613,7 @@ function wireBuild(){
     remember();
     const keep = TT || {};
     TT = { v: 3, days: made.days, slots: made.slots, published: !!keep.published, built: new Date().toISOString(), meets: keep.meets };
-    ['asgRules', 'pins', 'updates', 'tpOut'].forEach(k => { if (keep[k] !== undefined) TT[k] = keep[k]; });
+    ['pins', 'updates', 'tpOut'].forEach(k => { if (keep[k] !== undefined) TT[k] = keep[k]; });
     land(made);
   });
 }

@@ -13,7 +13,7 @@
 <title>Connect Lite — Edit assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611071826">
+<link rel="stylesheet" href="hub-tokens.css?v=202611071902">
 <style>
   /* ---- The assignment editor, v2 (11 Oct 2026) -------------------------------
      From the designer's handoff "Assignment editor v2". The page behind Edit
@@ -103,9 +103,6 @@
   .meta input[type=datetime-local]{width:100%;}
   .meta select{width:100%;}
   .meta input.num{width:58px; text-align:center;}
-  .dsrow{display:flex; flex-direction:column; gap:3px; padding:6px 0; border-top:1px solid var(--row-line);}
-  .dsrow:first-child{border-top:none; padding-top:0;}
-  .dsname{font-size:0.78rem;} .dsname small{color:var(--grey);}
   .meta .clear{font-size:0.74rem; align-self:flex-start;}
 
   /* the document column */
@@ -321,7 +318,7 @@
   .modes .tvlink{display:inline-flex;align-items:center;padding:7px 14px;font-weight:700;font-size:.86rem;color:var(--ink);text-decoration:none;border-radius:999px;}
   .modes .tvlink:hover{background:var(--box);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611071826">
+<link rel="stylesheet" href="hub-house.css?v=202611071902">
 </head>
 <body class="hub-paper" data-sync-ok="Connected to the course &mdash; wording is kept when you press Save" data-sync-ok-short="Connected">
 <div class="board">
@@ -340,15 +337,15 @@
   </div>
 </div></div>
 <div class="menu" id="menu" hidden></div>
-<script src="assignment-defaults.js?v=202611071826"></script>
-<script src="assignment-history.js?v=202611071826"></script>
-<script src="hub-due.js?v=202611071826"></script>
-<script src="hub-rotation.js?v=202611071826"></script>
-<script src="hub-docx.js?v=202611071826"></script>
-<script src="hub-shared.js?v=202611071826"></script>
-<script src="hub-store.js?v=202611071826"></script>
-<script src="hub-say.js?v=202611071826"></script>
-<script src="hub-sync.js?v=202611071826"></script>
+<script src="assignment-defaults.js?v=202611071902"></script>
+<script src="assignment-history.js?v=202611071902"></script>
+<script src="hub-due.js?v=202611071902"></script>
+<script src="hub-rotation.js?v=202611071902"></script>
+<script src="hub-docx.js?v=202611071902"></script>
+<script src="hub-shared.js?v=202611071902"></script>
+<script src="hub-store.js?v=202611071902"></script>
+<script src="hub-say.js?v=202611071902"></script>
+<script src="hub-sync.js?v=202611071902"></script>
 <script>
 /* The course pill goes into the save bar, left of Discard, on every screen
    size: floating in the corner it covered the brief (12 Oct 2026). A plain
@@ -691,7 +688,6 @@ function metaHTML(a){
       <p class="mh">Handbook range: 750–1,000.</p></div>`}
     ${datesHTML(a)}
     ${outHTML(a)}
-    ${dueSetsHTML(a)}
     ${cxm ? '' : `<div class="mf"><label for="mFmt">Format</label>
       <select id="mFmt" onchange="updateMeta('format',this.value)">
         <option value="prose" ${a.format==='prose'?'selected':''}>Continuous prose</option>
@@ -1125,39 +1121,6 @@ function updateMeta(key,v){
   if (key === 'format') { const p = $('proseLine'); if (p) { const pc = proseCount(); p.textContent = pc + ' of the four are in continuous prose. The syllabus and the CELTA 5 say two must be (Handbook 9.2.1 says should).'; p.classList.toggle('bad', pc < 2); } }
   soon();
 }
-/* A DEADLINE PER TEACHING SET (10 Oct 2026). On C/18 the LRT is due Monday
-   for DEF and Tuesday for ABC -- nobody hands in on a day they teach. Each
-   group's two sets get their own date here; an empty one keeps the Due above.
-   Stored as dueSets: { '<group>': [first set, second set] } (hubDueFor). */
-function dueSetsHTML(a){
-  const R = window.hubRotation;
-  const roster = (() => { try { return JSON.parse(localStorage.getItem('connect_roster_v1')) || {}; } catch (e) { return {}; } })();
-  const by = {};
-  Object.values(roster.trainees || {}).filter(Boolean).forEach(t => { const g = String(t.group || ''); (by[g] = by[g] || []).push({ token: t.id || t.token, name: t.name }); });
-  const groups = Object.keys(by).sort().filter(g => by[g].length > 1);
-  if (!R || !groups.length) return '';
-  const rows = groups.map(g => {
-    const sets = R.setsFor(by[g]);
-    const cur = ((a.dueSets || {})[g]) || [];
-    return sets.map((set, i) => !set.length ? '' : `<div class="dsrow"><span class="dsname"><b>${esc(R.setName(set))}</b>${groups.length > 1 ? ' · Group ' + esc(g) : ''} <small>${esc(set.map(p => String(p.name || '').split(' ')[0]).join(', '))}</small></span>
-      <input type="datetime-local" value="${cur[i] ? HubDue.toLocalInput(cur[i]) : ''}" onchange="updateDueSet('${esc(g)}', ${i}, this.value)" aria-label="Due for ${esc(R.setName(set))}">
-      ${cur[i] ? `<button type="button" class="lnk clear" onclick="updateDueSet('${esc(g)}', ${i}, '')">Clear</button>` : ''}</div>`).join('');
-  }).join('');
-  return `<div class="mf"><span class="ml">Due by set</span><div>${rows}</div>
-    <p class="mh">Only where the two teaching sets hand in on different days. Leave a set empty and it keeps the Due above. Each trainee sees their own set’s date.</p></div>`;
-}
-/* Stored as an instant, not as the text in the box: see hub-due.js. Takes
-   effect at once like the release switch -- a date left waiting for Save is a
-   date someone thinks they set. */
-function updateDueSet(g, i, v){
-  const a = DATA[CURRENT];
-  const ds = Object.assign({}, a.dueSets || {});
-  const row = (ds[g] || ['', '']).slice();
-  row[i] = v ? HubDue.fromLocalInput(v) : '';
-  if (row.some(Boolean)) ds[g] = row; else delete ds[g];
-  if (Object.keys(ds).length) a.dueSets = ds; else delete a.dueSets;
-  persistSettings(); render();
-}
 function updateDue(v){
   DATA[CURRENT].dueAt = v ? HubDue.fromLocalInput(v) : '';
   DATA[CURRENT].due = DATA[CURRENT].dueAt;   // the timetable and the dashboard read `due` (hubWordingFilled)
@@ -1170,7 +1133,8 @@ function updateDue(v){
    with the way to change them; the assignment opens to the trainees on its opening date by itself. */
 function datesHTML(a){
   const f = iso => iso ? HubDue.fmt(iso) : '';
-  const bits = [['Opens', f(a.releaseFrom || a.outAt)], ['Due', f(a.dueAt || a.due)], ['Resubmission', f(a.resubDueAt)]].filter(b => b[1]);
+  const perSet = a.dueSets && Object.keys(a.dueSets).length;   // the dates by set are set on the timetable too (7 Nov 2026)
+  const bits = [['Opens', f(a.releaseFrom || a.outAt)], ['Due', (f(a.dueAt || a.due) ? f(a.dueAt || a.due) + (perSet ? ' (differs by set)' : '') : '')], ['Resubmission', f(a.resubDueAt)]].filter(b => b[1]);
   return `<div class="mf"><span class="ml">Dates</span>
       <div class="line">${bits.length ? bits.map(b => '<b>' + b[0] + '</b> ' + esc(b[1])).join(' &middot; ') : 'None yet'}</div>
       <p class="mh"><a href="23_timetable.html#asgDates">${bits.length ? 'Change them on the timetable' : 'Set them on the timetable'}</a></p></div>`;
