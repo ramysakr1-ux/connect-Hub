@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611071054">
+<link rel="stylesheet" href="hub-tokens.css?v=202611071826">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -134,6 +134,7 @@
   .arules h4{margin:0 0 4px;} .arule{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:center; padding:8px 0; border-top:1px solid var(--row-line); font-size:.86rem;} .arule b{min-width:56px;}
   .arule input{font:inherit; font-size:.84rem; padding:4px 6px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field);} .arule input[type=number]{width:54px;} .arule small{flex-basis:100%; color:var(--grey);}
   .adrow input{font:inherit; font-size:.86rem; text-transform:none; letter-spacing:0; font-weight:500; color:var(--ink); padding:7px 9px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper);}
+  .adrow.hit{background:var(--gold-wash); box-shadow:0 0 0 2px var(--gold) inset; border-radius:10px; padding-left:10px; padding-right:10px; transition:background .4s;}
   @media (max-width:700px){ .adrow{grid-template-columns:1fr;} }
   .due.late{color:var(--brick);}
 
@@ -824,25 +825,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611071054">
+<link rel="stylesheet" href="hub-house.css?v=202611071826">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611071054"></script>
-<script src="hub-tracker.js?v=202611071054"></script>
-<script src="hub-rotation.js?v=202611071054"></script>
-<script src="hub-xlsx.js?v=202611071054"></script>
-<script src="hub-docx.js?v=202611071054"></script>
-<script src="hub-timetable-parse.js?v=202611071054"></script>
-<script src="assignment-defaults.js?v=202611071054"></script>
-<script src="hub-shared.js?v=202611071054"></script>
-<script src="hub-store.js?v=202611071054"></script>
-<script src="hub-say.js?v=202611071054"></script>
-<script src="hub-sync.js?v=202611071054"></script>
-<script src="hub-notebook.js?v=202611071054"></script>
+<script src="hub-due.js?v=202611071826"></script>
+<script src="hub-tracker.js?v=202611071826"></script>
+<script src="hub-rotation.js?v=202611071826"></script>
+<script src="hub-xlsx.js?v=202611071826"></script>
+<script src="hub-docx.js?v=202611071826"></script>
+<script src="hub-timetable-parse.js?v=202611071826"></script>
+<script src="assignment-defaults.js?v=202611071826"></script>
+<script src="hub-shared.js?v=202611071826"></script>
+<script src="hub-store.js?v=202611071826"></script>
+<script src="hub-say.js?v=202611071826"></script>
+<script src="hub-sync.js?v=202611071826"></script>
+<script src="hub-notebook.js?v=202611071826"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1732,7 +1733,7 @@ function keyLine(){
  * is against the center's own scheduling rule, but a warning is right where a
  * veto is not: a tutor moving a deadline usually knows something the software
  * does not. */
-let MOVING = null;   // the assignment key whose deadline is being moved
+let FOCUS_ASG = null;   // {k, f}: the assignment row (and field) a click on a deadline marker opens
 
 /* Does this group teach on that day? Their set decides which of a practice's
    two days is theirs, so "teaching that day" is a per-group question. */
@@ -1800,25 +1801,6 @@ function setAsgDate(k, f, local){
   if (f === 'resub') { if (iso) a.resubDueAt = iso; else delete a.resubDueAt; }
   try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
 }
-function moveHTML(){
-  if (!MOVING || !IS_TUTOR) return '';
-  const w = rec('connect_assignment_wording_v2') || {};
-  const a = w[MOVING] || {};
-  const cur = dayOf(a.due);
-  const days = (TT.days || []).map(d => d.date);
-  return `<div class="imp"><h3>Move ${esc(a.title || MOVING.toUpperCase())}</h3>
-    <p>It is due on ${esc(cur || 'no day yet')}. Pick another course day; the time of day is kept.</p>
-    <div class="row">
-      <select id="moveTo">${days.map(d => {
-        const t = teachesOn(d);
-        return `<option value="${esc(d)}"${d === cur ? ' selected' : ''}>${esc(d)}${t.length ? ' \u2014 ' + (t.length > 1 ? 'groups' : 'group') + ' ' + t.join(', ') + ' teach' : ''}</option>`;
-      }).join('')}</select>
-      <button class="btn" id="moveGo">Move it</button>
-      <button class="btn quiet" id="moveCancel">Leave it</button>
-    </div>
-    <p class="hint" id="moveWarn"></p></div>`;
-}
-
 function wireMove(){
   if (!IS_TUTOR) return;
   if ($('asgOpen')) $('asgOpen').addEventListener('click', () => { ASG_OPEN = !ASG_OPEN; render(); if (ASG_OPEN) { const b = $('asgDates'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
@@ -1834,30 +1816,22 @@ function wireMove(){
     note = laid.length ? 'Laid from the rules: ' + laid.join(', ') + '.' : 'No assignment has a session tile yet.'; render();
   });
   document.querySelectorAll('#asgDates input[data-f]').forEach(i => i.addEventListener('change', () => { setAsgDate(i.closest('.adrow').dataset.k, i.dataset.f, i.value); note = 'Assignment dates saved'; render(); }));
-  document.querySelectorAll('[data-move]:not([data-field="out"]):not([data-field="resub"])').forEach(el => el.addEventListener('click', () => {
-    MOVING = (MOVING === el.dataset.move) ? null : el.dataset.move; render();
+  /* A CLICK ON A DEADLINE OPENS ITS DATES (Ramy, 7 Nov 2026: "you click, and then nothing really happens"). The old
+     click put a day-only "Move" box at the top of the page, out of sight, so the page jumped and showed nothing. Now
+     any marker (out, due, resubmission) opens Assignment dates, scrolls to that assignment's row and puts the cursor
+     in the field that was clicked: day AND time. Dragging a marker still moves its day. */
+  document.querySelectorAll('[data-move]').forEach(el => el.addEventListener('click', () => {
+    ASG_OPEN = true; FOCUS_ASG = { k: el.dataset.move, f: el.dataset.field === 'out' ? 'open' : (el.dataset.field || 'due') }; render();
   }));
-  const sel = $('moveTo');
-  const warn = () => {
-    const el = $('moveWarn'); if (!el || !sel) return;
-    const t = teachesOn(sel.value);
-    el.textContent = t.length
-      ? 'Group ' + t.join(' and ') + ' teach that day. A deadline usually falls on a day a group is not teaching \u2014 this is a note, not a block.'
-      : '';
-  };
-  if (sel) { sel.addEventListener('change', warn); warn(); }
-  if ($('moveCancel')) $('moveCancel').addEventListener('click', () => { MOVING = null; render(); });
-  if ($('moveGo')) $('moveGo').addEventListener('click', () => {
-    const w = rec('connect_assignment_wording_v2') || {};
-    const a = w[MOVING]; if (!a || !sel) return;
-    /* Keep the hour: the deadline is an instant, and only its DAY is moving. */
-    const local = window.HubDue ? HubDue.toLocalInput(a.due) : '';
-    const time = local ? local.slice(11, 16) : '23:59';
-    a.due = window.HubDue ? HubDue.fromLocalInput(sel.value + 'T' + time) : sel.value;
-    a.dueAt = a.due;   // the assignment screens read `dueAt` (hubWordingFilled)
-    try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
-    MOVING = null; note = 'Deadline moved'; render();
-  });
+  if (FOCUS_ASG) {
+    const fa = FOCUS_ASG; FOCUS_ASG = null;
+    const row = document.querySelector('#asgDates .adrow[data-k="' + fa.k + '"]');
+    if (row) {
+      row.classList.add('hit'); setTimeout(() => row.classList.remove('hit'), 2400);
+      row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      const inp = row.querySelector('input[data-f="' + fa.f + '"]'); if (inp) setTimeout(() => inp.focus({ preventScroll: true }), 350);
+    }
+  }
 }
 
 /* Whose clock the times are in. Said once, under the grid, and only when it
@@ -1957,7 +1931,7 @@ function render(){
   if (WEEK == null || WEEK >= weeks.length || WEEK < 0) { const t = weeks.findIndex(w => w.some(d => d.date >= TODAY)); WEEK = t === -1 ? weeks.length - 1 : t; }
   const oldBar = IS_TUTOR ? `<div id="ttOldBar">${pub ? '<button type="button" id="unpublish">Take it back</button>' : ''}<button type="button" id="buildOpen">Set up the timetable</button><button type="button" id="setOpen">Timetable settings</button><button type="button" id="asgOpen">Assignment dates</button></div>` : '';
   const bar = IS_TUTOR ? oldBar + (EDIT ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` + statusHTML() : '')
-      + (PREVIEW ? '' : asgDatesHTML() + moveHTML() + buildPanelHTML() + settingsPanelHTML() + builtHTML() + importHTML()) : '';
+      + (PREVIEW ? '' : asgDatesHTML() + buildPanelHTML() + settingsPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
      October teaching practice starts at 2:00 PM" (Ramy, 9 Oct 2026: "the
@@ -3260,7 +3234,7 @@ function wireBoard(){
     if (was.ghost) was.ghost.remove();
     if (was.el) was.el.classList.remove('lifted', 'dragging');
     if (was.due) {
-      if (!was.moved) return;   // a click on a deadline opens the move panel (wireMove)
+      if (!was.moved) return;   // a click on a deadline opens Assignment dates at its row (wireMove)
       if (was.target && was.target.r.kind !== 'block') moveDue(was.due, was.target.date, was.field);
       was.el.dataset.dragged = '1';
       return;
