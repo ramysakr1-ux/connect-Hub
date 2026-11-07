@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611070915">
+<link rel="stylesheet" href="hub-tokens.css?v=202611070946">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -711,9 +711,12 @@
   }
 
   /* the empty timetable's three starts (28 Oct 2026) */
-  .ttstart{display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:12px; margin:6px 0 4px;} @media (max-width:820px){ .ttstart{grid-template-columns:1fr;} }
+  .ttstart{display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin:6px 0 4px;} @media (max-width:1180px){ .ttstart{grid-template-columns:1fr 1fr;} } @media (max-width:620px){ .ttstart{grid-template-columns:1fr;} }
   .ttstart .tcard{display:flex; flex-direction:column; gap:8px; padding:18px 20px; border-radius:14px; background:var(--paper); border:1.5px solid var(--sand-line); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.25));}
-  .ttstart .tcard.cx{background:color-mix(in oklch, var(--a-forest, var(--teal)) 8%, var(--paper)); border-color:color-mix(in oklch, var(--a-forest, var(--teal)) 30%, transparent);}
+  .ttstart .tcard.on{background:color-mix(in oklch, var(--a-forest, var(--teal)) 8%, var(--paper)); border-color:var(--a-forest, var(--teal)); box-shadow:inset 0 0 0 1px var(--a-forest, var(--teal));}
+  .ttstart .tcard.on .btn{background:var(--a-forest, var(--teal)); color:var(--paper); border-color:transparent;}
+  .su2 .bwhy{margin:0 0 10px; color:var(--grey); font-size:.92rem;} .su2 .ttstart{margin:0 0 14px;}
+  .su2 .bnum{margin:0 0 12px; font:600 .78rem/1.2 'Karla',sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--grey);}
   .ttstart .tcard b{font:700 1.1rem/1.2 Newsreader,Georgia,serif;} .ttstart .tcard > span{font-size:.88rem; line-height:1.45; color:var(--ink-2, var(--grey)); flex:1;}
   .ttstart .tcard .btn{align-self:flex-start;}
   .cxshapes{display:flex; flex-direction:column; gap:6px; margin:2px 0 4px;} .cxshapes label{display:flex; gap:8px; align-items:center; font-size:.9rem; cursor:pointer;}
@@ -821,25 +824,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611070915">
+<link rel="stylesheet" href="hub-house.css?v=202611070946">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611070915"></script>
-<script src="hub-tracker.js?v=202611070915"></script>
-<script src="hub-rotation.js?v=202611070915"></script>
-<script src="hub-xlsx.js?v=202611070915"></script>
-<script src="hub-docx.js?v=202611070915"></script>
-<script src="hub-timetable-parse.js?v=202611070915"></script>
-<script src="assignment-defaults.js?v=202611070915"></script>
-<script src="hub-shared.js?v=202611070915"></script>
-<script src="hub-store.js?v=202611070915"></script>
-<script src="hub-say.js?v=202611070915"></script>
-<script src="hub-sync.js?v=202611070915"></script>
-<script src="hub-notebook.js?v=202611070915"></script>
+<script src="hub-due.js?v=202611070946"></script>
+<script src="hub-tracker.js?v=202611070946"></script>
+<script src="hub-rotation.js?v=202611070946"></script>
+<script src="hub-xlsx.js?v=202611070946"></script>
+<script src="hub-docx.js?v=202611070946"></script>
+<script src="hub-timetable-parse.js?v=202611070946"></script>
+<script src="assignment-defaults.js?v=202611070946"></script>
+<script src="hub-shared.js?v=202611070946"></script>
+<script src="hub-store.js?v=202611070946"></script>
+<script src="hub-say.js?v=202611070946"></script>
+<script src="hub-sync.js?v=202611070946"></script>
+<script src="hub-notebook.js?v=202611070946"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1364,7 +1367,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     /* An unnamed input is a slot nobody has named yet. The tutor sees it as a
        slot to fill; the course sees "Input", because a morning with nothing
        on it reads as a free morning (Ramy, 9 Oct 2026: "show them as Input"). */
-    if (!x.t) { if (EDIT) cls.push('empty'); title = '<span class="tl">' + esc(KIND_LABEL[x.k] || '') + '</span>'; }
+    if (!x.t) { if (EDIT) cls.push('empty'); title = '<span class="tl">' + esc(EDIT && x.k === 'input' ? 'Empty input' : KIND_LABEL[x.k] || '') + '</span>'; }
   }
   /* THE ROOM A TILE JOINS (9 Oct 2026, the handoff's §9). A TP or input tile
      is in the course's "Teaching practice" or "Input" room unless it names
@@ -1928,11 +1931,9 @@ function render(){
         ? `<div class="carried"><h3>Start from ${esc(carried.from)}’s timetable</h3>
             <p>${carried.days.length} days came across with this course: their sessions, their times, the teaching practices and the notes. They go onto this course’s dates in order, day 1 on day 1. Everything stays editable.</p>
             <div class="bar"><button class="btn" id="fromCarried"${noDates ? ' disabled' : ''}>Start from ${esc(carried.from)}</button><button class="btn quiet" id="build"${noDates ? ' disabled' : ''}>Build a fresh one</button><span class="status">${noDates ? 'Set the course start and end dates on Course admin first.' : ''}</span></div></div>`
-        : startCardsHTML(noDates) + (note ? `<p class="status" style="margin:10px 0 0">${esc(note)}</p>` : ''))
-      : `<div class="empty">The timetable has not been set up yet.</div>`) + (IS_TUTOR ? buildPanelHTML() + importHTML() : '');
+        : (note ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` : '') + buildPanelHTML(true))
+      : `<div class="empty">The timetable has not been set up yet.</div>`) + (IS_TUTOR ? (carried ? buildPanelHTML() : '') + importHTML() : '');
     wireBuild(); wireImport();
-    document.querySelectorAll('input[name=cxShape]').forEach(r => r.addEventListener('change', () => { CX_SHAPE = r.value; }));
-    if ($('cxUse')) $('cxUse').addEventListener('click', cxApply);
     if ($('fromCarried')) $('fromCarried').addEventListener('click', startFromCarried);
     return;
   }
@@ -1951,9 +1952,9 @@ function render(){
   /* THE COURSE STUDIO (Ramy's design, 29 Oct 2026): one week at a time behind week tabs, a toolbar, the board, a side panel.
      The old row of buttons stays on the page, out of sight, because Course setup opens its panels through it. */
   if (WEEK == null || WEEK >= weeks.length || WEEK < 0) { const t = weeks.findIndex(w => w.some(d => d.date >= TODAY)); WEEK = t === -1 ? weeks.length - 1 : t; }
-  const oldBar = IS_TUTOR ? `<div id="ttOldBar">${pub ? '<button type="button" id="unpublish">Take it back</button>' : ''}<button type="button" id="buildOpen">Set up the timetable</button><button type="button" id="setOpen">Timetable settings</button><button type="button" id="asgOpen">Assignment dates</button><button type="button" id="importOpen">Import from a sheet</button></div>` : '';
+  const oldBar = IS_TUTOR ? `<div id="ttOldBar">${pub ? '<button type="button" id="unpublish">Take it back</button>' : ''}<button type="button" id="buildOpen">Set up the timetable</button><button type="button" id="setOpen">Timetable settings</button><button type="button" id="asgOpen">Assignment dates</button></div>` : '';
   const bar = IS_TUTOR ? oldBar + (EDIT ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` + statusHTML() : '')
-      + (PREVIEW ? '' : asgDatesHTML() + moveHTML() + buildPanelHTML() + settingsPanelHTML() + daysPanelHTML() + builtHTML() + importHTML()) : '';
+      + (PREVIEW ? '' : asgDatesHTML() + moveHTML() + buildPanelHTML() + settingsPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
      October teaching practice starts at 2:00 PM" (Ramy, 9 Oct 2026: "the
@@ -1990,7 +1991,7 @@ function render(){
     : CHANGES.length ? `<button type="button" class="btn publish" id="pubBtn">Publish changes</button>` : '';   /* shown only when there is something to publish (Ramy, 30 Oct 2026) */
   const tool = `<div class="stool"><div><h2>Week ${two(WEEK + 1)}</h2><p class="wkd">${esc(DOW[wa.getDay()] + ' ' + dm(wa))} – ${esc(DOW[wb.getDay()] + ' ' + dm(wb))}</p>${changeNote(w)}</div>
     <div class="sacts">${filt}<button type="button" class="btn quiet" id="tOrient" title="Switch the board round">${ACROSS() ? 'Days down' : 'Days across'}</button>
-      ${EDIT ? `<button type="button" class="btn quiet" id="libBtn" aria-pressed="${LIB_OPEN}">Input library</button><button type="button" class="btn quiet" id="addSes">+ Session</button><button type="button" class="btn quiet" id="setupBtn">Set up the timetable</button><button type="button" class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>${pubBtn}` : ''}
+      ${EDIT ? `<button type="button" class="btn quiet" id="libBtn" aria-pressed="${LIB_OPEN}">Pieces and sessions</button><button type="button" class="btn quiet" id="addSes">+ Session</button><button type="button" class="btn quiet" id="setupBtn">Set up the timetable</button><button type="button" class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>${pubBtn}` : ''}
       ${EDIT ? '<button type="button" class="btn quiet" id="howBtn">How it works</button>' : ''}</div></div>`;
   /* THE PIECES (Ramy, 6 Nov 2026: "like pieces of chess or checkers ... you just move things around"): the kinds of tile
      to drop onto the board, then the library's input sessions */
@@ -2056,7 +2057,7 @@ function render(){
 /* THE COURSE'S DAYS. Which weekdays it meets: full-time is Monday to Friday,
    a part-time course ticks its own. Changing them lays the days out again,
    keeping every session and note on a day that is still a course day. */
-let DAYS_OPEN = false, CHANGES_OPEN = false;
+let CHANGES_OPEN = false;
 const ask = (text, verb) => window.confirmModal ? confirmModal(text, verb) : Promise.resolve(confirm(text));
 const clone = o => JSON.parse(JSON.stringify(o));
 const dayName = date => { const d = parse(date); return d ? DOW[d.getDay()] + ' ' + dm(d) : date; };
@@ -2257,14 +2258,18 @@ function cxDates(meets){
   return out;
 }
 let CX_SHAPE = 'four';
-function cxApply(){
+async function cxApply(){
+  if (TT && TT.days && TT.days.length && !(await ask('Replace the whole board with Connect’s timetable? The course goes on seeing the published timetable until you publish, and Undo brings this board back.', 'Use Connect’s timetable'))) return;
   const shape = CX_SHAPES.find(x => x[0] === CX_SHAPE) || CX_SHAPES[0], dates = cxDates(shape[2]);
   if (dates.length < 20) { note = 'Set the course start date on Course admin first.'; render(); return; }
   const end = parse(SETTINGS.end), last = parse(dates[19]);
   const days = cxDays().map((d, i) => Object.assign({ date: dates[i], notes: '' }, d));
   if (!TT) TT = { v: 3, days: [], slots: [] };
   remember();
-  TT = { v: 3, days, slots: [], published: false, built: new Date().toISOString(), meets: shape[2].slice(), from: 'connect:' + shape[0] };
+  const was = TT || {};
+  TT = { v: 3, days, slots: [], published: !!was.published, built: new Date().toISOString(), meets: shape[2].slice(), from: 'connect:' + shape[0] };
+  if (was.updates) TT.updates = was.updates;
+  BUILD_OPEN = false;
   const inputs = days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input').length, 0);
   /* and its assignment dates (29 Oct 2026): opens with its session, due five teaching days later at 5 pm, a resubmission
      five days after that (Lessons from the Classroom: due day 19, resubmission on the last day) */
@@ -2281,18 +2286,21 @@ function cxApply(){
     + (end && last && last > end ? ' The course ends ' + dayName(SETTINGS.end) + ' on Course admin, before the last day here: change the end date there.' : '');
   render();
 }
-/* the empty timetable: three ways to start, as everywhere else (Connect's, your own from a sheet, or built) */
-function startCardsHTML(noDates){
-  /* three doors (Ramy, 6 Nov 2026: "build from scratch or edit an existing timetable or choose from a template"): a
-     template built from a few numbers, a real course's timetable, or a sheet. Each lands a whole timetable; the board
-     is where it is changed. */
+/* the empty timetable: four ways to start (a template full or blank, Connect's, your own from a sheet) */
+function startCardsHTML(noDates, B){
+  const on = blank => B && !!B.blank === blank ? ' on' : '';
+  /* the doors (Ramy, 6 Nov 2026: "build from scratch or edit an existing timetable or choose from a template"): a
+     template built from a few numbers, the same days with the input places left empty (7 Nov: "build the blank
+     board"), a real course's timetable, or a sheet. The board is where it is changed. */
   return `<div class="ttstart">
-    <div class="tcard cx"><b>A template</b><span>Four weeks, five weeks or part-time. The dates, the days and the shape of the day are two sentences you change; Connect builds every day, full, and you move the pieces.</span>
-      <button class="btn primary" id="build"${noDates ? ' disabled' : ''}>Build from a template</button></div>
-    <div class="tcard"><b>Connect’s timetable</b><span>Four weeks from a real course: an input session at 10:00, three TP lessons from 11:30, lunch, feedback and lesson planning; the demonstration lessons, the Stage 2 tutorials, four filmed observations and the assignments in their places. Laid onto your dates.</span>
+    <div class="tcard cx${on(false)}"><b>A template</b><span>Four weeks, five weeks or part-time, every day full: the input sessions in the library’s order. You set the dates and the day below, then move the pieces.</span>
+      <button class="btn quiet" id="build"${noDates ? ' disabled' : ''} aria-pressed="${!!on(false)}">Use a template</button></div>
+    <div class="tcard${on(true)}"><b>A blank board</b><span>The same days and times as a template, with the TPs, feedback, breaks and day one in place. Every input session is left empty, and you drag each one in from the library.</span>
+      <button class="btn quiet" id="buildBlank"${noDates ? ' disabled' : ''} aria-pressed="${!!on(true)}">Use a blank board</button></div>
+    <div class="tcard"><b>Connect’s timetable</b><span>Four weeks from a real course, laid onto your dates: the input sessions, the TPs, the demonstration lessons, the Stage 2 tutorials, the filmed observations and the assignments in their places.</span>
       <div class="cxshapes">${CX_SHAPES.map(([k, l]) => `<label><input type="radio" name="cxShape" value="${k}"${CX_SHAPE === k ? ' checked' : ''}> ${esc(l)}</label>`).join('')}</div>
       <button class="btn quiet" id="cxUse"${noDates ? ' disabled' : ''}>Use Connect’s timetable</button></div>
-    <div class="tcard"><b>Import from a sheet</b><span>A Google Sheet, an Excel or Word file, or rows pasted in: one row a day. Connect lays it onto your dates.</span><button class="btn quiet" id="importOpen"${noDates ? ' disabled' : ''}>Import from a sheet</button></div>
+    <div class="tcard"><b>Import from a sheet</b><span>A Google Sheet, an Excel or Word file, or rows pasted in, one row a day. Connect lays it onto your dates.</span><button class="btn quiet" id="importOpen"${noDates ? ' disabled' : ''}>Import from a sheet</button></div>
   </div>${noDates ? '<p class="status">Set the course start and end dates on Course admin first.</p>' : ''}`;
 }
 function courseDates(){
@@ -2302,20 +2310,11 @@ function courseDates(){
   return out;
 }
 function buildDefaults(){
-  const dates = courseDates(), tpCount = parseInt(SETTINGS.tpCount, 10) || 8;
-  /* which days teach: all but day one, then the spare days go where a course needs them -- two after the half-way
-     practice (tutorials, the new class), one before the last two practices (planning), the rest at the end */
-  const teach = dates.map(() => true); teach[0] = false;
-  let spare = dates.length - 1 - tpCount * 2;
-  const half = 1 + Math.ceil(tpCount / 2) * 2, late = 1 + (tpCount - 2) * 2;
-  const offAt = []; if (spare >= 2) offAt.push(half, half + 1); else if (spare === 1) offAt.push(half);
-  if (spare >= 3) offAt.push(late + 2);
-  offAt.forEach(i => { if (dates[i]) teach[i] = false; });
-  spare -= offAt.length; for (let i = dates.length - 1; spare > 0 && i > 0; i--) if (teach[i]) { teach[i] = false; spare--; }
+  const teach = defaultTeach(courseDates(), parseInt(SETTINGS.tpCount, 10) || 8);
   /* the numbers: read off the board's pattern when there is one, else the house day */
   const n = (TT && TT.pattern && numbersFromPattern(TT.pattern)) || DAY_DEFAULT();
   return { n, pattern: patternFromNumbers(n),
-           teach, sessions: LIB_SESSIONS.map(x => ({ slug: x[0], t: x[1], on: true, by: 'auto' })), own: [],
+           teach, sessions: LIB_SESSIONS.map(x => ({ slug: x[0], t: x[1], on: true, by: 'auto' })), own: [], blank: false,
            guided: false, tutorials: true, newClass: true, planning: true, assessor: !!SETTINGS.visitDate };
 }
 const hm = m => toHM(Math.max(0, Math.min(23 * 60 + 55, m)));
@@ -2413,7 +2412,9 @@ function relayDay(day, B){
 function buildDays(B){
   const dates = courseDates(), tpCount = parseInt(SETTINGS.tpCount, 10) || 8, shape = dayShape(B);
   const fbFirst = shape.findIndex(sl => sl.role === 'fb') !== -1 && shape.findIndex(sl => sl.role === 'fb') < shape.findIndex(sl => sl.role === 'block');
-  const queue = B.sessions.filter(x => x.on).map(x => ({ t: x.t, by: x.by })).concat(B.own.filter(Boolean).map(t => ({ t, by: 'auto' })));
+  /* A BLANK BOARD (Ramy, 7 Nov 2026: "build the blank board"): the days, the TPs, feedback, breaks and day one as a full
+     build lays them, and every input place an empty tile to drop a session on */
+  const queue = B.blank ? [] : B.sessions.filter(x => x.on).map(x => ({ t: x.t, by: x.by })).concat(B.own.filter(Boolean).map(t => ({ t, by: 'auto' })));
   const ids = () => newId();
   const S = (s, e, k, t, extra) => Object.assign({ id: ids(), s: hm(s), e: hm(e), k, t }, extra || {});
   const roomTP = 'Teaching practice';
@@ -2428,7 +2429,7 @@ function buildDays(B){
     const next = () => queue.shift();
     /* when the ticked sessions run out, one study slot a morning and the other left empty: a blank cell reads cleaner than two study tiles */
     let studied = false;
-    const input = (sl) => { const q = next(); if (q) return S(sl.s, sl.e, 'input', q.t, { by: byOf(q) }); if (studied) return null; studied = true; return S(sl.s, sl.e, 'task', 'Study time · planning and assignments'); };
+    const input = (sl) => { if (B.blank) return S(sl.s, sl.e, 'input', '', { room: 'Input' }); const q = next(); if (q) return S(sl.s, sl.e, 'input', q.t, { by: byOf(q) }); if (studied) return null; studied = true; return S(sl.s, sl.e, 'task', 'Study time · planning and assignments'); };
     const r = roleOf[i]; const day = { date, notes: '', sessions: [] };
     const isIntro = i === 0;
     const afterHalf = halfIdx != null && i > halfIdx, afterLate = lateIdx != null && i > lateIdx;
@@ -2493,7 +2494,7 @@ function buildDays(B){
    two sentences (buildPanelHTML, below). The teaching practice count is worked out from the TP lesson's length
    (Cambridge: at least eight occasions, six hours in all: 45 minutes makes eight, never fewer than eight). It replaces
    the build form, the shelf, the cards, Course setup and The course's days. Build it lands every day full; Lay it out
-   again builds every day afresh; Keep the days changes only the course's dates. */
+   again builds every day afresh; Change the dates only moves only the course's dates. */
 const SIX_HOURS = 360;
 function tpLenOf(P){ const L = layout(P), t = L.find(x => x.k === 'tp'); return t ? t.len : (P.lens && P.lens.tp) || KIND_LEN.tp; }
 function tpCountOf(P){ const len = tpLenOf(P); return Math.max(8, Math.min(window.HUB_MAX_TP || 12, Math.round(SIX_HOURS / len))); }
@@ -2606,8 +2607,8 @@ function dominoes(){
     });
   } catch (e) {}
 }
-function buildPanelHTML(){
-  if (!BUILD_OPEN) return '';
+function buildPanelHTML(always){
+  if (!BUILD_OPEN && !always) return '';
   const B = BUILD || (BUILD = buildDefaults());
   if (!B.meets) courseIntoPanel(B);
   B.n = B.n || DAY_DEFAULT(); B.pattern = patternFromNumbers(B.n);
@@ -2645,14 +2646,16 @@ function buildPanelHTML(){
     ? `${esc(dayName(dates[0]))} to ${esc(dayName(dates[dates.length - 1]))} · ${dates.length} days · ${Math.min(teaching, need)} with teaching practice · ${tpCount} TPs of ${N.tpLen} minutes`
     : 'Choose a start date, the weeks and the days the course meets'}${dates.length && teaching < need ? ` · <span class="warn">${tpCount} TPs need ${need} teaching days and there are ${teaching}: add a week, or a day</span>` : ''}</span></div>`;
   const has = !!(TT && TT.days && TT.days.length);
-  const acts = has
-    ? `<button type="button" class="btn primary" id="bRelay">Lay it out again</button><button type="button" class="btn quiet" id="bSave">Keep the days, save the dates</button><button type="button" class="btn quiet" id="bScratch">Start over</button>`
-    : `<button type="button" class="btn primary" id="bGo">Build it</button>`;
-  const hint = has
-    ? 'Lay it out again builds every day afresh from these numbers; Undo brings the board back. Keep the days changes only the course’s dates and leaves every session where it is.'
-    : 'Every day lands full: the input sessions in the library’s teaching order, the lessons, the breaks, day one with the demo lesson. Then move the pieces.';
-  return `<div class="imp bld su2 cards"><div class="bhead"><h3>Set up the timetable</h3><div><button type="button" class="btn quiet" id="bSound" aria-pressed="${SOUND_ON()}" title="The dominoes’ sound">${SOUND_ON() ? 'Sound on' : 'Sound off'}</button><button type="button" class="btn quiet" id="bClose">Close</button></div></div>
-    <div class="bcard"><div class="tpls">${tpls}</div>
+  const go = B.blank ? 'Build the blank board' : 'Build from the template';
+  const acts = `<button type="button" class="btn primary" id="bGo">${go}</button>` + (has ? `<button type="button" class="btn quiet" id="bSave">Change the dates only</button>` : '');
+  const hint = (has ? go + ' replaces the whole board, and Undo brings this one back. Change the dates only moves the course’s dates and leaves every session where it is. ' : '')
+    + (B.blank ? 'Every day lands with its times, the lessons, the breaks and day one with the demo lesson; each input session is an empty tile. Drag a session from the library onto one, or click a session and it goes in the next empty place.'
+    : 'Every day lands full: the input sessions in the library’s teaching order, the lessons, the breaks, day one with the demo lesson. Then move the pieces.');
+  const noDates = !SETTINGS.start || !SETTINGS.end;
+  return `<div class="imp bld su2 cards"><div class="bhead"><h3>Set up the timetable</h3><div><button type="button" class="btn quiet" id="bSound" aria-pressed="${SOUND_ON()}" title="The dominoes’ sound">${SOUND_ON() ? 'Sound on' : 'Sound off'}</button>${has ? '<button type="button" class="btn quiet" id="bClose">Close</button>' : ''}</div></div>
+    <p class="bwhy">${has ? 'Four ways to start. Whichever you choose replaces the board you have now; Undo brings it back.' : 'Four ways to start. Choose one; you can come back here and choose again at any time.'}</p>
+    ${startCardsHTML(noDates && !has, B)}
+    <div class="bcard"><h4 class="bnum">${B.blank ? 'The blank board' : 'The template'}: the course and its day</h4><div class="tpls">${tpls}</div>
       <div class="bsec first">${course}</div><div class="bsec">${day}</div><div class="bsec">${tut}</div>
       ${facts}<div class="row bacts">${acts}</div><p class="hint">${hint}</p></div></div>`;
 }
@@ -2674,9 +2677,15 @@ function keepCourse(B){
 }
 function wireBuild(){
   if (!IS_TUTOR) return;
-  const openers = ['build', 'buildOpen', 'setupBtn'].map($).filter(Boolean);
-  openers.forEach(b => b.addEventListener('click', () => { BUILD = BUILD || buildDefaults(); if (!BUILD.meets) courseIntoPanel(BUILD); BUILD_OPEN = !BUILD_OPEN; SET_OPEN = false; render(); if (BUILD_OPEN) { const el = document.querySelector('.bld'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } }));
-  if (!BUILD_OPEN) return;
+  const openers = ['build', 'buildBlank', 'buildOpen', 'setupBtn'].map($).filter(Boolean);
+  openers.forEach(b => b.addEventListener('click', () => { BUILD = BUILD || buildDefaults(); if (!BUILD.meets) courseIntoPanel(BUILD);
+    const pick = b.id === 'build' || b.id === 'buildBlank';
+    if (pick) { BUILD.blank = b.id === 'buildBlank'; BUILD_OPEN = true; } else BUILD_OPEN = !BUILD_OPEN;
+    if (pick) { SET_OPEN = false; render(); const el = document.querySelector('.bld .bcard'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; } SET_OPEN = false; render(); if (BUILD_OPEN) { const el = document.querySelector('.bld'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } }));
+  if (!BUILD_OPEN && !document.querySelector('.bld')) return;
+  /* the cards' other two doors: Connect's timetable (its shape), and the sheet (wireImport) */
+  document.querySelectorAll('input[name=cxShape]').forEach(r => r.addEventListener('change', () => { CX_SHAPE = r.value; }));
+  if ($('cxUse')) $('cxUse').addEventListener('click', cxApply);
   const B = BUILD, N = B.n, num = (el, lo, hi) => Math.max(lo, Math.min(hi, parseInt(el.value, 10) || 0));
   if ($('bClose')) $('bClose').addEventListener('click', () => { BUILD_OPEN = false; render(); });
   if ($('bSound')) $('bSound').addEventListener('click', () => { try { localStorage.setItem('tt:sound', SOUND_ON() ? 'off' : 'on'); } catch (e) {} render(); });
@@ -2704,13 +2713,16 @@ function wireBuild(){
   const land = made => {
     FALL = true; LIB_OPEN = true; WEEK = 0; BUILD_OPEN = false;
     TT.pattern = clone(B.pattern);
-    const n = made.days.length, inputs = made.days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input').length, 0);
+    const n = made.days.length, inputs = made.days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input' && (!B.blank || x.t)).length, 0);
+    const empty = made.days.reduce((a, d) => a + d.sessions.filter(x => x.k === 'input' && !x.t).length, 0);
     /* save('Built') renders once, and the dominoes fall on that render: a second render would sweep them away */
-    save('Built', { text: 'Connect built the timetable: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + inputs + ' input sessions', effects: made.left ? [made.left + ' library session' + (made.left === 1 ? ' did' : 's did') + ' not fit'] : [] });
-    note = 'Built: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + inputs + ' input sessions' + (made.left ? ' · ' + made.left + ' did not fit' : '') + '. Drag a tile to move it, drop it on another to swap, drop a piece on it to replace it; publish it when it looks right.';
+    save('Built', { text: 'Connect built the timetable: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + (B.blank ? empty + ' empty input places' : inputs + ' input sessions'), effects: made.left ? [made.left + ' library session' + (made.left === 1 ? ' did' : 's did') + ' not fit'] : [] });
+    note = B.blank
+      ? 'Built: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + empty + ' empty input places. Drag a session from the library onto an empty one, or click a session and it goes in the next empty place; publish it when it looks right.'
+      : 'Built: ' + n + ' days, ' + made.teachDays + ' with teaching practice, ' + inputs + ' input sessions' + (made.left ? ' · ' + made.left + ' did not fit' : '') + '. Drag a tile to move it, drop it on another to swap, drop a piece on it to replace it; publish it when it looks right.';
     const st = document.querySelector('.status'); if (st) st.textContent = note;
   };
-  /* KEEP THE DAYS: the course's dates and the pattern change; every session keeps its date */
+  /* CHANGE THE DATES ONLY: the course's dates and the pattern change; every session keeps its date */
   if ($('bSave')) $('bSave').addEventListener('click', () => {
     remember();
     if (!keepCourse(B)) { render(); return; }
@@ -2718,69 +2730,24 @@ function wireBuild(){
     save('Saved', { text: 'Timetable setup changed: ' + dayName(SETTINGS.start) + ' to ' + dayName(SETTINGS.end) + ', ' + SETTINGS.tpCount + ' TPs' });
     note = 'Saved. Every session kept its date; the day you set is the pattern new days follow.'; render();
   });
-  /* LAY IT OUT AGAIN: every day of the draft is laid afresh; the course goes on seeing the published one */
-  if ($('bRelay')) $('bRelay').addEventListener('click', async () => {
-    if (!(await ask('Lay the timetable out again from these numbers? Every day of the draft is laid afresh; the course goes on seeing the published timetable until you publish. Undo brings the old board back.', 'Lay it out again'))) return;
-    remember();
+  /* BUILD (one button, Ramy 7 Nov 2026: "keep things simple, systematic"): a new board from the template or blank; over a
+     board it asks first, the course goes on seeing the published one until you publish, and Undo brings the old one back */
+  if ($('bGo')) $('bGo').addEventListener('click', async () => {
+    const had = !!(TT && TT.days && TT.days.length);
+    if (had && !(await ask('Replace the whole board with a new ' + (B.blank ? 'blank board' : 'one from the template') + '? The course goes on seeing the published timetable until you publish, and Undo brings this board back.', B.blank ? 'Build the blank board' : 'Build it'))) return;
     if (!keepCourse(B)) { render(); return; }
     const made = buildDays(B);
     if (!made.days.length) { note = 'No teaching days fall between those dates.'; render(); return; }
+    remember();
     const keep = TT || {};
     TT = { v: 3, days: made.days, slots: made.slots, published: !!keep.published, built: new Date().toISOString(), meets: keep.meets };
     ['asgRules', 'pins', 'updates', 'tpOut'].forEach(k => { if (keep[k] !== undefined) TT[k] = keep[k]; });
     land(made);
   });
-  /* START OVER (Ramy, 6 Nov 2026: "I want to start fresh ... from the very beginning"): the board is cleared and the three doors come
-     back. The course goes on seeing the published timetable until a new one is published; Undo brings this board back. */
-  if ($('bScratch')) $('bScratch').addEventListener('click', async () => {
-    if (!(await ask('Clear the whole board and start over? The course goes on seeing the published timetable until you publish a new one, and Undo brings this board back.', 'Start over'))) return;
-    remember();
-    const keep = TT || {};
-    TT = { v: 3, days: [], slots: [], published: false, meets: keep.meets };
-    ['asgRules', 'pins', 'tpOut'].forEach(k => { if (keep[k] !== undefined) TT[k] = keep[k]; });
-    BUILD = null; BUILD_OPEN = false; WEEK = 0;
-    save('Cleared', { text: 'The board was cleared to start over' });
-    note = 'The board is empty. Choose how to begin.'; render();
-  });
-  /* BUILD IT: a course with no timetable yet */
-  if ($('bGo')) $('bGo').addEventListener('click', () => {
-    if (!keepCourse(B)) { render(); return; }
-    const made = buildDays(B);
-    if (!made.days.length) { note = 'No teaching days fall between those dates.'; render(); return; }
-    remember();
-    const keep = TT || {};
-    TT = { v: 3, days: made.days, slots: made.slots, published: false, built: new Date().toISOString(), meets: keep.meets };
-    land(made);
-  });
 }
-function daysPanelHTML(){
-  if (!DAYS_OPEN) return '';
-  const meets = window.hubMeets ? hubMeets(TT) : [1,2,3,4,5];
-  return `<div class="imp"><h3>The course’s days</h3>
-    <p>The weekdays the course meets. A part-time course ticks only its own; the teaching practices are dealt again over the days that are left, and everything already on a day that is still a course day stays where it is. To take one day out (a holiday, a snow day), click its date on the board instead.</p>
-    <div class="meets"><span class="ml">The course meets on</span>${[1,2,3,4,5,6,0].map(n => `<label><input type="checkbox" data-meet="${n}"${meets.indexOf(n) !== -1 ? ' checked' : ''}> ${DOW[n]}</label>`).join('')}</div>
-    <p class="hint">To change a day’s times, drag its tiles, or set one day as you want it and use ⋯ on that day → “Use this day’s shape for…”.</p>
-    <div class="row"><button class="btn quiet" id="relay">Lay the days out again</button><button class="btn quiet" id="daysClose">Close</button></div></div>`;
-}
-
 function wireDays(){
   if (!IS_TUTOR) return;
   wireBuild();
-  if ($('daysClose')) $('daysClose').addEventListener('click', () => { DAYS_OPEN = false; render(); });
-  if ($('relay')) $('relay').addEventListener('click', async () => {
-    if (await ask('Lay the course days out again from the course dates? Sessions and notes on a day that is still a course day are kept; the teaching practices are dealt again.', 'Rebuild')) { remember(); build(true, { text: 'The course days were laid out again' }); }
-  });
-  document.querySelectorAll('[data-meet]').forEach(el => el.addEventListener('change', async () => {
-    const was = window.hubMeets ? hubMeets(TT) : [1,2,3,4,5];
-    const n = +el.dataset.meet, next = was.filter(x => x !== n);
-    if (el.checked) next.push(n);
-    next.sort();
-    if (!next.length) { render(); return; }
-    if (!(await ask('Lay the course days out again on ' + next.map(x => DOW[x]).join(', ') + '? Sessions and notes on a day that is still a course day are kept; the teaching practices are dealt again.', 'Rebuild'))) { render(); return; }
-    remember();
-    TT.meets = next;
-    build(true, { text: 'The course now meets on ' + next.map(x => DOWL[x]).join(', ') });
-  }));
 }
 
 /* ---- DRAFT AND PUBLISH (stage 2, 9 Oct 2026) ------------------------------
@@ -3194,12 +3161,12 @@ function openHow(){
   const el = pop('ttpop');
   const step = (n, h, body, btn) => `<div class="how"><span class="hn">${n}</span><div><b>${h}</b><p>${body}</p>${btn || ''}</div></div>`;
   el.innerHTML = `
-    ${step(1, 'Set up the course', 'Open <b>Set up the timetable</b>. Tap the start date, the weeks, the days the course meets and the time zone; shape the usual day by dragging its tiles; tick the sessions. Press <b>Lay it out again</b> and Lite builds every day, with the teaching practices, input sessions and tutorials in their places.', '<button type="button" class="btn quiet" data-how="setup">Open Set up the timetable</button>')}
-    ${step('1b', 'Build it from scratch', 'With a timetable already on the board, open <b>Set up the timetable</b> and press <b>Start from scratch</b>: the board clears and the three ways to begin come back, Connect’s ready-made timetable, a sheet of your own, or the panel. The course goes on seeing the published timetable until you publish a new one, and <b>Undo</b> brings the old board back.')}
-    ${step(2, 'Five weeks, or part-time','In Set up the timetable, change the number of weeks and tap the days the course meets. A five-week course might meet Monday to Thursday; a part-time course might meet Tuesday and Thursday over twelve weeks. Then press <b>Lay it out again</b>.')}
-    ${step(3, 'Already have a timetable?', 'Bring it in instead of building one: a Google Sheet, an Excel or Word file, or rows pasted in, one row a day. Lite lays it onto your dates. It is <b>Import from a sheet</b>, above the board, or on the empty timetable.')}
+    ${step(1, 'Set up the timetable', 'Press <b>Set up the timetable</b>. There are four ways to start: <b>a template</b> (every day full), <b>a blank board</b> (the same days with the input sessions left empty), <b>Connect’s timetable</b>, or <b>a sheet</b> of your own. Choose one, set the dates and the day, and press the one gold button.', '<button type="button" class="btn quiet" data-how="setup">Open Set up the timetable</button>')}
+    ${step('1b', 'Change your mind', 'Open <b>Set up the timetable</b> again at any time and choose another way to start. It replaces the board; the course goes on seeing the published timetable until you publish, and <b>Undo</b> brings the old board back. <b>Change the dates only</b> moves the course’s dates and leaves every session where it is.')}
+    ${step(2, 'Five weeks, or part-time', 'The templates are four weeks Monday to Friday, five weeks Monday to Thursday, and part-time Tuesdays and Thursdays. Or type the weeks and tap the days the course meets.')}
+    ${step(3, 'Already have a timetable?', 'Choose <b>Import from a sheet</b> in Set up the timetable: a Google Sheet, an Excel or Word file, or rows pasted in, one row a day. Lite lays it onto your dates.')}
     ${step(4, 'Change a session', 'Click it. Change the title, the day, the times, the tutor or what trainees prepare, then press <b>Save draft</b>. To move it, drag it to an empty place; drop it on another session to swap the two.')}
-    ${step(5, 'Add a session', 'Press <b>+ Session</b>, click an empty place on the board, or open the <b>Input library</b> and drag a session onto the board.', '<button type="button" class="btn quiet" data-how="lib">Open the Input library</button>')}
+    ${step(5, 'Add a session', 'Open <b>Pieces and sessions</b> and drag a session onto an empty place, or click it and it goes in the next empty input session. <b>+ Session</b> and a click on an empty place work too.', '<button type="button" class="btn quiet" data-how="lib">Open Pieces and sessions</button>')}
     ${step(6, 'A day that is different', 'Use <b>⋯</b> on the day: start it later, finish it earlier, close it for a holiday, or copy its shape to other days.')}
     ${step(7, 'Show it to the course', 'Press <b>Publish</b>. Lite runs its checks first, and says who will see it. After that every change is a draft until you press <b>Publish changes</b>, and <b>Undo</b> takes back the last one. <b>Trainee view</b> shows exactly what trainees see.')}`;
   el.hidden = false; asDrawer(el, 'How the timetable works');
@@ -3229,7 +3196,11 @@ document.addEventListener('click', e => {
   if (!e.target.closest) return;
   const lib = e.target.closest('[data-lib]');
   if (lib && EDIT) {
-    const day = TT.days.find(d => d.date >= TODAY && !d.closed) || TT.days.find(d => !d.closed); if (!day) return;
+    /* the next empty input place takes it (a blank board fills in order); else the first free time from today */
+    const open = TT.days.filter(d => !d.closed), hole = d => (d.sessions || []).slice().sort(byStart).find(x => x.k === 'input' && !String(x.t || '').trim());
+    const gap = open.find(d => d.date >= TODAY && hole(d)) || open.find(hole);
+    if (gap) { replaceTile(gap.date, hole(gap).id, { t: lib.dataset.lib }); return; }
+    const day = open.find(d => d.date >= TODAY) || open[0]; if (!day) return;
     const s = freeAfter(day); newSession(day.date, toHM(s), toHM(Math.min(23 * 60, s + 75)), lib.dataset.lib); return;
   }
   const cont = e.target.closest('.tgrid.tboard .cont[data-cont]');
@@ -4082,28 +4053,6 @@ function builtHTML(){
       <div><b>Deadlines</b><span>${b.dues.length ? b.dues.map(esc).join('<br>') : 'None set from the sheet'}</span></div>
       <div><b>Remembered</b><span>${b.kept.length ? b.kept.length + ' new term' + (b.kept.length === 1 ? '' : 's') + ', used next time' : 'Nothing new'}</span></div>
     </div><button class="btn quiet" id="builtClose">Close</button></div>`;
-}
-
-function build(keep, change){
-  const sk = skeleton();
-  if (!sk) { note = 'The course needs a start and an end date first.'; render(); return; }
-  if (keep && TT && TT.days) {
-    const old = {}; TT.days.forEach(d => { old[d.date] = d; });
-    /* Keep what each day already says: its cells (the day shape, 30 Sep
-       2026) and its notes. This still copied the old a/b fields, so a rebuild
-       that was meant to keep the sessions dropped every one of them. */
-    sk.days.forEach(d => {
-      const o = old[d.date]; if (!o) return;
-      d.notes = o.notes || '';
-      if (Array.isArray(o.sessions)) d.sessions = JSON.parse(JSON.stringify(o.sessions));
-      if (o.closed) { d.closed = true; d.sessions = []; d.notes = ''; }
-    });
-    const keepPins = TT.pins, tray = Array.isArray(TT.unplaced) ? TT.unplaced.slice() : [];
-    sk.days.forEach(d => { if (!old[d.date] && tray.length) { const c = tray.shift(); d.sessions = c.sessions || []; d.notes = c.notes || ''; } });
-    TT = Object.assign(sk, keepPins ? { pins: keepPins } : {}, tray.length ? { unplaced: tray } : {}, TT.updates ? { updates: TT.updates } : {});
-    TT.days.forEach(d => { if (d.closed) { delete d.tp; delete d.setIndex; } else if (d.tp) ensureTp(d); else dropTp(d); });
-  } else TT = Object.assign(sk, TT && TT.updates ? { updates: TT.updates } : {});
-  save('Built', change);
 }
 
 /* The last course's days onto this course's dates, in order. A course longer
