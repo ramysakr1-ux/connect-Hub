@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611071902">
+<link rel="stylesheet" href="hub-tokens.css?v=202611072356">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -824,25 +824,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611071902">
+<link rel="stylesheet" href="hub-house.css?v=202611072356">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611071902"></script>
-<script src="hub-tracker.js?v=202611071902"></script>
-<script src="hub-rotation.js?v=202611071902"></script>
-<script src="hub-xlsx.js?v=202611071902"></script>
-<script src="hub-docx.js?v=202611071902"></script>
-<script src="hub-timetable-parse.js?v=202611071902"></script>
-<script src="assignment-defaults.js?v=202611071902"></script>
-<script src="hub-shared.js?v=202611071902"></script>
-<script src="hub-store.js?v=202611071902"></script>
-<script src="hub-say.js?v=202611071902"></script>
-<script src="hub-sync.js?v=202611071902"></script>
-<script src="hub-notebook.js?v=202611071902"></script>
+<script src="hub-due.js?v=202611072356"></script>
+<script src="hub-tracker.js?v=202611072356"></script>
+<script src="hub-rotation.js?v=202611072356"></script>
+<script src="hub-xlsx.js?v=202611072356"></script>
+<script src="hub-docx.js?v=202611072356"></script>
+<script src="hub-timetable-parse.js?v=202611072356"></script>
+<script src="assignment-defaults.js?v=202611072356"></script>
+<script src="hub-shared.js?v=202611072356"></script>
+<script src="hub-store.js?v=202611072356"></script>
+<script src="hub-say.js?v=202611072356"></script>
+<script src="hub-sync.js?v=202611072356"></script>
+<script src="hub-notebook.js?v=202611072356"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1786,6 +1786,7 @@ function setAsgDate(k, f, local, g, i){
   if (f === 'resub') { if (iso) a.resubDueAt = iso; else delete a.resubDueAt; }
   try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
 }
+function openAsgAt(k, field){ ASG_OPEN = true; FOCUS_ASG = { k, f: field === 'out' ? 'open' : (field || 'due') }; render(); }
 function wireMove(){
   if (!IS_TUTOR) return;
   if ($('asgOpen')) $('asgOpen').addEventListener('click', () => { ASG_OPEN = !ASG_OPEN; render(); if (ASG_OPEN) { const b = $('asgDates'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
@@ -1795,9 +1796,7 @@ function wireMove(){
      click put a day-only "Move" box at the top of the page, out of sight, so the page jumped and showed nothing. Now
      any marker (out, due, resubmission) opens Assignment dates, scrolls to that assignment's row and puts the cursor
      in the field that was clicked: day AND time. Dragging a marker still moves its day. */
-  document.querySelectorAll('[data-move], [data-asg]').forEach(el => el.addEventListener('click', () => {
-    ASG_OPEN = true; FOCUS_ASG = { k: el.dataset.move || el.dataset.asg, f: el.dataset.field === 'out' ? 'open' : (el.dataset.field || 'due') }; render();
-  }));
+  document.querySelectorAll('[data-move], [data-asg]').forEach(el => el.addEventListener('click', () => openAsgAt(el.dataset.move || el.dataset.asg, el.dataset.field)));
   if (FOCUS_ASG) {
     const fa = FOCUS_ASG; FOCUS_ASG = null;
     const row = document.querySelector('#asgDates .adrow[data-k="' + fa.k + '"]');
@@ -3150,7 +3149,8 @@ function wireBoard(){
   document.addEventListener('pointermove', e => {
     if (!DRAG || DRAG.touch || DRAG.locked) return;
     const dx = e.clientX - DRAG.x0, dy = e.clientY - DRAG.y0;
-    if (!DRAG.moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+    const still = DRAG.due ? 8 : 4;   /* a deadline is small and mostly clicked: it takes a clearer move to start a drag */
+    if (!DRAG.moved && Math.abs(dx) < still && Math.abs(dy) < still) return;
     if (!DRAG.moved) { DRAG.moved = true; DRAG.el.classList.add('dragging'); closePop(); }
     if (DRAG.resize) {
       const day = DRAG.day, delta = Math.round(dy / PXM / 5) * 5;
@@ -3210,8 +3210,12 @@ function wireBoard(){
     if (was.el) was.el.classList.remove('lifted', 'dragging');
     if (was.due) {
       if (!was.moved) return;   // a click on a deadline opens Assignment dates at its row (wireMove)
-      if (was.target && was.target.r.kind !== 'block') moveDue(was.due, was.target.date, was.field);
-      was.el.dataset.dragged = '1';
+      was.el.dataset.dragged = '1';   // the click that follows a drag is swallowed (the board's click capture)
+      if (was.target && was.target.r.kind !== 'block') { moveDue(was.due, was.target.date, was.field); return; }
+      /* A DRAG THAT LANDS NOWHERE IS A CLICK (Ramy, 7 Nov 2026: "I'm clicking on the red LSRT ... it's not opening").
+         A hand on a trackpad moves a few pixels while it presses; that started a drag, the drop went nowhere and the
+         click was thrown away. Let go on its own day, or off the board, and its dates open, as a click would. */
+      openAsgAt(was.due, was.field);
       return;
     }
     if (was.resize) {
