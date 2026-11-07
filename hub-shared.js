@@ -1096,6 +1096,18 @@ window.hubVisitDate = function(settings, tt){
 };
 /* Which weekdays the course meets on (0 = Sunday). Full-time is Monday to
    Friday, the default; a part-time course ticks only its own days. */
+/* THE COURSE'S TUTORS, from both lists on Course admin (10 Oct 2026; put back 7 Nov 2026: it went out with the tutor
+   colours on 27 Oct, and every page fell back to the signatures field alone, so a tutor added under "Add a tutor" never
+   reached the timetable: Ramy, "it's still only says RS"). The signatures first, in their order (an input tile names its
+   tutor by place in this list, so the order must not move); anyone in the contacts who is not already there follows. */
+window.hubTutorNames = function(cs){
+  cs = cs || {};
+  var out = [];
+  var add = function(n){ n = String(n || '').trim(); if (n && !out.some(function(x){ return x.toLowerCase() === n.toLowerCase(); })) out.push(n); };
+  String(cs.tutorNames || '').split(/[,\n;]+/).forEach(add);
+  (Array.isArray(cs.tutorContacts) ? cs.tutorContacts : []).forEach(function(c){ if (c) add(c.name); });
+  return out;
+};
 window.hubMeets = function(tt){
   var m = tt && Array.isArray(tt.meets) ? tt.meets.filter(function(n){ return n >= 0 && n <= 6; }) : [];
   return m.length ? m : [1, 2, 3, 4, 5];
