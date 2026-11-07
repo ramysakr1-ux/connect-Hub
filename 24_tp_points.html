@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611072356">
+<link rel="stylesheet" href="hub-tokens.css?v=202611080036">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -47,6 +47,7 @@
   .tsn{margin:0 0 10px; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--gold-deep);}
   .tchoice{display:grid; grid-template-columns:1fr 1fr; gap:12px;} @media (max-width:640px){ .tchoice{grid-template-columns:1fr;} }
   /* a card of its own, so it is not missed under the title (Ramy, 29 Oct 2026: "could easily be missed ... some clarity") */
+  .cvcls{margin:0; font-size:.9rem; line-height:1.4;} .cvcls small{display:block; color:var(--grey); font-size:.78rem;}
   .gtkydoor{display:grid; grid-template-columns:1fr auto; gap:4px 18px; align-items:center; margin:22px 0; padding:16px 20px; border-radius:14px; text-decoration:none; color:var(--ink);
     background:color-mix(in oklch, var(--a-forest, var(--teal)) 8%, var(--paper)); border-left:4px solid var(--a-forest, var(--teal)); box-shadow:var(--nb-shadow); transition:transform .15s ease, background-color .15s ease;}
   .gtkydoor:hover{transform:translateY(-3px); background:color-mix(in oklch, var(--a-forest, var(--teal)) 13%, var(--paper));}
@@ -728,7 +729,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611072356">
+<link rel="stylesheet" href="hub-house.css?v=202611080036">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -891,14 +892,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611072356"></script>
-<script src="hub-tracker.js?v=202611072356"></script>
-<script src="hub-rotation.js?v=202611072356"></script>
-<script src="hub-shared.js?v=202611072356"></script>
-<script src="hub-store.js?v=202611072356"></script>
-<script src="hub-say.js?v=202611072356"></script>
-<script src="hub-sync.js?v=202611072356"></script>
-<script src="hub-notebook.js?v=202611072356"></script>
+<script src="hub-due.js?v=202611080036"></script>
+<script src="hub-tracker.js?v=202611080036"></script>
+<script src="hub-rotation.js?v=202611080036"></script>
+<script src="hub-shared.js?v=202611080036"></script>
+<script src="hub-store.js?v=202611080036"></script>
+<script src="hub-say.js?v=202611080036"></script>
+<script src="hub-sync.js?v=202611080036"></script>
+<script src="hub-notebook.js?v=202611080036"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -1237,13 +1238,26 @@ function library(){
   return {};
 }
 const assigned = () => ((P && P.set && P.set.setFor) || {});
-function setIdFor(group){
+/* THE CLASSES (Ramy, 7 Nov 2026: "after TP4 they change level ... so TP points now will also be different"). Where Course
+   admin > Classes puts a group in one class and then another, its TP1 to TP4 come from the first class's set and TP5 on
+   from the second's (hub-shared hubClassAtTp). A set's session "5A" is that book's fifth TP, taught by whichever group is
+   in that class by then. Without classes, one set per group, as before. Asked without a TP, the first half's. */
+const classSetId = (group, tp) => { const k = window.hubClassAtTp ? hubClassAtTp(SETTINGS, group, tp || 1) : null; return k && k.set && library()[k.set] ? k.set : ''; };
+const byClasses = group => !!(window.hubClassPlan && hubClassPlan(SETTINGS, group) && classSetId(group, 1));
+function setIdFor(group, tp){
   const lib = library(), ids = Object.keys(lib);
   if (!ids.length) return '';
+  const k = classSetId(group, tp); if (k) return k;
   const chosen = assigned()[group] || '';
   return lib[chosen] ? chosen : ids[0];          // one set serves every group until told otherwise
 }
-const setFor = group => library()[setIdFor(group)] || null;
+const setFor = (group, tp) => library()[setIdFor(group, tp)] || null;
+/* the class's words for a group's card: "Intermediate set, TP1 to TP4; then Elementary set" */
+function classSetsLine(group){
+  const lib = library(), a = setIdFor(group, 1), b = setIdFor(group, LEVEL_AT);
+  const nm = id => esc(setName(lib[id])) + (lib[id] && lib[id].level ? ' · ' + esc(window.hubLevelName ? hubLevelName(lib[id].level) : lib[id].level) : '');
+  return a === b ? nm(a) : `${nm(a)}, TP 1 to ${LEVEL_AT - 1}; then ${nm(b)}`;
+}
 const setName = s => (s && (s.name || s.book)) || 'The set';
 
 function setBar(){
@@ -1316,7 +1330,7 @@ function build(keepEdits){
                 set: Object.assign({}, (P && P.set) || {}, { library: lib, setFor: assigned() }) });
   let usedAny = false;
   gs.forEach((g, i) => {
-    const set = setFor(g.group);
+    const set = setFor(g.group), setAt = tp => setFor(g.group, tp);
     if (set) usedAny = true;
     const r = R.rotate(g.people, { tps: TPS, groupOffset: i * 3 });
     const rows = {};
@@ -1328,7 +1342,7 @@ function build(keepEdits){
       if (!set || !st.length) return null;
       const day = [], fixed = {};
       for (let tp = 1; tp <= TPS; tp++) {
-        const ses = (set.sessions || {})[tp + (si === 0 ? 'A' : 'B')];
+        const ses = ((setAt(tp) || {}).sessions || {})[tp + (si === 0 ? 'A' : 'B')];
         day.push([0, 1, 2].map(k => ((ses && ses.slots || [])[k] || {}).type || ''));
         const f = st.map(p => { const was = keepEdits && P && P.groups && P.groups[g.group] && P.groups[g.group][p.token] && P.groups[g.group][p.token]['tp' + tp]; return was && was.edited ? (was.aim || '') : ''; });
         if (f.some(Boolean)) fixed[tp - 1] = f;
@@ -1343,7 +1357,7 @@ function build(keepEdits){
           const was = keepEdits && P && P.groups && P.groups[g.group] && P.groups[g.group][token] && P.groups[g.group][token]['tp'+tp];
           if (was && was.edited) { rows[token]['tp'+tp] = was; return; }
           const dd = deal[si], mine = dd && dd.perms[tp - 1] ? dd.perms[tp - 1][st.indexOf(p)] : pos;
-          const found = set && slotFor(set, tp, si, mine === undefined ? pos : mine);
+          const found = setAt(tp) && slotFor(setAt(tp), tp, si, mine === undefined ? pos : mine);
           const cell = { aim: r.rows[token]['tp'+tp] };
           rows[token]['tp'+tp] = Object.assign(found ? stamp(cell, found) : cell, keptMakeup(was));
         });
@@ -1392,7 +1406,7 @@ const MKEY = (g, t, tp) => g + '|' + t + '|' + tp;
    the order by hand, its place in the day (`at`); hub-rotation's orderDealt reads both, so the timetable and the
    trainee's page follow. */
 function dayCtx(g, tp, si){
-  const set = setFor(g), sets = (P.sets && P.sets[g]) || [];
+  const set = setFor(g, tp), sets = (P.sets && P.sets[g]) || [];
   const mates = si >= 0 ? (sets[si] || []).filter(Boolean) : [];
   const ses = set && si >= 0 ? (set.sessions || {})[tp + (si === 0 ? 'A' : 'B')] : null;
   return { set, mates, slots: (ses && ses.slots) || [] };
@@ -2601,7 +2615,7 @@ function boardHTML(dealt){
     const act = s ? `<a class="cblink" href="28_tp_point_sets.html?from=tp&set=${encodeURIComponent(cur)}">${cx ? 'Open' : 'Write'}</a>` : '';
     const label = g.group ? 'Group ' + g.group : 'The course';
     return `<div class="cvgrp"><div class="cvwho"><span class="cvnum">${esc(g.group || '1')}</span><div><b>${esc(label)}</b><small>${g.people.length} trainee${g.people.length === 1 ? '' : 's'}${sets.map((n, i) => ` <em class="ts ${SETCOL[i % 3]}">${esc(n)}</em>`).join('')}</small></div></div>
-      <div class="cvpick"><select data-cbset="${esc(g.group)}" aria-label="The TP point set ${esc(label)} uses"><optgroup label="Sets on this course">${ids.map(id => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(setName(lib[id]))}${esc(lv(lib[id]))}</option>`).join('')}</optgroup>
+      <div class="cvpick">${byClasses(g.group) ? `<p class="cvcls">${classSetsLine(g.group)}<small>From the classes on <a href="6_centre_admin_dashboard.html#classesCard">Course admin</a></small></p>` : ''}<select${byClasses(g.group) ? ' hidden' : ''} data-cbset="${esc(g.group)}" aria-label="The TP point set ${esc(label)} uses"><optgroup label="Sets on this course">${ids.map(id => `<option value="${esc(id)}"${id === cur ? ' selected' : ''}>${esc(setName(lib[id]))}${esc(lv(lib[id]))}</option>`).join('')}</optgroup>
         <optgroup label="Add a set"><option value="__pool">Browse the TP Point Pool…</option><option value="__own">Write your own set…</option></optgroup></select></div>
       <div class="cbact">${tag}${act}</div></div>`;
   }).join('');

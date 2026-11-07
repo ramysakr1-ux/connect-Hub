@@ -1708,7 +1708,7 @@ case 'inbox': {
       var bDate = String(req.date || ''), bId = String(req.id || ''), bAsg = String(req.asg || '').toLowerCase();
       var sheet = bookableTile_(course.id, bDate, bId);
       var bSet = courseRead_(course.id, 'settings') || {};
-      var own = ownTutor_(bSet, me), isTut = /tutorial/i.test(sheet.tile.t || ''), sheetBy = tutorName_(bSet, sheet.tile.by);
+      var own = ownTutor_(bSet, me, bDate, sheet.tile.t), isTut = /tutorial/i.test(sheet.tile.t || ''), sheetBy = tutorName_(bSet, sheet.tile.by);
       var ownSheet = !own || !sheetBy || own.toLowerCase() === sheetBy.toLowerCase();
       if (isTut && !ownSheet) throw new Error('Tutorials are with your own tutor, ' + own + '. Book on their sheet.');
       if (!isTut && !ownSheet) {
@@ -3500,8 +3500,23 @@ function tutorName_(set, by) {
   var names = String((set && set.tutorNames) || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
   return names[+by] || '';
 }
-/* their own tutor: their group's row on Course admin > Tutor contacts */
-function ownTutor_(set, me) {
+/* their own tutor: their group's row on Course admin > Tutor contacts.
+   v203 (7 Nov 2026, Ramy: "after TP4 they change level and they swap trainers ... send them to the right door"): where the
+   course has CLASSES (Course admin > Classes: settings.classes { list: [{id, level, set, tutor}], groups: { g: [before,
+   after] }, change: "YYYY-MM-DD" }), their own tutor is their class's tutor on the sheet's day: the first class's before the
+   change, the second's from it. A Stage 2 tutorial is with the first class's tutor, a Stage 3 tutorial with the second's,
+   whatever day it falls on. The page's copy of this rule is hubTutorForTile in hub-shared.js: change one, change both. */
+function ownTutor_(set, me, date, title) {
+  var c = set && set.classes, g0 = String((me && me.group) || '');
+  if (c && c.list && c.list.length && c.groups && c.groups[g0]) {
+    var by = function (id) { for (var j = 0; j < c.list.length; j++) if (c.list[j] && id && c.list[j].id === id) return c.list[j]; return null; };
+    var a = by(c.groups[g0][0]), b = by(c.groups[g0][1]); a = a || b; b = b || a;
+    if (a) {
+      var t = String(title || ''), d = String(date || '').slice(0, 10), ch = String(c.change || '').slice(0, 10);
+      var k = /stage\s*2/i.test(t) ? a : /stage\s*3/i.test(t) ? b : (ch && d && d >= ch) ? b : a;
+      if (k && k.tutor) return String(k.tutor);
+    }
+  }
   var rows = (set && set.tutorContacts) || [], g = String((me && me.group) || '');
   for (var i = 0; i < rows.length; i++) if (rows[i] && rows[i].name && g && String(rows[i].group || '') === g) return String(rows[i].name);
   return '';

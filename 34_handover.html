@@ -33,7 +33,7 @@
 <title>Handover</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611072356">
+<link rel="stylesheet" href="hub-tokens.css?v=202611080036">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -90,19 +90,19 @@
     .note.empty{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611072356">
+<link rel="stylesheet" href="hub-house.css?v=202611080036">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"><p class="lede">Loading the course…</p></div>
 </div>
-<script src="hub-shared.js?v=202611072356"></script>
-<script src="hub-store.js?v=202611072356"></script>
-<script src="hub-say.js?v=202611072356"></script>
-<script src="hub-rotation.js?v=202611072356"></script>
-<script src="hub-sync.js?v=202611072356"></script>
-<script src="hub-notebook.js?v=202611072356"></script>
+<script src="hub-shared.js?v=202611080036"></script>
+<script src="hub-store.js?v=202611080036"></script>
+<script src="hub-say.js?v=202611080036"></script>
+<script src="hub-rotation.js?v=202611080036"></script>
+<script src="hub-sync.js?v=202611080036"></script>
+<script src="hub-notebook.js?v=202611080036"></script>
 <script>
 /* Whose room this is: the tutors'. hub-sync.js sets HubMode, which the gate reads;
    without it the room opened for a trainee (the pre-push check caught it, 25 Oct 2026). */
@@ -125,7 +125,7 @@ else (async function(){
   const groups = [...new Set(roster.map(t => String(t.group || '')).filter(Boolean))].sort();
   const urlG = new URLSearchParams(location.search).get('group');
   let group = (urlG && groups.includes(urlG)) ? urlG : (groups[0] || '');
-  const swapDay = (() => { const days = (course.timetable && course.timetable.days) || []; const d = days.find(x => String(x.tp) === String(half)); if (!d || !d.date) return ''; try { return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'long', timeZone: tz }).format(hubDateOf(d.date)); } catch (e) { return d.date; } })();
+  const swapDay = (() => { const days = (course.timetable && course.timetable.days) || []; const ch = window.hubClassChange ? hubClassChange(cs) : ''; const d = ch ? { date: ch } : days.find(x => String(x.tp) === String(half)); if (!d || !d.date) return ''; try { return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'long', timeZone: tz }).format(hubDateOf(d.date)); } catch (e) { return d.date; } })();
   const GRADE = { 'Above standard': ['above', 'Above'], 'To standard': ['to', 'To'], 'Not to standard': ['not', 'Not to'], 'Below standard': ['not', 'Not to'] };
   const STAGE = { above: ['above', 'Above standard'], to: ['to', 'To standard'], below: ['not', 'Not to standard'], not: ['not', 'Not to standard'] };
   const letterOf = (t, i) => (window.hubLetterOf && hubLetterOf(t.token, t.name)) || (cs.slotOf && cs.slotOf[t.token]) || 'ABCDEF'[i % 6];
@@ -184,8 +184,10 @@ else (async function(){
   function draw(){
     const list = roster.filter(t => String(t.group || '') === group);
     const c = chosen[group] || {};
-    leaving = c.from || (contacts.find(x => x && String(x.group || '') === group && x.name) || {}).name || taughtBy(list) || tutors[0] || '';
-    const receiving = c.to || tutors.find(n => n !== leaving) || '';
+    /* WITH CLASSES (Course admin > Classes, 7 Nov 2026): the first class's tutor hands over to the second's */
+    const plan = window.hubClassPlan ? hubClassPlan(cs, group) : null;
+    leaving = c.from || (plan && plan[0].tutor) || (contacts.find(x => x && String(x.group || '') === group && x.name) || {}).name || taughtBy(list) || tutors[0] || '';
+    const receiving = c.to || (plan && plan[1].tutor !== leaving && plan[1].tutor) || tutors.find(n => n !== leaving) || '';
     const stamps = list.map(t => (((t.records || {}).staffLinks || []).find(x => x && x.handover) || {}).handed).filter(Boolean).sort((a, b) => String(b.at).localeCompare(String(a.at)));
     const handed = (stamps.length && stamps.length === list.length) ? stamps[0] : null;
     const opts = (sel) => tutors.map(n => `<option${n === sel ? ' selected' : ''}>${esc(n)}</option>`).join('') || '<option>Tutor</option>';

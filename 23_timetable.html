@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611072356">
+<link rel="stylesheet" href="hub-tokens.css?v=202611080036">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -265,6 +265,7 @@
   .tgrid .nowbar:before{content:''; position:absolute; left:-1px; top:-3px; width:8px; height:8px; border-radius:50%; background:var(--gold);}
   .tile.tv2-past{opacity:.45;}
   .tile.tv2-now{box-shadow:0 0 0 2px var(--gold); z-index:2;}
+  .tile .klv{display:block; font-size:0.66rem; font-weight:600; letter-spacing:.02em; opacity:.85; margin-top:2px;}
   .tgrid .notes{padding:7px 9px 8px; border-top:1px solid var(--sand-line); font-size:0.7rem; line-height:1.45; color:var(--grey);}
   .tgrid .notes input{width:100%; box-sizing:border-box; font:inherit; font-size:0.72rem; padding:4px 6px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
   .addtile{display:block; width:calc(100% - 10px); margin:5px; font:inherit; font-size:0.7rem; font-weight:700; padding:5px; border-radius:var(--r-control); border:1px dashed var(--sand-line); background:none; color:var(--grey); cursor:pointer;}
@@ -824,25 +825,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611072356">
+<link rel="stylesheet" href="hub-house.css?v=202611080036">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611072356"></script>
-<script src="hub-tracker.js?v=202611072356"></script>
-<script src="hub-rotation.js?v=202611072356"></script>
-<script src="hub-xlsx.js?v=202611072356"></script>
-<script src="hub-docx.js?v=202611072356"></script>
-<script src="hub-timetable-parse.js?v=202611072356"></script>
-<script src="assignment-defaults.js?v=202611072356"></script>
-<script src="hub-shared.js?v=202611072356"></script>
-<script src="hub-store.js?v=202611072356"></script>
-<script src="hub-say.js?v=202611072356"></script>
-<script src="hub-sync.js?v=202611072356"></script>
-<script src="hub-notebook.js?v=202611072356"></script>
+<script src="hub-due.js?v=202611080036"></script>
+<script src="hub-tracker.js?v=202611080036"></script>
+<script src="hub-rotation.js?v=202611080036"></script>
+<script src="hub-xlsx.js?v=202611080036"></script>
+<script src="hub-docx.js?v=202611080036"></script>
+<script src="hub-timetable-parse.js?v=202611080036"></script>
+<script src="assignment-defaults.js?v=202611080036"></script>
+<script src="hub-shared.js?v=202611080036"></script>
+<script src="hub-store.js?v=202611080036"></script>
+<script src="hub-say.js?v=202611080036"></script>
+<script src="hub-sync.js?v=202611080036"></script>
+<script src="hub-notebook.js?v=202611080036"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -981,11 +982,13 @@ function roomsByLabel(){
   });
   return by;
 }
-function roomFor(slot, group){
+function roomFor(slot, group, level){
   if (!slot.room) return null;
   const list = ROOMS[String(slot.room).trim().toLowerCase()] || [];
   if (!list.length) return null;
-  return list.find(r => String(r.group || '') === String(group || '')) || list.find(r => !r.group) || list[0];
+  /* with classes (7 Nov 2026): the room named for the level the group is with that day comes first */
+  const lv = level && window.hubLevelName ? hubLevelName(level) : '';
+  return (lv && list.find(r => r.level && hubLevelName(r.level) === lv)) || list.find(r => String(r.group || '') === String(group || '')) || list.find(r => !r.group) || list[0];
 }
 
 /* The groups, and each one's two teaching sets, from the roster. */
@@ -1355,6 +1358,12 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
         return `<span class="tchr${me ? ' me' : ''}" title="${esc((many ? 'Group ' + (g.group || '') + ' · ' : '') + (me ? 'You teach' : 'Teaching'))}"><i class="av">${esc(String(p.letter || ''))}</i>${many ? '<small class="gp">Group ' + esc(g.group || '') + '</small>' : ''}</span>`;
       }).join('');
       title = `TP ${day.tp}${who ? '<span class="tchrs">' + who + '</span>' : ''}`;
+      /* THE CLASS IT IS TAUGHT IN (Course admin > Classes, 7 Nov 2026): its level and its tutor's initials, so the change of
+         level shows on the board itself */
+      if (window.hubClassAtTp && day.tp) {
+        const ks = teachers.map(g => ({ g, k: hubClassAtTp(SETTINGS, g.group, day.tp) })).filter(o => o.k && (o.k.level || o.k.tutor));
+        if (ks.length) title += '<span class="klv">' + ks.map(o => esc([(o.k.level && window.hubLevelShort) ? hubLevelShort(o.k.level) : (o.k.level || ''), o.k.tutor && window.hubInitials ? hubInitials(o.k.tutor) : ''].filter(Boolean).join(' · '))).join(' / ') + '</span>';
+      }
     }
     if (false && place && day.tp && teachers[0]) {
       const letters = teachers[0].order.map(p => String(p.letter)).sort();
@@ -1377,7 +1386,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
      another of the course's rooms; any tile can carry a link of its own. The
      room is named on the tile, and a Join button shows from fifteen minutes
      before it starts until it ends, on the course's own clock (nowLine). */
-  const room = joinFor(x, (rec('hub:me') || {}).group);
+  const room = joinFor(x, (rec('hub:me') || {}).group, day.date);
   if (room) cls.push('online');
   const joinHTML = room ? `<span class="rm">${esc(room.label)}</span><a class="join" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join</a>` : '';
   const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k !== 'tp' && x.by !== undefined && x.by !== '' && x.by !== null && TUTORS[+x.by] ? ' · ' + TUTORS[+x.by] : '');
@@ -1424,10 +1433,10 @@ function localStart(date, from){
   return (a && a.differs) ? hubClock(a.local) : '';
 }
 function roomLabelOf(x){ return x.room || (x.k === 'tp' ? 'Teaching practice' : x.k === 'input' ? 'Input' : ''); }
-function joinFor(x, group){
+function joinFor(x, group, date){
   if (x.url && /^https?:\/\//i.test(x.url) && x.url !== 'https://') return { label: 'Online', url: x.url };
   const lbl = roomLabelOf(x); if (!lbl) return null;
-  const r = roomFor({ room: lbl }, group);
+  const r = roomFor({ room: lbl }, group, x.k === 'tp' && window.hubLevelOn && group ? hubLevelOn(SETTINGS, group, date) : '');
   return r ? { label: r.label || lbl, url: r.url } : null;
 }
 
@@ -2974,7 +2983,7 @@ function openDetails(date, id){
   const name = x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '');
   const lt = localRange(day.date, x.s, x.e), tut = x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by] ? TUTORS[+x.by] : '';
   const page = x.k === 'input' ? (x.lib ? 'input-sessions/' + x.lib + '/' : libPageFor(x.t)) : '';
-  const room = joinFor(x, (rec('hub:me') || {}).group);
+  const room = joinFor(x, (rec('hub:me') || {}).group, day.date);
   el.innerHTML = `<p class="dt1">${esc(dayName(date))} · ${esc(hubClockRange(x.s, x.e))}${lt ? ` · <span class="lt" title="Your time">${esc(lt)}</span>` : ''}</p>
     <span class="kchip k-${esc(x.k)}">${esc(KIND_LABEL[x.k] || x.k)}</span>
     ${tut ? `<p class="dt1">With ${esc(tut)} (${esc(initialsOf(tut))})</p>` : ''}
@@ -3317,7 +3326,9 @@ function openBooking(date, id){
   el.innerHTML = sheetHTML(day, x) + (IS_TRAINEE ? (sh.mine.length
       ? `<div class="acts"><button type="button" class="btn quiet" id="bkFree">Cancel my place</button><button type="button" class="btn" id="bkOk">Done</button></div>`
       : can ? `${isTut ? '' : `<label>What is it about?<select id="bkAsg"><option value="">Something else</option>${['fol', 'lrt', 'lsrt', 'lfc'].map(k => `<option value="${k}">${asgShort(k)}</option>`).join('')}</select></label>`}
-        <p class="bkrule">${isTut ? 'Tutorials are with your own tutor.' : 'Before you submit an assignment, any tutor; after, your own tutor only.'}</p>
+        <p class="bkrule">${(() => { /* their tutor ON THAT DAY, from the classes (7 Nov 2026): Stage 3 is the second tutor's */
+          const own = window.hubTutorForTile ? hubTutorForTile(SETTINGS, (rec('hub:me') || {}).group, date, x.t) : '';
+          return isTut ? (own ? 'Tutorials are with your tutor, ' + esc(own) + '.' : 'Tutorials are with your own tutor.') : 'Before you submit an assignment, any tutor; after, your own tutor' + (own ? ', ' + esc(own) : '') + ', only.'; })()}</p>
         <div class="acts"><button type="button" class="btn quiet" id="bkOk">Close</button><button type="button" class="btn" id="bkGo">Book the next place</button></div><p class="bkmsg" id="bkMsg"></p>`
       : `${demo ? '<p class="bkrule">This is a demo course, so places are not booked here.</p>' : ''}<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`) : `<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`);
   el.hidden = false; el.classList.add('sheetpop'); asDrawer(el, x.t || 'Book a place');

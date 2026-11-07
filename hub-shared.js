@@ -1108,6 +1108,80 @@ window.hubTutorNames = function(cs){
   (Array.isArray(cs.tutorContacts) ? cs.tutorContacts : []).forEach(function(c){ if (c) add(c.name); });
   return out;
 };
+/* THE CLASSES (Ramy, 7 Nov 2026: "after TP4 they change level and they swap trainers ... so TP points now will also be
+   different ... different contact person. And Lite will be able to read this. Send them to the right door").
+   A CLASS is a level with its book's TP point set, its tutor and its room. Each group is in one class for the first half
+   and another for the second; the change is a DAY (the new-class day on the timetable, else the first day of the second
+   level's TP). Kept on the course settings as
+     classes: { list: [{ id, level, set, tutor, room }], groups: { "1": [before id, after id] }, change: "YYYY-MM-DD" }
+   Every reader asks these, so the TP points, getting to know you, tutorials, consultations, "email your tutor", the
+   timetable and the handover all follow one record. A course with no classes set reads exactly as before.
+   The store keeps its own copy of the tutor rule (ownTutor_ in store/gas/Code.js): change one, change both. */
+window.hubClasses = function(cs){
+  var c = cs && cs.classes;
+  return (c && Array.isArray(c.list) && c.list.some(function(x){ return x && x.id; })) ? c : null;
+};
+window.hubLevelAt = function(cs){ var n = parseInt((cs && cs.tpCount) || '', 10) || 8; return Math.floor(n / 2) + 1; };
+/* [first-half class, second-half class] for a group, or null when the course has no classes for it */
+window.hubClassPlan = function(cs, group){
+  var c = window.hubClasses(cs); if (!c) return null;
+  var row = (c.groups || {})[String(group == null ? '' : group)]; if (!Array.isArray(row)) return null;
+  var by = function(id){ for (var i = 0; i < c.list.length; i++) if (c.list[i] && id && c.list[i].id === id) return c.list[i]; return null; };
+  var a = by(row[0]), b = by(row[1]);
+  if (!a && !b) return null;
+  return [a || b, b || a];
+};
+window.hubClassChange = function(cs){ var c = window.hubClasses(cs); return c ? String(c.change || '').slice(0, 10) : ''; };
+/* the class a group is in on a day (YYYY-MM-DD) */
+window.hubClassOn = function(cs, group, date){
+  var p = window.hubClassPlan(cs, group); if (!p) return null;
+  var ch = window.hubClassChange(cs), d = String(date || '').slice(0, 10);
+  return (ch && d && d >= ch) ? p[1] : p[0];
+};
+/* the class a group teaches a TP in: TP1 to TP4 the first, TP5 on the second (eight TPs) */
+window.hubClassAtTp = function(cs, group, tp){
+  var p = window.hubClassPlan(cs, group); if (!p) return null;
+  return (+tp >= window.hubLevelAt(cs)) ? p[1] : p[0];
+};
+/* which half a tutorial tile belongs to by its name: a Stage 2 tutorial looks back on the first half (its tutor), a Stage 3
+   tutorial is with the second half's tutor, whatever day it falls on; anything else goes by the day */
+window.hubTutorForTile = function(cs, group, date, title){
+  var p = window.hubClassPlan(cs, group);
+  if (p) {
+    var t = String(title || '');
+    if (/stage\s*2/i.test(t)) return p[0].tutor || '';
+    if (/stage\s*3/i.test(t)) return p[1].tutor || '';
+  }
+  return window.hubTutorOn(cs, group, date);
+};
+/* a trainee's own tutor on a day: their class's tutor; with no classes, their group's row in Tutor contacts */
+window.hubTutorOn = function(cs, group, date){
+  var k = window.hubClassOn(cs, group, date || (window.hubToday ? window.hubToday() : new Date().toISOString().slice(0, 10)));
+  if (k && k.tutor) return String(k.tutor);
+  var rows = (cs && Array.isArray(cs.tutorContacts)) ? cs.tutorContacts : [], g = String(group == null ? '' : group);
+  for (var i = 0; i < rows.length; i++) if (rows[i] && rows[i].name && g && String(rows[i].group || '') === g) return String(rows[i].name);
+  return '';
+};
+/* the level a group teaches on a day, from its class: '' with no classes (the readers then fall back to the set or room) */
+window.hubLevelOn = function(cs, group, date){
+  var k = window.hubClassOn(cs, group, date || (window.hubToday ? window.hubToday() : ''));
+  return k && k.level ? String(k.level) : '';
+};
+/* the contact row (name, email, role) for a tutor by name */
+window.hubTutorContact = function(cs, name){
+  var n = String(name || '').trim().toLowerCase(); if (!n) return null;
+  var rows = (cs && Array.isArray(cs.tutorContacts)) ? cs.tutorContacts : [];
+  for (var i = 0; i < rows.length; i++) if (rows[i] && String(rows[i].name || '').trim().toLowerCase() === n) return rows[i];
+  return null;
+};
+/* the change day the timetable proposes: its new-class day, else the first day of the second level's first TP */
+window.hubClassChangeFromTimetable = function(cs, tt){
+  var days = (tt && Array.isArray(tt.days)) ? tt.days.filter(function(d){ return d && !d.closed; }) : [];
+  for (var i = 0; i < days.length; i++) if (days[i].how === 'newclass') return days[i].date;
+  var at = window.hubLevelAt(cs), first = '';
+  days.forEach(function(d){ if (+d.tp === at && (!first || d.date < first)) first = d.date; });
+  return first;
+};
 window.hubMeets = function(tt){
   var m = tt && Array.isArray(tt.meets) ? tt.meets.filter(function(n){ return n >= 0 && n <= 6; }) : [];
   return m.length ? m : [1, 2, 3, 4, 5];

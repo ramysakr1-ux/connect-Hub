@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611072356">
+<link rel="stylesheet" href="hub-tokens.css?v=202611080036">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -219,6 +219,8 @@
   .ilrow .cl-label{flex:1 1 170px; min-width:0;}
   .ilrow .cl-url{flex:2 1 220px; min-width:0;}
   .ilrow .cl-from{flex:0 0 185px; font-size:0.84rem; padding:8px 10px;}
+  .ilrow .kl-n{flex:0 0 78px; font-size:0.86rem;} .ilrow .kg-w{font-size:0.84rem; color:var(--grey);}
+  .kl-row .house-sel, .kg-row .house-sel{flex:1 1 170px; min-width:0;}
   .ilrow .sw.short{flex:0 0 auto; padding:0;}
   /* which timetable session each of the center's own input sessions found (Ramy, 28 Oct 2026: "it has to be the exact
      wording, right?" -- it does not, and this line shows what it found) */
@@ -666,7 +668,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611072356">
+<link rel="stylesheet" href="hub-house.css?v=202611080036">
 </head>
 <body>
 <div class="board">
@@ -955,6 +957,16 @@
         <p class="hintline">Ask Connect sorts a tutor's notes into the feedback boxes and drafts the overall comment. Off, nothing from the feedback form goes to it. The CELTA 5's stages are not affected.</p>
       </div>
     </div>
+    </section>
+    <!-- THE CLASSES (Ramy, 7 Nov 2026: "after TP4 they change level and they swap trainers ... and Lite will be able to read
+         this. Send them to the right door"). One record: each class is a level, its TP points and its tutor; each group is
+         in one class until the change and another after it. hub-shared.js hubClassOn and the store's ownTutor_ read it. -->
+    <section class="setcard" id="classesCard">
+    <h3 class="docsh">Classes</h3>
+    <div class="guide-box gb-plain"><div class="gb"><p>A class is a level with its own TP points and its own tutor. Each group teaches one class until the change of level, then the other. Lite follows it: the TP points each trainee gets, the getting-to-know-you activities, who they book tutorials and consultations with, and who “Email your tutor” writes to. Leave it empty and nothing changes at the change of level.</p></div></div>
+    <div id="classList" class="fields docs"></div>
+    <button type="button" class="btn ghost" id="addClass" style="margin-top:10px;">Add a class</button>
+    <div id="classGroups" class="fields docs" style="margin-top:16px;"></div>
     </section>
     <section class="setcard">
     <h3 class="docsh">Online rooms</h3>
@@ -1266,19 +1278,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611072356"></script>
-<script src="hub-store.js?v=202611072356"></script>
-<script src="hub-xlsx.js?v=202611072356"></script>
-<script src="hub-say.js?v=202611072356"></script>
-<script src="agreement-defaults.js?v=202611072356"></script>
-<script src="observation-defaults.js?v=202611072356"></script>
-<script src="hub-shared.js?v=202611072356"></script>
-<script src="hub-rotation.js?v=202611072356"></script>
-<script src="hub-due.js?v=202611072356"></script>
-<script src="hub-sync.js?v=202611072356"></script>
-<script src="hub-notebook.js?v=202611072356"></script>
-<script src="hub-hand.js?v=202611072356"></script>
-<script src="hub-ink.js?v=202611072356"></script>
+<script src="assignment-defaults.js?v=202611080036"></script>
+<script src="hub-store.js?v=202611080036"></script>
+<script src="hub-xlsx.js?v=202611080036"></script>
+<script src="hub-say.js?v=202611080036"></script>
+<script src="agreement-defaults.js?v=202611080036"></script>
+<script src="observation-defaults.js?v=202611080036"></script>
+<script src="hub-shared.js?v=202611080036"></script>
+<script src="hub-rotation.js?v=202611080036"></script>
+<script src="hub-due.js?v=202611080036"></script>
+<script src="hub-sync.js?v=202611080036"></script>
+<script src="hub-notebook.js?v=202611080036"></script>
+<script src="hub-hand.js?v=202611080036"></script>
+<script src="hub-ink.js?v=202611080036"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1703,12 +1715,14 @@ try {
     paintCertSig();
     if(cs.volunteerContact){ document.getElementById('volContactName').value = cs.volunteerContact.name || ''; document.getElementById('volContactEmail').value = cs.volunteerContact.email || ''; }
     if(Array.isArray(cs.tutorContacts)) CONTACTS = cs.tutorContacts.filter(c => c && (c.name || c.email)).map(c => ({ name: c.name || '', email: c.email || '', group: c.group || '', role: c.role || '' }));
+    if(cs.classes && typeof cs.classes === 'object') CLASSES = JSON.parse(JSON.stringify(cs.classes));
     if(Array.isArray(cs.onlineRooms)) ROOMS = cs.onlineRooms.filter(r => r && (r.label || r.url)).map(r => ({ label: r.label || '', url: r.url || '', group: r.group || '', level: r.level || '', assessor: !!r.assessor }));
   }
 } catch(e) { console.error('Course admin: the settings did not all load — ' + (e && e.message || e)); }
 renderCandLinks();
 renderRooms();
 renderContacts();
+renderClasses();
 
 document.getElementById('logoUploadBtn').addEventListener('click', ()=>document.getElementById('logoFile').click());
 /* 7 Oct 2026: the box takes a pasted or dropped image as well as a chosen
@@ -1836,6 +1850,7 @@ function saveSettings(how){
     courseLinks: readCandLinks(),
     onlineRooms: readRooms(),
     tutorContacts: readContacts(),
+    classes: readClasses(),
     /* The center's signature for the volunteers' certificates (8 Oct 2026). */
     certSigner: (() => { const n = document.getElementById('certSignerName').value.trim(); return n ? { name: n, role: document.getElementById('certSignerRole').value.trim(), ink: (certSigner && certSigner.ink) || '' } : null; })(),
     volunteerContact: (() => { const n = document.getElementById('volContactName').value.trim(), e = document.getElementById('volContactEmail').value.trim(); return e ? { name: n, email: e } : null; })(),
@@ -1965,6 +1980,92 @@ function readContacts(){
   const ok = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   CONTACTS = all; return all.filter(c => c.name || ok(c.email)).map(c => { const o = { name: c.name }; if (ok(c.email)) o.email = c.email; if (c.group) o.group = c.group; if (c.role) o.role = c.role; return o; });
 }
+/* ---- THE CLASSES (Ramy, 7 Nov 2026) ------------------------------------------------------------------------------
+   Each class: a level, the TP point set it teaches from (the course's own sets, written on the TP points screen), its
+   tutor. Each group: its class until the change, and after. The change: a day, proposed from the timetable (its new-class
+   day). Saved with the rest of Settings as `classes`; nothing is saved until a class has a tutor or a set, so an untouched
+   card leaves the course as it was. */
+var CLASSES = CLASSES || null;   /* var, like CONTACTS: the settings load above fills it before this line runs */
+function classTutorNames(){
+  const out = [], add = n => { n = String(n || '').trim(); if (n && !out.some(x => x.toLowerCase() === n.toLowerCase())) out.push(n); };
+  String((document.getElementById('tutorNames') || {}).value || '').split(/[,\n;]+/).forEach(add);
+  document.querySelectorAll('.tc-name').forEach(el => add(el.value));
+  return out;
+}
+function classSets(){
+  let P = null; try { P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null'); } catch (e) {}
+  const lib = (P && P.set && P.set.library) || {};
+  return Object.keys(lib).map(id => ({ id, name: lib[id].name || lib[id].book || 'A set', level: lib[id].level || '' })).filter(x => x.name);
+}
+function classGroups(){
+  let people = []; try { people = Array.isArray(ROSTER) ? ROSTER : Object.values(loadRoster().trainees || {}); } catch (e) {}
+  const gs = [...new Set(people.map(p => p && p.group).filter(Boolean).map(String))].sort();
+  return gs.length ? gs : ['1', '2'];
+}
+function classLabel(k, i){
+  const lv = k.level ? (window.hubLevelName ? hubLevelName(k.level) : k.level) : '';
+  return (lv || 'Class ' + (i + 1)) + (k.tutor ? ' · ' + k.tutor : '');
+}
+function renderClasses(){
+  const host = document.getElementById('classList'); if (!host) return;
+  const C = CLASSES || {};
+  let list = Array.isArray(C.list) && C.list.length ? C.list : [];
+  const gs = classGroups();
+  if (!list.length) list = gs.map((g, i) => ({ id: 'k' + (i + 1), level: '', set: '', tutor: '' }));
+  const tutors = classTutorNames(), sets = classSets();
+  const lvOpt = cur => '<option value="">Level</option>' + (window.HUB_LEVELS || []).map(([c, n]) => `<option value="${esc(c)}"${(cur && (cur === c || (window.hubLevelName && hubLevelName(cur) === n))) ? ' selected' : ''}>${esc(n)}</option>`).join('');
+  const setOpt = cur => `<option value="">${sets.length ? 'TP points' : 'No TP point sets yet'}</option>` + sets.map(s => `<option value="${esc(s.id)}"${cur === s.id ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  const tutOpt = cur => '<option value="">Tutor</option>' + tutors.concat(cur && !tutors.includes(cur) ? [cur] : []).map(n => `<option value="${esc(n)}"${cur === n ? ' selected' : ''}>${esc(n)}</option>`).join('');
+  host.innerHTML = list.map((k, i) => `<div class="wide ilrow kl-row" data-id="${esc(k.id)}">
+      <b class="kl-n">Class ${i + 1}</b>
+      <div class="house-sel"><select class="kl-level" title="Level">${lvOpt(k.level)}</select></div>
+      <div class="house-sel"><select class="kl-set" title="The TP points this class teaches from">${setOpt(k.set)}</select></div>
+      <div class="house-sel"><select class="kl-tutor" title="Its tutor">${tutOpt(k.tutor)}</select></div>
+      ${list.length > 1 ? `<button type="button" class="linkbtn kl-del" data-i="${i}">Remove</button>` : ''}
+    </div>`).join('') + (sets.length ? '' : '<div class="wide"><small class="muted">The TP point sets are written on the TP points screen; they show here once there is one.</small></div>');
+  /* the groups: before and after the change */
+  const rows = C.groups || {};
+  const kOpt = cur => list.map((k, i) => `<option value="${esc(k.id)}"${cur === k.id ? ' selected' : ''}>${esc(classLabel(k, i))}</option>`).join('');
+  let tt = null; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {}
+  let cs0 = {}; try { cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  const proposed = window.hubClassChangeFromTimetable ? hubClassChangeFromTimetable(cs0, tt) : '';
+  const change = C.change || proposed || '';
+  const nice = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { return d; } };
+  document.getElementById('classGroups').innerHTML = `<div class="wide"><b>The groups</b></div>` + gs.map((g, gi) => {
+      const r = Array.isArray(rows[g]) ? rows[g] : [list[gi % list.length].id, list[(gi ^ 1) < list.length ? (gi ^ 1) : gi % list.length].id];
+      return `<div class="wide ilrow kg-row" data-g="${esc(g)}"><b class="kl-n">Group ${esc(g)}</b>
+        <span class="kg-w">until the change</span><div class="house-sel"><select class="kg-before">${kOpt(r[0])}</select></div>
+        <span class="kg-w">then</span><div class="house-sel"><select class="kg-after">${kOpt(r[1])}</select></div></div>`; }).join('')
+    + `<div class="wide ilrow"><b class="kl-n">The change</b><input type="date" id="classChange" aria-label="The change of level" value="${esc(change)}" style="width:auto">
+       <small class="muted">${proposed ? 'The timetable’s new class is on ' + esc(nice(proposed)) + (C.change && C.change !== proposed ? '. <button type="button" class="linkbtn" id="classChangeTT">Use that day</button>' : '.') : 'From this day each group is with its second class and its tutor. Stage 2 tutorials stay with the first tutor; Stage 3 tutorials are with the second.'}</small></div>`;
+  host.querySelectorAll('.kl-del').forEach(b => b.addEventListener('click', () => { const c = readClassesRaw(); c.list.splice(+b.dataset.i, 1); CLASSES = c; renderClasses(); scheduleSave(); }));
+  host.querySelectorAll('.kl-set').forEach(sel => sel.addEventListener('change', () => {
+    /* a set with a level names the class's level, when the level is not chosen yet */
+    const row = sel.closest('.kl-row'), lv = row.querySelector('.kl-level'), s = sets.find(x => x.id === sel.value);
+    if (s && s.level && !lv.value) { const code = (window.HUB_LEVELS || []).find(([c, n]) => window.hubLevelName && hubLevelName(s.level) === n); if (code) lv.value = code[0]; }
+  }));
+  host.querySelectorAll('.kl-level, .kl-tutor').forEach(sel => sel.addEventListener('change', () => { CLASSES = readClassesRaw(); renderClasses(); }));
+  const ct = document.getElementById('classChangeTT'); if (ct) ct.addEventListener('click', () => { document.getElementById('classChange').value = proposed; scheduleSave(); });
+}
+function readClassesRaw(){
+  const list = [...document.querySelectorAll('.kl-row')].map(r => ({ id: r.dataset.id, level: r.querySelector('.kl-level').value, set: r.querySelector('.kl-set').value, tutor: r.querySelector('.kl-tutor').value }));
+  const groups = {}; document.querySelectorAll('.kg-row').forEach(r => { groups[r.dataset.g] = [r.querySelector('.kg-before').value, r.querySelector('.kg-after').value]; });
+  const ch = document.getElementById('classChange');
+  return { list, groups, change: ch ? ch.value : '' };
+}
+function readClasses(){
+  if (!document.getElementById('classList')) return CLASSES || undefined;
+  const c = readClassesRaw();
+  CLASSES = c;
+  /* on only once a class says something: an untouched card is no classes */
+  return c.list.some(k => k.tutor || k.set) ? c : undefined;
+}
+/* a tutor added or renamed above is offered in the classes at once */
+document.getElementById('panel-settings').addEventListener('change', e => { if (e.target.matches('.tc-name, #tutorNames')) { CLASSES = readClassesRaw(); renderClasses(); } });
+document.getElementById('addClass').addEventListener('click', () => {
+  const c = readClassesRaw(); let n = c.list.length + 1; while (c.list.some(k => k.id === 'k' + n)) n++;
+  c.list.push({ id: 'k' + n, level: '', set: '', tutor: '' }); CLASSES = c; renderClasses();
+});
 document.getElementById('addTutorContact').addEventListener('click', () => { readContacts(); CONTACTS.push({ name:'', email:'', group:'' }); renderContacts(); });
 document.getElementById('toggleTutorBulk').addEventListener('click', e => {
   const bw = document.getElementById('tutorBulkWrap'), open = bw.style.display === 'none';
