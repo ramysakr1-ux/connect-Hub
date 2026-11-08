@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611080036">
+<link rel="stylesheet" href="hub-tokens.css?v=202611080952">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -131,7 +131,7 @@
   .adrow{display:grid; grid-template-columns:minmax(150px,1fr) repeat(3, minmax(0,1.2fr)); gap:8px 12px; align-items:end; padding:10px 0; border-top:1px solid var(--row-line);}
   .adrow b{align-self:center; font-size:.92rem;} .adrow label{display:flex; flex-direction:column; gap:4px; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
   .adrow input{font:inherit; font-size:.86rem; text-transform:none; letter-spacing:0; font-weight:500; color:var(--ink); padding:7px 9px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper);}
-  .adrow .dsets{grid-column:2 / -1; display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px 12px;} .adrow .dsets small{grid-column:1 / -1; color:var(--grey); font-size:.78rem;}
+  .adrow .dsets{grid-column:2 / -1; display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:8px 12px;} .adrow .dsets small{grid-column:1 / -1; color:var(--grey); font-size:.78rem;} .adrow .dclear{grid-column:1 / -1;}
   @media (max-width:700px){ .adrow .dsets{grid-column:auto;} }
   .adrow.hit{background:var(--gold-wash); box-shadow:0 0 0 2px var(--gold) inset; border-radius:10px; padding-left:10px; padding-right:10px; transition:background .4s;}
   @media (max-width:700px){ .adrow{grid-template-columns:1fr;} }
@@ -825,25 +825,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611080036">
+<link rel="stylesheet" href="hub-house.css?v=202611080952">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611080036"></script>
-<script src="hub-tracker.js?v=202611080036"></script>
-<script src="hub-rotation.js?v=202611080036"></script>
-<script src="hub-xlsx.js?v=202611080036"></script>
-<script src="hub-docx.js?v=202611080036"></script>
-<script src="hub-timetable-parse.js?v=202611080036"></script>
-<script src="assignment-defaults.js?v=202611080036"></script>
-<script src="hub-shared.js?v=202611080036"></script>
-<script src="hub-store.js?v=202611080036"></script>
-<script src="hub-say.js?v=202611080036"></script>
-<script src="hub-sync.js?v=202611080036"></script>
-<script src="hub-notebook.js?v=202611080036"></script>
+<script src="hub-due.js?v=202611080952"></script>
+<script src="hub-tracker.js?v=202611080952"></script>
+<script src="hub-rotation.js?v=202611080952"></script>
+<script src="hub-xlsx.js?v=202611080952"></script>
+<script src="hub-docx.js?v=202611080952"></script>
+<script src="hub-timetable-parse.js?v=202611080952"></script>
+<script src="assignment-defaults.js?v=202611080952"></script>
+<script src="hub-shared.js?v=202611080952"></script>
+<script src="hub-store.js?v=202611080952"></script>
+<script src="hub-say.js?v=202611080952"></script>
+<script src="hub-sync.js?v=202611080952"></script>
+<script src="hub-notebook.js?v=202611080952"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1779,7 +1779,11 @@ function asgDatesHTML(){
     if (!R || !gs.length) return '';
     const cur = a.dueSets || {};
     const rows = gs.map(g => (g.sets || []).map((set, i) => !set.length ? '' : `<label class="dset"><span>Due · ${esc(R.setName(set))}${gs.length > 1 ? ' · Group ' + esc(g.group) : ''}</span><input type="datetime-local" data-f="set" data-g="${esc(g.group)}" data-i="${i}" value="${v((cur[g.group] || [])[i])}"></label>`).join('')).join('');
-    return rows ? `<div class="dsets"><small>Only if the sets hand in on different days. Leave one empty and it keeps the Due.</small>${rows}</div>` : '';
+    /* CLEAR THEM (Ramy, 8 Nov 2026: "if I do and I want to just cancel it, I can't seem to do that"). A date and time
+       field cannot be emptied by hand in Safari, so a set date once written stayed, and the deadline showed twice on the
+       timetable. One button takes this assignment's set dates away; every set then keeps the Due. */
+    const any = Object.keys(cur).some(g => (cur[g] || []).some(Boolean));
+    return rows ? `<div class="dsets"><small>Only if the sets hand in on different days. Leave one empty and it keeps the Due.</small>${rows}${any ? `<div class="dclear"><button type="button" class="btn quiet wash" data-clear-sets="${esc(k)}">Clear the set dates</button></div>` : ''}</div>` : '';
   }
   return `<div class="imp" id="asgDates"><h3>Assignment dates</h3>
     <p>When each assignment opens to the trainees, when it is due, and when a resubmission is due. Set the day and the time; it shows on the timetable on the day it falls. Dragging a marker on the board moves its day. The wording is in Course admin.</p>
@@ -1795,11 +1799,18 @@ function setAsgDate(k, f, local, g, i){
   if (f === 'resub') { if (iso) a.resubDueAt = iso; else delete a.resubDueAt; }
   try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
 }
+function clearSetDates(k){
+  const w = rec('connect_assignment_wording_v2') || JSON.parse(JSON.stringify(window.CONNECT_HUB_DEFAULT_WORDING || {}));
+  if (!w[k] || !w[k].dueSets) return;
+  delete w[k].dueSets;
+  try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
+}
 function openAsgAt(k, field){ ASG_OPEN = true; FOCUS_ASG = { k, f: field === 'out' ? 'open' : (field || 'due') }; render(); }
 function wireMove(){
   if (!IS_TUTOR) return;
   if ($('asgOpen')) $('asgOpen').addEventListener('click', () => { ASG_OPEN = !ASG_OPEN; render(); if (ASG_OPEN) { const b = $('asgDates'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
   if ($('asgClose')) $('asgClose').addEventListener('click', () => { ASG_OPEN = false; render(); });
+  document.querySelectorAll('#asgDates [data-clear-sets]').forEach(b => b.addEventListener('click', () => { clearSetDates(b.dataset.clearSets); note = 'Set dates cleared: every set keeps the Due'; FOCUS_ASG = { k: b.dataset.clearSets, f: 'due' }; render(); }));
   document.querySelectorAll('#asgDates input[data-f]').forEach(i => i.addEventListener('change', () => { setAsgDate(i.closest('.adrow').dataset.k, i.dataset.f, i.value, i.dataset.g, i.dataset.i); note = 'Assignment dates saved'; render(); }));
   /* A CLICK ON A DEADLINE OPENS ITS DATES (Ramy, 7 Nov 2026: "you click, and then nothing really happens"). The old
      click put a day-only "Move" box at the top of the page, out of sight, so the page jumped and showed nothing. Now
