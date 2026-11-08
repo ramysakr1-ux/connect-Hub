@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611081722">
+<link rel="stylesheet" href="hub-tokens.css?v=202611081805">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -841,25 +841,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611081722">
+<link rel="stylesheet" href="hub-house.css?v=202611081805">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611081722"></script>
-<script src="hub-tracker.js?v=202611081722"></script>
-<script src="hub-rotation.js?v=202611081722"></script>
-<script src="hub-xlsx.js?v=202611081722"></script>
-<script src="hub-docx.js?v=202611081722"></script>
-<script src="hub-timetable-parse.js?v=202611081722"></script>
-<script src="assignment-defaults.js?v=202611081722"></script>
-<script src="hub-shared.js?v=202611081722"></script>
-<script src="hub-store.js?v=202611081722"></script>
-<script src="hub-say.js?v=202611081722"></script>
-<script src="hub-sync.js?v=202611081722"></script>
-<script src="hub-notebook.js?v=202611081722"></script>
+<script src="hub-due.js?v=202611081805"></script>
+<script src="hub-tracker.js?v=202611081805"></script>
+<script src="hub-rotation.js?v=202611081805"></script>
+<script src="hub-xlsx.js?v=202611081805"></script>
+<script src="hub-docx.js?v=202611081805"></script>
+<script src="hub-timetable-parse.js?v=202611081805"></script>
+<script src="assignment-defaults.js?v=202611081805"></script>
+<script src="hub-shared.js?v=202611081805"></script>
+<script src="hub-store.js?v=202611081805"></script>
+<script src="hub-say.js?v=202611081805"></script>
+<script src="hub-sync.js?v=202611081805"></script>
+<script src="hub-notebook.js?v=202611081805"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2813,6 +2813,31 @@ function checksHTML(){
     if (s3 >= 0 && firstOf(7) >= 0 && s3 >= firstOf(7)) lines.push(['note', 'Stage 3 tutorials come with two lessons left, before TP7']);
     const lastTwo = open.slice(-2).map(d => d.date);
     Object.keys(DUES).forEach(date => { if (lastTwo.indexOf(date) !== -1) DUES[date].forEach(x => { if (/resub/i.test(x.title || '')) lines.push(['note', `${x.title} falls on ${dayName(date)}, one of the last two days`]); }); });
+  })();
+  /* THE INPUT SESSIONS, BEFORE THE COURSE SEES THEM (Ramy, 8 Nov 2026: "we could have a warning"). Found on C/21 that
+     week: a session on the timetable twice, an input place left empty, an input session nobody teaches. Warnings, never
+     a block. Lesson planning is planning time, not an input session, and is left out. */
+  (function(){
+    const isPlan = t => /^(guided )?lesson planning\b/i.test(String(t || '').trim());
+    const hasBy = x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by];
+    const placed = placedMap(), seen = new Set();
+    Object.keys(placed).forEach(k => {
+      const on = placed[k];
+      on.forEach(p => {
+        const same = on.filter(o => sameGroup(o.x, p.x));
+        if (same.length < 2 || seen.has(k + '|' + (p.x.g || ''))) return;
+        seen.add(k + '|' + (p.x.g || ''));
+        lines.push(['bad', `“${p.x.t}” is on twice: ${same.map(o => dayName(o.date)).join(' and ')}`]);
+      });
+    });
+    const empty = [], nobody = [];
+    open.forEach(d => (d.sessions || []).forEach(x => {
+      if (x.k !== 'input') return;
+      if (!x.t) empty.push(dayName(d.date));
+      else if (!isPlan(x.t) && TUTORS.length && !hasBy(x)) nobody.push(`“${x.t}” (${dayName(d.date)})`);
+    }));
+    if (empty.length) lines.push(['note', `${empty.length === 1 ? 'An empty input place' : empty.length + ' empty input places'}: ${empty.join(', ')}`]);
+    if (nobody.length) lines.push(['note', `No tutor yet: ${nobody.join(', ')}`]);
   })();
   const un = Array.isArray(TT.unplaced) ? TT.unplaced : [];
   return `<div class="tchecks"><div class="cl"><span class="dot ${lines.some(l => l[0] === 'bad') || un.length ? 'bad' : 'ok'}"></span>${n} sessions on ${open.length} day${open.length === 1 ? '' : 's'}${un.length ? ` · <b>${un.length === 1 ? '1 day’s' : un.length + ' days’'} sessions don’t fit</b>` : ''}${lines.length ? '' : ' · no clashes'}</div>
