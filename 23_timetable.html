@@ -1234,6 +1234,11 @@ const toHM = n => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n %
 const byStart = (a, b) => (toMin(a.s) || 0) - (toMin(b.s) || 0);
 const newId = () => 's' + Math.random().toString(36).slice(2, 8);
 let TUTORS = window.hubTutorNames ? hubTutorNames(SETTINGS) : String(SETTINGS.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);   // both of Course admin's tutor lists
+/* EVERY TUTOR ON ONE SESSION (Ramy, 8 Nov 2026: "an option for both two or all tutors ... Life after CELTA doesn't have a
+   tutor, because we're both going to be"). A tile's tutor is one tutor's place in the list, or 'all': every tutor on the
+   course. byList says which, as places in the list; a tile nobody is named on gives none. */
+const byList = x => !x ? [] : x.by === 'all' ? TUTORS.map((_, i) => i) : (x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by]) ? [+x.by] : [];
+const allLabel = () => TUTORS.length === 2 ? 'Both tutors' : 'All tutors';
 /* Each tutor's color, chosen in Course admin or the next free one (hub-shared.js). */
 /* Tutors are told apart by their initials on the tile, not by color (Ramy, 27 Oct 2026: "drop the color and keep the initials"). */
 
@@ -1391,7 +1396,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     title = '<span class="tl">' + esc(x.t || '') + '</span>';
     /* the tutor's initials on their input tile, with the color (Ramy, 27 Oct 2026: "the trainer's initials instead of their names: color and initials") */
     /* ... and on any session a tutor runs: an assignment set-up, a tutorial, consultations (Ramy, 7 Nov 2026: "I don't see it") */
-    if (['tp', 'break', 'lunch'].indexOf(x.k) === -1 && x.by !== undefined && x.by !== '' && x.by !== null && TUTORS[+x.by]) title += `<span class="who tut" title="${esc(TUTORS[+x.by])}">${esc(window.hubInitials ? hubInitials(TUTORS[+x.by]) : String(TUTORS[+x.by]).split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase())}</span>`;
+    if (['tp', 'break', 'lunch'].indexOf(x.k) === -1) title += byList(x).map(i => `<span class="who tut" title="${esc(TUTORS[i])}">${esc(window.hubInitials ? hubInitials(TUTORS[i]) : String(TUTORS[i]).split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase())}</span>`).join('');
     /* An unnamed input is a slot nobody has named yet. The tutor sees it as a
        slot to fill; the course sees "Input", because a morning with nothing
        on it reads as a free morning (Ramy, 9 Oct 2026: "show them as Input"). */
@@ -1406,7 +1411,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
   const room = joinFor(x, (rec('hub:me') || {}).group, day.date);
   if (room) cls.push('online');
   const joinHTML = room ? `<span class="rm">${esc(room.label)}</span><a class="join" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join</a>` : '';
-  const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k !== 'tp' && x.by !== undefined && x.by !== '' && x.by !== null && TUTORS[+x.by] ? ' · ' + TUTORS[+x.by] : '');
+  const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k !== 'tp' && byList(x).length ? ' · ' + byList(x).map(i => TUTORS[i]).join(' and ') : '');
   /* THE READER'S OWN TIME, in green (29 Sep 2026; lost when the grid became
      tiles on 9 Oct, while the line above the grid still promised it -- put
      back 10 Oct). Only when the reader is somewhere that makes it a
@@ -1424,7 +1429,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     if (place.narrow) cls.push('narrow');
     if (!place.exact) cls.push('odd');
     /* the tutor filter (the design's "All tutors"): another tutor's sessions fade; breaks, lunch and the course's own tiles stay */
-    if (TFILTER !== '' && x.by !== undefined && x.by !== null && x.by !== '' && String(x.by) !== TFILTER) cls.push('faded');
+    if (TFILTER !== '' && byList(x).length && byList(x).map(String).indexOf(TFILTER) === -1) cls.push('faded');
     /* the reader's own time is a colour, not words (Ramy, 29 Oct 2026: "you don't have to say your time ... this colour is their time") */
     /* with a second clock the course's own time is a watermark and the reader's is the one to read (Ramy, 29 Oct 2026) */
     if (lt) cls.push('twoclock');
@@ -1841,9 +1846,9 @@ function whoHTML(){
   const mins = x => Math.max(0, (toMin(x.e) || 0) - (toMin(x.s) || 0));
   const hrs = m => { const h = Math.floor(m / 60), r = m % 60; return (h ? h + ' h' : '') + (h && r ? ' ' : '') + (r ? r + ' min' : '') || '0 min'; };
   const line = ({ d, x }) => `<button type="button" class="wline" data-who="${esc(d.date)}|${esc(x.id)}"><span class="wd">${esc(dayName(d.date))}</span><span class="wt">${esc(x.t || 'Empty input')}</span>${twiceOf(x) ? '<span class="twc">Twice</span>' : ''}</button>`;
-  const hasBy = x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by];
+  const hasBy = x => byList(x).length > 0;
   const cards = TUTORS.map((n, i) => {
-    const mine = tiles.filter(t => hasBy(t.x) && +t.x.by === i);
+    const mine = tiles.filter(t => byList(t.x).indexOf(i) !== -1);   // a session for every tutor counts for each
     return `<div class="wcard"><div class="wh"><span class="who tut">${esc(initialsOf(n))}</span><b>${esc(n)}</b><span class="wn">${mine.length} ${mine.length === 1 ? 'session' : 'sessions'} · ${hrs(mine.reduce((a, t) => a + mins(t.x), 0))}</span></div>
       ${mine.length ? mine.map(line).join('') : '<p class="wnone">No input sessions yet.</p>'}</div>`;
   }).join('');
@@ -2012,7 +2017,7 @@ function render(){
   const B = bounds(), H = (B.to - B.from) * PXM;
   let ruler = '';
   for (let m = Math.ceil(B.from / 60) * 60; m <= B.to; m += 60) ruler += `<span style="top:${(m - B.from) * PXM}px">${esc(hubClock(toHM(m)).replace(':00', ''))}</span>`;
-  const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input' && x.by !== undefined && x.by !== '' && TUTORS[+x.by]) used.add(+x.by); }));
+  const used = new Set(); (TT.days || []).forEach(d => (d.sessions || []).forEach(x => { if (x.k === 'input') byList(x).forEach(i => used.add(i)); }));
   Object.values(OUTS || {}).forEach(list => list.forEach(o => { const i = TUTORS.indexOf(o.by); if (i !== -1) used.add(i); }));
   const key = `<div class="slegend">${[['input', 'Input'], ['tp', 'Teaching practice'], ['feedback', 'TP feedback'], ['plan', 'Lesson planning'], ['demo', 'Demo lessons and observation'], ['event', 'Tutorials and whole group'], ['task', 'Assignments and admin'], ['reflect', 'Reflection'], ['assessor', 'Assessor'], ['break', 'Breaks and lunch']].map(k => `<span><i class="tile k-${k[0]}"></i>${k[1]}</span>`).join('')}<span><i class="dl"></i>A deadline</span></div>`;
   const gsw = groupSwitchHTML();
@@ -2020,7 +2025,7 @@ function render(){
   const two = n => String(n).padStart(2, '0');
   WEEK_OF = {}; weeks.forEach((x, i) => x.forEach(d => { WEEK_OF[d.date] = i; }));
   const tabs = false ? `<nav class="swk" aria-label="Course weeks">${weeks.map((x, i) => `<button type="button" data-week="${i}" class="${i === WEEK ? 'on' : ''}" aria-current="${i === WEEK}">Week ${two(i + 1)}<small>${esc(DOW[parse(x[0].date).getDay()] + ' ' + dm(parse(x[0].date)))}</small></button>`).join('')}</nav>` : '';
-  const used2 = [...new Set((TT.days || []).flatMap(d => (d.sessions || []).filter(x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by]).map(x => String(+x.by))))];
+  const used2 = [...new Set((TT.days || []).flatMap(d => (d.sessions || []).flatMap(x => byList(x)).map(i => String(i))))];
   if (TFILTER !== '' && used2.indexOf(TFILTER) === -1) TFILTER = '';
   const filt = used2.length > 1 ? `<select id="tFilter" aria-label="Show one tutor’s sessions"><option value="">All tutors</option>${used2.map(i => `<option value="${i}"${TFILTER === i ? ' selected' : ''}>${esc(initialsOf(TUTORS[+i]))} · ${esc(TUTORS[+i])}</option>`).join('')}</select>` : '';
   const pubBtn = !IS_TUTOR || !EDIT ? '' : !pub ? `<button type="button" class="btn publish" id="setBtn">Publish</button>`
@@ -2167,7 +2172,7 @@ function wireInputBy(){
       if (d.closed) return;
       const r = ranges.filter(x => x.from <= d.date).pop(); if (!r) return;
       const i = TUTORS.indexOf(r.by);
-      (d.sessions || []).forEach(x => { if (x.k !== 'input') return; n++; if (x.by !== undefined && x.by !== '' && x.by !== null && +x.by !== i) differ++; plan.push([x, i]); });
+      (d.sessions || []).forEach(x => { if (x.k !== 'input' || x.by === 'all') return; n++; if (x.by !== undefined && x.by !== '' && x.by !== null && +x.by !== i) differ++; plan.push([x, i]); });
     });
     if (!n) { note = 'No input sessions in those days'; render(); return; }
     if (differ && !(await ask(differ + ' of these ' + n + ' input sessions already name a different tutor. Give them these tutors too?', 'Change them'))) return;
@@ -2187,7 +2192,7 @@ function wireInputBy(){
 function turnsPlan(tt, nTutors){
   const plan = []; let n = 0;
   (tt.days || []).forEach(d => { if (d.closed) return;
-    (d.sessions || []).slice().sort((a, b) => String(a.s || '').localeCompare(String(b.s || ''))).forEach(x => { if (x.k !== 'input' || /^(guided )?lesson planning\b/i.test(String(x.t || '').trim())) return; plan.push([x, n % nTutors]); n++; }); });
+    (d.sessions || []).slice().sort((a, b) => String(a.s || '').localeCompare(String(b.s || ''))).forEach(x => { if (x.k !== 'input' || x.by === 'all' || /^(guided )?lesson planning\b/i.test(String(x.t || '').trim())) return; plan.push([x, n % nTutors]); n++; }); });
   return plan;
 }
 function wireTurns(){
@@ -2837,7 +2842,7 @@ function checksHTML(){
      a block. Lesson planning is planning time, not an input session, and is left out. */
   (function(){
     const isPlan = t => /^(guided )?lesson planning\b/i.test(String(t || '').trim());
-    const hasBy = x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by];
+    const hasBy = x => byList(x).length > 0;
     const placed = placedMap(), seen = new Set();
     Object.keys(placed).forEach(k => {
       const on = placed[k];
@@ -3631,7 +3636,7 @@ function openTile(date, id, fresh){
     <div class="three"><label>Start<input name="s" type="text" inputmode="text" autocomplete="off" required value="${esc(hubClock(x0.s))}" placeholder="10:00 AM"></label><label>End<input name="e" type="text" inputmode="text" autocomplete="off" required value="${esc(hubClock(x0.e))}" placeholder="11:15 AM"></label><label>Length<input name="len" type="number" min="5" max="600" step="5" value="${Math.max(5, (toMin(x0.e) || 0) - (toMin(x0.s) || 0))}"></label></div>
     <p class="muted" id="tClockHint">Type a time as you say it: 12:30, 1230, 1:15pm. Change Length to move the end.</p>
     <label>Category<select name="k">${KIND_ORDER.map(k => `<option value="${k}"${x0.k === k ? ' selected' : ''}>${esc(KIND_LABEL[k])}</option>`).join('')}</select></label>
-    <div class="two"><label>Tutor initials<select name="by"><option value="">Unassigned</option>${TUTORS.map((n, i) => `<option value="${i}"${by === String(i) ? ' selected' : ''}>${esc(initialsOf(n))} · ${esc(n)}</option>`).join('')}</select></label>
+    <div class="two"><label>Tutor initials<select name="by"><option value="">Unassigned</option>${TUTORS.map((n, i) => `<option value="${i}"${by === String(i) ? ' selected' : ''}>${esc(initialsOf(n))} · ${esc(n)}</option>`).join('')}${TUTORS.length > 1 ? `<option value="all"${by === 'all' ? ' selected' : ''}>${esc(allLabel())}</option>` : ''}</select></label>
       <label>Group<select name="g"><option value="">Whole course</option>${groupsOpt.map(g => `<option value="${esc(g)}"${String(x0.g || '') === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></label></div>
     <label class="plrow"${/consultation|tutorial/i.test(x0.t || '') ? '' : ' hidden'}>Each place<select name="pl">${[10, 15, 20, 30, 45, 60].map(m => `<option value="${m}"${placeLen(x0) === m ? ' selected' : ''}>${m} minutes</option>`).join('')}</select></label>
     <label>Preparation<textarea name="d" placeholder="What trainees read or bring. They see this when they open the session.">${esc(x0.d || '')}</textarea></label>
@@ -3675,7 +3680,7 @@ function openTile(date, id, fresh){
     else OPEN_TILE = { date: to.date, id: x.id, before: JSON.stringify({ x: clone(x), tp: to === from ? from.tp : to.tp, set: to === from ? from.setIndex : to.setIndex }) };
     x.k = k; x.s = toHM(s0); x.e = toHM(e0);
     if (k === 'tp') { delete x.t; x.room = 'Teaching practice'; } else { if (t) x.t = t; else delete x.t; if (x.room === 'Teaching practice') delete x.room; }
-    if (byN === '') delete x.by; else x.by = +byN;
+    if (byN === '') delete x.by; else x.by = byN === 'all' ? 'all' : +byN;
     if (g) x.g = g; else delete x.g;
     /* a tutorial or consultation sheet keeps the length of its places; any other tile has none */
     if (/consultation|tutorial/i.test(x.t || '') && +v('pl') && +v('pl') !== 15) x.pl = +v('pl'); else delete x.pl;
