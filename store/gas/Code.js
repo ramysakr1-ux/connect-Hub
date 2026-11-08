@@ -1768,12 +1768,12 @@ case 'inbox': {
           if (was.demoExpires && !owner) data.demoExpires = was.demoExpires;
         }
       }
-      /* ONE COPY DOES NOT UNDO ANOTHER (v205, 8 Nov 2026). These three are written whole, and a page open since before
+      /* ONE COPY DOES NOT UNDO ANOTHER (v205, 8 Nov 2026). These are written whole (v208: the TP points and the volunteer register too), and a page open since before
          someone else's change used to write its old copy straight over it: Tense and aspect, placed on C/21's Tue 17 Nov
          and saved, was gone a few hours later. Each now carries a version (kind 'revs'). A page says which version its copy
          started from (base); if the store has moved on since, nothing is written and the page gets the newer copy back to
          lay its change over. A page that sends no base (an older page) writes as before, and the version still moves. */
-      if (ck === 'timetable' || ck === 'wording' || ck === 'settings') {
+      if (REV_KINDS_[ck]) {
         var rlock = LockService.getScriptLock();
         rlock.waitLock(10000);
         try {
@@ -1782,12 +1782,11 @@ case 'inbox': {
           var cur = Number(revs[ck] || 0);
           if (typeof req.base === 'number' && req.base < cur) {
             var now = courseRead_(course.id, ck);
+            if (ck === 'tppoints') now = tpPointsFor_(now, true, null);   // the shape a tutor's boot gives
             return { saved: false, stale: true, rev: cur, data: now };
           }
-          courseWriteRaw_(course.id, ck, data);
-          revs[ck] = cur + 1;
-          courseWriteRaw_(course.id, 'revs', revs);
-          return { saved: true, rev: cur + 1 };
+          courseWriteRaw_(course.id, ck, data);   // moves the version (bumpRev_)
+          return { saved: true, rev: LAST_REV_ };
         } finally { rlock.releaseLock(); }
       }
       courseWrite_(course.id, ck, data);
@@ -3335,7 +3334,21 @@ function recordsFor_(courseId, token, kinds) {
    waits for the end; a timed job moves the version at once, so the second mark is the one after the rows changed. */
 function write_(courseId, token, kind, data) { try { return writeInner_(courseId, token, kind, data); } finally { markChanged_(courseId); } }
 function writeHistory_(courseId, token, data) { try { return writeHistoryInner_(courseId, token, data); } finally { markChanged_(courseId); } }
-function courseWriteRaw_(courseId, kind, data) { try { return courseWriteRawInner_(courseId, kind, data); } finally { markChanged_(courseId); } }
+/* THE VERSIONS (v205, extended v208, 8 Nov 2026). The records a page writes whole carry a version in kind 'revs', moved by
+   EVERY write of them -- a tutor's put, and the store's own (a volunteer's reply, the reminder stamps, a token reissued) --
+   so a page holding an older copy is refused instead of writing over a change it never saw. Every caller holds the
+   script lock; the read cache is dropped around the version so the number read is the one on the sheet. */
+var REV_KINDS_ = { timetable: 1, wording: 1, settings: 1, tppoints: 1, volunteers: 1 };
+var LAST_REV_ = null;
+function bumpRev_(courseId, kind) {
+  COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+  var revs = courseRead_(courseId, 'revs') || {};
+  revs[kind] = Number(revs[kind] || 0) + 1;
+  courseWriteRawInner_(courseId, 'revs', revs);
+  COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+  return revs[kind];
+}
+function courseWriteRaw_(courseId, kind, data) { try { var out = courseWriteRawInner_(courseId, kind, data); if (REV_KINDS_[kind]) LAST_REV_ = bumpRev_(courseId, kind); return out; } finally { markChanged_(courseId); } }
 function writeInner_(courseId, token, kind, data) {
   markChanged_(courseId);
   if (kind === 'tpHistory') return writeHistory_(courseId, token, data);

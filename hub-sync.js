@@ -368,7 +368,7 @@
       showUnsaved();
       throw err;
     }); }); }, Promise.resolve());
-    all.then(function(){ status('Saved to the course', 'ok'); if (MERGED.length) mergedReload(); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
+    all.then(function(){ status('Saved to the course', 'ok'); markVer(); if (MERGED.length) mergedReload(); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
     return all;
   }
   // A page about to navigate awaits this, so nothing is left to the beacon.
@@ -386,7 +386,7 @@
      is current the moment it opens. Only what this page has not touched is laid down, as a full boot does. */
   window.HubSync.refresh = function(){
     return bootWithRetries().then(function(boot){
-      if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() });
+      if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() }); markVer();
       var p = plan(boot);
       if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
       apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
@@ -563,7 +563,7 @@
      started from (REV) and keeps that copy (BASE). If the store has moved on, it writes nothing and sends its copy back;
      this page lays its own change over it (merge3), saves that, and reloads to show it. A version this page did not see
      (an older store, a write left over from another page) sends no base and writes as before. */
-  var GUARD = { timetable: 1, wording: 1, settings: 1 };
+  var GUARD = { timetable: 1, wording: 1, settings: 1, tppoints: 1, volunteers: 1 };   // v208: the TP points and the volunteer register too
   var KEY_OF = {}; Object.keys(COURSE_KEYS).forEach(function(k){ KEY_OF[COURSE_KEYS[k]] = k; });
   var PAGE_ID = Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
   var REV = {}, BASE = {}, BOOT_REVS = null, MERGED = [];
@@ -629,7 +629,7 @@
       });
       return out;
     }
-    var idOf = function(e){ return isObj(e) ? (e.id != null ? 'id:' + e.id : e.date ? 'date:' + e.date : null) : null; };
+    var idOf = function(e){ return isObj(e) ? (e.id != null ? 'id:' + e.id : e.token ? 'token:' + e.token : e.date ? 'date:' + e.date : null) : null; };   // a volunteer student is their link
     var keyed = function(a){ if (!Array.isArray(a)) return false; var seen = {}; return a.every(function(e){ var k = idOf(e); if (!k || seen[k]) return false; seen[k] = 1; return true; }); };
     if (keyed(mine) && keyed(theirs)) {
       var bm = {}, mm = {}, tm = {}, res = [];
@@ -651,7 +651,27 @@
     return mine;
   }
   window.HubSync && (window.HubSync.merge3 = merge3);
-  var MERGE_NAMES = { timetable: 'the timetable', wording: 'the assignment dates', settings: 'the course settings' };
+  /* AN OPEN PAGE CATCHES UP (Ramy, 8 Nov 2026: "yes, build both"). An open tab never read the store again, so a tab left
+     open since the morning showed the morning's timetable, dates and register. PAGE_VER is the course's version as this
+     page last knew it: from its boot, its quick check, or its own write (the store moves the version and hub-store keeps
+     it only when nobody else wrote in between). Coming back to the tab asks for the version -- a few bytes -- and when the
+     course has moved and nothing here is waiting to be sent, the page takes the course and reloads once. A minute apart
+     at most; never in a demo. */
+  var PAGE_VER = null, LAST_LOOK = 0;
+  function markVer(){ try { var V = S.verGet && S.verGet(); if (V && V.v && (!S.cred || V.cred === S.cred())) PAGE_VER = V.v; } catch (e) {} }
+  function quiet(){ return !Object.keys(queue).length && !Object.keys(ledger()).length && !timer; }
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState !== 'visible' || DEMO || !started || !PAGE_VER || !S.version) return;
+    if (Date.now() - LAST_LOOK < 60000 || !quiet()) return;
+    LAST_LOOK = Date.now();
+    S.version().then(function(r){
+      if (!r || !r.ver || r.ver === PAGE_VER || !quiet()) return;
+      status('The course has moved on \u2014 refreshing', 'busy');
+      dirty = {};   // everything this page wrote is saved (quiet), so the course's copy of it is the one to take
+      return window.HubSync.refresh().then(function(){ markVer(); location.reload(); });
+    }).catch(function(){});
+  });
+  var MERGE_NAMES = { timetable: 'the timetable', wording: 'the assignment dates', settings: 'the course settings', tppoints: 'the TP points', volunteers: 'the volunteer register' };
   function mergedReload(){
     var what = MERGED.filter(function(k, i){ return MERGED.indexOf(k) === i; }).map(function(k){ return MERGE_NAMES[k] || k; }).join(' and ');
     MERGED = [];
@@ -955,6 +975,7 @@
        ask at all; otherwise it asks for the version, and boots only when the course has moved since this copy. */
     var V0 = S.verGet ? S.verGet() : null, CRED = S.cred ? S.cred() : '';
     var settledQuietly = function(){
+      markVer();
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
       afterBoot();
       status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
@@ -983,7 +1004,7 @@
     return;
     function fullBoot(){
     return bootWithRetries().then(function(boot){
-      if (boot && boot.__ver && S.verPut) S.verPut({ cred: CRED, v: boot.__ver, at: Date.now() });
+      if (boot && boot.__ver && S.verPut) S.verPut({ cred: CRED, v: boot.__ver, at: Date.now() }); markVer();
       var p = plan(boot);
       if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
       var untouched = Object.keys(p).every(function(k){ return !dirty[k]; });
@@ -1039,7 +1060,7 @@
   } catch (e) { cover = null; }
   var uncover = function(){ if (!cover) return; var c = cover; cover = null; c.style.opacity = '0'; setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 260); };
   bootWithRetries().then(function(boot){
-    if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() });
+    if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() }); markVer();
     var p = plan(boot);
     if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
     apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p); exposeMeta(); rebuildSnapshot();
