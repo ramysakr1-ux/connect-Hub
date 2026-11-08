@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611081009">
+<link rel="stylesheet" href="hub-tokens.css?v=202611081024">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -750,7 +750,7 @@
   .slib input{width:100%; box-sizing:border-box; font:inherit; font-size:0.84rem; padding:7px 9px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink); margin:0 0 6px;}
   .slib .tpl{display:block; width:100%; text-align:left; margin-top:6px; padding:9px 11px; border:1px solid color-mix(in oklch, black 10%, var(--kc-input)); border-radius:8px; background:oklch(95% 0.03 245); color:var(--ink); font:inherit; font-size:0.82rem; cursor:grab;}
   .slib .tpl b{display:block; font-weight:700;} .slib .tpl small{color:var(--grey); font-size:0.7rem;}
-  .slib .tpl.placed{background:var(--paper);} .twc{display:inline-block; margin-left:6px; padding:0 6px; border-radius:6px; background:var(--brick); color:var(--paper); font-size:0.66rem; font-weight:700; letter-spacing:.04em; font-style:normal; vertical-align:1px;}
+  .slib.libtake{box-shadow:0 0 0 2px var(--teal) inset; background:var(--gold-wash);} .slib .tpl.placed{background:var(--paper);} .twc{display:inline-block; margin-left:6px; padding:0 6px; border-radius:6px; background:var(--brick); color:var(--paper); font-size:0.66rem; font-weight:700; letter-spacing:.04em; font-style:normal; vertical-align:1px;}
   .tile.twice{box-shadow:0 0 0 2px var(--brick) inset;} .tile .twc.tw1{display:block; width:fit-content; margin:4px 0 0;}
   .slib .tpl:hover{border-color:var(--ink);}
   .tgrid.tboard .timeaxis .dh{visibility:hidden;}
@@ -827,25 +827,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611081009">
+<link rel="stylesheet" href="hub-house.css?v=202611081024">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611081009"></script>
-<script src="hub-tracker.js?v=202611081009"></script>
-<script src="hub-rotation.js?v=202611081009"></script>
-<script src="hub-xlsx.js?v=202611081009"></script>
-<script src="hub-docx.js?v=202611081009"></script>
-<script src="hub-timetable-parse.js?v=202611081009"></script>
-<script src="assignment-defaults.js?v=202611081009"></script>
-<script src="hub-shared.js?v=202611081009"></script>
-<script src="hub-store.js?v=202611081009"></script>
-<script src="hub-say.js?v=202611081009"></script>
-<script src="hub-sync.js?v=202611081009"></script>
-<script src="hub-notebook.js?v=202611081009"></script>
+<script src="hub-due.js?v=202611081024"></script>
+<script src="hub-tracker.js?v=202611081024"></script>
+<script src="hub-rotation.js?v=202611081024"></script>
+<script src="hub-xlsx.js?v=202611081024"></script>
+<script src="hub-docx.js?v=202611081024"></script>
+<script src="hub-timetable-parse.js?v=202611081024"></script>
+<script src="assignment-defaults.js?v=202611081024"></script>
+<script src="hub-shared.js?v=202611081024"></script>
+<script src="hub-store.js?v=202611081024"></script>
+<script src="hub-say.js?v=202611081024"></script>
+<script src="hub-sync.js?v=202611081024"></script>
+<script src="hub-notebook.js?v=202611081024"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1808,6 +1808,7 @@ function clearSetDates(k){
   delete w[k].dueSets;
   try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
 }
+function overLib(e){ const lib = document.querySelector('.slib'); if (!lib) return false; const r = lib.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; }
 function openAsgAt(k, field){ ASG_OPEN = true; FOCUS_ASG = { k, f: field === 'out' ? 'open' : (field || 'due') }; render(); }
 function wireMove(){
   if (!IS_TUTOR) return;
@@ -1972,7 +1973,7 @@ function render(){
      to drop onto the board, then the library's input sessions */
   const lib = EDIT && LIB_OPEN ? `<aside class="slib"><h3>The pieces</h3><p>Drag a piece onto an empty place, or onto a tile to replace it. Drag a tile to move it; drop it on another to swap the two.</p>
     <div class="pieces">${PIECES.map(p => `<button type="button" class="pc k-${p[0] === 'blank' ? 'event' : p[0]}" draggable="true" data-piece="${p[0]}">${esc(p[1])}</button>`).join('')}</div>
-    <h3>Input sessions</h3><p>Click one to schedule it, or drag it like a piece.</p><input id="libQ" type="search" placeholder="Search sessions" aria-label="Search the input sessions" value="${esc(LIB_Q)}"><div id="libList">${libListHTML()}</div></aside>` : '';
+    <h3>Input sessions</h3><p>Click one to schedule it, or drag it like a piece. Drag a session from the board back here to take it off.</p><input id="libQ" type="search" placeholder="Search sessions" aria-label="Search the input sessions" value="${esc(LIB_Q)}"><div id="libList">${libListHTML()}</div></aside>` : '';
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + tabs + tool + roomsStrip() + gsw
     + `<div class="slayout${lib ? ' libopen' : ''}">${lib}<div>${weekBoard(w, WEEK)}${key}</div></div>`
     + '';   /* nothing written under the board (Ramy, 30 Oct 2026: "remove the writing underneath ... it's crowded") */
@@ -3225,6 +3226,8 @@ function wireBoard(){
       DRAG.ghost.style.width = (DRAG.w || DRAG.el.offsetWidth) + 'px'; if (DRAG.h) DRAG.ghost.style.height = DRAG.h + 'px';
       document.body.appendChild(DRAG.ghost); DRAG.el.classList.add('lifted');
     }
+    const lib = document.querySelector('.slib');
+    if (lib) lib.classList.toggle('libtake', !DRAG.due && DRAG.x && DRAG.x.k === 'input' && !!DRAG.x.t && overLib(e));
     const date = dayUnder(e.clientX, e.clientY);
     const col = date && document.getElementById('d-' + date);
     if (DRAG.due) {
@@ -3261,7 +3264,7 @@ function wireBoard(){
   document.addEventListener('pointerup', e => {
     if (!DRAG) return;
     const was = DRAG; DRAG = null;
-    clearTints();
+    clearTints(); document.querySelectorAll('.libtake').forEach(x => x.classList.remove('libtake'));
     if (was.ghost) was.ghost.remove();
     if (was.el) was.el.classList.remove('lifted', 'dragging');
     if (was.due) {
@@ -3282,6 +3285,15 @@ function wireBoard(){
       render(); return;
     }
     if (!was.moved) { openTile(was.day.date, was.x.id); return; }
+    /* BACK TO THE LIBRARY (Ramy, 8 Nov 2026: "take an input session from the timetable and drag it back to the
+       library"). An input session let go over the library leaves the board: its place stays, empty, for another. */
+    if (overLib(e) && was.x.k === 'input' && was.x.t) {
+      UNDO.push(was.before);
+      const x = was.day.sessions.find(s => s.id === was.x.id), name = x.t;
+      delete x.t; delete x.lib; delete x.d; delete x.url; delete x.by;
+      save('Back in the library', { text: '“' + name + '” taken off ' + dayName(was.day.date) + '; its place is empty' });
+      render(); return;
+    }
     const t = was.target;
     if (!t || t.r.kind === 'block') { render(); return; }
     UNDO.push(was.before);
