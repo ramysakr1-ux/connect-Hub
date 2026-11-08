@@ -1536,6 +1536,8 @@ case 'inbox': {
          -- the key already proves the course; the random half is the secret. */
       var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
       if (tutor) boot.course.courseFeedback = courseFeedbackFor_(course.id);
+      /* v205: the versions of the three records a page writes whole, so its next write can say which one it started from */
+      if (tutor) boot.course.revs = courseRead_(course.id, 'revs') || {};
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
@@ -1765,6 +1767,28 @@ case 'inbox': {
           if (was.presentToday && !data.presentToday) data.presentToday = was.presentToday;
           if (was.demoExpires && !owner) data.demoExpires = was.demoExpires;
         }
+      }
+      /* ONE COPY DOES NOT UNDO ANOTHER (v205, 8 Nov 2026). These three are written whole, and a page open since before
+         someone else's change used to write its old copy straight over it: Tense and aspect, placed on C/21's Tue 17 Nov
+         and saved, was gone a few hours later. Each now carries a version (kind 'revs'). A page says which version its copy
+         started from (base); if the store has moved on since, nothing is written and the page gets the newer copy back to
+         lay its change over. A page that sends no base (an older page) writes as before, and the version still moves. */
+      if (ck === 'timetable' || ck === 'wording' || ck === 'settings') {
+        var rlock = LockService.getScriptLock();
+        rlock.waitLock(10000);
+        try {
+          COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+          var revs = courseRead_(course.id, 'revs') || {};
+          var cur = Number(revs[ck] || 0);
+          if (typeof req.base === 'number' && req.base < cur) {
+            var now = courseRead_(course.id, ck);
+            return { saved: false, stale: true, rev: cur, data: now };
+          }
+          courseWriteRaw_(course.id, ck, data);
+          revs[ck] = cur + 1;
+          courseWriteRaw_(course.id, 'revs', revs);
+          return { saved: true, rev: cur + 1 };
+        } finally { rlock.releaseLock(); }
       }
       courseWrite_(course.id, ck, data);
       return { saved: true };

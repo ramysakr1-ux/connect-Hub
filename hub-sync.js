@@ -360,7 +360,7 @@
     if (!keys.length) return Promise.resolve();
     if (DEMO) { status('Demo \u00b7 kept on this device', 'demo'); return Promise.resolve(); }   /* stays in this tab's ledger; never sent */
     // One at a time: Apps Script copes badly with a burst.
-    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(jobs[k]).then(function(r){ confirmed(k); return r; }, function(err){
+    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(withBase(jobs[k])).then(function(r){ if (r && r.stale) return onStale(k, jobs[k], r); confirmed(k); afterPut(jobs[k], r); return r; }, function(err){
       if (err && err.transient) throw err;          // stays in the ledger; the next page sends it again
       if (note(k, jobs[k], err) >= RETRIES) {       // recorded either way -- the record is the point
         var l = ledger(); if (l[k]) { delete l[k]; ledgerSet(l); }  // stop re-sending, KEEP the record
@@ -368,7 +368,7 @@
       showUnsaved();
       throw err;
     }); }); }, Promise.resolve());
-    all.then(function(){ status('Saved to the course', 'ok'); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
+    all.then(function(){ status('Saved to the course', 'ok'); if (MERGED.length) mergedReload(); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
     return all;
   }
   // A page about to navigate awaits this, so nothing is left to the beacon.
@@ -389,7 +389,7 @@
       if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() });
       var p = plan(boot);
       if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
-      apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; });
+      apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
       rebuildSnapshot();
       return true;
     });
@@ -471,7 +471,7 @@
       if (TUTOR_ONLY[kind] && !(kind === 'feedback' && data === null)) return; // the tutor's records: read here, never written
       schedule('t:' + kind, { op: 'put', token: S.token(), kind: kind, data: data });
     }
-    if (mode === 'tutor' && COURSE_KEYS[key]) schedule('c:' + COURSE_KEYS[key], { op: 'putCourse', kind: COURSE_KEYS[key], data: data });
+    if (mode === 'tutor' && COURSE_KEYS[key]) schedule('c:' + COURSE_KEYS[key], { op: 'putCourse', kind: COURSE_KEYS[key], data: data, page: PAGE_ID });
     if (mode === 'tutor' && key === 'connect_roster_v1' && data && data.trainees) {
       Object.keys(data.trainees).forEach(function(token){
         var rec = recordOf(data.trainees[token]);
@@ -557,6 +557,124 @@
     if (id.indexOf('r:') === 0) { heldPairs[id.slice(2)] = true; return; }
     var k = keyOfJob(id); if (k) dirty[k] = true;
   });
+  /* ONE COPY DOES NOT UNDO ANOTHER (store v205, 8 Nov 2026). The timetable, the assignment wording and the course settings
+     are written whole, and a page left open used to write its old copy over a change made since: Tense and aspect, placed
+     on C/21's Tue 17 Nov and saved, was gone hours later. Each write now says which version of the store's copy this page
+     started from (REV) and keeps that copy (BASE). If the store has moved on, it writes nothing and sends its copy back;
+     this page lays its own change over it (merge3), saves that, and reloads to show it. A version this page did not see
+     (an older store, a write left over from another page) sends no base and writes as before. */
+  var GUARD = { timetable: 1, wording: 1, settings: 1 };
+  var KEY_OF = {}; Object.keys(COURSE_KEYS).forEach(function(k){ KEY_OF[COURSE_KEYS[k]] = k; });
+  var PAGE_ID = Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+  var REV = {}, BASE = {}, BOOT_REVS = null, MERGED = [];
+  function revsSave(){ try { origSet('hub:revs', JSON.stringify({ who: identity, revs: REV })); } catch (e) {} }
+  (function(){
+    if (mode !== 'tutor') return;
+    var saved = parse((function(){ try { return localStorage.getItem('hub:revs'); } catch (e) { return null; } })());
+    if (!saved || saved.who !== identity || !saved.revs) return;
+    Object.keys(GUARD).forEach(function(kind){
+      if (held['c:' + kind] || typeof saved.revs[kind] !== 'number') return;   // a write left over: its base is unknown
+      REV[kind] = saved.revs[kind]; BASE[kind] = current(KEY_OF[kind]);
+    });
+  })();
+  /* what a boot says the store holds, for each record this page has not changed */
+  function noteBoot(p){
+    if (mode !== 'tutor' || !BOOT_REVS) return;
+    Object.keys(GUARD).forEach(function(kind){
+      var key = KEY_OF[kind]; if (dirty[key] || !(key in p)) return;
+      REV[kind] = Number(BOOT_REVS[kind] || 0); BASE[kind] = p[key];
+    });
+    revsSave();
+  }
+  function withBase(job){
+    if (mode !== 'tutor' || !job || job.op !== 'putCourse' || !GUARD[job.kind] || job.page !== PAGE_ID || typeof REV[job.kind] !== 'number') return job;
+    var out = Object.assign({}, job); out.base = REV[job.kind]; return out;
+  }
+  function afterPut(job, r){
+    if (!job || job.op !== 'putCourse' || !GUARD[job.kind] || !r || typeof r.rev !== 'number') return;
+    REV[job.kind] = r.rev; BASE[job.kind] = JSON.stringify(job.data); revsSave();
+  }
+  function localForm(kind, data){ return kind === 'wording' && data && window.hubWordingFilled ? window.hubWordingFilled(data) : data; }
+  /* The store moved on: theirs, with this page's change laid over it, saved in one write. */
+  function onStale(id, job, r, tries){
+    var theirs = localForm(job.kind, r.data), base = parse(BASE[job.kind]);
+    var merged = merge3(base, job.data, theirs);
+    REV[job.kind] = r.rev; BASE[job.kind] = JSON.stringify(theirs); revsSave();
+    try { origSet(KEY_OF[job.kind], JSON.stringify(merged)); } catch (e) {}
+    var next = Object.assign({}, job, { data: merged }); remember(id, next);
+    MERGED.push(job.kind);
+    return S.call(withBase(next)).then(function(r2){
+      if (r2 && r2.stale && (tries || 0) < 2) return onStale(id, next, r2, (tries || 0) + 1);
+      confirmed(id); afterPut(next, r2); return r2;
+    });
+  }
+  /* Three copies of one record: what this page started from, what it has now, what the store has now. Whatever only one
+     side changed is kept; where both changed the same thing, this page's change wins (it is the newer). Lists whose
+     items carry an id or a date (days, sessions) are matched item by item, so two tutors changing different days keep
+     both. */
+  function merge3(base, mine, theirs){
+    var J = function(x){ return JSON.stringify(x); };
+    if (J(mine) === J(base)) return theirs;
+    if (J(theirs) === J(base) || J(mine) === J(theirs)) return mine;
+    var isObj = function(x){ return !!x && typeof x === 'object' && !Array.isArray(x); };
+    var has = function(o, k){ return isObj(o) && Object.prototype.hasOwnProperty.call(o, k); };
+    if (isObj(mine) && isObj(theirs)) {
+      var b = isObj(base) ? base : {}, out = {}, keys = [];
+      Object.keys(theirs).concat(Object.keys(mine)).forEach(function(k){ if (keys.indexOf(k) === -1) keys.push(k); });
+      keys.forEach(function(k){
+        var m = has(mine, k), t = has(theirs, k), bb = has(b, k);
+        if (!m) { if (bb && J(b[k]) === J(theirs[k])) return; out[k] = theirs[k]; return; }   // this page removed it
+        if (!t) { if (bb && J(b[k]) === J(mine[k])) return; out[k] = mine[k]; return; }       // they removed it
+        out[k] = merge3(bb ? b[k] : undefined, mine[k], theirs[k]);
+      });
+      return out;
+    }
+    var idOf = function(e){ return isObj(e) ? (e.id != null ? 'id:' + e.id : e.date ? 'date:' + e.date : null) : null; };
+    var keyed = function(a){ if (!Array.isArray(a)) return false; var seen = {}; return a.every(function(e){ var k = idOf(e); if (!k || seen[k]) return false; seen[k] = 1; return true; }); };
+    if (keyed(mine) && keyed(theirs)) {
+      var bm = {}, mm = {}, tm = {}, res = [];
+      (keyed(base) ? base : []).forEach(function(e){ bm[idOf(e)] = e; });
+      mine.forEach(function(e){ mm[idOf(e)] = e; });
+      theirs.forEach(function(e){
+        var k = idOf(e);
+        tm[k] = 1;
+        if (k in mm) res.push(merge3(bm[k], mm[k], e));
+        else if (!(k in bm) || J(bm[k]) !== J(e)) res.push(e);     // this page removed it only if they left it alone
+      });
+      mine.forEach(function(e){
+        var k = idOf(e); if (tm[k]) return;
+        if (k in bm && J(bm[k]) === J(e)) return;                  // they removed it, and this page left it alone
+        res.push(e);
+      });
+      return res;
+    }
+    return mine;
+  }
+  window.HubSync && (window.HubSync.merge3 = merge3);
+  var MERGE_NAMES = { timetable: 'the timetable', wording: 'the assignment dates', settings: 'the course settings' };
+  function mergedReload(){
+    var what = MERGED.filter(function(k, i){ return MERGED.indexOf(k) === i; }).map(function(k){ return MERGE_NAMES[k] || k; }).join(' and ');
+    MERGED = [];
+    try { sessionStorage.setItem('hub:merged', what); } catch (e) {}
+    setTimeout(function(){ location.reload(); }, 150);
+  }
+  /* After the reload: say what happened, once, in plain words. */
+  (function(){
+    var what = ''; try { what = sessionStorage.getItem('hub:merged') || ''; if (what) sessionStorage.removeItem('hub:merged'); } catch (e) {}
+    if (!what) return;
+    var show = function(){
+      var el = document.createElement('div');
+      el.id = 'hubMerged'; el.setAttribute('role', 'status');
+      el.style.cssText = 'position:fixed;left:16px;right:16px;margin:0 auto;top:14px;z-index:2147483000;max-width:560px;box-sizing:border-box;' +
+        'background:oklch(97% 0.02 195);border:1px solid oklch(37.5% 0.058 195);border-top:3px solid oklch(37.5% 0.058 195);border-radius:12px;' +
+        'color:oklch(23.5% 0.017 65);font:500 14px/1.5 Karla,Helvetica,sans-serif;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 10px 30px -14px rgba(35,34,32,.35);';
+      el.innerHTML = '<span style="flex:1">' + esc(what.charAt(0).toUpperCase() + what.slice(1)) + ' changed somewhere else while this page was open: in another tab, or by another tutor. Your change was added to the newer copy and saved. This is the page as it is now.</span>' +
+        '<button type="button" style="font:700 12px Karla,sans-serif;padding:6px 12px;border-radius:20px;border:1.5px solid oklch(37.5% 0.058 195);background:none;color:oklch(37.5% 0.058 195);cursor:pointer;">OK</button>';
+      el.querySelector('button').onclick = function(){ el.remove(); };
+      document.body.appendChild(el);
+    };
+    if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+  })();
   if (Object.keys(held).length) setTimeout(function(){ Object.keys(held).forEach(function(id){ schedule(id, held[id]); }); }, 0);
   // ...and again the moment the connection comes back, without waiting for a
   // page change. Ramy, 24 Sep 2026: "I have it on my desktop and write the
@@ -606,6 +724,7 @@
     }
     if (mode === 'trainee' ? !boot.me : !boot.roster) return {};
     var course = boot.course || {}, out = {};
+    BOOT_REVS = (mode === 'tutor' && course.revs && typeof course.revs === 'object') ? course.revs : null;
     /* The course's own id, for a tutor: the volunteer register mints each
        student's link as "<courseId>-<random>" and this is the only way the
        browser can learn which course it is on (store version 43). */
@@ -865,11 +984,11 @@
       if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
       var untouched = Object.keys(p).every(function(k){ return !dirty[k]; });
       if (untouched) {
-        var changed = apply(p);
+        var changed = apply(p); noteBoot(p);
         if (changed.length) { status('The course has moved on \u2014 refreshing', 'busy'); flushBeacon(); setTimeout(function(){ location.reload(); }, 150); return; }
       } else {
         // The roster goes in merged: this page's own records are already laid over it.
-        apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; });
+        apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
         rebuildSnapshot();
       }
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
@@ -919,7 +1038,7 @@
     if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() });
     var p = plan(boot);
     if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
-    apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); exposeMeta(); rebuildSnapshot();
+    apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p); exposeMeta(); rebuildSnapshot();
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     afterBoot();
     status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
