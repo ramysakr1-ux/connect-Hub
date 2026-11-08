@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611080952">
+<link rel="stylesheet" href="hub-tokens.css?v=202611081006">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -750,6 +750,8 @@
   .slib input{width:100%; box-sizing:border-box; font:inherit; font-size:0.84rem; padding:7px 9px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink); margin:0 0 6px;}
   .slib .tpl{display:block; width:100%; text-align:left; margin-top:6px; padding:9px 11px; border:1px solid color-mix(in oklch, black 10%, var(--kc-input)); border-radius:8px; background:oklch(95% 0.03 245); color:var(--ink); font:inherit; font-size:0.82rem; cursor:grab;}
   .slib .tpl b{display:block; font-weight:700;} .slib .tpl small{color:var(--grey); font-size:0.7rem;}
+  .slib .tpl.placed{background:var(--paper);} .twc{display:inline-block; margin-left:6px; padding:0 6px; border-radius:6px; background:var(--brick); color:var(--paper); font-size:0.66rem; font-weight:700; letter-spacing:.04em; font-style:normal; vertical-align:1px;}
+  .tile.twice{box-shadow:0 0 0 2px var(--brick) inset;} .tile .twc.tw1{display:block; width:fit-content; margin:4px 0 0;}
   .slib .tpl:hover{border-color:var(--ink);}
   .tgrid.tboard .timeaxis .dh{visibility:hidden;}
   .tgrid.tboard .tlab{display:flex; align-items:center; justify-content:center; text-align:center; font-size:0.86rem; font-weight:700; color:var(--ink); white-space:nowrap; padding:4px; font-variant-numeric:tabular-nums;}
@@ -825,25 +827,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611080952">
+<link rel="stylesheet" href="hub-house.css?v=202611081006">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611080952"></script>
-<script src="hub-tracker.js?v=202611080952"></script>
-<script src="hub-rotation.js?v=202611080952"></script>
-<script src="hub-xlsx.js?v=202611080952"></script>
-<script src="hub-docx.js?v=202611080952"></script>
-<script src="hub-timetable-parse.js?v=202611080952"></script>
-<script src="assignment-defaults.js?v=202611080952"></script>
-<script src="hub-shared.js?v=202611080952"></script>
-<script src="hub-store.js?v=202611080952"></script>
-<script src="hub-say.js?v=202611080952"></script>
-<script src="hub-sync.js?v=202611080952"></script>
-<script src="hub-notebook.js?v=202611080952"></script>
+<script src="hub-due.js?v=202611081006"></script>
+<script src="hub-tracker.js?v=202611081006"></script>
+<script src="hub-rotation.js?v=202611081006"></script>
+<script src="hub-xlsx.js?v=202611081006"></script>
+<script src="hub-docx.js?v=202611081006"></script>
+<script src="hub-timetable-parse.js?v=202611081006"></script>
+<script src="assignment-defaults.js?v=202611081006"></script>
+<script src="hub-shared.js?v=202611081006"></script>
+<script src="hub-store.js?v=202611081006"></script>
+<script src="hub-say.js?v=202611081006"></script>
+<script src="hub-sync.js?v=202611081006"></script>
+<script src="hub-notebook.js?v=202611081006"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1379,6 +1381,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     /* An unnamed input is a slot nobody has named yet. The tutor sees it as a
        slot to fill; the course sees "Input", because a morning with nothing
        on it reads as a free morning (Ramy, 9 Oct 2026: "show them as Input"). */
+    if (EDIT && x.t && twiceOf(x)) { cls.push('twice'); title = title.replace('</span>', '<span class="twc tw1">Twice</span></span>'); }
     if (!x.t) { if (EDIT) cls.push('empty'); title = '<span class="tl">' + esc(EDIT && x.k === 'input' ? 'Empty input' : KIND_LABEL[x.k] || '') + '</span>'; }
   }
   /* THE ROOM A TILE JOINS (9 Oct 2026, the handoff's §9). A TP or input tile
@@ -1868,6 +1871,7 @@ function render(){
   if (PREVIEW && IS_TUTOR && LIVE && !WORK) { WORK = TT; TT = Object.assign({}, TT, JSON.parse(JSON.stringify(LIVE))); LIVE_KEYS.forEach(k => { if (LIVE[k] === undefined) delete TT[k]; }); }
   else if (!PREVIEW && WORK) { TT = WORK; WORK = null; }
   ZONE = SETTINGS.timeZone || '';
+  PLACED = placedMap();
   STATE = stateMap();
   GROUPS = groups(); DUES = dues(); OUTS = outs(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
   document.body.classList.toggle('editing', EDIT);
@@ -2966,7 +2970,10 @@ const pieceLabel = k => (PIECES.find(p => p[0] === k) || [k, KIND_LABEL[k] || k]
 function libListHTML(){
   const q = normT(LIB_Q);
   const list = STUDIO_LIB.filter(x => !q || normT(x[1]).indexOf(q) !== -1);
-  return list.length ? list.map(x => `<button type="button" class="tpl" draggable="true" data-lib="${esc(x[1])}"><b>${esc(x[1])}</b><small>Input · 75 minutes · Schedule</small></button>`).join('') : '<p>Nothing by that name in the library.</p>';
+  /* where each session already sits (8 Nov 2026): placing it again moves it there */
+  const on = x => (PLACED[x[0]] || []).map(p => dayName(p.date));
+  const line = x => { const d = on(x); return !d.length ? 'Input · 75 minutes · Schedule' : d.length > 1 ? '<span class="twc">Twice</span> ' + esc(d.join(' and ')) : 'On ' + esc(d[0]) + ' · Place it to move it'; };
+  return list.length ? list.map(x => `<button type="button" class="tpl${on(x).length ? ' placed' : ''}" draggable="true" data-lib="${esc(x[1])}"><b>${esc(x[1])}</b><small>${line(x)}</small></button>`).join('') : '<p>Nothing by that name in the library.</p>';
 }
 function shade(on){
   let sh = document.querySelector('.ttshade');
@@ -3019,6 +3026,32 @@ function newSession(date, s, e, t){
   if (t) { x.t = t; x.room = 'Input'; const sl = libSlugOf(t); if (sl) x.lib = sl; }
   openTile(date, x.id, x);
 }
+/* ONE SESSION, ONE PLACE (Ramy, 8 Nov 2026: "some of the input sessions are written twice on the timetable ... if I
+   drag and drop an input session on the timetable, the other one should go back to the library ... you should not
+   end up with two identical inputs on the same timetable"). The same input session is its library page (x.lib, or
+   the library title it carries). Placing one (from the library, a drop on a tile, or the session form) moves it: any
+   other copy for the same group becomes an empty input place, which the library can fill again. Copies already on a
+   board are marked "Twice" on their tiles and in the library, so they can be cleared by hand. */
+/* only the library's sessions: a typed tile that repeats on purpose ("Lesson planning" every day) is not a copy */
+const sesKey = x => x && x.k === 'input' && x.t ? (x.lib || libSlugOf(x.t)) : '';
+const sameGroup = (a, b) => !a.g || !b.g || String(a.g) === String(b.g);
+function freeOthers(x){
+  const key = sesKey(x); if (!key) return [];
+  const freed = [];
+  (TT.days || []).forEach(d => (d.sessions || []).forEach(o => {
+    if (o === x || o.id === x.id || sesKey(o) !== key || !sameGroup(o, x)) return;
+    delete o.t; delete o.lib; delete o.d; delete o.url; o.k = 'input';
+    freed.push(dayName(d.date));
+  }));
+  return freed;
+}
+function placedMap(){
+  const m = {};
+  ((TT && TT.days) || []).forEach(d => (d.sessions || []).forEach(o => { const k = sesKey(o); if (k) (m[k] = m[k] || []).push({ date: d.date, x: o }); }));
+  return m;
+}
+let PLACED = {};
+const twiceOf = x => { const k = sesKey(x), on = k && PLACED[k]; return !!(on && on.filter(p => sameGroup(p.x, x)).length > 1); };
 function freeAfter(day){
   const end = (day.sessions || []).length ? Math.max(...day.sessions.map(x => toMin(x.e) || 0)) : 10 * 60;
   return end;
@@ -3138,7 +3171,8 @@ function replaceTile(date, id, p){
   remember(); const was = tileName(x, day);
   if (p.k) { x.k = p.k === 'blank' ? 'event' : p.k; x.t = p.k === 'blank' ? '' : pieceLabel(p.k); delete x.lib; if (x.room === 'Input') delete x.room; }
   else { x.k = 'input'; x.t = p.t; x.room = 'Input'; const sl = libSlugOf(p.t); if (sl) x.lib = sl; else delete x.lib; }
-  save('Changed', { text: '“' + was + '” on ' + dayName(date) + ' is now “' + tileName(x, day) + '”' }); render();
+  const freed = freeOthers(x);
+  save('Changed', { text: '“' + was + '” on ' + dayName(date) + ' is now “' + tileName(x, day) + '”' + (freed.length ? '; its place on ' + freed.join(', ') + ' is empty again' : '') }); render();
 }
 function newPiece(date, s, e, k){
   const day = dayOfDate(date); if (!day || day.closed) return;
@@ -3537,10 +3571,12 @@ function openTile(date, id, fresh){
     } else to.sessions.sort(byStart);
     if (k === 'tp') { const n = parseInt(v('tp'), 10); to.tp = n > 0 ? n : (to.tp || 1); to.setIndex = +v('set') || 0; }
     else if (!to.sessions.some(o => o.k === 'tp')) { delete to.tp; delete to.setIndex; }
-    if (isNew) { OPEN_TILE = null; closePop(); save('Added', { text: '“' + tileName(x, to) + '” added on ' + dayName(to.date) + ', ' + hubClockRange(x.s, x.e) }); render(); return; }
+    const freed = freeOthers(x), was = freed.length ? '; its place on ' + freed.join(', ') + ' is empty again' : '';
+    if (isNew) { OPEN_TILE = null; closePop(); save('Added', { text: '“' + tileName(x, to) + '” added on ' + dayName(to.date) + ', ' + hubClockRange(x.s, x.e) + was }); render(); return; }
+    if (freed.length) CHANGES.push({ at: new Date().toISOString(), key: 'tile:' + x.id + ':moved', text: '“' + tileName(x, to) + '” stays on ' + dayName(to.date) + was });
     if (to !== from) CHANGES.push({ at: new Date().toISOString(), key: 'tile:' + x.id, text: '“' + tileName(x, to) + '” moved from ' + dayName(from.date) + ' to ' + dayName(to.date) });
     closePop();
-    if (to !== from) { save('Saved'); render(); }
+    if (to !== from || freed.length) { save('Saved'); render(); }
   });
   if ($('tCancel')) $('tCancel').addEventListener('click', () => closePop());
   if ($('tDup')) $('tDup').addEventListener('click', () => { const c = clone(x0); c.id = newId(); delete c.locked; if (c.t) c.t += ' (copy)'; openTile(date, c.id, c); });
