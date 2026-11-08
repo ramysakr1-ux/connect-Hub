@@ -967,6 +967,10 @@
        left this browser holding the version and not the settings, so the tutor home asked for the course again and the demo
        bar lost its day). The settings are the course; a copy without them boots. */
     if (sameCopy && mode !== 'volunteer' && !current('connect_course_settings')) sameCopy = false;
+    /* ...nor a tutor's copy that does not know its versions (store v205, 8 Nov 2026): without them the next write cannot
+       say which copy it started from, and could undo a change made elsewhere. One full boot learns them; after that they
+       are kept in this browser. */
+    if (sameCopy && mode === 'tutor' && typeof REV.timetable !== 'number') sameCopy = false;
     if (sameCopy && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
     status('Checking the course\u2026', 'busy');
     (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(){ return false; /* any trouble, an older store included: boot as before, and the boot says if the link is dead */ }) : Promise.resolve(false)).then(function(fresh){
