@@ -2809,7 +2809,24 @@ function checksHTML(){
     const dayIdx = re => open.findIndex(d => (d.sessions || []).some(x => re.test(x.t || '')));
     const s2 = dayIdx(/stage\s*2\s*tutorial/i), s3 = dayIdx(/stage\s*3\s*tutorial/i);
     if (s2 < 0) lines.push(['note', 'No Stage 2 tutorials on the timetable yet (after TP4, as the groups change)']);
-    else if ((lastOf(4) >= 0 && s2 <= lastOf(4)) || (firstOf(5) >= 0 && s2 > firstOf(5))) lines.push(['note', 'Stage 2 tutorials should fall after TP4 and before TP5']);
+    else {
+      /* EACH SET AGAINST ITS OWN TP4 (Ramy, 8 Nov 2026, C/21: "Stage 2 tutorials- ABC" on Thu 26 after ABC's TP4 on Wed 25,
+         DEF's on Fri 27 after theirs on Thu 26). The rule read every tutorial against the course's LAST TP4, so ABC's
+         tutorial on DEF's TP4 day was called early. A tutorial whose title names a set (ABC, DEF) is read against that
+         set's TP4 and TP5; one that names none against the first TP4 and the first TP5. */
+      const R = window.hubRotation, sets = [];
+      (GROUPS || []).forEach(g => (g.sets || []).forEach((set, i) => { const nm = R && set && set.length ? R.setName(set) : ''; if (nm) sets.push({ nm, i }); }));
+      const dayOfSet = (n, i) => open.findIndex(d => Number(d.tp) === n && Number(d.setIndex || 0) === i);
+      let off = false;
+      open.forEach((d, idx) => (d.sessions || []).forEach(x => {
+        if (!/stage\s*2\s*tutorial/i.test(x.t || '')) return;
+        const named = sets.filter(s => new RegExp('\\b' + s.nm + '\\b').test(x.t || ''));
+        const after = named.length ? Math.max(...named.map(s => dayOfSet(4, s.i))) : firstOf(4);
+        const tp5s = named.length ? named.map(s => dayOfSet(5, s.i)).filter(n => n >= 0) : [firstOf(5)].filter(n => n >= 0);
+        if ((after >= 0 && idx <= after) || (tp5s.length && idx > Math.min(...tp5s))) off = true;
+      }));
+      if (off) lines.push(['note', 'Stage 2 tutorials should fall after TP4 and before TP5']);
+    }
     if (s3 >= 0 && firstOf(7) >= 0 && s3 >= firstOf(7)) lines.push(['note', 'Stage 3 tutorials come with two lessons left, before TP7']);
     const lastTwo = open.slice(-2).map(d => d.date);
     Object.keys(DUES).forEach(date => { if (lastTwo.indexOf(date) !== -1) DUES[date].forEach(x => { if (/resub/i.test(x.title || '')) lines.push(['note', `${x.title} falls on ${dayName(date)}, one of the last two days`]); }); });
