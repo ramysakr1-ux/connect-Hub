@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611081006">
+<link rel="stylesheet" href="hub-tokens.css?v=202611081009">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -827,25 +827,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611081006">
+<link rel="stylesheet" href="hub-house.css?v=202611081009">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611081006"></script>
-<script src="hub-tracker.js?v=202611081006"></script>
-<script src="hub-rotation.js?v=202611081006"></script>
-<script src="hub-xlsx.js?v=202611081006"></script>
-<script src="hub-docx.js?v=202611081006"></script>
-<script src="hub-timetable-parse.js?v=202611081006"></script>
-<script src="assignment-defaults.js?v=202611081006"></script>
-<script src="hub-shared.js?v=202611081006"></script>
-<script src="hub-store.js?v=202611081006"></script>
-<script src="hub-say.js?v=202611081006"></script>
-<script src="hub-sync.js?v=202611081006"></script>
-<script src="hub-notebook.js?v=202611081006"></script>
+<script src="hub-due.js?v=202611081009"></script>
+<script src="hub-tracker.js?v=202611081009"></script>
+<script src="hub-rotation.js?v=202611081009"></script>
+<script src="hub-xlsx.js?v=202611081009"></script>
+<script src="hub-docx.js?v=202611081009"></script>
+<script src="hub-timetable-parse.js?v=202611081009"></script>
+<script src="assignment-defaults.js?v=202611081009"></script>
+<script src="hub-shared.js?v=202611081009"></script>
+<script src="hub-store.js?v=202611081009"></script>
+<script src="hub-say.js?v=202611081009"></script>
+<script src="hub-sync.js?v=202611081009"></script>
+<script src="hub-notebook.js?v=202611081009"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2334,14 +2334,16 @@ function buildDays(B){
       if (sl.role === 'in1') {
         if (isIntro) day.sessions.push(S(sl.s, sl.e, 'input', 'Course introduction', { by: 0 }));
         else if (special === 'tutorials') day.sessions.push(S(sl.s, sl.e, 'event', 'Stage 2 tutorials · ABC'));
-        else if (special === 'newclass') day.sessions.push(S(sl.s, sl.e, 'event', 'Stage 2 tutorials · DEF'));
+        /* ALL THE STAGE 2 TUTORIALS ON THE FRIDAY (Ramy, 8 Nov 2026: "Tutorials are all on Friday. Monday is lesson planning
+           and demo lessons"): ABC first, then DEF; the new-class Monday plans for the new class and watches its demo */
+        else if (special === 'newclass') day.sessions.push(S(sl.s, sl.e, 'plan', 'Lesson planning'));
         else if (r && B.guided && firstTeach === -1) { firstTeach = i; day.sessions.push(S(sl.s, sl.e, 'plan', 'Guided lesson planning · TP1')); }
         else { const x = input(sl); if (x) day.sessions.push(x); }
         return;
       }
       if (sl.role === 'other') { day.sessions.push(S(sl.s, sl.e, sl.k, sl.t)); return; }
       if (sl.role === 'in2') {
-        if (special === 'tutorials') day.sessions.push(S(sl.s, sl.e, 'event', 'Stage 2 tutorials · ABC'));
+        if (special === 'tutorials') day.sessions.push(S(sl.s, sl.e, 'event', 'Stage 2 tutorials · DEF'));
         else if (visit) day.sessions.push(S(sl.s, sl.e, 'assessor', 'The assessor’s session'));
         else { const x = input(sl); if (x) day.sessions.push(x); }
         return;
@@ -2360,7 +2362,7 @@ function buildDays(B){
         /* feedback the morning after teaching (fbFirst): the first teaching day has nothing to feed back on yet, so it takes an input */
         if (isIntro || special === 'free' || special === 'planning' || (fbFirst && r && teachIdx[0] === i)) { const x = input(sl); if (x) day.sessions.push(x); }
         else if (special === 'newclass') day.sessions.push(S(sl.s, sl.e, 'plan', 'Lesson planning'));
-        else if (special === 'tutorials') return;
+        else if (special === 'tutorials') { if (!shape.some(q => q.role === 'in2')) day.sessions.push(S(sl.s, sl.e, 'event', 'Stage 2 tutorials · DEF')); return; }
         else day.sessions.push(S(sl.s, sl.e, 'feedback', r && r.tp === tpCount && r.set === 1 ? 'Written feedback' : 'TP feedback and lesson planning'));
       }
     });
