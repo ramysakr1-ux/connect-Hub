@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611081024">
+<link rel="stylesheet" href="hub-tokens.css?v=202611081124">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -617,6 +617,15 @@
      seeing it on a New York capture, 29 Sep 2026). */
   .zone{font-size:0.8rem; color:var(--ink); background:var(--sand-deep); border:1px solid var(--sand-line);
     border-left:4px solid var(--teal); border-radius:8px; padding:9px 13px; margin:0 0 16px; line-height:1.55;}
+  .wsum{display:flex; flex-wrap:wrap; gap:6px 16px; font-size:0.84rem; margin:0 0 12px;} .wsum b{font-size:1rem;} .wsum .wbad b{color:var(--brick);}
+  .wcards{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; margin:0 0 12px;}
+  .wcard{background:var(--card); border:1px solid var(--sand-line); border-top:3px solid var(--teal); border-radius:10px; padding:10px 12px;}
+  .wcard .wh{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 6px;} .wcard .wh .who.tut{display:inline-flex; padding:0 6px; border-radius:4px; font-size:0.66rem; font-weight:700; line-height:18px; background:var(--ink); color:var(--paper);}
+  .wn{font-size:0.76rem; color:var(--grey); font-weight:600;}
+  .wline{display:flex; gap:10px; align-items:baseline; width:100%; text-align:left; padding:5px 6px; border:0; border-radius:6px; background:none; color:var(--ink); font:inherit; font-size:0.82rem; cursor:pointer;} .wline:hover{background:var(--gold-wash);}
+  .wline .wd{flex:0 0 86px; color:var(--grey); font-size:0.76rem;} .wline .wt{flex:1; min-width:0;}
+  .wnone{font-size:0.8rem; color:var(--grey); margin:4px 6px;}
+  .wpart{border-top:1px solid var(--row-line); padding:10px 0 4px;} .wpart h4{font-size:0.86rem; margin:0 0 4px;} .wlist{font-size:0.8rem; line-height:1.6;}
   .imp{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:14px 16px; margin:0 0 18px;}
   .imp h3{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
   .imp p{font-size:0.8rem; color:var(--grey); margin:0 0 10px; line-height:1.55;}
@@ -827,25 +836,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611081024">
+<link rel="stylesheet" href="hub-house.css?v=202611081124">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611081024"></script>
-<script src="hub-tracker.js?v=202611081024"></script>
-<script src="hub-rotation.js?v=202611081024"></script>
-<script src="hub-xlsx.js?v=202611081024"></script>
-<script src="hub-docx.js?v=202611081024"></script>
-<script src="hub-timetable-parse.js?v=202611081024"></script>
-<script src="assignment-defaults.js?v=202611081024"></script>
-<script src="hub-shared.js?v=202611081024"></script>
-<script src="hub-store.js?v=202611081024"></script>
-<script src="hub-say.js?v=202611081024"></script>
-<script src="hub-sync.js?v=202611081024"></script>
-<script src="hub-notebook.js?v=202611081024"></script>
+<script src="hub-due.js?v=202611081124"></script>
+<script src="hub-tracker.js?v=202611081124"></script>
+<script src="hub-rotation.js?v=202611081124"></script>
+<script src="hub-xlsx.js?v=202611081124"></script>
+<script src="hub-docx.js?v=202611081124"></script>
+<script src="hub-timetable-parse.js?v=202611081124"></script>
+<script src="assignment-defaults.js?v=202611081124"></script>
+<script src="hub-shared.js?v=202611081124"></script>
+<script src="hub-store.js?v=202611081124"></script>
+<script src="hub-say.js?v=202611081124"></script>
+<script src="hub-sync.js?v=202611081124"></script>
+<script src="hub-notebook.js?v=202611081124"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1809,11 +1818,57 @@ function clearSetDates(k){
   try { localStorage.setItem('connect_assignment_wording_v2', JSON.stringify(w)); } catch (e) {}
 }
 function overLib(e){ const lib = document.querySelector('.slib'); if (!lib) return false; const r = lib.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; }
+/* WHO TEACHES WHAT (Ramy, 8 Nov 2026: "any stats on how many input sessions, which input sessions, how many input
+   sessions per trainer, who's doing what?"). Read off the board as it stands (the draft): each tutor's input sessions
+   with their days and hours, the sessions nobody teaches yet, the empty input places, the library's sessions not on
+   the timetable, and any session on it twice. Each line opens its tile. Lesson planning tiles are planning time, not
+   input sessions, and are left out. */
+let WHO_OPEN = false;
+function whoHTML(){
+  if (!WHO_OPEN || !IS_TUTOR) return '';
+  const isPlan = t => /^(guided )?lesson planning\b/i.test(String(t || '').trim());
+  const tiles = [], empty = [];
+  (TT.days || []).forEach(d => { if (d.closed) return; (d.sessions || []).forEach(x => {
+    if (x.k !== 'input') return;
+    if (!x.t) { empty.push({ d, x }); return; }
+    if (!isPlan(x.t)) tiles.push({ d, x });
+  }); });
+  const mins = x => Math.max(0, (toMin(x.e) || 0) - (toMin(x.s) || 0));
+  const hrs = m => { const h = Math.floor(m / 60), r = m % 60; return (h ? h + ' h' : '') + (h && r ? ' ' : '') + (r ? r + ' min' : '') || '0 min'; };
+  const line = ({ d, x }) => `<button type="button" class="wline" data-who="${esc(d.date)}|${esc(x.id)}"><span class="wd">${esc(dayName(d.date))}</span><span class="wt">${esc(x.t || 'Empty input')}</span>${twiceOf(x) ? '<span class="twc">Twice</span>' : ''}</button>`;
+  const hasBy = x => x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by];
+  const cards = TUTORS.map((n, i) => {
+    const mine = tiles.filter(t => hasBy(t.x) && +t.x.by === i);
+    return `<div class="wcard"><div class="wh"><span class="who tut">${esc(initialsOf(n))}</span><b>${esc(n)}</b><span class="wn">${mine.length} ${mine.length === 1 ? 'session' : 'sessions'} · ${hrs(mine.reduce((a, t) => a + mins(t.x), 0))}</span></div>
+      ${mine.length ? mine.map(line).join('') : '<p class="wnone">No input sessions yet.</p>'}</div>`;
+  }).join('');
+  const nobody = tiles.filter(t => !hasBy(t.x));
+  const placed = new Set(Object.keys(PLACED));
+  const left = STUDIO_LIB.filter(x => !placed.has(x[0]));
+  const twice = Object.keys(PLACED).filter(k => PLACED[k].length > 1).map(k => PLACED[k]);
+  const part = (h, n, body) => `<div class="wpart"><h4>${h} <span class="wn">${n}</span></h4>${body}</div>`;
+  return `<div class="imp" id="whoPanel"><h3>Who teaches what</h3>
+    <p>The input sessions on the board as it is now, by tutor. Lesson planning is left out. Click a session to open it.</p>
+    <div class="wsum"><span><b>${tiles.length}</b> input ${tiles.length === 1 ? 'session' : 'sessions'}</span><span><b>${empty.length}</b> empty ${empty.length === 1 ? 'place' : 'places'}</span><span><b>${nobody.length}</b> with no tutor</span><span><b>${left.length}</b> in the library, not on the timetable</span>${twice.length ? `<span class="wbad"><b>${twice.length}</b> on twice</span>` : ''}</div>
+    <div class="wcards">${cards || '<p class="wnone">No tutors named yet. They are named on Course admin.</p>'}</div>
+    ${twice.length ? part('On the timetable twice', twice.length, twice.map(on => on.map(p => line({ d: dayOfDate(p.date), x: p.x })).join('')).join('')) : ''}
+    ${nobody.length ? part('No tutor yet', nobody.length, nobody.map(line).join('')) : ''}
+    ${empty.length ? part('Empty input places', empty.length, empty.map(line).join('')) : ''}
+    ${left.length ? part('In the library, not on the timetable', left.length, `<p class="wlist">${left.map(x => esc(x[1])).join(' · ')}</p>`) : ''}
+    <div class="row"><button class="btn quiet" id="whoClose">Done</button></div></div>`;
+}
 function openAsgAt(k, field){ ASG_OPEN = true; FOCUS_ASG = { k, f: field === 'out' ? 'open' : (field || 'due') }; render(); }
 function wireMove(){
   if (!IS_TUTOR) return;
   if ($('asgOpen')) $('asgOpen').addEventListener('click', () => { ASG_OPEN = !ASG_OPEN; render(); if (ASG_OPEN) { const b = $('asgDates'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
   if ($('asgClose')) $('asgClose').addEventListener('click', () => { ASG_OPEN = false; render(); });
+  if ($('whoBtn')) $('whoBtn').addEventListener('click', () => { WHO_OPEN = !WHO_OPEN; render(); if (WHO_OPEN) { const b = $('whoPanel'); if (b) b.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
+  if ($('whoClose')) $('whoClose').addEventListener('click', () => { WHO_OPEN = false; render(); });
+  document.querySelectorAll('#whoPanel [data-who]').forEach(b => b.addEventListener('click', () => {
+    const [date, id] = b.dataset.who.split('|');
+    if (WEEK_OF[date] != null && WEEK_OF[date] !== WEEK) { WEEK = WEEK_OF[date]; render(); }
+    openTile(date, id);
+  }));
   document.querySelectorAll('#asgDates [data-clear-sets]').forEach(b => b.addEventListener('click', () => { clearSetDates(b.dataset.clearSets); note = 'Set dates cleared: every set keeps the Due'; FOCUS_ASG = { k: b.dataset.clearSets, f: 'due' }; render(); }));
   document.querySelectorAll('#asgDates input[data-f]').forEach(i => i.addEventListener('change', () => { setAsgDate(i.closest('.adrow').dataset.k, i.dataset.f, i.value, i.dataset.g, i.dataset.i); note = 'Assignment dates saved'; render(); }));
   /* A CLICK ON A DEADLINE OPENS ITS DATES (Ramy, 7 Nov 2026: "you click, and then nothing really happens"). The old
@@ -1930,7 +1985,7 @@ function render(){
   if (WEEK == null || WEEK >= weeks.length || WEEK < 0) { const t = weeks.findIndex(w => w.some(d => d.date >= TODAY)); WEEK = t === -1 ? weeks.length - 1 : t; }
   const oldBar = IS_TUTOR ? `<div id="ttOldBar">${pub ? '<button type="button" id="unpublish">Take it back</button>' : ''}<button type="button" id="buildOpen">Set up the timetable</button><button type="button" id="setOpen">Timetable settings</button><button type="button" id="asgOpen">Assignment dates</button></div>` : '';
   const bar = IS_TUTOR ? oldBar + (EDIT ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` + statusHTML() : '')
-      + (PREVIEW ? '' : asgDatesHTML() + buildPanelHTML() + settingsPanelHTML() + builtHTML() + importHTML()) : '';
+      + (PREVIEW ? '' : whoHTML() + asgDatesHTML() + buildPanelHTML() + settingsPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
      October teaching practice starts at 2:00 PM" (Ramy, 9 Oct 2026: "the
@@ -1967,7 +2022,7 @@ function render(){
     : CHANGES.length ? `<button type="button" class="btn publish" id="pubBtn">Publish changes</button>` : '';   /* shown only when there is something to publish (Ramy, 30 Oct 2026) */
   const tool = `<div class="stool"><div><h2>Week ${two(WEEK + 1)}</h2><p class="wkd">${esc(DOW[wa.getDay()] + ' ' + dm(wa))} – ${esc(DOW[wb.getDay()] + ' ' + dm(wb))}</p>${changeNote(w)}</div>
     <div class="sacts">${filt}<button type="button" class="btn quiet" id="tOrient" title="Switch the board round">${ACROSS() ? 'Days down' : 'Days across'}</button>
-      ${EDIT ? `<button type="button" class="btn quiet" id="libBtn" aria-pressed="${LIB_OPEN}">Pieces and sessions</button><button type="button" class="btn quiet" id="addSes">+ Session</button><button type="button" class="btn quiet" id="setupBtn">Set up the timetable</button><button type="button" class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>${pubBtn}` : ''}
+      ${EDIT ? `<button type="button" class="btn quiet" id="libBtn" aria-pressed="${LIB_OPEN}">Pieces and sessions</button><button type="button" class="btn quiet" id="whoBtn" aria-pressed="${WHO_OPEN}">Who teaches what</button><button type="button" class="btn quiet" id="addSes">+ Session</button><button type="button" class="btn quiet" id="setupBtn">Set up the timetable</button><button type="button" class="btn quiet" id="ttUndo"${UNDO.length ? '' : ' disabled'}>Undo</button>${pubBtn}` : ''}
       ${EDIT ? '<button type="button" class="btn quiet" id="howBtn">How it works</button>' : ''}</div></div>`;
   /* THE PIECES (Ramy, 6 Nov 2026: "like pieces of chess or checkers ... you just move things around"): the kinds of tile
      to drop onto the board, then the library's input sessions */
