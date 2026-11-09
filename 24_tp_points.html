@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611091142">
+<link rel="stylesheet" href="hub-tokens.css?v=202611091220">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -426,6 +426,7 @@
   .gcard.over{outline:2px dashed var(--ink); outline-offset:2px;}
   .gcard.free.un{background:var(--paper); border-style:dashed; border-left-style:solid;}
   .gcard .unwho{display:flex; align-items:center; gap:6px; margin-top:4px; font-size:0.75rem; color:var(--grey);}
+  .gcard .unname{box-sizing:border-box; margin-top:4px; font:inherit; font-size:0.78rem; padding:3px 6px; border:1px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink); width:100%;}
   .gcard .unwho select{font:inherit; font-size:0.78rem; padding:2px 4px; border:1px solid var(--sand-line); border-radius:6px; background:var(--paper); color:var(--ink); max-width:100%;}
   .unbar{margin:10px 0 6px; padding:9px 12px; border-radius:10px; background:var(--sand); font-size:0.85rem; line-height:1.5;}
   .unbar .btn{margin-left:6px;} .gcard.free{background:var(--sand); border-style:dashed; cursor:default;}
@@ -734,7 +735,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611091142">
+<link rel="stylesheet" href="hub-house.css?v=202611091220">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -897,14 +898,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611091142"></script>
-<script src="hub-tracker.js?v=202611091142"></script>
-<script src="hub-rotation.js?v=202611091142"></script>
-<script src="hub-shared.js?v=202611091142"></script>
-<script src="hub-store.js?v=202611091142"></script>
-<script src="hub-say.js?v=202611091142"></script>
-<script src="hub-sync.js?v=202611091142"></script>
-<script src="hub-notebook.js?v=202611091142"></script>
+<script src="hub-due.js?v=202611091220"></script>
+<script src="hub-tracker.js?v=202611091220"></script>
+<script src="hub-rotation.js?v=202611091220"></script>
+<script src="hub-shared.js?v=202611091220"></script>
+<script src="hub-store.js?v=202611091220"></script>
+<script src="hub-say.js?v=202611091220"></script>
+<script src="hub-sync.js?v=202611091220"></script>
+<script src="hub-notebook.js?v=202611091220"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -1010,7 +1011,7 @@ const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
 const IS_READER = !IS_TUTOR && !IS_TRAINEE;
 if (IS_READER) {
   document.documentElement.classList.add('tp-ro');
-  const CHANGES = '[data-gmove],[data-gown],[data-gfree],[data-unwho],[data-undeal],[data-gchip],[data-gcard],[data-mk],[data-mrm],[data-m],[data-rel],[data-cbset],[data-cblen],[data-stlink],#applyset,#rebuild,#cbdeal,#sdeal,#build,#typesOnly,.tcard.own,.tcard.lib,.cbpill,a[href^="28_tp_point_sets"]';
+  const CHANGES = '[data-gmove],[data-gown],[data-gfree],[data-unwho],[data-unname],[data-undeal],[data-gchip],[data-gcard],[data-mk],[data-mrm],[data-m],[data-rel],[data-cbset],[data-cblen],[data-stlink],#applyset,#rebuild,#cbdeal,#sdeal,#build,#typesOnly,.tcard.own,.tcard.lib,.cbpill,a[href^="28_tp_point_sets"]';
   ['click', 'dragstart', 'drop', 'change', 'input', 'keydown'].forEach(ev => document.addEventListener(ev, e => {
     const t = e.target && e.target.closest && e.target.closest(CHANGES);
     if (t && !(ev === 'keydown' && e.key === 'Tab')) { e.preventDefault(); e.stopImmediatePropagation(); }
@@ -1513,7 +1514,7 @@ const unKey = (tp, si, k) => tp + '|' + si + '|' + k;
 const unWhoOf = g => (((P.set || {}).unWho || {})[g]) || {};
 /* who holds the unassessed lesson at tp/si/k now: a token, 'tutor', 'none' or '' */
 function unHolder(g, tp, si, k){
-  const mark = unWhoOf(g)[unKey(tp, si, k)]; if (mark === 'tutor' || mark === 'none') return mark;
+  const mark = unWhoOf(g)[unKey(tp, si, k)]; if (mark === 'tutor' || mark === 'none' || /^name:/.test(mark || '')) return mark;
   const rows = (P.groups || {})[g] || {};
   return Object.keys(rows).find(t => { const c = ((rows[t] || {}).un || {})[tp]; return c && c.si === si && c.k === k; }) || '';
 }
@@ -1526,7 +1527,7 @@ function unGive(g, tp, si, k, who, byHand){
   P.groups = P.groups || {}; P.groups[g] = P.groups[g] || {};
   Object.keys(P.groups[g]).forEach(t => { const u = (P.groups[g][t] || {}).un; if (u && u[tp] && u[tp].si === si && u[tp].k === k) delete u[tp]; });
   P.set = P.set || {}; P.set.unWho = Object.assign({}, P.set.unWho || {}); const w = Object.assign({}, P.set.unWho[g] || {});
-  if (who === 'tutor' || who === 'none') w[unKey(tp, si, k)] = who;
+  if (who === 'tutor' || who === 'none' || /^name:./.test(who || '')) w[unKey(tp, si, k)] = who;
   else { delete w[unKey(tp, si, k)]; if (who) { const row = P.groups[g][who] = P.groups[g][who] || {}; row.un = Object.assign({}, row.un || {}); row.un[tp] = Object.assign(unCell(g, tp, si, k), byHand ? { edited: true } : {}); } }
   P.set.unWho[g] = w;
 }
@@ -1538,7 +1539,7 @@ function unDeal(g, onlyEmpty){
     const cands = (sets[1 - si] || []).filter(Boolean);
     ks.forEach((k, j) => {
       const now = unHolder(g, tp, si, k);
-      if (now && (onlyEmpty || now === 'tutor' || now === 'none' || (((P.groups[g][now] || {}).un || {})[tp] || {}).edited)) return;
+      if (now && (onlyEmpty || now === 'tutor' || now === 'none' || /^name:/.test(now) || (((P.groups[g][now] || {}).un || {})[tp] || {}).edited)) return;
       const who = cands[(tp - 1 + j) % cands.length]; if (!who) return;
       unGive(g, tp, si, k, who); n++;
     });
@@ -1575,13 +1576,14 @@ function gridHTML(g, rows, lettered){
       }).join('');
       const uks = unSlots(g, tp, si), others = ((sets[1 - si] || []).filter(Boolean));
       const unCard = k => {
-        const sl = D.slots[k] || {}, who = unHolder(g, tp, si, k), c = who && who !== 'tutor' && who !== 'none' ? (((rows[who] || {}).un || {})[tp] || {}) : unCell(g, tp, si, k);
+        const sl = D.slots[k] || {}, who = unHolder(g, tp, si, k), named = /^name:/.test(who || ''), c = who && who !== 'tutor' && who !== 'none' && !named ? (((rows[who] || {}).un || {})[tp] || {}) : unCell(g, tp, si, k);
         const pages = c.book && (c.book.ref || c.book.page) ? short(c.book.ref || ('p. ' + c.book.page)) : '';
         const opt = (v, label) => `<option value="${esc(v)}"${who === v ? ' selected' : ''}>${esc(label)}</option>`;
         return `<div class="gcard free un fm-${esc(fam(sl.type || c.aim))}" data-unslot="${esc(g)}|${tp}|${si}|${k}"><span class="gk">Unassessed</span>
           <b class="gt">${esc(c.aim || sl.type || 'A lesson')}</b>${pages ? `<span class="gp">${esc(pages)}</span>` : ''}
           <label class="unwho">Taught by <select data-unwho="${esc(g)}|${tp}|${si}|${k}">${who ? '' : '<option value="" selected>Choose</option>'}${
-            others.map(t => opt(t, ((lettered.find(p => p.token === t) || {}).letter || '') + ' · ' + nameOf(t))).join('')}${opt('tutor', 'Tutor teaches')}${opt('none', 'Nobody')}</select></label></div>`;
+            others.map(t => opt(t, ((lettered.find(p => p.token === t) || {}).letter || '') + ' · ' + nameOf(t))).join('')}${opt('tutor', 'Tutor teaches')}${named ? opt(who, who.slice(5)) : ''}<option value="__other">Someone else</option>${opt('none', 'Nobody')}</select></label>
+          <input type="text" class="unname" data-unname="${esc(g)}|${tp}|${si}|${k}" placeholder="Their name" value="${named ? esc(who.slice(5)) : ''}" maxlength="60"${named ? '' : ' hidden'}></div>`;
       };
       const unHTML = uks.map(unCard).join('');
       const free = D.slots.map((sl, k) => (sl && (sl.type || sl.aim) && !held[k] && uks.indexOf(k) === -1) ? `<div class="gcard free fm-${esc(fam(sl.type))}" data-gfree="${esc(g)}|${tp}|${si}|${k}"><span class="gk">Nobody teaches this now</span><b class="gt">${esc(sl.type || '')}</b>${sl.pages ? `<span class="gp">${esc(short(sl.pages))}</span>` : ''}<span class="ga">Drag a trainee here to give it to them.</span></div>` : '').join('');
@@ -1630,9 +1632,15 @@ function wireGrid(){
   });
   document.querySelectorAll('[data-unwho]').forEach(el => el.addEventListener('change', () => {
     const [g, tp, si, k] = arr(el.dataset.unwho); if (!el.value) return;
+    if (el.value === '__other') { const inp = el.closest('.gcard').querySelector('[data-unname]'); if (inp) { inp.hidden = false; inp.focus(); } return; }
     unGive(g, +tp, +si, +k, el.value, true);
     persist(el.value === 'none' ? 'Nobody teaches it' : el.value === 'tutor' ? 'The tutor teaches it' : 'Saved: an unassessed lesson');
   }));
+  /* SOMEONE ELSE (Ramy, 9 Nov 2026: "with a manual override and option to add a different name") */
+  document.querySelectorAll('[data-unname]').forEach(el => {
+    const save = () => { const v = el.value.trim(); if (!v) return; const [g, tp, si, k] = arr(el.dataset.unname); if (unHolder(g, +tp, +si, +k) === 'name:' + v) return; unGive(g, +tp, +si, +k, 'name:' + v, true); persist('Saved: ' + v + ' teaches it'); };
+    el.addEventListener('change', save); el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+  });
   document.querySelectorAll('[data-undeal]').forEach(b => b.addEventListener('click', () => { const n = unDeal(b.dataset.undeal, true); persist(n ? 'The unassessed lessons are shared out' : 'Saved'); }));
   document.querySelectorAll('[data-gmove]').forEach(b => b.addEventListener('click', () => { const [g, tp, si, k, d] = arr(b.dataset.gmove); persist(swapTimes(g, tp, +si, +k, +k + (+d))); }));
   document.querySelectorAll('[data-gown]').forEach(b => b.addEventListener('click', () => { const [g, tok, tp] = arr(b.dataset.gown); OPEN = MKEY(g, tok, tp); persist(ownLesson(g, tok, tp)); }));

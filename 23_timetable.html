@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611091142">
+<link rel="stylesheet" href="hub-tokens.css?v=202611091220">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -843,25 +843,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611091142">
+<link rel="stylesheet" href="hub-house.css?v=202611091220">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611091142"></script>
-<script src="hub-tracker.js?v=202611091142"></script>
-<script src="hub-rotation.js?v=202611091142"></script>
-<script src="hub-xlsx.js?v=202611091142"></script>
-<script src="hub-docx.js?v=202611091142"></script>
-<script src="hub-timetable-parse.js?v=202611091142"></script>
-<script src="assignment-defaults.js?v=202611091142"></script>
-<script src="hub-shared.js?v=202611091142"></script>
-<script src="hub-store.js?v=202611091142"></script>
-<script src="hub-say.js?v=202611091142"></script>
-<script src="hub-sync.js?v=202611091142"></script>
-<script src="hub-notebook.js?v=202611091142"></script>
+<script src="hub-due.js?v=202611091220"></script>
+<script src="hub-tracker.js?v=202611091220"></script>
+<script src="hub-rotation.js?v=202611091220"></script>
+<script src="hub-xlsx.js?v=202611091220"></script>
+<script src="hub-docx.js?v=202611091220"></script>
+<script src="hub-timetable-parse.js?v=202611091220"></script>
+<script src="assignment-defaults.js?v=202611091220"></script>
+<script src="hub-shared.js?v=202611091220"></script>
+<script src="hub-store.js?v=202611091220"></script>
+<script src="hub-say.js?v=202611091220"></script>
+<script src="hub-sync.js?v=202611091220"></script>
+<script src="hub-notebook.js?v=202611091220"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1347,6 +1347,10 @@ function teachersOf(day){
     const others = gr.sets[1 - (day.setIndex || 0)] || [];
     Object.keys(rows).map(t => ({ t, u: ((rows[t] || {}).un || {})[day.tp] })).filter(o => o.u && Number(o.u.si) === Number(day.setIndex || 0))
       .sort((a, b) => a.u.k - b.u.k).forEach(o => { const p = others.find(x => x.token === o.t); if (p) order.push(Object.assign({}, p, { un: true })); });
+    /* a name typed for it (Someone else), on a tutor's board: the store hands the choice to tutors only */
+    const who = ((TPP.set || {}).unWho || {})[gr.group] || {};
+    Object.keys(who).filter(key => /^name:./.test(who[key])).map(key => key.split('|').map(Number)).filter(([tp, si]) => tp === Number(day.tp) && si === Number(day.setIndex || 0))
+      .sort((a, b) => a[2] - b[2]).forEach(([tp, si, k]) => { const nm = who[tp + '|' + si + '|' + k].slice(5); order.push({ token: 'name:' + nm, letter: window.hubInitials ? hubInitials(nm) : nm.slice(0, 2).toUpperCase(), name: nm, un: true }); });
     out.push({ group: gr.group, order });
   });
   return out;
@@ -1385,7 +1389,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
       const many = false;
       const who = teachers.map(g => ({ g, p: g.order[tpIdx] })).filter(x => x.p).map(({ g, p }) => {
         const me = !!meTok && p.token === meTok;
-        return `<span class="tchr${me ? ' me' : ''}${p.un ? ' un' : ''}" title="${esc((many ? 'Group ' + (g.group || '') + ' · ' : '') + (me ? 'You teach' : 'Teaching') + (p.un ? ', unassessed' : ''))}"><i class="av">${esc(String(p.letter || ''))}</i>${p.un ? '<small class="unl">Unassessed</small>' : ''}${many ? '<small class="gp">Group ' + esc(g.group || '') + '</small>' : ''}</span>`;
+        return `<span class="tchr${me ? ' me' : ''}${p.un ? ' un' : ''}" title="${esc((many ? 'Group ' + (g.group || '') + ' · ' : '') + (me ? 'You teach' : 'Teaching') + (p.un ? (p.name ? ': ' + p.name : '') + ', unassessed' : ''))}"><i class="av">${esc(String(p.letter || ''))}</i>${p.un ? '<small class="unl">Unassessed</small>' : ''}${many ? '<small class="gp">Group ' + esc(g.group || '') + '</small>' : ''}</span>`;
       }).join('');
       title = `TP ${day.tp}${who ? '<span class="tchrs">' + who + '</span>' : ''}`;
       /* THE CLASS IT IS TAUGHT IN (Course admin > Classes, 7 Nov 2026): its level and its tutor's initials, so the change of
