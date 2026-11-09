@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611082059">
+<link rel="stylesheet" href="hub-tokens.css?v=202611090947">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -461,6 +461,11 @@
   body.rpicking .grid.roster.grow:not(.rpick) .name:has(.grip):hover{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:3px; border-radius:6px;}
   body.rpicking .rset[data-rgroup]{cursor:pointer;} body.rpicking .rset[data-rgroup]:hover{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:4px; border-radius:6px;}
   @media (pointer:coarse){ .grid.roster .grip{width:34px; height:40px;} }
+  @media (pointer:fine){ .grid.roster.grow:has(.name .grip){cursor:grab;} }
+  body.rdragging, body.rdragging *{cursor:grabbing !important; user-select:none;}
+  .grid.roster.grow.rlifted{opacity:.45;}
+  .grid.roster.grow.rdrop, .rset.rdrop{outline:2px dashed var(--a-forest, var(--teal)); outline-offset:3px; border-radius:6px; background:color-mix(in oklch, var(--a-forest, var(--teal)) 8%, var(--paper));}
+  .rghost{position:fixed; z-index:60; pointer-events:none; padding:6px 12px; border-radius:8px; background:var(--paper); color:var(--ink); border:1px solid var(--sand-line); box-shadow:0 14px 28px -12px oklch(30% 0.04 60 / .65); font-weight:600;}
   .rnote.rhow{margin-top:-2px; padding:8px 12px; border-radius:10px; background:var(--sand); color:var(--ink);}
   /* Mix the groups (28 Oct 2026) */
   .mixbox{margin:4px 0 16px; padding:16px 18px; border:1px solid var(--sand-line); border-radius:14px; background:var(--paper);}
@@ -668,7 +673,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611082059">
+<link rel="stylesheet" href="hub-house.css?v=202611090947">
 </head>
 <body>
 <div class="board">
@@ -1278,19 +1283,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611082059"></script>
-<script src="hub-store.js?v=202611082059"></script>
-<script src="hub-xlsx.js?v=202611082059"></script>
-<script src="hub-say.js?v=202611082059"></script>
-<script src="agreement-defaults.js?v=202611082059"></script>
-<script src="observation-defaults.js?v=202611082059"></script>
-<script src="hub-shared.js?v=202611082059"></script>
-<script src="hub-rotation.js?v=202611082059"></script>
-<script src="hub-due.js?v=202611082059"></script>
-<script src="hub-sync.js?v=202611082059"></script>
-<script src="hub-notebook.js?v=202611082059"></script>
-<script src="hub-hand.js?v=202611082059"></script>
-<script src="hub-ink.js?v=202611082059"></script>
+<script src="assignment-defaults.js?v=202611090947"></script>
+<script src="hub-store.js?v=202611090947"></script>
+<script src="hub-xlsx.js?v=202611090947"></script>
+<script src="hub-say.js?v=202611090947"></script>
+<script src="agreement-defaults.js?v=202611090947"></script>
+<script src="observation-defaults.js?v=202611090947"></script>
+<script src="hub-shared.js?v=202611090947"></script>
+<script src="hub-rotation.js?v=202611090947"></script>
+<script src="hub-due.js?v=202611090947"></script>
+<script src="hub-sync.js?v=202611090947"></script>
+<script src="hub-notebook.js?v=202611090947"></script>
+<script src="hub-hand.js?v=202611090947"></script>
+<script src="hub-ink.js?v=202611090947"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2765,10 +2770,10 @@ async function renderStoreRoster(next){
            email box looks like a box. The trainee's link is two matching pills,
            Copy link and Email it (greyed until there is an address); Links and
            Remove sit apart at the end, the one that undoes something last. -->
-      ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>${trainees.length > 1 ? `<p class="rnote rhow"><b>To move a trainee</b>, click their name, then click the trainee to swap places with, in either group. To put them in a set’s free place instead, click that set’s heading. Click them again, or press Esc, to stop. <button type="button" class="linkbtn" id="mixOpen">Or let Lite mix the groups</button></p><div id="mixHost" hidden></div>` : ''}
+      ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>${trainees.length > 1 ? `<p class="rnote rhow"><b>To move a trainee</b>, drag them onto the trainee to swap places with, in either group, or onto a set’s heading to take a free place there. You can also click their name, then click where they go. <button type="button" class="linkbtn" id="mixOpen">Or let Lite mix the groups</button></p><div id="mixHost" hidden></div>` : ''}
       <div class="grid roster ghead"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
       ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
-        <div class="name">${t.letter ? `<span class="grip" title="Click, then click another trainee to swap places, or a set to move there" aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${t.certName && t.certName.at ? `<em class="certok" title="Confirmed ${esc(String(t.certName.at).slice(0, 10))}${t.certName.by === 'tutor' ? ' by a tutor' : ' by the trainee'}">Name confirmed</em>` : `<em class="certno" title="The trainee confirms it when they sign the agreement">Name not confirmed</em>`}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
+        <div class="name">${t.letter ? `<span class="grip" title="Drag onto another trainee to swap places, or onto a set to move there. Or click, then click." aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${t.certName && t.certName.at ? `<em class="certok" title="Confirmed ${esc(String(t.certName.at).slice(0, 10))}${t.certName.by === 'tutor' ? ' by a tutor' : ' by the trainee'}">Name confirmed</em>` : `<em class="certno" title="The trainee confirms it when they sign the agreement">Name not confirmed</em>`}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
         <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
         <div class="acts col-link">
           <button class="pillbtn" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
@@ -3075,7 +3080,61 @@ async function setPinSwitch(on){
     if (pick.tok === tok) { drop(); say(''); return; }
     const p = pick; drop(); moveTrainee(p.tok, { el: row, tok });
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && pick) { drop(); say(''); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && pick) { drop(); say(''); } if (e.key === 'Escape' && DR) endDrag(); });
+
+  /* DRAG AND DROP AGAIN, THE TIMETABLE'S WAY (Ramy, 9 Nov 2026: "can we just drag and drop the roster instead ...
+     drag and drop seems to be working everywhere else now ... just a lot easier"). The 27 Oct drag used the browser's
+     own drag, which was finicky; this one is the timetable's: press a trainee's row with the mouse, a copy of the name
+     follows the pointer, the trainee or set's heading under it lights, and letting go there swaps or moves, exactly as
+     the two clicks do. The page scrolls by itself near the top or bottom of the window. A press that does not move is
+     still the first of the two clicks, and a phone keeps the two taps. */
+  let DR = null, swallow = false, scrollV = 0, scrollRaf = 0;
+  const targetAt = (x, y) => {
+    const el = document.elementFromPoint(x, y); if (!el || !host.contains(el)) return null;
+    const head = el.closest('.rset[data-rgroup]'); if (head) return { el: head, group: head.dataset.rgroup, set: +head.dataset.rset };
+    const row = el.closest('.grid.roster.grow[data-tok]');
+    if (row && row.dataset.tok !== DR.tok && row.querySelector('.name .grip')) return { el: row, tok: row.dataset.tok };
+    return null;
+  };
+  const lightOff = () => host.querySelectorAll('.rdrop').forEach(x => x.classList.remove('rdrop'));
+  function scrollLoop(){ if (!DR || !scrollV) { scrollRaf = 0; return; } window.scrollBy(0, scrollV); if (DR.lx != null) follow(DR.lx, DR.ly); scrollRaf = requestAnimationFrame(scrollLoop); }
+  function follow(x, y){
+    DR.ghost.style.left = (x + 12) + 'px'; DR.ghost.style.top = (y - 14) + 'px';
+    lightOff(); DR.target = targetAt(x, y); if (DR.target) DR.target.el.classList.add('rdrop');
+  }
+  function endDrag(){
+    if (!DR) return; lightOff(); if (DR.ghost) DR.ghost.remove();
+    if (DR.row) DR.row.classList.remove('rlifted'); document.body.classList.remove('rdragging');
+    scrollV = 0; DR = null;
+  }
+  host.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch' || e.button !== 0) return;
+    if (e.target.closest('code, a, button:not(.grip), input, select, textarea, label')) return;
+    const row = e.target.closest('.grid.roster.grow[data-tok]'); if (!row || !row.querySelector('.name .grip')) return;
+    DR = { tok: row.dataset.tok, row, name: ((list().find(t => t.token === row.dataset.tok) || {}).name || '').trim(), x0: e.clientX, y0: e.clientY, moved: false };
+    e.preventDefault();   // no text selection while dragging
+  });
+  document.addEventListener('pointermove', e => {
+    if (!DR) return;
+    if (!DR.moved) {
+      if (Math.abs(e.clientX - DR.x0) < 5 && Math.abs(e.clientY - DR.y0) < 5) return;
+      DR.moved = true; if (pick) drop();
+      DR.ghost = document.createElement('div'); DR.ghost.className = 'rghost'; DR.ghost.textContent = DR.name;
+      document.body.appendChild(DR.ghost); DR.row.classList.add('rlifted'); document.body.classList.add('rdragging');
+      /* nothing is said while dragging: a line appearing above the list pushed every row down under the pointer */
+    }
+    DR.lx = e.clientX; DR.ly = e.clientY; follow(e.clientX, e.clientY);
+    const edge = 70, h = window.innerHeight;
+    scrollV = e.clientY < edge ? -Math.ceil((edge - e.clientY) / 4) : e.clientY > h - edge ? Math.ceil((e.clientY - (h - edge)) / 4) : 0;
+    if (scrollV && !scrollRaf) scrollRaf = requestAnimationFrame(scrollLoop);
+  });
+  document.addEventListener('pointerup', () => {
+    if (!DR) return;
+    const was = DR; if (!was.moved) { DR = null; return; }   // a press without a move is a click: the two clicks above
+    const t = was.target; endDrag(); swallow = true; setTimeout(() => { swallow = false; }, 0);
+    if (t) moveTrainee(was.tok, t); else say('');
+  });
+  host.addEventListener('click', e => { if (swallow) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 
   async function moveTrainee(tok, target){
     const S = window.HubStore, all = list(), me = all.find(t => t.token === tok); if (!me || !R) return;
