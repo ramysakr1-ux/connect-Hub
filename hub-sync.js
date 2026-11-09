@@ -333,12 +333,13 @@
     if (document.body) watch(); else document.addEventListener('DOMContentLoaded', watch);
   }
 
+  function safeLedgerForm(job){ try { return ledgerForm(job); } catch (e) { return job; } }
   function payloadFor(job){ var pl = Object.assign({}, job); if (key()) pl.key = key(); return pl; }
   function key(){ return S.key(); }
   function schedule(id, job){
     /* R1 (1 Nov 2026): a page whose link has been replaced in this browser saves nothing, not even into its ledger */
     if (S.moved && S.moved()) { status('Not saved \u2014 another Lite link was opened in this browser. Reload this page.', 'error'); return; }
-    queue[id] = job; remember(id, job); clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy');
+    queue[id] = job; remember(id, safeLedgerForm(job)); clearTimeout(timer); timer = setTimeout(flush, 600); status('Saving…', 'busy');
   }
   /* One flush at a time. Each flush used to start the moment it was asked,
      so a Return clicked while the last autosave was still on its way sent the
@@ -360,7 +361,7 @@
     if (!keys.length) return Promise.resolve();
     if (DEMO) { status('Demo \u00b7 kept on this device', 'demo'); return Promise.resolve(); }   /* stays in this tab's ledger; never sent */
     // One at a time: Apps Script copes badly with a burst.
-    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(withBase(jobs[k])).then(function(r){ if (r && r.stale) return onStale(k, jobs[k], r); confirmed(k); afterPut(jobs[k], r); return r; }, function(err){
+    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(wire(jobs[k])).then(function(r){ if (r && r.stale) return onStale(k, jobs[k], r); confirmed(k); afterPut(jobs[k], r); return r; }, function(err){
       if (err && err.transient) throw err;          // stays in the ledger; the next page sends it again
       if (note(k, jobs[k], err) >= RETRIES) {       // recorded either way -- the record is the point
         var l = ledger(); if (l[k]) { delete l[k]; ledgerSet(l); }  // stop re-sending, KEEP the record
@@ -399,7 +400,8 @@
     if (S.moved && S.moved()) return;   // R1: the beacon never carries another link's credentials; the ledger keeps the work
     var jobs = queue; queue = {}; clearTimeout(timer); timer = null;
     Object.keys(jobs).forEach(function(k){
-      var body = JSON.stringify(payloadFor(jobs[k]));
+      /* the beacon carries the base too: a stale beacon writes nothing, and the ledger (with its base) merges it next page */
+      var body = JSON.stringify(payloadFor(wire(jobs[k])));
       var sent = false;
       try { sent = navigator.sendBeacon(S.url, new Blob([body], { type: 'text/plain' })); } catch (e) {}
       if (!sent) { try { fetch(S.url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: body, keepalive: true }); } catch (e) {} }
@@ -479,9 +481,22 @@
         Object.keys(rec).forEach(function(kind){
           var json = JSON.stringify(rec[kind]);
           if (snapshot[token][kind] === json) return;
+          var was = snapshot[token][kind];
           snapshot[token][kind] = json;
           if (started) wrotePairs[token + ':' + kind] = true;
-          schedule('r:' + token + ':' + kind, { op: 'put', token: token, kind: kind, data: rec[kind] });
+          /* ONLY THE TP THAT CHANGED (rehearsal, 9 Nov 2026: Return took over ten seconds). The history went whole on every
+             Return, every TP's feedback document in it, so it grew with the course. The store keeps each TP on its own row
+             and writes only the TPs it is sent (it never deletes one), so the TP that changed is all it needs. A part still
+             waiting in the ledger is kept: two Returns before a flush send both. */
+          var out = rec[kind];
+          if (kind === 'tpHistory' && was != null) {
+            var prev = parse(was) || {}, delta = {}, n;
+            for (n in (out || {})) if (JSON.stringify(out[n]) !== JSON.stringify(prev[n])) delta[n] = out[n];
+            if (!Object.keys(delta).length) return;
+            var waiting = ledger()['r:' + token + ':tpHistory'];
+            out = Object.assign({}, (waiting && waiting.data) || {}, delta);
+          }
+          schedule('r:' + token + ':' + kind, { op: 'put', token: token, kind: kind, data: out });
         });
       });
     }
@@ -590,6 +605,21 @@
     if (mode !== 'tutor' || !job || job.op !== 'putCourse' || !GUARD[job.kind] || job.page !== PAGE_ID || typeof REV[job.kind] !== 'number') return job;
     var out = Object.assign({}, job); out.base = REV[job.kind]; return out;
   }
+  /* A WRITE LEFT BEHIND KEEPS ITS BASE (rehearsal, 9 Nov 2026). A tab closed while its write was on the wire, or before the
+     store's "stale" came back, left the job in the ledger without the version it started from. The next page sent it
+     with no base, which the store takes as a plain write: this page's old whole copy over a change made since. So the
+     ledger keeps the job's base and the copy it started from (baseCopy); the next page sends that base, the store answers
+     stale, and onStale lays the change over the newer copy as it would have here. baseCopy stays in this browser. */
+  function ledgerForm(job){
+    var j = withBase(job);
+    if (j !== job && typeof BASE[job.kind] === 'string') j.baseCopy = BASE[job.kind];
+    return j;
+  }
+  function wire(job){
+    var out = withBase(job);
+    if (out && 'baseCopy' in out) { out = Object.assign({}, out); delete out.baseCopy; }
+    return out;
+  }
   function afterPut(job, r){
     if (!job || job.op !== 'putCourse' || !GUARD[job.kind] || !r || typeof r.rev !== 'number') return;
     REV[job.kind] = r.rev; BASE[job.kind] = JSON.stringify(job.data); revsSave();
@@ -597,13 +627,15 @@
   function localForm(kind, data){ return kind === 'wording' && data && window.hubWordingFilled ? window.hubWordingFilled(data) : data; }
   /* The store moved on: theirs, with this page's change laid over it, saved in one write. */
   function onStale(id, job, r, tries){
-    var theirs = localForm(job.kind, r.data), base = parse(BASE[job.kind]);
+    var theirs = localForm(job.kind, r.data);
+    var base = parse(job.page !== PAGE_ID && typeof job.baseCopy === 'string' ? job.baseCopy : BASE[job.kind]);   // a left-behind write merges from its own start
     var merged = merge3(base, job.data, theirs);
     REV[job.kind] = r.rev; BASE[job.kind] = JSON.stringify(theirs); revsSave();
     try { origSet(KEY_OF[job.kind], JSON.stringify(merged)); } catch (e) {}
-    var next = Object.assign({}, job, { data: merged }); remember(id, next);
+    var next = Object.assign({}, job, { data: merged, page: PAGE_ID }); delete next.base; delete next.baseCopy;
+    remember(id, ledgerForm(next));
     MERGED.push(job.kind);
-    return S.call(withBase(next)).then(function(r2){
+    return S.call(wire(next)).then(function(r2){
       if (r2 && r2.stale && (tries || 0) < 2) return onStale(id, next, r2, (tries || 0) + 1);
       confirmed(id); afterPut(next, r2); return r2;
     });

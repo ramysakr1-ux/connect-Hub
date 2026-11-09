@@ -4063,7 +4063,7 @@ function historyFromRows_(rows, courseId, token) {
 }
 // The history only grows: an entry the caller does not send is kept, and an
 // entry it does send replaces the row for that TP alone. One read of the
-// sheet, one write per TP that changed, one append for the new ones.
+// sheet's key columns, one write per TP sent, one append for the new ones.
 function writeHistoryInner_(courseId, token, data) {
   markChanged_(courseId);
   var lock = LockService.getScriptLock();
@@ -4071,25 +4071,29 @@ function writeHistoryInner_(courseId, token, data) {
   try {
     var sh = sheet_(SHEET_RECORDS);
     var last = sh.getLastRow();
-    var rows = last >= 2 ? sh.getRange(2, 1, last - 1, 4).getValues() : [];
-    var have = historyFromRows_(rows, courseId, token) || {};
+    /* ONLY THE KEYS, ONLY THE TPs SENT (rehearsal, 9 Nov 2026: Return took over ten seconds). This read every record's
+       JSON on the sheet -- every trainee's plans, feedback and documents on every course -- to find one trainee's rows,
+       and rewrote every TP it already held. Each TP is its own row and is written only when it is sent, so the three
+       key columns are enough to find the rows, and a TP not sent is left as it is (as before: nothing is ever deleted). */
+    var rows = last >= 2 ? sh.getRange(2, 1, last - 1, 3).getValues() : [];
     var want = (data && typeof data === 'object') ? data : {};
-    var merged = {};
-    Object.keys(have).forEach(function (k) { merged[k] = have[k]; });
-    Object.keys(want).forEach(function (k) { if (want[k]) merged[k] = want[k]; });
     var rowOf = {};
     rows.forEach(function (r, i) { if (String(r[0]) === String(courseId) && String(r[1]) === token) rowOf[String(r[2])] = i + 2; });
+    /* an old whole-history row (before one row per TP) is folded in once, for the TPs that have no row of their own */
+    var legacy = rowOf['tpHistory'] ? String(sh.getRange(rowOf['tpHistory'], 4).getValue() || 'null') : 'null', old = null;
+    if (legacy !== 'null') { try { old = JSON.parse(legacy); } catch (e) { old = null; } }
+    if (old && typeof old === 'object') { want = Object.assign({}, want); Object.keys(old).forEach(function (k) { if (!want[k] && !rowOf['tpHistory:' + k] && old[k]) want[k] = old[k]; }); }
     var appends = [];
-    Object.keys(merged).forEach(function (k) {
-      if (!/^\d+$/.test(k)) return;
+    Object.keys(want).forEach(function (k) {
+      if (!/^\d+$/.test(k) || !want[k]) return;
       var kind = 'tpHistory:' + k;
-      var json = JSON.stringify(merged[k]);
+      var json = JSON.stringify(want[k]);
       assertFits_(json, kind);
-      if (rowOf[kind]) { if (String(rows[rowOf[kind] - 2][3]) !== json) sh.getRange(rowOf[kind], 4, 1, 2).setValues([[json, new Date()]]); }
+      if (rowOf[kind]) sh.getRange(rowOf[kind], 4, 1, 2).setValues([[json, new Date()]]);
       else appends.push([courseId, token, kind, json, new Date()]);
     });
     if (appends.length) sh.getRange(sh.getLastRow() + 1, 1, appends.length, 5).setValues(appends);
-    if (rowOf['tpHistory']) sh.getRange(rowOf['tpHistory'], 4, 1, 2).setValues([['null', new Date()]]);
+    if (legacy !== 'null') sh.getRange(rowOf['tpHistory'], 4, 1, 2).setValues([['null', new Date()]]);
   } finally { lock.releaseLock(); }
 }
 
