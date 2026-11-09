@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611090947">
+<link rel="stylesheet" href="hub-tokens.css?v=202611090955">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -488,6 +488,7 @@
   .rdrag-ghost small{font-weight:600; color:var(--grey);}
   body.rdragging, body.rdragging *{cursor:grabbing !important; user-select:none;}
   .rset:first-of-type{margin-top:8px;}
+  .rset.rempty{margin:6px 0 4px; padding:14px 16px; border:2px dashed color-mix(in oklch, var(--gold-deep) 55%, transparent); border-radius:10px; font-size:0.85rem; font-weight:500; letter-spacing:0; text-transform:none; color:var(--ink); background:color-mix(in oklch, var(--gold-deep) 6%, var(--paper)); cursor:pointer;}
   .grow .name{display:flex; align-items:center; gap:10px; min-width:0;}
   .grow .name .nm{display:flex; flex-direction:column; min-width:0; font-weight:600;}
   .grow .name .addr{font-size:0.72rem; font-weight:400; color:var(--grey); word-break:break-all; margin-top:3px;}
@@ -673,7 +674,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611090947">
+<link rel="stylesheet" href="hub-house.css?v=202611090955">
 </head>
 <body>
 <div class="board">
@@ -1283,19 +1284,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611090947"></script>
-<script src="hub-store.js?v=202611090947"></script>
-<script src="hub-xlsx.js?v=202611090947"></script>
-<script src="hub-say.js?v=202611090947"></script>
-<script src="agreement-defaults.js?v=202611090947"></script>
-<script src="observation-defaults.js?v=202611090947"></script>
-<script src="hub-shared.js?v=202611090947"></script>
-<script src="hub-rotation.js?v=202611090947"></script>
-<script src="hub-due.js?v=202611090947"></script>
-<script src="hub-sync.js?v=202611090947"></script>
-<script src="hub-notebook.js?v=202611090947"></script>
-<script src="hub-hand.js?v=202611090947"></script>
-<script src="hub-ink.js?v=202611090947"></script>
+<script src="assignment-defaults.js?v=202611090955"></script>
+<script src="hub-store.js?v=202611090955"></script>
+<script src="hub-xlsx.js?v=202611090955"></script>
+<script src="hub-say.js?v=202611090955"></script>
+<script src="agreement-defaults.js?v=202611090955"></script>
+<script src="observation-defaults.js?v=202611090955"></script>
+<script src="hub-shared.js?v=202611090955"></script>
+<script src="hub-rotation.js?v=202611090955"></script>
+<script src="hub-due.js?v=202611090955"></script>
+<script src="hub-sync.js?v=202611090955"></script>
+<script src="hub-notebook.js?v=202611090955"></script>
+<script src="hub-hand.js?v=202611090955"></script>
+<script src="hub-ink.js?v=202611090955"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -2591,6 +2592,7 @@ let PINS = { on: false, tutor: false, trainees: {} };
    letters the TP points deal and the tracker shows -- hub-rotation lettersFor,
    per group). One group of six reads "Teaching set ABC / DEF"; more than one
    group heads each. With no rotation to ask, it is one list by name. */
+const gHead0 = (gs, g) => gs.length > 1 ? 'Group ' + g : '';
 function rosterSets(list){
   const byG = {};
   list.forEach(t => { const g = String(t.group || '1'); (byG[g] = byG[g] || []).push(t); });
@@ -2606,6 +2608,17 @@ function rosterSets(list){
     const sets = [[], []], rest = [];
     people.forEach(t => (t.idx == null || t.idx > 5 ? rest : sets[t.idx < 3 ? 0 : 1]).push(t));
     const gHead = gs.length > 1 ? 'Group ' + g : '';
+    /* TWO TEACHING SETS IN EVERY GROUP (Ramy, 9 Nov 2026: "I need to have 2 sub groups per TP group even if I had
+       only 8 trainees"). A group of two or more with everyone in one set shows the other set's heading, empty, to
+       drag someone onto. */
+    if (people.length > 1 && sets.filter(x => x.length).length === 1) {
+      const full = sets[0].length ? 0 : 1, emptyName = full ? 'ABC' : 'DEF';
+      [0, 1].forEach(i => out.push(sets[i].length
+        ? { head: (gHead0(gs, g) ? gHead0(gs, g) + ' · ' : '') + 'Teaching set ' + sets[i].map(t => t.letter).join(''), people: sets[i], group: g, set: i }
+        : { head: (gHead0(gs, g) ? gHead0(gs, g) + ' · ' : '') + 'Teaching set ' + emptyName, people: [], group: g, set: i, empty: true }));
+      if (rest.length) out.push({ head: (gHead0(gs, g) ? gHead0(gs, g) + ' · ' : '') + 'Not in a set yet', people: rest });
+      return;
+    }
     const named = sets.filter(x => x.length);
     if (named.length > 1) named.forEach((x, i) => out.push({ head: (gHead ? gHead + ' · ' : '') + 'Teaching set ' + x.map(t => t.letter).join(''), people: x, group: g, set: sets.indexOf(x) }));
     else if (named.length) out.push({ head: gHead, people: named[0], group: g, set: sets.indexOf(named[0]) });
@@ -2772,7 +2785,7 @@ async function renderStoreRoster(next){
            Remove sit apart at the end, the one that undoes something last. -->
       ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>${trainees.length > 1 ? `<p class="rnote rhow"><b>To move a trainee</b>, drag them onto the trainee to swap places with, in either group, or onto a set’s heading to take a free place there. You can also click their name, then click where they go. <button type="button" class="linkbtn" id="mixOpen">Or let Lite mix the groups</button></p><div id="mixHost" hidden></div>` : ''}
       <div class="grid roster ghead"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
-      ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
+      ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.empty ? `<div class="rset rempty" data-rgroup="${esc(sec.group)}" data-rset="${sec.set}">Nobody in this set yet. Drag a trainee here, or click a trainee and then this box.</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
         <div class="name">${t.letter ? `<span class="grip" title="Drag onto another trainee to swap places, or onto a set to move there. Or click, then click." aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${t.certName && t.certName.at ? `<em class="certok" title="Confirmed ${esc(String(t.certName.at).slice(0, 10))}${t.certName.by === 'tutor' ? ' by a tutor' : ' by the trainee'}">Name confirmed</em>` : `<em class="certno" title="The trainee confirms it when they sign the agreement">Name not confirmed</em>`}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
         <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
         <div class="acts col-link">
@@ -3151,6 +3164,11 @@ async function setPinSwitch(on){
       myNew = [0, 1, 2].map(i => target.set * 3 + i).find(i => !taken[i]);
       if (myNew == null) { say('That set is full. Drop onto a trainee in it to swap places.', true); return; }
       if (toG === fromG && p[tok] === myNew) return;
+      /* never leave a group of two or more in one set (Ramy, 9 Nov 2026: two sub groups per TP group) */
+      const after = {}; [fromG, toG].forEach(g => { after[g] = Object.assign({}, placesIn(all, g)); });
+      delete after[fromG][tok]; after[toG][tok] = myNew;
+      const lone = [fromG, toG].find(g => { const v = Object.values(after[g]).filter(i => i <= 5); return v.length > 1 && (v.every(i => i < 3) || v.every(i => i >= 3)); });
+      if (lone) { say('Not moved: that would leave ' + (lone === fromG && lone !== toG ? 'their group' : 'the group') + ' with one teaching set. Swap them with someone instead.', true); return; }
     }
     if (tpStarted() && !(await confirmModal('Teaching practice has started. This changes who teaches on which day from now on. Move them?', 'Move'))) return;
     /* every trainee in the groups it touches keeps an explicit place, so nobody else shifts */
