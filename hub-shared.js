@@ -2661,3 +2661,36 @@ window.hubTrapFocus = function(dlg, opts){
     }, 0);
   };
 };
+
+/* THE DAY MOVES ON BY ITSELF (Ramy, 9 Nov 2026: "why can't the hero card update itself as the day progresses?"). A home
+   left open all day kept the morning's card. hubAtBoundaries(fn) calls fn at each moment today's timetable changes what a
+   card says: every session's start, a quarter of an hour before it, its end, and midnight, on the course's clock. A moment
+   that passes while the tab is hidden runs when it is shown again. fn is never run while someone is typing: it waits for
+   them to leave the box. */
+window.hubAtBoundaries = function(fn){
+  var timer = null, owed = false;
+  function rd(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function now(){ return window.hubNow ? window.hubNow() : Date.now(); }
+  function typing(){ var a = document.activeElement; return !!(a && (a.matches && a.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]), textarea, select, [contenteditable=""], [contenteditable=true]'))); }
+  function next(){
+    var cs = rd('connect_course_settings') || {}, tt = rd('connect_timetable_v1') || {}, tz = cs.timeZone || '';
+    var today = window.hubToday ? window.hubToday() : new Date(now()).toISOString().slice(0, 10), t = now(), best = null;
+    var at = function(hm){ if (!/^\d{1,2}:\d{2}/.test(String(hm || ''))) return null; if (window.hubZonedInstant && tz) { var v = window.hubZonedInstant(today, String(hm).slice(0, 5), tz); if (v != null) return v; } var p = today.split('-'), h = String(hm).split(':'); return new Date(+p[0], +p[1] - 1, +p[2], +h[0], +h[1] || 0).getTime(); };
+    var d = (tt.days || []).filter(function(x){ return x && x.date === today; })[0];
+    ((d && (d.sessions || d.slots)) || []).forEach(function(x){
+      [at(x.s), at(x.s) != null ? at(x.s) - 15 * 60000 : null, at(x.e)].forEach(function(v){ if (v != null && v > t + 500 && (best == null || v < best)) best = v; });
+    });
+    var mid = new Date(t); mid.setHours(24, 0, 5, 0); if (best == null || mid.getTime() < best) best = mid.getTime();
+    return best;
+  }
+  function fire(){ if (document.hidden) { owed = true; return; } if (typing()) { owed = true; return; } owed = false; try { fn(); } catch (e) {} schedule(); }
+  function schedule(){ clearTimeout(timer); var b = next(); timer = setTimeout(fire, Math.min(Math.max(1000, b - now() + 1000), 6 * 3600000)); }
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden && owed) fire(); });
+  document.addEventListener('focusout', function(){ if (owed) setTimeout(function(){ if (owed && !typing()) fire(); }, 300); });
+  schedule();
+};
+/* the page itself, again: for a card that is drawn once, as the trainee's home is. The reader keeps their place. */
+window.hubReloadAtBoundaries = function(){
+  try { var y = sessionStorage.getItem('hub:keepY:' + location.pathname); if (y != null) { sessionStorage.removeItem('hub:keepY:' + location.pathname); window.addEventListener('load', function(){ setTimeout(function(){ window.scrollTo(0, +y || 0); }, 50); }); } } catch (e) {}
+  window.hubAtBoundaries(function(){ try { sessionStorage.setItem('hub:keepY:' + location.pathname, String(window.scrollY || 0)); } catch (e) {} location.reload(); });
+};
