@@ -1167,6 +1167,17 @@ window.hubLevelOn = function(cs, group, date){
   var k = window.hubClassOn(cs, group, date || (window.hubToday ? window.hubToday() : ''));
   return k && k.level ? String(k.level) : '';
 };
+/* THE LEVEL FOR A LESSON, WHEN NOBODY HAS TYPED ONE (Ramy, 9 Nov 2026, the rehearsal: Level was empty on the plan and the
+   feedback). The group's class on that day (Course admin > Classes), else the level of the TP point set the group teaches
+   from: a tutor's copy names it in set.library and set.setFor, a trainee's carries it as `level`. As a word: "Elementary". */
+window.hubLevelFor = function(group, date){
+  var cs = {}, P = {};
+  try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  try { P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || '{}') || {}; } catch (e) {}
+  var lv = window.hubLevelOn ? window.hubLevelOn(cs, group, date) : '';
+  if (!lv) { var st = P.set || {}, lib = st.library || {}, id = (st.setFor || {})[String(group == null ? '' : group)], s = id && lib[id]; lv = (s && s.level) || P.level || ''; }
+  return lv ? (window.hubLevelName ? window.hubLevelName(lv) : String(lv)) : '';
+};
 /* the contact row (name, email, role) for a tutor by name */
 window.hubTutorContact = function(cs, name){
   var n = String(name || '').trim().toLowerCase(); if (!n) return null;
@@ -1329,7 +1340,7 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
     /* The materials link the trainee gave, first, so a marker or an assessor
        reading the record can open what the writing refers to (24 Sep 2026). */
     var ml = (snap && snap.materialsLink || '').trim();
-    if (ml) out += '<p style="margin:0 0 10px;"><a href="' + esc(ml) + '" target="_blank" rel="noopener" style="display:inline-block;font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:16px;background:oklch(37.5% 0.058 195);color:#fff;text-decoration:none;">Open the materials \u2197</a></p>';
+    if (ml) out += '<p style="margin:0 0 10px;"><a href="' + esc(ml) + '" target="_blank" rel="noopener" style="display:inline-block;font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:16px;background:oklch(37.5% 0.058 195);color:#fff;text-decoration:none;">Open the materials</a></p>';
     a.sections.forEach((s,i) => {
       if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
         out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${markFlags(nl2br(snap.text[i]), flags)}</div>`;
