@@ -214,9 +214,19 @@
        is too much." The button says what it is; a second sentence popping
        up under the pointer is a thing happening that nobody asked for. */
     b.onclick = function () { open(''); };
-    host().appendChild(b);
+    place(b);
     /* a page that draws itself late (the last page) can wipe the container it landed in: put it back once the page has settled */
-    [1500, 5000].forEach(function (ms) { setTimeout(function () { if (!b.isConnected && !document.querySelector('.say-pill')) host().appendChild(b); }, ms); });
+    [1500, 5000].forEach(function (ms) { setTimeout(function () { if (!b.isConnected && !document.querySelector('.say-pill')) place(b); }, ms); });
+  }
+
+  /* THE CREDIT IS THE LAST LINE (Ramy, 9 Nov 2026: "why is my credit sitting on top of say something? We need to be
+     consistent across the platform"). Most screens end with the pill and then the credit line; the landings (tutor
+     home, course admin, the assessor pack, the trainee home) draw their own footer, and the pill landed after it.
+     Where such a footer is in the pill's container, the pill goes just before it. */
+  function place(b) {
+    var h = host();
+    var foot = [].filter.call(h.querySelectorAll('footer.foot'), function (f) { return /designed and built/.test(f.textContent); })[0];
+    if (foot) foot.parentNode.insertBefore(b, foot); else h.appendChild(b);
   }
 
   /* WHERE IN THE FLOW. Not simply the end of <body>: ten screens center their
