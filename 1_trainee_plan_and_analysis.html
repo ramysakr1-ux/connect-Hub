@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611110131">
+<link rel="stylesheet" href="hub-tokens.css?v=202611110213">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -319,16 +319,7 @@
   .example-box dt:first-child{margin-top:0;}
   .example-box dd{margin:2px 0 0;}
 
-  .ipa-bar{position:fixed; left:0; right:0; bottom:62px; background:rgba(252,248,239,0.99);
-    border-top:2px solid var(--sand-line); padding:8px 14px; display:none;
-    flex-wrap:wrap; gap:5px; justify-content:center; z-index:420; max-height:150px; overflow-y:auto;}
-  .ipa-bar.show{display:flex;}
-  .ipa-bar button{font-family:'Newsreader',Georgia,serif; font-size:0.95rem; min-width:32px;
-    padding:5px 7px; border:1px solid var(--sand-line); border-radius:5px;
-    background:var(--box); color:var(--ink); cursor:pointer;}
-  .ipa-bar button:hover{background:var(--sand-deep);}
-  .ipa-bar .grp{font-size:0.68rem; color:var(--grey); text-transform:uppercase; letter-spacing:.06em;
-    align-self:center; margin:0 4px 0 10px; font-weight:700;}
+  /* the phonemic symbols are hubIPA's now (hub-shared.js, 11 Nov 2026): the slash, on the box's own edge */
 
   /* Turn in, a sentence, then Print, all in a centred row -- so the sentence
      read as filling in a sandwich and Print's border competed with Turn in for
@@ -404,7 +395,7 @@
 
   @media print{
     body{background:#fff; padding:0; display:block;}
-    .actionbar,.ipa-bar,.del-btn,.btn,.btn-add,.aim-cue,.example-btn,.fw-wrap,.fw-hint,.credit-pill,.stp button,.iadd,.imenu{display:none !important;}
+    .actionbar,.del-btn,.btn,.btn-add,.aim-cue,.example-btn,.fw-wrap,.fw-hint,.credit-pill,.stp button,.iadd,.imenu{display:none !important;}
     .stg textarea,.stp .t-time{border:none !important; background:transparent !important;}
     .card,.blk,.header,.proc-wrap{ border-radius:0; page-break-inside:avoid;}
     textarea,input,select{border:1px solid #999 !important; background:#fff !important;}
@@ -453,7 +444,7 @@
   .readycues li.ok{background:color-mix(in oklch, var(--teal) 8%, var(--paper));} .readycues li.ok .rk{color:var(--teal);}
   .shareVol .aud{display:block; font-size:.74rem; color:var(--grey); margin-top:2px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611110131">
+<link rel="stylesheet" href="hub-house.css?v=202611110213">
 </head>
 <body>
 <div class="board">
@@ -670,7 +661,6 @@
 
 </div>
 
-<div class="ipa-bar" id="ipaBar"></div>
 
 <div class="actionbar">
   <div class="lhs">
@@ -686,13 +676,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611110131"></script>
-<script src="hub-shared.js?v=202611110131"></script>
-<script src="hub-rotation.js?v=202611110131"></script>
-<script src="hub-store.js?v=202611110131"></script>
-<script src="hub-say.js?v=202611110131"></script>
-<script src="hub-sync.js?v=202611110131"></script>
-<script src="hub-notebook.js?v=202611110131"></script>
+<script src="hub-due.js?v=202611110213"></script>
+<script src="hub-shared.js?v=202611110213"></script>
+<script src="hub-rotation.js?v=202611110213"></script>
+<script src="hub-store.js?v=202611110213"></script>
+<script src="hub-say.js?v=202611110213"></script>
+<script src="hub-sync.js?v=202611110213"></script>
+<script src="hub-notebook.js?v=202611110213"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1000,11 +990,6 @@ const BULLET='• ';
 document.addEventListener('focusin', e=>{
   const t=e.target;
   if(t.classList && t.classList.contains('blt') && t.value===''){ t.value=BULLET; autoGrow(t); }
-  if(t.classList && t.classList.contains('phon')){
-    lastPhon=t; $('ipaBar').classList.add('show');
-  } else if(!t.closest || !t.closest('.ipa-bar')){
-    $('ipaBar').classList.remove('show');
-  }
 });
 document.addEventListener('keydown', e=>{
   const t=e.target;
@@ -1455,33 +1440,6 @@ const SHEETS={
   }
 };
 
-const IPA=[
-  ['Vowels','iː ɪ e æ ɑː ɒ ɔː ʊ uː ʌ ɜː ə'],
-  ['Diphthongs','eɪ aɪ ɔɪ əʊ oʊ aʊ ɪə eə ʊə'],
-  ['Consonants','p b t d k ɡ f v θ ð s z ʃ ʒ h m n ŋ l r j w tʃ dʒ'],
-  ['Marks','ˈ ˌ ː / . ‿']
-];
-(function buildIPA(){
-  const bar=$('ipaBar');
-  IPA.forEach(([label,syms])=>{
-    const g=document.createElement('span'); g.className='grp'; g.textContent=label; bar.appendChild(g);
-    syms.split(' ').forEach(s=>{
-      const b=document.createElement('button');
-      b.type='button'; b.textContent=s;
-      b.addEventListener('mousedown', e=>e.preventDefault());
-      b.addEventListener('click', ()=>{
-        if(!lastPhon) return;
-        const st=lastPhon.selectionStart, en=lastPhon.selectionEnd;
-        lastPhon.value=lastPhon.value.slice(0,st)+s+lastPhon.value.slice(en);
-        const pos=st+s.length;
-        lastPhon.setSelectionRange(pos,pos);
-        lastPhon.focus(); autoGrow(lastPhon); dirty=true;
-      });
-      bar.appendChild(b);
-    });
-  });
-})();
-
 function fieldHTML(f){
   /* THE INSTRUCTION GOES IN THE BOX (Ramy, 5 Oct 2026: "instructions should be
      written inside the pill ... as a watermark", "we need to dumb it down").
@@ -1495,7 +1453,7 @@ function fieldHTML(f){
      read as an afterthought (Ramy, 21 Sep 2026). No bullets -- a name is not a list. */
   if(f.type==='box')    return `<div class="row"><label>${f.label}</label><textarea class="fld" data-k="${f.k}" rows="3"${ph}></textarea></div>`;
   if(f.type==='phon')   return `<div class="row"><label>${f.label}</label>
-      <p class="hint" style="color:var(--teal);">Click a symbol from the bar at the bottom to insert it.</p>
+      <p class="hint" style="color:var(--teal);">Type / and carry on typing: the symbols appear under the box.</p>
       <textarea class="fld phon" data-k="${f.k}" rows="2"${ph}></textarea></div>`;
   if(f.type==='select') return `<div class="row"><label>${f.label}</label>${f.hint?`<p class="hint">${f.hint}</p>`:''}
       <select class="fld" data-k="${f.k}">${f.options.map(o=>`<option value="${o}">${o||'— choose —'}</option>`).join('')}</select></div>`;
@@ -2449,6 +2407,8 @@ try{ const hn=localStorage.getItem('hub:name'); if(hn && $('fName') && !$('fName
 /* Reserve exactly as much room as the fixed bar actually takes (it wraps on
    a narrow screen); see hubReserveForBar in hub-shared.js. */
 if (window.hubReserveForBar) hubReserveForBar('.actionbar');
+/* phonemic symbols from the slash, in the language analysis and the vocabulary table (Ramy, 11 Nov 2026: "do the lesson plan too") */
+if (window.hubIPA) hubIPA.bar('textarea.phon, #laSection textarea');
 /* The standing turn-in reminder, in the center's own words (Ramy, 24 Sep
    2026: "TPs could just read something like submit before a certain time...
    the self eval will read something like before we do our feedback").

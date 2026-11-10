@@ -2591,73 +2591,92 @@ window.hubHeadHTML = function (text, heads) {
   window.hubMic = { ok: OK, bar: bar, stop: stop };
 })();
 
-/* ---- PHONEMIC SYMBOLS THAT FOLLOW THE CURSOR (Ramy, 11 Nov 2026: "not just LRT, but also FOL, LSRT, like
-   it's just there ... maybe the trainer feedback"). The lesson plan has had a symbol bar on its
-   pronunciation boxes since September; the written assignments and the tutor's feedback ask for
-   phonemic script too, and had nothing, so people pasted symbols from a website. One pill at the
-   bottom left, shown while you are in a box it writes into; it opens the symbols, and a symbol goes
-   in where the cursor is. hubIPA.bar(scope) puts it on the page once. The look is .ipabar in
-   hub-house.css. The same symbols, in the same order, as the plan's own bar. */
+/* ---- PHONEMIC SYMBOLS, FROM THE SLASH (Ramy, 11 Nov 2026: "not just LRT, but also FOL, LSRT, like it's just
+   there ... maybe the trainer feedback"; and the same night, of the pill this first shipped as: "a pill that is sort
+   of hovering around. Something subtle. Bit more clever"). Phonemic script sits between two slashes, so the slash is
+   the switch: type / and carry on with ordinary letters, and the box's own bottom edge offers what the last letter
+   could be (o: ɒ ɔː əʊ ɔɪ). Click one or press its number and the letter becomes the symbol; the closing / puts the
+   strip away. A small /ə/ tab on the box's top edge opens the whole set for anyone who does not know the slash.
+   Nothing shows until a box has the cursor. hubIPA.bar(scope) switches it on for a page; the look is .ipa* in
+   hub-house.css. Works in a textarea and in the feedback form's contenteditable points. */
 (function(){
-  var SETS = [
-    ['Vowels','iː ɪ e æ ɑː ɒ ɔː ʊ uː ʌ ɜː ə'],
-    ['Diphthongs','eɪ aɪ ɔɪ əʊ oʊ aʊ ɪə eə ʊə'],
-    ['Consonants','p b t d k ɡ f v θ ð s z ʃ ʒ h m n ŋ l r j w tʃ dʒ'],
-    ['Marks','ˈ ˌ ː / . ‿']
-  ];
-  var BAR = null, SCOPE = null, target = null, open = false, SPACE = null;
-  function put(sym){
+  var SETS = [['Vowels','iː ɪ e æ ɑː ɒ ɔː ʊ uː ʌ ɜː ə'], ['Diphthongs','eɪ aɪ ɔɪ əʊ oʊ aʊ ɪə eə ʊə'], ['Consonants','p b t d k ɡ f v θ ð s z ʃ ʒ h m n ŋ l r j w tʃ dʒ'], ['Marks','ˈ ˌ ː / . ‿']];
+  var KIN = { a:'æ ɑː ʌ ə aɪ aʊ', e:'e ɜː ə eɪ eə', i:'ɪ iː aɪ ɪə', o:'ɒ ɔː əʊ ɔɪ', u:'ʊ uː ʌ ʊə', s:'ʃ', z:'ʒ', t:'θ ð tʃ', d:'ð dʒ', n:'ŋ', c:'tʃ k', j:'dʒ j', g:'ɡ ŋ dʒ', y:'j', "'":'ˈ ˌ', '’':'ˈ ˌ', ':':'ː' };
+  var SCOPE = null, target = null, STRIP = null, KEY = null, all = false, byKey = false, shut = false, RO = null;
+  var isBox = function(e){ return e && e.value != null; };
+  /* the words on this line, up to the cursor */
+  function before(){
+    if (!target) return '';
+    if (isBox(target)) { var v = target.value.slice(0, target.selectionStart == null ? target.value.length : target.selectionStart); return v.slice(v.lastIndexOf('\n') + 1); }
+    var sel = window.getSelection(); if (!sel.rangeCount || !target.contains(sel.anchorNode)) return '';
+    var r = sel.getRangeAt(0).cloneRange(); r.collapse(true); r.setStart(target, 0); var t = r.toString(); return t.slice(t.lastIndexOf('\n') + 1);
+  }
+  /* is the cursor between two slashes? A slash opens only at the start of a line or after a space or an opening mark, so "and/or" is left alone. */
+  function inside(line){ var open = false; for (var i = 0; i < line.length; i++) { if (line[i] !== '/') continue; if (open) open = false; else if (i === 0 || /[\s(\[“"‘:;,=]/.test(line[i - 1])) open = true; } return open; }
+  function put(sym, swap){
     if (!target || !target.isConnected) return;
     target.focus();
-    var done = false;
-    try { done = document.execCommand('insertText', false, sym); } catch (x) {}   /* keeps undo, and works in a contenteditable */
-    if (!done && target.value != null) {
-      var s = target.selectionStart == null ? target.value.length : target.selectionStart, e = target.selectionEnd == null ? s : target.selectionEnd;
-      target.value = target.value.slice(0, s) + sym + target.value.slice(e);
-      try { target.setSelectionRange(s + sym.length, s + sym.length); } catch (x) {}
-      target.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    if (swap) { if (isBox(target)) { var s = target.selectionStart; target.setSelectionRange(Math.max(0, s - 1), target.selectionEnd); } else { try { window.getSelection().modify('extend', 'backward', 'character'); } catch (x) {} } }
+    var done = false; try { done = document.execCommand('insertText', false, sym); } catch (x) {}   /* keeps undo, and the page's own input handlers save it */
+    if (!done && isBox(target)) { var a = target.selectionStart, z = target.selectionEnd; target.value = target.value.slice(0, a) + sym + target.value.slice(z); try { target.setSelectionRange(a + sym.length, a + sym.length); } catch (x) {} target.dispatchEvent(new Event('input', { bubbles: true })); }
+  }
+  function place(){
+    if (!target || !target.isConnected) return;
+    var r = target.getBoundingClientRect(), x = window.scrollX, y = window.scrollY;
+    KEY.style.left = Math.round(r.right + x - KEY.offsetWidth - 12) + 'px'; KEY.style.top = Math.round(r.top + y - KEY.offsetHeight / 2) + 'px';
+    if (STRIP.hidden) return;
+    STRIP.style.left = Math.round(r.left + x) + 'px'; STRIP.style.top = Math.round(r.bottom + y - 1) + 'px'; STRIP.style.width = Math.round(r.width) + 'px';
+    /* never under the page's bottom bar or off the screen: the page moves up */
+    var bar = document.querySelector('.actionbar'), floor = window.innerHeight - (bar && getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().height : 0) - 10;
+    var over = STRIP.getBoundingClientRect().bottom - floor; if (over > 0) window.scrollBy(0, Math.min(over, Math.max(0, r.top - 70)));
   }
   function paint(){
-    if (!BAR) return;
-    BAR.querySelector('.ipapanel').hidden = !open;
-    var b = BAR.querySelector('.ipabtn'); b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.classList.toggle('on', open);
-    /* room under the page's last box, so it too can come up above the symbols; it goes when they close */
-    if (open && !SPACE) { SPACE = document.createElement('div'); SPACE.setAttribute('aria-hidden', 'true'); SPACE.style.height = Math.ceil(BAR.querySelector('.ipapanel').getBoundingClientRect().height + 40) + 'px'; document.body.appendChild(SPACE); }
-    if (!open && SPACE) { SPACE.remove(); SPACE = null; }
-    if (open) clear();
+    if (!STRIP) return;
+    var line = before(), on = inside(line); if (!on) shut = false;
+    var show = !!target && (byKey || (on && !shut));
+    if (target) target.classList.toggle('ipa-open', show);
+    STRIP.hidden = !show; KEY.classList.toggle('on', show && byKey);
+    if (!show) { all = false; place(); return; }
+    var full = byKey || all, last = line.slice(-1).toLowerCase(), kin = on && !full ? (KIN[last] || '').split(' ').filter(Boolean) : [];
+    var h = '';
+    if (full) h = SETS.map(function(g){ return '<span class="ipagrp"><span class="ipalbl">' + g[0] + '</span>' + g[1].split(' ').map(function(x){ return '<button type="button" class="ipasym" tabindex="-1">' + x + '</button>'; }).join('') + '</span>'; }).join('') +
+      (byKey ? '<span class="ipasay ipatip">Quicker: type / and carry on typing. Lite offers the symbols as you go.</span>' : '<button type="button" class="ipamore" tabindex="-1">Fewer</button>');
+    else h = '<span class="ipasay">' + (kin.length ? '“' + last + '” could be' : 'Type as you would. The symbols appear here.') + '</span>' +
+      kin.map(function(x, i){ return '<button type="button" class="ipasym" data-swap="1" tabindex="-1">' + x + '<kbd>' + (i + 1) + '</kbd></button>'; }).join('') + '<button type="button" class="ipamore" tabindex="-1">All symbols</button>';
+    if (STRIP.dataset.h !== h) { STRIP.innerHTML = h; STRIP.dataset.h = h; }
+    STRIP.classList.toggle('full', full);
+    place();
   }
-  /* the symbols never sit on the box you are writing in: the page moves up until the box's last line shows above them */
-  function clear(){
-    if (!open || !target || !target.isConnected) return;
-    var top = BAR.querySelector('.ipapanel').getBoundingClientRect().top, r = target.getBoundingClientRect();
-    var over = Math.min(r.bottom, r.top + 220) + 12 - top;
-    if (over > 0) window.scrollBy(0, over);
-  }
+  function leave(){ if (target) target.classList.remove('ipa-open'); target = null; byKey = false; all = false; shut = false; if (STRIP) STRIP.hidden = true; if (KEY) KEY.hidden = true; if (RO) RO.disconnect(); }
   function bar(scope){
-    if (BAR) return;
+    if (STRIP) return;
     SCOPE = scope || 'textarea';
-    BAR = document.createElement('div'); BAR.className = 'ipabar'; BAR.hidden = true;
-    var panel = '<div class="ipapanel" hidden role="group" aria-label="Phonemic symbols">' + SETS.map(function(g){
-      return '<div class="ipagrp"><span class="ipalbl">' + g[0] + '</span>' + g[1].split(' ').map(function(x){ return '<button type="button" class="ipasym" tabindex="-1">' + x + '</button>'; }).join('') + '</div>';
-    }).join('') + '</div>';
-    BAR.innerHTML = panel + '<button type="button" class="ipabtn" aria-expanded="false" title="Phonemic symbols: press one and it goes in where your cursor is"><span class="ipaeg">/ə/</span><span class="lbl">Phonemic symbols</span></button>';
-    /* the box keeps its cursor */
-    BAR.addEventListener('mousedown', function(e){ e.preventDefault(); });
-    BAR.addEventListener('click', function(e){
-      var t = e.target.closest ? e.target.closest('button') : null; if (!t) return;
-      if (t.classList.contains('ipabtn')) { open = !open; paint(); return; }
-      if (t.classList.contains('ipasym')) put(t.textContent);
+    STRIP = document.createElement('div'); STRIP.className = 'ipastrip'; STRIP.hidden = true; STRIP.setAttribute('role', 'group'); STRIP.setAttribute('aria-label', 'Phonemic symbols');
+    KEY = document.createElement('button'); KEY.type = 'button'; KEY.className = 'ipakey'; KEY.hidden = true; KEY.tabIndex = -1; KEY.textContent = '/ə/';
+    KEY.title = 'Phonemic symbols. Or type / and carry on typing: Lite offers the symbols as you go.'; KEY.setAttribute('aria-label', 'Phonemic symbols');
+    document.body.appendChild(STRIP); document.body.appendChild(KEY);
+    [STRIP, KEY].forEach(function(el){ el.addEventListener('mousedown', function(e){ e.preventDefault(); }); });   /* the box keeps its cursor */
+    KEY.addEventListener('click', function(){ byKey = !byKey; all = false; paint(); });
+    STRIP.addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button') : null; if (!b) return;
+      if (b.classList.contains('ipamore')) { all = !all; paint(); return; }
+      put(b.firstChild.textContent, !!b.dataset.swap); paint();
     });
-    document.body.appendChild(BAR);
+    if (window.ResizeObserver) RO = new ResizeObserver(function(){ place(); });
     document.addEventListener('focusin', function(e){
       var t = e.target; if (!t.matches || !t.matches(SCOPE) || t.disabled || t.readOnly) return;
-      target = t; BAR.hidden = false; clear();
+      if (target && target !== t) leave();
+      target = t; KEY.hidden = false; if (RO) { RO.disconnect(); RO.observe(t); } paint();
     });
-    document.addEventListener('focusout', function(){
-      setTimeout(function(){ var a = document.activeElement; if (!(a && a.matches && a.matches(SCOPE)) && !(a && BAR.contains(a))) { BAR.hidden = true; open = false; paint(); } }, 150);
-    });
-    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && open) { open = false; paint(); } }, true);
+    document.addEventListener('focusout', function(){ setTimeout(function(){ var a = document.activeElement; if (!(a && a.matches && a.matches(SCOPE))) leave(); }, 150); });
+    document.addEventListener('input', function(e){ if (e.target === target) { all = false; paint(); } });
+    document.addEventListener('selectionchange', function(){ if (target && document.activeElement === target) paint(); });
+    document.addEventListener('keydown', function(e){
+      if (!target || e.target !== target || STRIP.hidden) return;
+      if (e.key === 'Escape') { shut = true; byKey = false; all = false; paint(); return; }
+      if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) { var b = STRIP.querySelectorAll('button[data-swap]')[+e.key - 1]; if (b) { e.preventDefault(); put(b.firstChild.textContent, true); paint(); } }
+    }, true);
+    window.addEventListener('resize', place);
   }
   window.hubIPA = { bar: bar };
 })();
