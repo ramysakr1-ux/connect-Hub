@@ -1112,8 +1112,9 @@ window.hubTutorNames = function(cs){
    different ... different contact person. And Lite will be able to read this. Send them to the right door").
    A CLASS is a level with its book's TP point set, its tutor and its room. Each group is in one class for the first half
    and another for the second; the change is a DAY (the new-class day on the timetable, else the first day of the second
-   level's TP). Kept on the course settings as
+   level's TP). First kept on the course settings as
      classes: { list: [{ id, level, set, tutor, room }], groups: { "1": [before id, after id] }, change: "YYYY-MM-DD" }
+   and, since 10 Nov 2026, with a plan per group by TP (see hubClassBlocks below).
    Every reader asks these, so the TP points, getting to know you, tutorials, consultations, "email your tutor", the
    timetable and the handover all follow one record. A course with no classes set reads exactly as before.
    The store keeps its own copy of the tutor rule (ownTutor_ in store/gas/Code.js): change one, change both. */
@@ -1122,35 +1123,113 @@ window.hubClasses = function(cs){
   return (c && Array.isArray(c.list) && c.list.some(function(x){ return x && x.id; })) ? c : null;
 };
 window.hubLevelAt = function(cs){ var n = parseInt((cs && cs.tpCount) || '', 10) || 8; return Math.floor(n / 2) + 1; };
-/* [first-half class, second-half class] for a group, or null when the course has no classes for it */
-window.hubClassPlan = function(cs, group){
+/* THE CHANGE IS A TP, NOT A DATE (Ramy, 10 Nov 2026, setting C/21's classes: "can we not make it a date? Can we just make
+   it like after how many TPs instead ... some centers maybe do two, four, two ... there's always room for other courses
+   with other combinations"). Each group has a PLAN: the class it teaches, block by block, each block ending on a TP.
+     classes.plan = { "1": [{ k: 'k1', to: 4 }, { k: 'k2', to: 8 }], "3": [{ k: 'k3', to: 2 }, { k: 'k4', to: 6 }, { k: 'k3', to: 8 }] }
+   The DAY a group is with its next class is worked out from the timetable (hubClassStart): the board's new-class day
+   where it falls between the two classes' TPs, else the course day after the group's last TP in the old class.
+   A course saved before this (groups: { g: [before, after] }, change: a date) reads as it always did: two blocks at the
+   half-way TP, changing on its saved date. Course admin still writes those two old fields beside the plan, for a page
+   or a store that has not caught up. The store's copy of the tutor rule is ownTutor_ (store/gas/Code.js). */
+/* [{ k: the class, from: its first TP, to: its last }] for a group, or null when the course has no classes for it */
+window.hubClassBlocks = function(cs, group){
   var c = window.hubClasses(cs); if (!c) return null;
-  var row = (c.groups || {})[String(group == null ? '' : group)]; if (!Array.isArray(row)) return null;
+  var g = String(group == null ? '' : group), tps = parseInt((cs && cs.tpCount) || '', 10) || 8;
   var by = function(id){ for (var i = 0; i < c.list.length; i++) if (c.list[i] && id && c.list[i].id === id) return c.list[i]; return null; };
-  var a = by(row[0]), b = by(row[1]);
-  if (!a && !b) return null;
-  return [a || b, b || a];
+  var plan = c.plan && c.plan[g], out = [];
+  if (Array.isArray(plan) && plan.length) {
+    var from = 1;
+    plan.forEach(function(b, i){
+      if (from > tps) return;
+      var k = by(b && b.k), to = i === plan.length - 1 ? tps : Math.max(from, Math.min(tps, parseInt(b && b.to, 10) || tps));
+      if (k) out.push({ k: k, from: from, to: to });
+      from = to + 1;
+    });
+    if (out.length) out[out.length - 1].to = tps;
+  } else {
+    var row = (c.groups || {})[g]; if (!Array.isArray(row)) return null;
+    var a = by(row[0]), z = by(row[1]); if (!a && !z) return null;
+    a = a || z; z = z || a;
+    var half = window.hubLevelAt(cs);
+    out = [{ k: a, from: 1, to: half - 1 }, { k: z, from: half, to: tps }];
+  }
+  return out.length ? out : null;
+};
+/* [the first class, the class after the first change] for a group: what the handover reads */
+window.hubClassPlan = function(cs, group){
+  var b = window.hubClassBlocks(cs, group); if (!b) return null;
+  return [b[0].k, (b[1] || b[0]).k];
 };
 window.hubClassChange = function(cs){ var c = window.hubClasses(cs); return c ? String(c.change || '').slice(0, 10) : ''; };
+/* the timetable this browser holds, parsed once per copy */
+var hubTTRaw = null, hubTTVal = null;
+function hubTTNow(){
+  var raw = null; try { raw = localStorage.getItem('connect_timetable_v1'); } catch (e) {}
+  if (raw !== hubTTRaw) { hubTTRaw = raw; try { hubTTVal = JSON.parse(raw || 'null'); } catch (e) { hubTTVal = null; } }
+  return hubTTVal;
+}
+/* the day a group is with the class whose first TP is `tp`: the timetable's new-class day where it falls after the last
+   lesson of TP (tp - 1) and no later than the first lesson of TP tp; else the course day after that last lesson. '' when
+   the timetable cannot say. */
+window.hubClassStart = function(tt, tp){
+  var days = (tt && Array.isArray(tt.days)) ? tt.days.filter(function(d){ return d && d.date && !d.closed; }).slice().sort(function(a, b){ return String(a.date).localeCompare(String(b.date)); }) : [];
+  var last = '', first = '';
+  days.forEach(function(d){ if (+d.tp === tp - 1 && d.date > last) last = d.date; if (+d.tp === +tp && (!first || d.date < first)) first = d.date; });
+  if (!last) return '';
+  for (var i = 0; i < days.length; i++) if (days[i].how === 'newclass' && days[i].date > last && (!first || days[i].date <= first)) return days[i].date;
+  for (var j = 0; j < days.length; j++) if (days[j].date > last) return days[j].date;
+  return '';
+};
+/* each block's first day for a group: ['', '2026-11-30', ...] (the first block has none) */
+window.hubClassStarts = function(cs, group, tt){
+  var b = window.hubClassBlocks(cs, group); if (!b) return [];
+  var c = window.hubClasses(cs), planned = !!(c.plan && Array.isArray(c.plan[String(group == null ? '' : group)]));
+  var t = tt || hubTTNow(), saved = String(c.change || '').slice(0, 10);
+  return b.map(function(x, i){
+    if (!i) return '';
+    var day = window.hubClassStart(t, x.from);
+    /* a course saved with a date keeps its date; a plan goes by the timetable, and falls back on the saved day */
+    return planned ? (day || (i === 1 ? saved : '')) : (i === 1 && saved ? saved : day);
+  });
+};
 /* the class a group is in on a day (YYYY-MM-DD) */
 window.hubClassOn = function(cs, group, date){
-  var p = window.hubClassPlan(cs, group); if (!p) return null;
-  var ch = window.hubClassChange(cs), d = String(date || '').slice(0, 10);
-  return (ch && d && d >= ch) ? p[1] : p[0];
+  var b = window.hubClassBlocks(cs, group); if (!b) return null;
+  var starts = window.hubClassStarts(cs, group), d = String(date || '').slice(0, 10);
+  for (var i = b.length - 1; i > 0; i--) if (starts[i] && d && d >= starts[i]) return b[i].k;
+  return b[0].k;
 };
-/* the class a group teaches a TP in: TP1 to TP4 the first, TP5 on the second (eight TPs) */
+/* the class a group teaches a TP in */
 window.hubClassAtTp = function(cs, group, tp){
-  var p = window.hubClassPlan(cs, group); if (!p) return null;
-  return (+tp >= window.hubLevelAt(cs)) ? p[1] : p[0];
+  var b = window.hubClassBlocks(cs, group); if (!b) return null;
+  for (var i = 0; i < b.length; i++) if (+tp >= b[i].from && +tp <= b[i].to) return b[i].k;
+  return (+tp < b[0].from ? b[0] : b[b.length - 1]).k;
 };
-/* which half a tutorial tile belongs to by its name: a Stage 2 tutorial looks back on the first half (its tutor), a Stage 3
-   tutorial is with the second half's tutor, whatever day it falls on; anything else goes by the day */
+/* THE NEW CLASS'S FIRST TP POINTS (Ramy, 10 Nov 2026: "when they swap level ... the TP points should be released on
+   Friday. The Friday before"). One choice for the whole course, classes.out: 'before' = the last course day before the
+   group meets its new class, 'day' = the day it meets it, anything else = the course's usual rule. Returns that day for
+   a TP that opens a new class, '' for any other TP. The TP points page and the trainee's home both ask this first. */
+window.hubClassOutDay = function(cs, group, tp, tt){
+  var c = window.hubClasses(cs); if (!c || (c.out !== 'before' && c.out !== 'day')) return '';
+  var b = window.hubClassBlocks(cs, group); if (!b) return '';
+  var i = -1; b.forEach(function(x, n){ if (n && x.from === +tp && x.k !== b[n - 1].k) i = n; });
+  if (i < 0) return '';
+  var t = tt || hubTTNow(), start = window.hubClassStarts(cs, group, t)[i]; if (!start) return '';
+  if (c.out === 'day') return start;
+  var days = (t && Array.isArray(t.days)) ? t.days.filter(function(d){ return d && d.date && !d.closed; }).map(function(d){ return d.date; }).sort() : [], prev = '';
+  days.forEach(function(d){ if (d < start) prev = d; });
+  return prev || start;
+};
+/* which class a tutorial tile belongs to by its name: a Stage 2 tutorial looks back on the first half (the class of the
+   last TP before half way), a Stage 3 tutorial is with the last class's tutor, whatever day it falls on; anything else
+   goes by the day */
 window.hubTutorForTile = function(cs, group, date, title){
-  var p = window.hubClassPlan(cs, group);
-  if (p) {
-    var t = String(title || '');
-    if (/stage\s*2/i.test(t)) return p[0].tutor || '';
-    if (/stage\s*3/i.test(t)) return p[1].tutor || '';
+  var b = window.hubClassBlocks(cs, group);
+  if (b) {
+    var t = String(title || ''), tps = parseInt((cs && cs.tpCount) || '', 10) || 8;
+    if (/stage\s*2/i.test(t)) return (window.hubClassAtTp(cs, group, window.hubLevelAt(cs) - 1) || {}).tutor || '';
+    if (/stage\s*3/i.test(t)) return (window.hubClassAtTp(cs, group, tps) || {}).tutor || '';
   }
   return window.hubTutorOn(cs, group, date);
 };

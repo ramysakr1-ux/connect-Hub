@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611102109">
+<link rel="stylesheet" href="hub-tokens.css?v=202611102132">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -229,6 +229,8 @@
   .ilrow .cl-from{flex:0 0 185px; font-size:0.84rem; padding:8px 10px;}
   .ilrow .kl-n{flex:0 0 78px; font-size:0.86rem;} .ilrow .kg-w{font-size:0.84rem; color:var(--grey);}
   .kl-row .house-sel, .kg-row .house-sel{flex:1 1 170px; min-width:0;}
+  /* a long set or class name stays inside the card on a phone (10 Nov 2026: the boxes ran off its right edge) */
+  #classesCard .house-sel{max-width:100%;} #classesCard .house-sel select{max-width:100%; min-width:0; text-overflow:ellipsis;}
   .ilrow .sw.short{flex:0 0 auto; padding:0;}
   /* which timetable session each of the center's own input sessions found (Ramy, 28 Oct 2026: "it has to be the exact
      wording, right?" -- it does not, and this line shows what it found) */
@@ -682,7 +684,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611102109">
+<link rel="stylesheet" href="hub-house.css?v=202611102132">
 </head>
 <body>
 <div class="board">
@@ -1292,20 +1294,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611102109"></script>
-<script src="hub-store.js?v=202611102109"></script>
-<script src="hub-xlsx.js?v=202611102109"></script>
-<script src="hub-say.js?v=202611102109"></script>
-<script src="agreement-defaults.js?v=202611102109"></script>
-<script src="observation-defaults.js?v=202611102109"></script>
-<script src="hub-shared.js?v=202611102109"></script>
+<script src="assignment-defaults.js?v=202611102132"></script>
+<script src="hub-store.js?v=202611102132"></script>
+<script src="hub-xlsx.js?v=202611102132"></script>
+<script src="hub-say.js?v=202611102132"></script>
+<script src="agreement-defaults.js?v=202611102132"></script>
+<script src="observation-defaults.js?v=202611102132"></script>
+<script src="hub-shared.js?v=202611102132"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611102109"></script>
-<script src="hub-due.js?v=202611102109"></script>
-<script src="hub-sync.js?v=202611102109"></script>
-<script src="hub-notebook.js?v=202611102109"></script>
-<script src="hub-hand.js?v=202611102109"></script>
-<script src="hub-ink.js?v=202611102109"></script>
+<script src="hub-rotation.js?v=202611102132"></script>
+<script src="hub-due.js?v=202611102132"></script>
+<script src="hub-sync.js?v=202611102132"></script>
+<script src="hub-notebook.js?v=202611102132"></script>
+<script src="hub-hand.js?v=202611102132"></script>
+<script src="hub-ink.js?v=202611102132"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1349,7 +1351,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611102109'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611102132'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -2048,10 +2050,11 @@ function readContacts(){
 }
 /* ---- THE CLASSES (Ramy, 7 Nov 2026) ------------------------------------------------------------------------------
    Each class: a level, the TP point set it teaches from (the course's own sets, written on the TP points screen), its
-   tutor. Each group: its class until the change, and after. The change: a day, proposed from the timetable (its new-class
-   day). Saved with the rest of Settings as `classes`; nothing is saved until a class has a tutor or a set, so an untouched
+   tutor. Each group: the class it teaches, block by block, each block ending on a TP (10 Nov 2026; it was one change on
+   a typed date). The day of a change is read from the timetable, never typed. Saved with the rest of Settings as `classes`; nothing is saved until a class has a tutor or a set, so an untouched
    card leaves the course as it was. */
-var CLASSES = CLASSES || null;   /* var, like CONTACTS: the settings load above fills it before this line runs */
+var CLASSES = CLASSES || null;
+var CLASS_PLAN = null, CLASS_TT = null, CLASS_TPS = 8;   /* what the card last drew: each group's plan, the timetable it read, the course's TP count */   /* var, like CONTACTS: the settings load above fills it before this line runs */
 function classTutorNames(){
   const out = [], add = n => { n = String(n || '').trim(); if (n && !out.some(x => x.toLowerCase() === n.toLowerCase())) out.push(n); };
   String((document.getElementById('tutorNames') || {}).value || '').split(/[,\n;]+/).forEach(add);
@@ -2089,24 +2092,82 @@ function renderClasses(){
       <div class="house-sel"><select class="kl-tutor" title="Its tutor">${tutOpt(k.tutor)}</select></div>
       ${list.length > 1 ? `<button type="button" class="linkbtn kl-del" data-i="${i}">Remove</button>` : ''}
     </div>`).join('') + (sets.length ? '' : '<div class="wide"><small class="muted">The TP point sets are written on the TP points screen; they show here once there is one.</small></div>');
-  /* the groups: before and after the change */
-  const rows = C.groups || {};
-  const kOpt = cur => list.map((k, i) => `<option value="${esc(k.id)}"${cur === k.id ? ' selected' : ''}>${esc(classLabel(k, i))}</option>`).join('');
+  /* THE GROUPS, BY TP (Ramy, 10 Nov 2026: "can we not make it a date? Can we just make it like after how many TPs instead
+     ... some centers maybe do two, four, two ... there's always room for other courses with other combinations"). Each
+     group reads as a sentence: this class for TP 1 to 4, then that one. A group changes as often as it likes, or never.
+     The day of each change is worked out from the timetable and only shown (hub-shared hubClassStart). A card saved with
+     the old two boxes and a date opens as "TP 1 to 4, then". */
   let tt = null; try { tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {}
   let cs0 = {}; try { cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
-  const proposed = window.hubClassChangeFromTimetable ? hubClassChangeFromTimetable(cs0, tt) : '';
-  const change = C.change || proposed || '';
+  const tps = parseInt(cs0.tpCount, 10) || 8, half = Math.floor(tps / 2) + 1;
+  const ids = list.map(k => k.id), okId = id => ids.includes(id) ? id : ids[0];
+  const planOf = (g, gi) => {
+    let p = C.plan && Array.isArray(C.plan[g]) ? C.plan[g].map(b => ({ k: okId(b && b.k), to: parseInt(b && b.to, 10) || tps })) : null;
+    if (!p || !p.length) {
+      const r = C.groups && Array.isArray(C.groups[g]) ? C.groups[g] : [ids[gi % ids.length], ids[(gi ^ 1) < ids.length ? (gi ^ 1) : gi % ids.length]];
+      const a = okId(r[0]), z = okId(r[1]);
+      p = a === z ? [{ k: a, to: tps }] : [{ k: a, to: half - 1 }, { k: z, to: tps }];
+    }
+    /* each block ends after it starts and leaves a TP for every block after it; the last runs to the end */
+    let from = 1; p = p.slice(0, tps);
+    p.forEach((b, i) => { const last = i === p.length - 1; b.to = last ? tps : Math.max(from, Math.min(tps - (p.length - 1 - i), b.to)); from = b.to + 1; });
+    return p;
+  };
+  const PLAN = {}; gs.forEach((g, gi) => { PLAN[g] = planOf(g, gi); });
+  const kOpt = cur => list.map((k, i) => `<option value="${esc(k.id)}"${cur === k.id ? ' selected' : ''}>${esc(classLabel(k, i))}</option>`).join('');
   const nice = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); } catch (e) { return d; } };
-  document.getElementById('classGroups').innerHTML = `<div class="wide"><b>The groups</b></div>` + gs.map((g, gi) => {
-      const r = Array.isArray(rows[g]) ? rows[g] : [list[gi % list.length].id, list[(gi ^ 1) < list.length ? (gi ^ 1) : gi % list.length].id];
-      return `<div class="wide ilrow kg-row" data-g="${esc(g)}"><b class="kl-n">Group ${esc(g)}</b>
-        <span class="kg-w">until the change</span><div class="house-sel"><select class="kg-before">${kOpt(r[0])}</select></div>
-        <span class="kg-w">then</span><div class="house-sel"><select class="kg-after">${kOpt(r[1])}</select></div></div>`; }).join('')
-    + `<div class="wide ilrow"><b class="kl-n">The change</b><input type="date" id="classChange" aria-label="The change of level" value="${esc(change)}" style="width:auto">
-       <small class="muted">${proposed ? 'The timetable’s new class is on ' + esc(nice(proposed)) + (C.change && C.change !== proposed ? '. <button type="button" class="linkbtn" id="classChangeTT">Use that day</button>' : '.') : 'From this day each group is with its second class and its tutor. Stage 2 tutorials stay with the first tutor; Stage 3 tutorials are with the second.'}</small></div>`;
+  const isNewClassDay = d => !!(tt && (tt.days || []).some(x => x && x.date === d && x.how === 'newclass'));
+  const dayLine = from => { const d = window.hubClassStart ? hubClassStart(tt, from) : '';
+    return d ? 'With this class from ' + esc(nice(d)) + (isNewClassDay(d) ? ', the timetable’s new class day.' : ', the course day after TP ' + (from - 1) + '.')
+             : 'With this class from the course day after TP ' + (from - 1) + ', once the timetable has it.'; };
+  const groupHTML = g => { const p = PLAN[g]; let from = 1;
+    return p.map((b, i) => { const last = i === p.length - 1, f = from; from = b.to + 1;
+      const span = p.length === 1 ? '<span class="kg-w">for the whole course</span>'
+        : last ? `<span class="kg-w">for TP ${f} to ${tps}, the last</span>`
+        : `<span class="kg-w">for TP ${f} to</span><div class="house-sel" style="flex:0 0 84px; width:84px;"><select class="kg-to" aria-label="The last TP in this class" style="width:84px; min-width:0;">${Array.from({ length: tps - (p.length - 1 - i) - f + 1 }, (_, n) => f + n).map(n => `<option${n === b.to ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`;
+      return `<div class="wide ilrow kg-row" data-g="${esc(g)}" data-i="${i}"><b class="kl-n">${i ? 'then' : 'Group ' + esc(g)}</b>
+          <div class="house-sel"><select class="kg-k" aria-label="${i ? 'The next class' : 'The first class'}">${kOpt(b.k)}</select></div>${span}
+          ${i ? `<button type="button" class="linkbtn kg-del" data-g="${esc(g)}" data-i="${i}">Remove</button>` : ''}</div>`
+        + (i ? `<div class="wide" style="margin:-6px 0 2px;"><small class="muted">${dayLine(f)}</small></div>` : ''); }).join('')
+      + (p.length < tps && list.length > 1 ? `<div class="wide" style="margin:-2px 0 8px;"><button type="button" class="linkbtn kg-add" data-g="${esc(g)}">Add a change</button></div>` : ''); };
+  /* THE NEW CLASS'S FIRST TP POINTS: one choice for the whole course (Ramy, 10 Nov 2026: "the TP points should be
+     released on Friday. The Friday before" ... "one release choice for the whole course") */
+  const changes = gs.some(g => PLAN[g].some((b, i) => i && b.k !== PLAN[g][i - 1].k));
+  const outNow = C.out === 'before' || C.out === 'day' ? C.out : '';
+  const outDays = mode => { if (!window.hubClassOutDay) return '';
+    const cs1 = Object.assign({}, cs0, { classes: { list, plan: PLAN, out: mode, change: C.change || '' } }), seen = [];
+    gs.forEach(g => { for (let tp = 2; tp <= tps; tp++) { const d = hubClassOutDay(cs1, g, tp, tt); if (d && !seen.includes(d)) seen.push(d); } });
+    /* several days read as a list: "Fri Nov 20, Fri Nov 27 and Fri Dec 4" (a long date has a comma of its own) */
+    const short = d => { try { const x = new Date(d + 'T12:00:00'); return x.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + x.toLocaleDateString('en-US', { month: 'short' }) + ' ' + x.getDate(); } catch (e) { return d; } };
+    const days = seen.sort(); return days.length < 2 ? days.map(nice).join('') : days.slice(0, -1).map(short).join(', ') + ' and ' + short(days[days.length - 1]); };
+  const outOpt = (v, b, small) => `<label style="display:flex; gap:10px; align-items:flex-start; margin:8px 0; text-transform:none; letter-spacing:0; font-size:0.92rem; font-weight:500; color:var(--ink);"><input type="radio" name="classOut" value="${v}"${outNow === v ? ' checked' : ''} style="width:auto; margin:4px 0 0;"><span><b>${b}</b><br><small class="muted">${small}</small></span></label>`;
+  const onTT = d => d ? 'On this timetable: ' + esc(d) + '.' : 'Lite names the day once the timetable has the TPs on it.';
+  document.getElementById('classGroups').innerHTML = `<div class="wide"><b>The groups</b><br><small class="muted">Which class each group teaches, by teaching practice. Lite works out the days from the timetable.</small></div>`
+    + gs.map(groupHTML).join('')
+    + (changes ? `<div class="wide" style="margin-top:10px; padding-top:14px; border-top:1px solid var(--sand-line);"><b>The new class’s first TP points</b><br><small class="muted">When a group changes class, when do its trainees get their first lesson for the new class?</small>
+        ${outOpt('', 'By the course’s usual rule', 'As set on TP points, under “When the next TP points go out”.')}
+        ${outOpt('before', 'On the last course day before they meet the new class', onTT(outDays('before')))}
+        ${outOpt('day', 'On the day they meet the new class', onTT(outDays('day')))}</div>` : '');
+  CLASS_PLAN = PLAN; CLASS_TT = tt; CLASS_TPS = tps;
   /* NOTHING SAVED, SAID (Ramy set C/21's date three times on 10 Nov 2026 and nothing was kept: the card saves only once
      a class has its TP points or its tutor, and it never said so) */
   if (!list.some(k => k.tutor || k.set)) document.getElementById('classGroups').insertAdjacentHTML('beforeend', '<div class="wide"><p class="note" style="margin:8px 0 0; color:var(--brick); font-weight:600;">No classes are saved yet. Choose the TP points or the tutor for a class, and the card saves.</p></div>');
+  /* the groups' own controls: a select redraws the sentence (the tab's change listener saves); a button changes the plan and saves */
+  const G = document.getElementById('classGroups');
+  G.querySelectorAll('.kg-k, .kg-to').forEach(sel => sel.addEventListener('change', () => { CLASSES = readClassesRaw(); renderClasses(); }));
+  G.querySelectorAll('.kg-add').forEach(b => b.addEventListener('click', () => {
+    const c = readClassesRaw(), p = c.plan[b.dataset.g] || [], last = p[p.length - 1]; if (!last) return;
+    const from = p.length > 1 ? p[p.length - 2].to + 1 : 1;
+    if (from >= tps) return;                                   /* no TP left to change at */
+    const other = (ids.find(id => id !== last.k) || last.k);
+    p.splice(p.length - 1, 1, { k: last.k, to: p.length === 1 ? Math.min(tps - 1, half - 1) : from + Math.floor((tps - from - 1) / 2) }, { k: other, to: tps });
+    c.plan[b.dataset.g] = p; CLASSES = c; renderClasses(); scheduleSave();
+  }));
+  G.querySelectorAll('.kg-del').forEach(b => b.addEventListener('click', () => {
+    const c = readClassesRaw(), p = c.plan[b.dataset.g] || [], i = +b.dataset.i; if (!(i > 0) || !p[i]) return;
+    p[i - 1].to = p[i].to; p.splice(i, 1);
+    c.plan[b.dataset.g] = p; CLASSES = c; renderClasses(); scheduleSave();
+  }));
   host.querySelectorAll('.kl-del').forEach(b => b.addEventListener('click', () => { const c = readClassesRaw(); c.list.splice(+b.dataset.i, 1); CLASSES = c; renderClasses(); scheduleSave(); }));
   host.querySelectorAll('.kl-set').forEach(sel => sel.addEventListener('change', () => {
     /* a set with a level names the class's level, when the level is not chosen yet */
@@ -2114,13 +2175,22 @@ function renderClasses(){
     if (s && s.level && !lv.value) { const code = (window.HUB_LEVELS || []).find(([c, n]) => window.hubLevelName && hubLevelName(s.level) === n); if (code) lv.value = code[0]; }
   }));
   host.querySelectorAll('.kl-level, .kl-tutor').forEach(sel => sel.addEventListener('change', () => { CLASSES = readClassesRaw(); renderClasses(); }));
-  const ct = document.getElementById('classChangeTT'); if (ct) ct.addEventListener('click', () => { document.getElementById('classChange').value = proposed; scheduleSave(); });
 }
 function readClassesRaw(){
   const list = [...document.querySelectorAll('.kl-row')].map(r => ({ id: r.dataset.id, level: r.querySelector('.kl-level').value, set: r.querySelector('.kl-set').value, tutor: r.querySelector('.kl-tutor').value }));
-  const groups = {}; document.querySelectorAll('.kg-row').forEach(r => { groups[r.dataset.g] = [r.querySelector('.kg-before').value, r.querySelector('.kg-after').value]; });
-  const ch = document.getElementById('classChange');
-  return { list, groups, change: ch ? ch.value : '' };
+  /* the plan, as the card shows it: each group's blocks in order, each ending on its TP (the last one on the course's last) */
+  const plan = {}, tps = CLASS_TPS || 8;
+  document.querySelectorAll('.kg-row').forEach(r => { const to = r.querySelector('.kg-to'); (plan[r.dataset.g] = plan[r.dataset.g] || []).push({ k: r.querySelector('.kg-k').value, to: to ? parseInt(to.value, 10) || tps : tps }); });
+  Object.keys(plan).forEach(g => { const p = plan[g]; if (p.length) p[p.length - 1].to = tps; });
+  const outEl = document.querySelector('input[name="classOut"]:checked'), out = outEl ? outEl.value : ((CLASSES && CLASSES.out) || '');
+  /* THE TWO OLD FIELDS, STILL WRITTEN: [first class, the class after the first change] per group and the day of the first
+     change, for a page cached from before the plan and a store not yet deployed. Readers that know the plan ignore them. */
+  const groups = {}; let change = '';
+  Object.keys(plan).forEach(g => { const p = plan[g]; if (!p.length) return; groups[g] = [p[0].k, (p[1] || p[0]).k];
+    if (p.length > 1 && window.hubClassStart) { const d = hubClassStart(CLASS_TT, p[0].to + 1); if (d && (!change || d < change)) change = d; } });
+  if (!change && CLASSES && CLASSES.change) change = String(CLASSES.change).slice(0, 10);
+  const c = { list, plan, groups, change }; if (out) c.out = out;
+  return c;
 }
 function readClasses(){
   if (!document.getElementById('classList')) return CLASSES || undefined;
@@ -2957,7 +3027,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611102109'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611102132'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();

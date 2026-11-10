@@ -74,7 +74,8 @@
         var a = levelWord(k.level), b = lib[k.set] ? levelWord(lib[k.set].level) : '';
         if (a && b && a !== b) add('class-level-' + k.id, 'classes', n + ' is set to ' + a + ', but its TP points are ' + b + '.');
       });
-      if (K.change && newClassDay && String(K.change).slice(0, 10) !== newClassDay) add('class-change', 'classes', 'The classes change on ' + nice(K.change) + ', but the timetable’s new class day is ' + nice(newClassDay) + '.');
+      /* a course saved with a date (before the plan by TP) can disagree with the board; a plan takes its days from the board */
+      if (!K.plan && K.change && newClassDay && String(K.change).slice(0, 10) !== newClassDay) add('class-change', 'classes', 'The classes change on ' + nice(K.change) + ', but the timetable’s new class day is ' + nice(newClassDay) + '.');
     } else if (newClassDay) {
       add('class-none', 'classes', 'The timetable changes class on ' + nice(newClassDay) + ', but Course admin has no classes. Every group keeps one set of TP points for the whole course.');
     }
@@ -88,10 +89,17 @@
     });
 
     /* ---- the TP points: what was dealt against what the course now says ---------------------------------------- */
+    /* the class a group teaches a TP in: its plan by TP where it has one (10 Nov 2026), else the old two halves */
     var classOf = function (g, tp) {
       if (!K) return null;
-      var row = (K.groups || {})[g]; if (!Array.isArray(row)) return null;
       var by = function (id) { return K.list.filter(function (k) { return k && id && k.id === id; })[0] || null; };
+      var plan = K.plan && K.plan[g];
+      if (Array.isArray(plan) && plan.length) {
+        var from = 1, hit = null, lastK = null;
+        plan.forEach(function (b, i) { var to = i === plan.length - 1 ? tps : Math.max(from, Math.min(tps, parseInt(b && b.to, 10) || tps)), k = by(b && b.k); if (k) { lastK = k; if (!hit && tp >= from && tp <= to) hit = k; } from = to + 1; });
+        return hit || lastK;
+      }
+      var row = (K.groups || {})[g]; if (!Array.isArray(row)) return null;
       var a = by(row[0]), b = by(row[1]); if (!a && !b) return null;
       return tp >= half ? (b || a) : (a || b);
     };

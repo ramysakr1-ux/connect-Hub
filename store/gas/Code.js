@@ -1763,7 +1763,7 @@ case 'inbox': {
       var bDate = String(req.date || ''), bId = String(req.id || ''), bAsg = String(req.asg || '').toLowerCase();
       var sheet = bookableTile_(course.id, bDate, bId);
       var bSet = courseRead_(course.id, 'settings') || {};
-      var own = ownTutor_(bSet, me, bDate, sheet.tile.t), isTut = /tutorial/i.test(sheet.tile.t || ''), sheetBy = tutorName_(bSet, sheet.tile.by);
+      var own = ownTutor_(bSet, me, bDate, sheet.tile.t, courseRead_(course.id, 'timetable')), isTut = /tutorial/i.test(sheet.tile.t || ''), sheetBy = tutorName_(bSet, sheet.tile.by);
       var ownSheet = !own || !sheetBy || own.toLowerCase() === sheetBy.toLowerCase();
       if (isTut && !ownSheet) throw new Error('Tutorials are with your own tutor, ' + own + '. Book on their sheet.');
       if (!isTut && !ownSheet) {
@@ -3596,19 +3596,64 @@ function tutorName_(set, by) {
    after] }, change: "YYYY-MM-DD" }), their own tutor is their class's tutor on the sheet's day: the first class's before the
    change, the second's from it. A Stage 2 tutorial is with the first class's tutor, a Stage 3 tutorial with the second's,
    whatever day it falls on. The page's copy of this rule is hubTutorForTile in hub-shared.js: change one, change both. */
-function ownTutor_(set, me, date, title) {
-  var c = set && set.classes, g0 = String((me && me.group) || '');
-  if (c && c.list && c.list.length && c.groups && c.groups[g0]) {
-    var by = function (id) { for (var j = 0; j < c.list.length; j++) if (c.list[j] && id && c.list[j].id === id) return c.list[j]; return null; };
-    var a = by(c.groups[g0][0]), b = by(c.groups[g0][1]); a = a || b; b = b || a;
-    if (a) {
-      var t = String(title || ''), d = String(date || '').slice(0, 10), ch = String(c.change || '').slice(0, 10);
-      var k = /stage\s*2/i.test(t) ? a : /stage\s*3/i.test(t) ? b : (ch && d && d >= ch) ? b : a;
-      if (k && k.tutor) return String(k.tutor);
+function ownTutor_(set, me, date, title, tt) {
+  /* v211 (10 Nov 2026, Ramy: "can we just make it like after how many TPs instead ... two, four, two"): a group may have
+     a PLAN by TP (classes.plan[g] = [{ k, to }, ...]) with as many changes as it likes; the day of each change is worked
+     out from the timetable (classStart_). A course saved with [before, after] and a date reads as it did in v203. */
+  var blocks = classBlocks_(set, me && me.group);
+  if (blocks) {
+    var c = set.classes, tps = parseInt(set.tpCount, 10) || 8, half = Math.floor(tps / 2) + 1;
+    var at = function (tp) { for (var i = 0; i < blocks.length; i++) if (tp >= blocks[i].from && tp <= blocks[i].to) return blocks[i].k; return blocks[blocks.length - 1].k; };
+    var t = String(title || ''), d = String(date || '').slice(0, 10), k = null;
+    if (/stage\s*2/i.test(t)) k = at(half - 1);
+    else if (/stage\s*3/i.test(t)) k = at(tps);
+    else {
+      var planned = !!(c.plan && Array.isArray(c.plan[String((me && me.group) || '')])), saved = String(c.change || '').slice(0, 10);
+      k = blocks[0].k;
+      for (var n = 1; n < blocks.length; n++) {
+        var day = classStart_(tt, blocks[n].from);
+        var start = planned ? (day || (n === 1 ? saved : '')) : (n === 1 && saved ? saved : day);
+        if (start && d && d >= start) k = blocks[n].k;
+      }
     }
+    if (k && k.tutor) return String(k.tutor);
   }
   var rows = (set && set.tutorContacts) || [], g = String((me && me.group) || '');
   for (var i = 0; i < rows.length; i++) if (rows[i] && rows[i].name && g && String(rows[i].group || '') === g) return String(rows[i].name);
+  return '';
+}
+/* the page's hubClassBlocks and hubClassStart (hub-shared.js), kept the same here: change one, change both */
+function classBlocks_(set, group) {
+  var c = set && set.classes, g = String(group == null ? '' : group);
+  if (!c || !Array.isArray(c.list) || !c.list.length) return null;
+  var tps = parseInt(set.tpCount, 10) || 8;
+  var by = function (id) { for (var j = 0; j < c.list.length; j++) if (c.list[j] && id && c.list[j].id === id) return c.list[j]; return null; };
+  var plan = c.plan && c.plan[g], out = [];
+  if (Array.isArray(plan) && plan.length) {
+    var from = 1;
+    plan.forEach(function (b, i) {
+      if (from > tps) return;
+      var k = by(b && b.k), to = i === plan.length - 1 ? tps : Math.max(from, Math.min(tps, parseInt(b && b.to, 10) || tps));
+      if (k) out.push({ k: k, from: from, to: to });
+      from = to + 1;
+    });
+    if (out.length) out[out.length - 1].to = tps;
+  } else {
+    var row = (c.groups || {})[g]; if (!Array.isArray(row)) return null;
+    var a = by(row[0]), z = by(row[1]); if (!a && !z) return null;
+    a = a || z; z = z || a;
+    var half = Math.floor(tps / 2) + 1;
+    out = [{ k: a, from: 1, to: half - 1 }, { k: z, from: half, to: tps }];
+  }
+  return out.length ? out : null;
+}
+function classStart_(tt, tp) {
+  var days = (tt && Array.isArray(tt.days)) ? tt.days.filter(function (d) { return d && d.date && !d.closed; }).slice().sort(function (x, y) { return String(x.date) < String(y.date) ? -1 : 1; }) : [];
+  var last = '', first = '';
+  days.forEach(function (d) { if (+d.tp === tp - 1 && d.date > last) last = d.date; if (+d.tp === +tp && (!first || d.date < first)) first = d.date; });
+  if (!last) return '';
+  for (var i = 0; i < days.length; i++) if (days[i].how === 'newclass' && days[i].date > last && (!first || days[i].date <= first)) return days[i].date;
+  for (var j = 0; j < days.length; j++) if (days[j].date > last) return days[j].date;
   return '';
 }
 function courseRead_(courseId, kind) {
