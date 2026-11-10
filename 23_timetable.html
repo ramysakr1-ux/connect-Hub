@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611101654">
+<link rel="stylesheet" href="hub-tokens.css?v=202611101840">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -843,25 +843,25 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611101654">
+<link rel="stylesheet" href="hub-house.css?v=202611101840">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611101654"></script>
-<script src="hub-tracker.js?v=202611101654"></script>
-<script src="hub-rotation.js?v=202611101654"></script>
-<script src="hub-xlsx.js?v=202611101654"></script>
-<script src="hub-docx.js?v=202611101654"></script>
-<script src="hub-timetable-parse.js?v=202611101654"></script>
-<script src="assignment-defaults.js?v=202611101654"></script>
-<script src="hub-shared.js?v=202611101654"></script>
-<script src="hub-store.js?v=202611101654"></script>
-<script src="hub-say.js?v=202611101654"></script>
-<script src="hub-sync.js?v=202611101654"></script>
-<script src="hub-notebook.js?v=202611101654"></script>
+<script src="hub-due.js?v=202611101840"></script>
+<script src="hub-tracker.js?v=202611101840"></script>
+<script src="hub-rotation.js?v=202611101840"></script>
+<script src="hub-xlsx.js?v=202611101840"></script>
+<script src="hub-docx.js?v=202611101840"></script>
+<script src="hub-timetable-parse.js?v=202611101840"></script>
+<script src="assignment-defaults.js?v=202611101840"></script>
+<script src="hub-shared.js?v=202611101840"></script>
+<script src="hub-store.js?v=202611101840"></script>
+<script src="hub-say.js?v=202611101840"></script>
+<script src="hub-sync.js?v=202611101840"></script>
+<script src="hub-notebook.js?v=202611101840"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -3128,15 +3128,17 @@ function openDetails(date, id){
   const lt = localRange(day.date, x.s, x.e), tut = x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by] ? TUTORS[+x.by] : '';
   const page = x.k === 'input' ? (x.lib ? 'input-sessions/' + x.lib + '/' : libPageFor(x.t)) : '';
   const room = joinFor(x, (rec('hub:me') || {}).group, day.date);
+  const mat = x.mat && /^https?:\/\//i.test(x.mat) ? x.mat : '';
   el.innerHTML = `<p class="dt1">${esc(dayName(date))} · ${esc(hubClockRange(x.s, x.e))}${lt ? ` · <span class="lt" title="Your time">${esc(lt)}</span>` : ''}</p>
     <span class="kchip k-${esc(x.k)}">${esc(KIND_LABEL[x.k] || x.k)}</span>
     ${tut ? `<p class="dt1">With ${esc(tut)} (${esc(initialsOf(tut))})</p>` : ''}
     ${x.d ? `<div class="prep">${esc(x.d)}</div>` : ''}
     ${page ? `<a class="res" href="${esc(page)}">Open the session</a>` : ''}
+    ${mat ? `<a class="res" href="${esc(mat)}" target="_blank" rel="noopener noreferrer">Open the materials</a>` : ''}
     ${x.k === 'feedback' && IS_TUTOR ? `<a class="res" href="40_tp_feedback.html?date=${esc(date)}${GVIEW ? '&group=' + encodeURIComponent(GVIEW) : ''}">Open the feedback screen</a>` : ''}
     ${x.k === 'feedback' && !IS_TUTOR ? `<a class="res" href="41_feedback_games.html">Feedback games</a>` : ''}
     ${room ? `<a class="res" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join · ${esc(room.label)}</a>` : ''}
-    ${!x.d && !page && !room && x.k !== 'feedback' ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}`;
+    ${!x.d && !page && !mat && !room && x.k !== 'feedback' ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}`;
   el.hidden = false; asDrawer(el, name);
 }
 /* A new session (+ Session, an empty place, or the library): made on the draft at once and opened to change, the same as
@@ -3166,7 +3168,7 @@ function freeOthers(x){
   const freed = [];
   (TT.days || []).forEach(d => (d.sessions || []).forEach(o => {
     if (o === x || o.id === x.id || sesKey(o) !== key || !sameGroup(o, x)) return;
-    delete o.t; delete o.lib; delete o.d; delete o.url; o.k = 'input';
+    delete o.t; delete o.lib; delete o.d; delete o.url; delete o.mat; o.k = 'input';
     freed.push(dayName(d.date));
   }));
   return freed;
@@ -3183,7 +3185,7 @@ function freeAfter(day){
   return end;
 }
 function draftCounts(){
-  const ids = days => { const m = new Map(); (days || []).forEach(d => (d.sessions || []).forEach(x => m.set(x.id, JSON.stringify([d.date, x.s, x.e, x.k, x.t || '', x.by == null ? '' : x.by, x.room || '', x.url || '', x.d || '', d.tp || 0, d.setIndex || 0])))); return m; };
+  const ids = days => { const m = new Map(); (days || []).forEach(d => (d.sessions || []).forEach(x => m.set(x.id, JSON.stringify([d.date, x.s, x.e, x.k, x.t || '', x.by == null ? '' : x.by, x.room || '', x.url || '', x.mat || '', x.d || '', d.tp || 0, d.setIndex || 0])))); return m; };
   const a = ids(LIVE && LIVE.days), b = ids(pickLive(TT).days); let add = 0, ed = 0, rm = 0;
   b.forEach((v, k) => { if (!a.has(k)) add++; else if (a.get(k) !== v) ed++; });
   a.forEach((v, k) => { if (!b.has(k)) rm++; });
@@ -3296,7 +3298,7 @@ function replaceTile(date, id, p){
   const x = (day.sessions || []).find(s => s.id === id); if (!x || x.k === 'tp') return;
   remember(); const was = tileName(x, day);
   if (p.k) { x.k = p.k === 'blank' ? 'event' : p.k; x.t = p.k === 'blank' ? '' : pieceLabel(p.k); delete x.lib; if (x.room === 'Input') delete x.room; }
-  else { x.k = 'input'; x.t = p.t; x.room = 'Input'; const sl = libSlugOf(p.t); if (sl) x.lib = sl; else delete x.lib; }
+  else { x.k = 'input'; x.t = p.t; x.room = 'Input'; const sl = libSlugOf(p.t); if (sl) x.lib = sl; else delete x.lib; delete x.mat; }   /* another session's materials do not stay under this one */
   const freed = freeOthers(x);
   save('Changed', { text: '“' + was + '” on ' + dayName(date) + ' is now “' + tileName(x, day) + '”' + (freed.length ? '; its place on ' + freed.join(', ') + ' is empty again' : '') }); render();
 }
@@ -3413,7 +3415,7 @@ function wireBoard(){
     if (overLib(e) && was.x.k === 'input' && was.x.t) {
       UNDO.push(was.before);
       const x = was.day.sessions.find(s => s.id === was.x.id), name = x.t;
-      delete x.t; delete x.lib; delete x.d; delete x.url; delete x.by;
+      delete x.t; delete x.lib; delete x.d; delete x.url; delete x.mat; delete x.by;
       save('Back in the library', { text: '“' + name + '” taken off ' + dayName(was.day.date) + '; its place is empty' });
       render(); return;
     }
@@ -3585,6 +3587,7 @@ function closePop(){
       if ((was.x.url || '') !== (x.url || '')) what.push(x.url ? 'has a link of its own' : 'link removed');
       else if ((was.x.room || '') !== (x.room || '')) what.push(x.room ? 'in the ' + x.room + ' room' : 'in the usual room');
       if ((was.x.d || '') !== (x.d || '')) what.push(x.d ? 'preparation changed' : 'preparation removed');
+      if ((was.x.mat || '') !== (x.mat || '')) what.push(x.mat ? (was.x.mat ? 'materials link changed' : 'has its materials') : 'materials link removed');
       if ((was.x.g || '') !== (x.g || '')) what.push(x.g ? 'for Group ' + x.g : 'for the whole course');
       /* locking is the tutors' own tool, like pinning: not news for the course */
       if (!what.length) { save('Saved'); render(); document.querySelectorAll('.ttpop, .ttmenu').forEach(el => { el.hidden = true; }); return; }
@@ -3653,7 +3656,10 @@ function openTile(date, id, fresh){
       <label>Group<select name="g"><option value="">Whole course</option>${groupsOpt.map(g => `<option value="${esc(g)}"${String(x0.g || '') === g ? ' selected' : ''}>Group ${esc(g)}</option>`).join('')}</select></label></div>
     <label class="plrow"${/consultation|tutorial/i.test(x0.t || '') ? '' : ' hidden'}>Each place<select name="pl">${[10, 15, 20, 30, 45, 60].map(m => `<option value="${m}"${placeLen(x0) === m ? ' selected' : ''}>${m} minutes</option>`).join('')}</select></label>
     <label>Preparation<textarea name="d" placeholder="What trainees read or bring. They see this when they open the session.">${esc(x0.d || '')}</textarea></label>
-    <label>Session or resources link<input name="url" type="url" placeholder="https://" value="${esc(x0.url && x0.url !== 'https://' ? x0.url : '')}"></label>
+    <label>Materials link<input name="mat" type="url" placeholder="https://" value="${esc(x0.mat || '')}" aria-describedby="matWhy"></label>
+    <p class="muted" id="matWhy">Your own slides, handout or folder. Trainees see it as “Open the materials”. Share it so anyone with the link can view.</p>
+    <label>Online room link<input name="url" type="url" placeholder="https://" value="${esc(x0.url && x0.url !== 'https://' ? x0.url : '')}" aria-describedby="urlWhy"></label>
+    <p class="muted" id="urlWhy">Only if this session meets somewhere other than its usual room. Trainees see it as “Join”.</p>
     ${!isNew && isSheet(x0) && BOOK ? `<div class="sheetin">${sheetHTML(day0, x0)}</div>` : ''}
     <label class="lock"><input type="checkbox" name="locked"${x0.locked ? ' checked' : ''}> Locked, so it can’t be dragged</label>
     <p class="warn" id="tErr"></p>
@@ -3680,7 +3686,11 @@ function openTile(date, id, fresh){
     if (e0 <= s0) return err('The end must be after the start.');
     if (k !== 'tp' && !t && k !== 'break' && k !== 'lunch') return err('Give the session a title.');
     let url = v('url').trim();
-    if (url) { try { const u = new URL(url); if (!/^https?:$/.test(u.protocol)) throw 0; url = u.href; } catch (x) { return err('The link must start with http:// or https://.'); } }
+    if (url) { try { const u = new URL(url); if (!/^https?:$/.test(u.protocol)) throw 0; url = u.href; } catch (x) { return err('The online room link must start with http:// or https://.'); } }
+    /* THE SESSION'S OWN MATERIALS (Ramy, 10 Nov 2026: a second tutor who brings her own input sessions). A link of its
+       own, apart from the room: the one box used to do both, and a tutor's slides showed to trainees as "Join · Online". */
+    let mat = v('mat').trim();
+    if (mat) { try { const u = new URL(mat); if (!/^https?:$/.test(u.protocol)) throw 0; mat = u.href; } catch (x) { return err('The materials link must start with http:// or https://.'); } }
     const g = v('g'), byN = v('by');
     /* the design's overlap check: the same tutor, or the same group (the whole course shares with every group) */
     const clash = (to.sessions || []).filter(o => o.id !== x0.id && o.k !== 'break' && o.k !== 'lunch' && k !== 'break' && k !== 'lunch' && toMin(o.s) < e0 && s0 < toMin(o.e)
@@ -3699,6 +3709,7 @@ function openTile(date, id, fresh){
     if (/consultation|tutorial/i.test(x.t || '') && +v('pl') && +v('pl') !== 15) x.pl = +v('pl'); else delete x.pl;
     const d = v('d').trim(); if (d) x.d = d; else delete x.d;
     if (url) x.url = url; else delete x.url;
+    if (mat) x.mat = mat; else delete x.mat;
     if (k !== 'input') delete x.lib;   /* a session that is no longer input no longer opens a session page */
     if (F.elements.locked.checked) x.locked = true; else delete x.locked;
     if (to !== from || isNew) {
