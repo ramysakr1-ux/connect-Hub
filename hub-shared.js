@@ -2591,6 +2591,77 @@ window.hubHeadHTML = function (text, heads) {
   window.hubMic = { ok: OK, bar: bar, stop: stop };
 })();
 
+/* ---- PHONEMIC SYMBOLS THAT FOLLOW THE CURSOR (Ramy, 11 Nov 2026: "not just LRT, but also FOL, LSRT, like
+   it's just there ... maybe the trainer feedback"). The lesson plan has had a symbol bar on its
+   pronunciation boxes since September; the written assignments and the tutor's feedback ask for
+   phonemic script too, and had nothing, so people pasted symbols from a website. One pill at the
+   bottom left, shown while you are in a box it writes into; it opens the symbols, and a symbol goes
+   in where the cursor is. hubIPA.bar(scope) puts it on the page once. The look is .ipabar in
+   hub-house.css. The same symbols, in the same order, as the plan's own bar. */
+(function(){
+  var SETS = [
+    ['Vowels','iː ɪ e æ ɑː ɒ ɔː ʊ uː ʌ ɜː ə'],
+    ['Diphthongs','eɪ aɪ ɔɪ əʊ oʊ aʊ ɪə eə ʊə'],
+    ['Consonants','p b t d k ɡ f v θ ð s z ʃ ʒ h m n ŋ l r j w tʃ dʒ'],
+    ['Marks','ˈ ˌ ː / . ‿']
+  ];
+  var BAR = null, SCOPE = null, target = null, open = false, SPACE = null;
+  function put(sym){
+    if (!target || !target.isConnected) return;
+    target.focus();
+    var done = false;
+    try { done = document.execCommand('insertText', false, sym); } catch (x) {}   /* keeps undo, and works in a contenteditable */
+    if (!done && target.value != null) {
+      var s = target.selectionStart == null ? target.value.length : target.selectionStart, e = target.selectionEnd == null ? s : target.selectionEnd;
+      target.value = target.value.slice(0, s) + sym + target.value.slice(e);
+      try { target.setSelectionRange(s + sym.length, s + sym.length); } catch (x) {}
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+  function paint(){
+    if (!BAR) return;
+    BAR.querySelector('.ipapanel').hidden = !open;
+    var b = BAR.querySelector('.ipabtn'); b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.classList.toggle('on', open);
+    /* room under the page's last box, so it too can come up above the symbols; it goes when they close */
+    if (open && !SPACE) { SPACE = document.createElement('div'); SPACE.setAttribute('aria-hidden', 'true'); SPACE.style.height = Math.ceil(BAR.querySelector('.ipapanel').getBoundingClientRect().height + 40) + 'px'; document.body.appendChild(SPACE); }
+    if (!open && SPACE) { SPACE.remove(); SPACE = null; }
+    if (open) clear();
+  }
+  /* the symbols never sit on the box you are writing in: the page moves up until the box's last line shows above them */
+  function clear(){
+    if (!open || !target || !target.isConnected) return;
+    var top = BAR.querySelector('.ipapanel').getBoundingClientRect().top, r = target.getBoundingClientRect();
+    var over = Math.min(r.bottom, r.top + 220) + 12 - top;
+    if (over > 0) window.scrollBy(0, over);
+  }
+  function bar(scope){
+    if (BAR) return;
+    SCOPE = scope || 'textarea';
+    BAR = document.createElement('div'); BAR.className = 'ipabar'; BAR.hidden = true;
+    var panel = '<div class="ipapanel" hidden role="group" aria-label="Phonemic symbols">' + SETS.map(function(g){
+      return '<div class="ipagrp"><span class="ipalbl">' + g[0] + '</span>' + g[1].split(' ').map(function(x){ return '<button type="button" class="ipasym" tabindex="-1">' + x + '</button>'; }).join('') + '</div>';
+    }).join('') + '</div>';
+    BAR.innerHTML = panel + '<button type="button" class="ipabtn" aria-expanded="false" title="Phonemic symbols: press one and it goes in where your cursor is"><span class="ipaeg">/ə/</span><span class="lbl">Phonemic symbols</span></button>';
+    /* the box keeps its cursor */
+    BAR.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    BAR.addEventListener('click', function(e){
+      var t = e.target.closest ? e.target.closest('button') : null; if (!t) return;
+      if (t.classList.contains('ipabtn')) { open = !open; paint(); return; }
+      if (t.classList.contains('ipasym')) put(t.textContent);
+    });
+    document.body.appendChild(BAR);
+    document.addEventListener('focusin', function(e){
+      var t = e.target; if (!t.matches || !t.matches(SCOPE) || t.disabled || t.readOnly) return;
+      target = t; BAR.hidden = false; clear();
+    });
+    document.addEventListener('focusout', function(){
+      setTimeout(function(){ var a = document.activeElement; if (!(a && a.matches && a.matches(SCOPE)) && !(a && BAR.contains(a))) { BAR.hidden = true; open = false; paint(); } }, 150);
+    });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && open) { open = false; paint(); } }, true);
+  }
+  window.hubIPA = { bar: bar };
+})();
+
 /* THE DEMO IS VIEW ONLY (Ramy, 24 Oct 2026: "I want it to be view only. For
    everyone ... they can't download anything"). On a demo course (the demo
    clock is set) printing and downloading say so instead of happening: the
