@@ -47,7 +47,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card-offer.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611102157">
+<link rel="stylesheet" href="hub-tokens.css?v=202611110032">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -222,7 +222,7 @@
   @media(max-width:420px){ body[data-card="ticket"] .panel{padding:22px 20px 6px;} body[data-card="ticket"] .t-stub{padding:14px 20px 20px;} }
   @media print{ body[data-card="ticket"] .card{filter:none;} body[data-card="ticket"] .t-perf{background:none;} body[data-card="ticket"] .t-stub{background:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611102157">
+<link rel="stylesheet" href="hub-house.css?v=202611110032">
 </head>
 <body data-say-pill="off">
 
@@ -288,7 +288,7 @@
        first (what it does, what you should know, why it exists), then shows,
        then costs, then asks. -->
   <h2>See it working</h2>
-  <p class="lede" style="font-size:0.88rem; color:var(--grey);">Explore a working demo course, two weeks in. Try it freely; nothing you do changes a candidate record.</p>
+  <p class="lede" style="font-size:0.88rem; color:var(--grey);">Explore a working demo course<span id="demoWhen">, two weeks in</span>. Try it freely; nothing you do changes a candidate record.</p>
   <!-- A standing demo is fixed on one day of its course (the demo clock, 30
        Sep 2026); the card says which, so the two demos a center receives read
        as two moments of one course and not as two copies of the same thing. -->
@@ -348,10 +348,10 @@
   </div>
 </div>
 
-<script src="hub-shared.js?v=202611102157"></script>
-<script src="hub-store.js?v=202611102157"></script>
-<script src="hub-say.js?v=202611102157"></script>
-<script src="hub-feedback.js?v=202611102157"></script>
+<script src="hub-shared.js?v=202611110032"></script>
+<script src="hub-store.js?v=202611110032"></script>
+<script src="hub-say.js?v=202611110032"></script>
+<script src="hub-feedback.js?v=202611110032"></script>
 <script>
 /* Everything course-specific comes from the one key in the URL. The card is
    complete and readable before any of it arrives -- what the store adds is the
@@ -425,8 +425,9 @@
     var one = list[0];
     var a = document.getElementById('doorCand');
     a.href = invite('t', one.token); a.removeAttribute('aria-disabled');
+    /* a demo that asks the visitor's name is the visitor's own space, not Aiko's (11 Nov 2026) */
     if (document.getElementById('candPick').hidden) document.getElementById('candNote').textContent =
-      String(one.name).split(' ')[0] + '’s own space: lesson plans, language analysis, self-evaluations, tutor feedback, and written assignments.';   // the ticket's words, 8 Oct 2026
+      (window.HUB_ASKS_NAME ? 'A trainee' : String(one.name).split(' ')[0]) + '’s own space: lesson plans, language analysis, self-evaluations, tutor feedback, and written assignments.';   // the ticket's words, 8 Oct 2026
     /* Three trainees, each at a different point (Ramy, 25 Oct 2026): one whose feedback is back and open,
        one whose feedback is sealed until the self-evaluation is in, one with a letter from the tutors.
        Read from the course, so a re-seeded course picks its own three. */
@@ -465,13 +466,16 @@
   HubStore.call({ op: 'course', key: k }).then(function(c){
     var sset = (c && c.settings) || {};
     if (!CARD) document.body.dataset.card = sset.cardStyle === 'ticket' ? 'ticket' : 'welcome';
+    if (sset.demoAskName) { window.HUB_ASKS_NAME = true; var cn = document.getElementById('candNote'); if (cn && document.getElementById('candPick').hidden) cn.textContent = cn.textContent.replace(/^[^\s]+’s own space:/, 'A trainee’s own space:'); }
     if (sset.demoToday && sset.start) {
       var days = [], d = new Date(sset.start + 'T00:00:00Z'), end = new Date((sset.end || sset.demoToday) + 'T00:00:00Z');
       for (; d <= end; d.setUTCDate(d.getUTCDate() + 1)) { var w = d.getUTCDay(); if (w && w !== 6) days.push(d.toISOString().slice(0, 10)); }
       var n = days.indexOf(sset.demoToday) + 1, visit = sset.visitDate ? days.indexOf(sset.visitDate) + 1 : 0;
       var el = document.getElementById('demoMoment');
       if (n > 0 && el) {
-        var where = n <= 6 ? 'the end of its first week' : n <= 10 ? 'its second week' : n <= 15 ? 'its third week' : 'its last week';
+        /* the day one demo is not "two weeks in", and day 1 is not the end of a week (11 Nov 2026) */
+        var where = n === 1 ? 'its first morning' : n <= 4 ? 'its first week' : n <= 6 ? 'the end of its first week' : n <= 10 ? 'its second week' : n <= 15 ? 'its third week' : 'its last week';
+        var when = document.getElementById('demoWhen'); if (when) when.textContent = n === 1 ? ' on its first day' : n <= 6 ? ', in its first week' : n <= 12 ? ', two weeks in' : n <= 15 ? ', three weeks in' : ', in its last week';
         var vis = visit > n ? ', ' + (visit - n === 1 ? 'the day before' : (visit - n) + ' days before') + ' the assessor\u2019s visit' : '';
         el.textContent = 'This course is fixed on day ' + n + ' of ' + days.length + ', ' + where + vis + '. It stays there, so what you see today is what you see next month.';
         el.hidden = false;
