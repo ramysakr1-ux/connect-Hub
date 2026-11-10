@@ -350,6 +350,9 @@
     var b = $('cbdeal') || $('build');
     var dealt = function(){ var Pp = g('P'); return !!(Pp && Pp.groups && Object.keys(Pp.groups).some(function(k){ return Object.keys(Pp.groups[k] || {}).length; })); };
     if (b && !dealt()) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); await sleep(500); b.click(); for (var w = 0; w < 60 && !dealt(); w++) await sleep(250); await sleep(600); }
+    /* SAY WHY, NOT NOTHING (walk report, 10 Nov 2026: on a fresh demo with no set chosen, Fill in finished with no change and
+       no word). Dealing needs a set for each group, and the sets page's Fill in puts the demo's two books on the course. */
+    if (!dealt()) { say('Nothing is dealt yet: each group needs a TP point set first. Open TP point sets and press Fill in there, then come back here.'); return; }
     if (!document.querySelector('button[data-rel]')) { var rt = document.querySelector('button[data-tab="rotation"]'); if (rt) { rt.click(); for (var w1 = 0; w1 < 40 && !document.querySelector('button[data-rel]'); w1++) await sleep(250); } }
     var rel = [].slice.call(document.querySelectorAll('button[data-rel][data-on="1"]'));
     if (!rel.length && !document.querySelector('button[data-rel]')) { say('Put the trainees and a TP point set on the course first.'); return; }
@@ -392,13 +395,21 @@
     /* The written lesson is Aiko's TP 4, the Time twins reading in Speakout, which is what her TP point says that day. */
     var num = function(x){ return parseInt(String(x || '').replace(/\D/g, ''), 10) || 0; };
     if ($('fTP') && $('fTP').disabled) { say('This plan is turned in. Take it back to change it.'); return; }
-    var todayLbl = (days().filter(function(d){ return d.date === cs().presentToday; })[0] || {}).label || '';
-    var tpNow = num((cur.meta || {}).tp) || num((todayLbl.match(/TP\s?\d+$/) || [])[0]);
-    if (tpNow && tpNow !== num(st.meta.tp)) {
-      var d4 = days().filter(function(d){ return /TP4$/.test(String(d.label).replace(/\s/g, '')); })[0];
-      say('This demo’s written lesson is Aiko’s TP 4, the Time twins reading. As the tutor, move the day to ' + (d4 ? d4.label.replace(/ · TP\s?4$/, '') : 'her TP 4') + ', then Fill in here.'); return;
+    /* WHOSE TP, NOT THE DAY'S LABEL (walk report, 10 Nov 2026: on day one Mateo's Fill in wrote and locked a TP 4 dated 16 Nov,
+       when his TP points say TP 1 on Tue 17 Nov and his TP 4 is Wed 25 Nov). Day one has no TP on its label, so the old guard
+       let the story's TP 4 through for anyone. Now the trainee's own TPs come from the timetable and their teaching set
+       (timetableDateFor), and the fill writes only on the trainee's own TP 4. */
+    var today = cs().presentToday || '', want = num(st.meta.tp), ttFor = g('timetableDateFor'), mine = {}, next = 0, n;
+    if (typeof ttFor === 'function') for (n = 1; n <= 8; n++) { var dd = ttFor(n); if (dd) mine[n] = dd; }
+    Object.keys(mine).forEach(function(k){ if (mine[k] >= today && (!next || mine[k] < mine[next])) next = +k; });
+    var todayLbl = (days().filter(function(d){ return d.date === today; })[0] || {}).label || '';
+    var tpNow = num((cur.meta || {}).tp) || next || num((todayLbl.match(/TP\s?\d+$/) || [])[0]);
+    if (tpNow !== want || (mine[want] && mine[want] !== today && !num((cur.meta || {}).tp))) {
+      say('This demo’s written lesson is a TP ' + want + ', the Time twins reading. '
+        + (next && next !== want ? 'This trainee’s next is TP ' + next + (mine[next] ? ', on ' + short(mine[next]) : '') + '. ' : '')
+        + 'As the tutor, move the day to ' + (mine[want] ? short(mine[want]) : 'their TP ' + want) + ', then Fill in here.'); return;
     }
-    var tdate = typeof g('timetableDateFor') === 'function' ? g('timetableDateFor')(num(st.meta.tp)) : '';
+    var tdate = mine[want] || '';
     st.meta = Object.assign({}, st.meta, { name: (cur.meta || {}).name || st.meta.name, tp: (cur.meta || {}).tp || ('TP' + num(st.meta.tp)), date: (cur.meta || {}).date || tdate || cs().presentToday || st.meta.date });
     g('draftApply')(st);
     await sleep(150); await retype(document.querySelector('main') || document.body);

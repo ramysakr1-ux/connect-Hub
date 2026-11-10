@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611100051">
+<link rel="stylesheet" href="hub-tokens.css?v=202611101223">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -453,7 +453,7 @@
   .readycues li.ok{background:color-mix(in oklch, var(--teal) 8%, var(--paper));} .readycues li.ok .rk{color:var(--teal);}
   .shareVol .aud{display:block; font-size:.74rem; color:var(--grey); margin-top:2px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611100051">
+<link rel="stylesheet" href="hub-house.css?v=202611101223">
 </head>
 <body>
 <div class="board">
@@ -686,13 +686,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611100051"></script>
-<script src="hub-shared.js?v=202611100051"></script>
-<script src="hub-rotation.js?v=202611100051"></script>
-<script src="hub-store.js?v=202611100051"></script>
-<script src="hub-say.js?v=202611100051"></script>
-<script src="hub-sync.js?v=202611100051"></script>
-<script src="hub-notebook.js?v=202611100051"></script>
+<script src="hub-due.js?v=202611101223"></script>
+<script src="hub-shared.js?v=202611101223"></script>
+<script src="hub-rotation.js?v=202611101223"></script>
+<script src="hub-store.js?v=202611101223"></script>
+<script src="hub-say.js?v=202611101223"></script>
+<script src="hub-sync.js?v=202611101223"></script>
+<script src="hub-notebook.js?v=202611101223"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -2064,11 +2064,18 @@ $('turnInBtn').addEventListener('click', async()=>{
      so in the same breath. */
   const LOCKS = 'Your tutor gets access to this plan, and you will not be able to edit it until they reopen it for you.';
   const MLOCKS = 'Your tutor gets your material, and you will not be able to change it until they reopen it for you.';
-  const ask = MAT
+  /* THE DATE AND THE TIMETABLE (walk report, 10 Nov 2026: a TP 4 plan dated 16 Nov was turned in when that trainee's TP 4
+     is on 25 Nov). The date stays the trainee's to change, since a lesson can move, so this asks rather than blocks. */
+  const ttNum = tpNumberOf(d.meta.tp), ttIso = ttNum ? timetableDateFor(ttNum) : '';
+  const fmt = s => { const m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? new Date(+m[1], +m[2]-1, +m[3]).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : s; };
+  const clash = (ttIso && d.meta.date && d.meta.date !== ttIso)
+    ? 'Your timetable has TP ' + ttNum + ' on ' + fmt(ttIso) + ', and this plan says ' + fmt(d.meta.date) + '. Check the TP number and the date. '
+    : '';
+  const ask = clash + (MAT
     ? (missing.length ? 'You haven\'t added ' + missing.join(', ') + '. ' + MLOCKS + ' Send it anyway?' : MLOCKS + ' Send it?')
     : missing.length
     ? 'You haven\'t filled in ' + missing.join(', ') + '. ' + LOCKS + ' Turn in anyway?'
-    : LOCKS + ' Turn it in?';
+    : LOCKS + ' Turn it in?');
   if(!await confirmModal(ask, MAT ? (missing.length ? 'Send anyway' : 'Send') : missing.length ? 'Turn in anyway' : 'Turn in')) return;
   /* The rendered document travels with the record, exactly as the tutor's
      feedback does. Handbook 14.1 asks the center to give the assessor "lesson
