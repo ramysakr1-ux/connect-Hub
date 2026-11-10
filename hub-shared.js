@@ -2694,3 +2694,52 @@ window.hubReloadAtBoundaries = function(){
   try { var y = sessionStorage.getItem('hub:keepY:' + location.pathname); if (y != null) { sessionStorage.removeItem('hub:keepY:' + location.pathname); window.addEventListener('load', function(){ setTimeout(function(){ window.scrollTo(0, +y || 0); }, 50); }); } } catch (e) {}
   window.hubAtBoundaries(function(){ try { sessionStorage.setItem('hub:keepY:' + location.pathname, String(window.scrollY || 0)); } catch (e) {} location.reload(); });
 };
+
+/* A POOL SET ARRIVES COMPLETE (10 Nov 2026). Ramy: "the audio for the TP points and the pages should just be there ...
+   they inherit the whole thing. It's a set." The Pool's public file carries the writing and NAMES each page and track;
+   the store hands a tutor the same set with the pages and recordings behind those names (store v209, op poolSet).
+   This lays one over the other: a page gets its file where the book and page number agree, a track line gets its
+   link where the track's name agrees, a teaching day gets its one PDF. Nothing written is touched and nothing is
+   added that the public copy does not already name, so a set and its library copy drifting apart costs a missing
+   page, never a wrong one. `hubPoolTake` is the whole act for a page: ask the store, lay it over, say how much
+   came. An older store, or no connection, answers nothing and the set arrives as it always did, to be pointed at
+   the centre's own PDF. */
+window.hubPoolFill = function(got, full){
+  var n = { pages: 0, tracks: 0, wanted: 0 };
+  if (!got || !got.sessions) return n;
+  var name = function(line){ return String(line || '').split('|')[0].trim().toLowerCase(); };
+  Object.keys(got.sessions).forEach(function(k){
+    var a = got.sessions[k] || {}, b = (full && full.sessions && full.sessions[k]) || {};
+    if (b.dayPdf && b.dayPdf.url && !(a.dayPdf && a.dayPdf.url)) a.dayPdf = JSON.parse(JSON.stringify(b.dayPdf));
+    (a.slots || []).forEach(function(sl, i){
+      var fs = (b.slots || [])[i] || {};
+      if (!sl) return;
+      (sl.files || []).forEach(function(f){
+        if (!f || f.url) return;
+        n.wanted++;
+        var m = (fs.files || []).filter(function(x){ return x && x.url && ((f.src && x.src === f.src && String(x.page) === String(f.page)) || (f.name && x.name === f.name)); })[0];
+        if (m) { f.url = m.url; n.pages++; }
+      });
+      var theirs = String(fs.tracks || '').split('\n').map(function(x){ return x.trim(); }).filter(Boolean);
+      var lines = String(sl.tracks || '').split('\n');
+      var changed = false;
+      lines = lines.map(function(line){
+        if (!line.trim() || /https?:\/\//.test(line)) return line;
+        n.wanted++;
+        var m = theirs.filter(function(x){ return /https?:\/\//.test(x) && name(x) === name(line); })[0];
+        if (!m) return line;
+        n.tracks++; changed = true; return m;
+      });
+      if (changed) sl.tracks = lines.join('\n');
+    });
+  });
+  return n;
+};
+window.hubPoolTake = function(got, libId){
+  var S = window.HubStore;
+  if (!S || !S.poolSet || !got) return Promise.resolve({ pages: 0, tracks: 0, wanted: 0, asked: false });
+  return S.poolSet(libId).then(function(r){
+    var full = r && r.found && r.data ? r.data : null;
+    var n = window.hubPoolFill(got, full); n.asked = !!full; return n;
+  }, function(){ return { pages: 0, tracks: 0, wanted: 0, asked: false }; });
+};

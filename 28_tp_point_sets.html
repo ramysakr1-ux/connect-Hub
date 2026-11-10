@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611101404">
+<link rel="stylesheet" href="hub-tokens.css?v=202611101607">
 <style>
   .tchoice{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0 0;} @media (max-width:640px){ .tchoice{grid-template-columns:1fr;} }
   .tcard{display:flex; flex-direction:column; gap:6px; padding:18px 20px; border-radius:14px; text-align:left; font:inherit; color:var(--ink); cursor:pointer; border:1.5px solid transparent; transition:background-color .15s, transform .15s, box-shadow .15s;}
@@ -274,7 +274,7 @@
   .addmenu .addpop button{display:block; width:100%; text-align:left; font:inherit; background:none; border:0; border-radius:8px; padding:10px 12px; cursor:pointer; color:var(--ink);}
   .addmenu .addpop button:hover{background:var(--field);} .addmenu .addpop b{display:block; font-size:0.9rem;} .addmenu .addpop span{font-size:0.78rem; color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611101404">
+<link rel="stylesheet" href="hub-house.css?v=202611101607">
 <style>
 /* COLOR FOR A SET (Ramy, 21 Oct 2026: "I feel like we should give it some
    color"). The notebook's own: white cards with the shadow, a forest band for
@@ -317,12 +317,12 @@ body.hub-paper .shead .state.done{background:var(--a-forest, var(--teal)); color
   </script>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611101404"></script>
-<script src="hub-rotation.js?v=202611101404"></script>
-<script src="hub-store.js?v=202611101404"></script>
-<script src="hub-say.js?v=202611101404"></script>
-<script src="hub-sync.js?v=202611101404"></script>
-<script src="hub-pages.js?v=202611101404"></script>
+<script src="hub-shared.js?v=202611101607"></script>
+<script src="hub-rotation.js?v=202611101607"></script>
+<script src="hub-store.js?v=202611101607"></script>
+<script src="hub-say.js?v=202611101607"></script>
+<script src="hub-sync.js?v=202611101607"></script>
+<script src="hub-pages.js?v=202611101607"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -643,8 +643,10 @@ async function takeFromLibrary(libId){
     const r = await fetch(LIB_MASTER + '?v=' + Date.now());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const master = await r.json();
-    const got = master[libId];
+    const got = JSON.parse(JSON.stringify(master[libId] || null));
     if (!got) throw new Error('that set is not in the library file');
+    /* the pages and the recordings come with it (10 Nov 2026): hub-shared hubPoolTake */
+    const came = window.hubPoolTake ? await window.hubPoolTake(got, libId) : { pages: 0, tracks: 0 };
     const id = newId();
     /* `from` is the only trace kept: which library set this began as, and when.
        It is what tells a later version of this screen that an update exists. */
@@ -658,7 +660,7 @@ async function takeFromLibrary(libId){
       && !Object.values(x.sessions || {}).some(ses => (ses.slots || []).some(sl => sl && (sl.type || sl.aim || (sl.stages || []).length)))) delete LIB[k]; });
     forGroup(id);
     CUR = id; S = LIB[id]; OPEN = null; SHOWLIB = false; TAKING = ''; LIBNOTE = '';
-    persist(row.book.split(',')[0] + ' is on the course');
+    persist(row.book.split(',')[0] + ' is on the course' + (came.pages || came.tracks ? ', with its ' + [came.pages ? came.pages + ' pages' : '', came.tracks ? came.tracks + ' recordings' : ''].filter(Boolean).join(' and ') : ''));
   } catch (e) {
     TAKING = ''; LIBNOTE = 'Could not take that set — ' + ((e && e.message) || e); render();
   }
@@ -798,9 +800,40 @@ function shelfHTML(){
     <span class="shsay" id="shsay">${ids.length ? 'Sets taken off this course. Drag one back up to the tabs, or put it back.' : 'Drag a set here to take it off this course.'}</span>
     ${ids.map(id => `<span class="spine" draggable="true" data-spine="${esc(id)}"><b>${esc(SHELF[id].name || SHELF[id].book || 'Untitled set')}</b><button type="button" class="putback" data-putback="${esc(id)}">Put back</button></span>`).join('')}</div>`;
 }
+/* PAGES ATTACHED AFTER THE DEAL REACH THE CARDS (10 Nov 2026). A card is stamped from its slot when it is dealt, so
+   pages attached later never arrived: C/21's cards went out naming 59 pages and carrying none, and only a second
+   deal mended it. Now every save here carries a slot's page files, the set's book link and its audio folder onto the
+   cards already dealt from it. Only what is empty is filled, and only where the card is still that slot's lesson
+   (the same aim, the same pages by name), so a card a tutor changed is left alone. */
+function carryToCards(P){
+  let n = 0;
+  const ids = Object.keys(LIB); if (!ids.length || !P || !P.groups) return 0;
+  const cs = rec('connect_course_settings') || {};
+  Object.keys(P.groups).forEach(g => {
+    Object.values(P.groups[g] || {}).forEach(row => Object.keys(row || {}).forEach(key => {
+      const cells = key === 'un' ? Object.keys(row.un || {}).map(t => [parseInt(t, 10), row.un[t]]) : [[parseInt(String(key).replace(/\D/g, ''), 10), row[key]]];
+      cells.forEach(([tp, cell]) => {
+        const m = cell && /^(\d+[AB])·(\d)$/.exec(String(cell.from || '')); if (!m) return;
+        const k = window.hubClassAtTp ? hubClassAtTp(cs, g, tp || 1) : null;
+        const set = (k && k.set && LIB[k.set]) || LIB[FOR[g]] || LIB[ids[0]];
+        const sl = set && set.sessions && set.sessions[m[1]] && (set.sessions[m[1]].slots || [])[+m[2] - 1];
+        if (!sl || String(cell.point || '') !== String(sl.aim || '')) return;
+        const mine = (cell.pages || []).filter(p => p && p.fromSet), files = sl.files || [];
+        if (mine.length !== files.length || mine.some((p, i) => p.name !== files[i].name)) return;
+        mine.forEach((p, i) => { if (!p.url && files[i].url) { p.url = files[i].url; n++; } });
+        if (set.audioUrl && cell.audio && !cell.audio.folder) { cell.audio.folder = set.audioUrl; n++; }
+        if (set.url && cell.book && !cell.book.url) { cell.book.url = set.url; n++; }
+        const ses = set.sessions[m[1]];
+        if (ses.dayPdf && ses.dayPdf.url && !(cell.dayPdf && cell.dayPdf.url)) { cell.dayPdf = ses.dayPdf; n++; }
+      });
+    }));
+  });
+  return n;
+}
 function persist(word){
   const P = rec(KEY) || {};
   if (S) S.updated = new Date().toISOString().slice(0, 10);
+  try { carryToCards(P); } catch (e) {}
   /* Everything lives under `set`: the store rebuilds this record from named
      keys when it reads it, so a sibling field would never come back. */
   P.set = Object.assign({}, P.set || {}, { library: LIB, setFor: FOR, shelf: SHELF });   /* keeps set.lengths, the course's lesson lengths (30 Oct 2026) */
@@ -930,6 +963,10 @@ function lockConnects(){
    them moves. 'break' is where that deeper run starts, and it is only reached
    when the two folios disagree. */
 let PG = null;
+/* A CUT IN HAND HOLDS THE PAGE (10 Nov 2026). Coming back to this tab makes hub-sync look at the course, and if the
+   course had moved it reloaded the page: on C/21 that threw away a Student's Book twice, 20 pages into 48. While a
+   PDF is open here the page says so, and hub-sync waits. */
+try { Object.defineProperty(window, 'HUB_HOLD', { get: () => !!PG, configurable: true }); } catch (e) {}
 
 function pagesPanel(){
   if (!S || !window.HubPages) return '';

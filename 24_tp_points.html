@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611101404">
+<link rel="stylesheet" href="hub-tokens.css?v=202611101607">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -735,7 +735,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611101404">
+<link rel="stylesheet" href="hub-house.css?v=202611101607">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -898,14 +898,14 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611101404"></script>
-<script src="hub-tracker.js?v=202611101404"></script>
-<script src="hub-rotation.js?v=202611101404"></script>
-<script src="hub-shared.js?v=202611101404"></script>
-<script src="hub-store.js?v=202611101404"></script>
-<script src="hub-say.js?v=202611101404"></script>
-<script src="hub-sync.js?v=202611101404"></script>
-<script src="hub-notebook.js?v=202611101404"></script>
+<script src="hub-due.js?v=202611101607"></script>
+<script src="hub-tracker.js?v=202611101607"></script>
+<script src="hub-rotation.js?v=202611101607"></script>
+<script src="hub-shared.js?v=202611101607"></script>
+<script src="hub-store.js?v=202611101607"></script>
+<script src="hub-say.js?v=202611101607"></script>
+<script src="hub-sync.js?v=202611101607"></script>
+<script src="hub-notebook.js?v=202611101607"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -3033,6 +3033,9 @@ async function takeInPlace(libId){
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const got = (await r.json())[libId];
     if (!got) throw new Error('that set is not in the Pool file');
+    /* the pages and the recordings come with it (10 Nov 2026): hub-shared hubPoolTake */
+    const came = window.hubPoolTake ? await window.hubPoolTake(got, libId) : { pages: 0, tracks: 0 };
+    const cameSay = came.pages || came.tracks ? ', with its ' + [came.pages ? came.pages + ' pages' : '', came.tracks ? came.tracks + ' recordings' : ''].filter(Boolean).join(' and ') : '';
     P.set = P.set || {};
     const lib = P.set.library && Object.keys(P.set.library).length ? P.set.library : Object.assign({}, library());
     let n = 1; while (lib['s' + n]) n++; const id = 's' + n;
@@ -3044,7 +3047,7 @@ async function takeInPlace(libId){
     const gs = groups(), g = gs.find(x => String(x.group) === String(POOLFOR));
     if (g) P.set.setFor = Object.assign({}, assigned(), { [g.group]: id });
     STUDIO = id; POOLTAKING = ''; POOLNOTE = ''; POOLOPEN = false;
-    persist(bookTitle(row.book) + ' is on the course' + (g ? ' for Group ' + g.group + '. Deal to give it out.' : '. Choose it for a group above.'));
+    persist(bookTitle(row.book) + ' is on the course' + cameSay + (g ? ' for Group ' + g.group + '. Deal to give it out.' : '. Choose it for a group above.'));
   } catch (e) {
     POOLTAKING = ''; POOLNOTE = 'Could not take that set — ' + ((e && e.message) || e); render();
   }

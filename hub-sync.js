@@ -691,7 +691,8 @@
      at most; never in a demo. */
   var PAGE_VER = null, LAST_LOOK = 0;
   function markVer(){ try { var V = S.verGet && S.verGet(); if (V && V.v && (!S.cred || V.cred === S.cred())) PAGE_VER = V.v; } catch (e) {} }
-  function quiet(){ return !Object.keys(queue).length && !Object.keys(ledger()).length && !timer; }
+  /* HUB_HOLD: a page with work in hand that a reload would lose (the set page while it cuts a book's pages, 10 Nov 2026) */
+  function quiet(){ return !Object.keys(queue).length && !Object.keys(ledger()).length && !timer && !window.HUB_HOLD; }
   document.addEventListener('visibilitychange', function(){
     if (document.visibilityState !== 'visible' || DEMO || !started || !PAGE_VER || !S.version) return;
     if (Date.now() - LAST_LOOK < 60000 || !quiet()) return;

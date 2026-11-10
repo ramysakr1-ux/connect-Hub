@@ -325,7 +325,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -507,6 +507,22 @@ function handle_(req) {
 
   switch (op) {
     case 'ping': return { tutor: tutor, assessor: assessor, owner: owner, time: new Date().toISOString() };
+    /* A POOL SET ARRIVES COMPLETE (v209, 10 Nov 2026). Ramy: "the audio for the TP points and the pages should just be
+       there ... If someone is using Connect, then they get it with the pages and with the audio. They inherit the
+       whole thing. It's a set." The Pool's public file carries the writing and names each page and track; the pages
+       and the recordings themselves are on the library course, and until now nothing handed them over, so every
+       course had to point at its own PDF. This answers one set, whole, to a tutor's key and to nobody else: not a
+       trainee, not an assessor, not an anonymous caller. A read; it moves no version. */
+    case 'poolSet': {
+      if (!tutor && !owner) throw new Error('Only a tutor can take a set from the Pool');
+      var psId = String(req.set || '');
+      if (!/^s\d{1,3}$/.test(psId)) throw new Error('A Pool set id like s8 is needed');
+      var psLib = libraryCourse_();
+      if (!psLib) return { set: psId, found: false };
+      var psRec = courseRead_(psLib.id, 'tppoints') || {};
+      var psSet = ((psRec.set || {}).library || {})[psId] || null;
+      return psSet ? { set: psId, found: true, data: psSet } : { set: psId, found: false };
+    }
     /* THE PASS (v132). `mintPass` is the owner's: a pass for a course, for 1 to 60 days (a week when not said).
        `passInfo` is public and tells the invitation card the date to print; it answers nothing else. */
     case 'mintPass': {
@@ -4556,6 +4572,14 @@ function materialsFolderName_(course){
  * nothing: a folder keeps its id when it moves, including into a Shared Drive.
  */
 /** Where the shared assets live: one folder under the materials root, remembered by id. */
+/* THE LIBRARY COURSE: the course record the TP Point Pool's sets are kept on, with their pages and recordings.
+   Remembered by id; found the first time by its name, which has said "TP point library" since it was made. */
+function libraryCourse_(){
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty('LIBRARY_COURSE'), all = courses_(), i;
+  if (id) { for (i = 0; i < all.length; i++) if (all[i].id === id) return all[i]; }
+  for (i = 0; i < all.length; i++) if (/^TP point library/i.test(String(all[i].name || ''))) { props.setProperty('LIBRARY_COURSE', all[i].id); return all[i]; }
+  return null;
+}
 /* WHERE A CONTRIBUTED SET LANDS. Its own folder, made by the script and shared
    with nobody, so a set offered to the Pool is private until Connect puts it in
    the library. Nothing in this file reads it back: there is no op that returns
