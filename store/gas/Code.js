@@ -323,7 +323,7 @@ function doPost(e) {
    else counts as a change. The course's own day is part of the version, so a page whose content follows the
    date (a demo clock, released points) boots once the day turns. */
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
-var READ_OPS_ = { ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
+var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
   ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1 };
 function verKey_(id) { return 'ver:' + id; }
@@ -1412,7 +1412,7 @@ case 'inbox': {
       return { key: courseKey_('assessor', course.id), expires: ex0 ? ex0.toISOString() : null };
     }
     case 'rotateAssessorKey': {
-      requireTutor_(tutor);
+      requireTutor_(tutor); requireAdminPin_(course, req, owner);
       var na = newKey_();
       PropertiesService.getScriptProperties().setProperty(keyProp_('assessor', course.id), na);
       var ex1 = assessorExpiry_(course.id);
@@ -1421,7 +1421,7 @@ case 'inbox': {
     // A holder of the current key mints a new one; every old tutor link for
     // THIS course dies at once. The new key is returned to that caller only.
     case 'rotateKey': {
-      requireTutor_(tutor);
+      requireTutor_(tutor); requireAdminPin_(course, req, owner);
       var nk = newKey_();
       PropertiesService.getScriptProperties().setProperty(keyProp_('tutor', course.id), nk);
       var tpk = courseRead_(course.id, 'pins'); if (tpk && tpk.tutor) { delete tpk.tutor; courseWrite_(course.id, 'pins', tpk); }
@@ -1454,8 +1454,43 @@ case 'inbox': {
       courseWrite_(course.id, 'pins', tp);
       return { saved: true };
     }
-    case 'reissueTrainee': {
+    /* THE COURSE ADMIN PIN (v210, 10 Nov 2026). Ramy, with a second tutor joining C/21 on the one tutor link: "a password
+       to the course admin ... set by the course admin when they're setting up the course ... four numbers, easy one."
+       Four digits, chosen once on Course admin by whoever sets the course up; kept as a salted hash beside the other
+       PINs (pins.admin). While one is set, the acts that cannot be undone (removing a trainee, a trainee's new link,
+       rotating the tutor or the assessor link) are refused without it, here, whatever page asks; Course admin's own
+       door asks for it too (adminPin). To change it takes the current one. A forgotten one is cleared by the owner
+       from the console (clearAdminPin), and the next person on Course admin chooses again. A course with none set
+       works exactly as before. */
+    case 'adminPin': {
       requireTutor_(tutor);
+      var apr = (courseRead_(course.id, 'pins') || {}).admin;
+      if (!apr) return { set: false, ok: true };
+      if (!owner && !String(req.adminPin || '')) return { set: apr.set || true, ok: false };
+      requireAdminPin_(course, req, owner);
+      return { set: apr.set || true, ok: true };
+    }
+    case 'setAdminPin': {
+      requireTutor_(tutor); requireAdminPin_(course, req, owner);
+      var newPin = String(req.pin == null ? '' : req.pin).replace(/\s+/g, '');
+      if (!/^\d{4}$/.test(newPin)) throw new Error('The Course admin PIN is four numbers');
+      var apw = courseRead_(course.id, 'pins') || {};
+      apw.admin = pinEntry_(newPin);
+      courseWrite_(course.id, 'pins', apw);
+      return { saved: true, set: apw.admin.set };
+    }
+    case 'clearAdminPin': {
+      requireOwner_(owner);
+      var apc = courseById_(String(req.course || ''));
+      if (!apc) throw new Error('Which course?');
+      var apx = courseRead_(apc.id, 'pins') || {};
+      var had = !!apx.admin; delete apx.admin;
+      if (had) courseWrite_(apc.id, 'pins', apx);
+      PropertiesService.getScriptProperties().deleteProperty('admintries:' + apc.id);
+      return { cleared: had };
+    }
+    case 'reissueTrainee': {
+      requireTutor_(tutor); requireAdminPin_(course, req, owner);
       var oldTok = String(req.token || '');
       var row = roster_(course.id).filter(function (t) { return t.token === oldTok; })[0];
       if (!row) throw new Error('No such trainee');
@@ -1488,7 +1523,7 @@ case 'inbox': {
       var tp3 = courseRead_(course.id, 'pins') || {};
       var tr = {};
       Object.keys(tp3.trainees || {}).forEach(function (k) { tr[k] = tp3.trainees[k].set || true; });
-      return { on: !!((courseRead_(course.id, 'settings') || {}).pinLinks), tutor: tp3.tutor ? (tp3.tutor.set || true) : false, trainees: tr };
+      return { on: !!((courseRead_(course.id, 'settings') || {}).pinLinks), tutor: tp3.tutor ? (tp3.tutor.set || true) : false, admin: tp3.admin ? (tp3.admin.set || true) : false, trainees: tr };
     }
 
     // ---- one call per page load: the course plus the caller's own records ----
@@ -1554,6 +1589,8 @@ case 'inbox': {
       if (tutor) boot.course.courseFeedback = courseFeedbackFor_(course.id);
       /* v205: the versions of the three records a page writes whole, so its next write can say which one it started from */
       if (tutor) boot.course.revs = courseRead_(course.id, 'revs') || {};
+      /* v210: whether Course admin has a PIN, so its door knows before it opens (never the PIN, nor its hash) */
+      if (tutor) boot.adminPin = !!(courseRead_(course.id, 'pins') || {}).admin;
       if (assessor) { var exb = assessorExpiry_(course.id); boot.assessor = { expires: exb ? exb.toISOString() : null }; }
       if (reader) {
         /* v53: the assessor's link never carries a candidate's address. */
@@ -1576,7 +1613,7 @@ case 'inbox': {
     // Remove a trainee and every record they had -- for test rows, not for a
     // candidate who leaves the course (removeTrainee keeps their records).
     case 'purgeTrainee': {
-      requireTutor_(tutor);
+      requireTutor_(tutor); requireAdminPin_(course, req, owner);
       var tokP = String(req.token || '');
       deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === course.id && String(r[1]) === tokP; });
       deleteRowsWhere_(SHEET_RECORDS, function (r) { return String(r[0]) === course.id && String(r[1]) === tokP; });
@@ -2892,7 +2929,7 @@ case 'inbox': {
       throw new Error('No such trainee');
     }
     case 'removeTrainee': {
-      requireTutor_(tutor);
+      requireTutor_(tutor); requireAdminPin_(course, req, owner);
       var removed = deleteRowsWhere_(SHEET_TRAINEES, function (r) { return String(r[0]) === course.id && String(r[1]) === String(req.token); });
       if (!removed) throw new Error('No such trainee');
       try { courseUpdateObj_(course.id, 'folpool', function (pl) { delete pl[String(req.token)]; return pl; }); } catch (e) {} try { courseUpdateObj_(course.id, 'folprofiles', function (pl) { delete pl[String(req.token)]; return pl; }); } catch (e) {}
@@ -4450,6 +4487,26 @@ function celtaShorthand_() {
 
 // ---- keys --------------------------------------------------------------------
 function requireTutor_(tutor) { if (!tutor) throw new Error('Tutors only'); }
+/* The Course admin PIN (v210): nothing to ask while the course has none; the owner passes. Four digits are few, so five
+   wrong ones in a row close the door for ten minutes, which a right one or the wait reopens. */
+function requireAdminPin_(course, req, owner) {
+  if (owner || !course) return;
+  var want = (courseRead_(course.id, 'pins') || {}).admin;
+  if (!want) return;
+  /* the count lives in a script property, not in the course: a wrong try is not a change to the course, and must not
+     send every open page back to the store for a fresh copy */
+  var props = PropertiesService.getScriptProperties(), tk = 'admintries:' + course.id, tries = { n: 0, at: 0 }, now = Date.now();
+  try { tries = JSON.parse(props.getProperty(tk) || '') || tries; } catch (e) {}
+  var fresh = now - tries.at < 10 * 60 * 1000;
+  if (fresh && tries.n >= 5) throw new Error('Too many wrong tries at the Course admin PIN. Try again in ten minutes.');
+  var given = String(req.adminPin || '').replace(/\s+/g, '');
+  if (!given) throw new Error('Admin PIN required');
+  if (pinHash_(given, want.salt) !== want.hash) {
+    props.setProperty(tk, JSON.stringify({ n: (fresh ? tries.n : 0) + 1, at: now }));
+    throw new Error('Wrong admin PIN');
+  }
+  if (tries.n) props.deleteProperty(tk);
+}
 
 /* PINs (v87): four to twelve letters or numbers; SHA-256 over salt + pin, hex. The salt is a
    fresh uuid per setting, so two people with the same digits do not share a

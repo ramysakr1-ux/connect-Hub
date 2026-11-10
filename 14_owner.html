@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611101905">
+<link rel="stylesheet" href="hub-tokens.css?v=202611101919">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -263,7 +263,7 @@
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
   .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611101905">
+<link rel="stylesheet" href="hub-house.css?v=202611101919">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -286,10 +286,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202611101905"></script>
-<script src="hub-store.js?v=202611101905"></script>
-<script src="hub-say.js?v=202611101905"></script>
-<script src="hub-card-mail.js?v=202611101905"></script>
+<script src="hub-shared.js?v=202611101919"></script>
+<script src="hub-store.js?v=202611101919"></script>
+<script src="hub-say.js?v=202611101919"></script>
+<script src="hub-card-mail.js?v=202611101919"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -661,6 +661,7 @@ function liveRow(c){
         <span class="right"><code>${esc(c.id)}</code>
           <span class="more"><button type="button" class="moretog" aria-label="More for this course">⋯</button>
             <span class="menu"><button type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
+              <button type="button" data-clearpin="${esc(c.id)}" data-label="${esc(label(c))}">Clear a forgotten Course admin PIN</button>
               ${(c.trainees && c.end && c.end >= TODAY()) ? '' : `<button type="button" class="danger" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${c.trainees || 0}">Delete this course</button>`}</span></span></span>
         ${SHOW_URLS ? `<span class="addr">Tutor: ${esc(tutor)}<br>Assessor: ${esc(assessor)}</span>` : ''}
       </div>
@@ -1144,6 +1145,11 @@ $('app').addEventListener('click', async e => {
     }
     render(last ? last.courses : COURSES, `The bin is empty: ${done} course${done === 1 ? '' : 's'} gone for good.`);
     try { $('status').scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e2) {}
+    BUSY = false; return; }
+  /* A FORGOTTEN COURSE ADMIN PIN (10 Nov 2026): only the owner clears it; the next person on Course admin chooses again. */
+  const cp = T('[data-clearpin]');
+  if (cp) { if (BUSY) return; BUSY = true; status('Clearing the Course admin PIN of ' + cp.dataset.label + '…');
+    try { const r = await call({ op: 'clearAdminPin', course: cp.dataset.clearpin }); status(r.cleared ? cp.dataset.label + ': the Course admin PIN is cleared. Whoever opens Course admin next can choose a new one.' : cp.dataset.label + ' has no Course admin PIN.'); } catch (err) { status(err.message); }
     BUSY = false; return; }
   const u = T('[data-undelete]');
   if (u) { if (BUSY) return; BUSY = true; status('Putting ' + u.dataset.label + ' back…');

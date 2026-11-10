@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611101905">
+<link rel="stylesheet" href="hub-tokens.css?v=202611101919">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -175,6 +175,14 @@
   .btn.primary{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700;}
   .btn.ghost{border-color:var(--sand-line); background:var(--box);}
   .btn.small{font-size:0.76rem; padding:5px 11px;}
+  /* COURSE ADMIN'S DOOR (10 Nov 2026): while the room is locked nothing of it is on the page, only this card */
+  body.adm-locked .board{display:none;}
+  .adm-door{max-width:520px; margin:12vh auto 0; padding:26px 28px 24px; background:var(--paper); border:1px solid var(--sand-line); border-top:4px solid var(--teal); border-radius:12px; font-family:'Karla',sans-serif; color:var(--ink);}
+  .adm-door h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.5rem; line-height:1.2; margin:0 0 8px;}
+  .adm-door p{font-size:0.95rem; line-height:1.55; color:var(--grey); margin:0 0 12px;}
+  .adm-door .row{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; margin-top:16px;}
+  .adm-door .warn{color:var(--brick); font-weight:600; min-height:1.3em; margin:10px 0 0;}
+  @media(max-width:640px){ .adm-door{margin:8vh 16px 0; padding:22px 20px;} }
   .btn.quiet{border:none; background:none; color:var(--grey); font-weight:500; padding:5px 6px;}
   .btn.quiet:hover{color:var(--ink);} /* Record, Links, Add a link went red on hover like Remove -- only Remove means danger */
   .btn.quiet[data-remove]:hover{color:var(--brick);}
@@ -674,7 +682,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611101905">
+<link rel="stylesheet" href="hub-house.css?v=202611101919">
 </head>
 <body>
 <div class="board">
@@ -1284,19 +1292,19 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611101905"></script>
-<script src="hub-store.js?v=202611101905"></script>
-<script src="hub-xlsx.js?v=202611101905"></script>
-<script src="hub-say.js?v=202611101905"></script>
-<script src="agreement-defaults.js?v=202611101905"></script>
-<script src="observation-defaults.js?v=202611101905"></script>
-<script src="hub-shared.js?v=202611101905"></script>
-<script src="hub-rotation.js?v=202611101905"></script>
-<script src="hub-due.js?v=202611101905"></script>
-<script src="hub-sync.js?v=202611101905"></script>
-<script src="hub-notebook.js?v=202611101905"></script>
-<script src="hub-hand.js?v=202611101905"></script>
-<script src="hub-ink.js?v=202611101905"></script>
+<script src="assignment-defaults.js?v=202611101919"></script>
+<script src="hub-store.js?v=202611101919"></script>
+<script src="hub-xlsx.js?v=202611101919"></script>
+<script src="hub-say.js?v=202611101919"></script>
+<script src="agreement-defaults.js?v=202611101919"></script>
+<script src="observation-defaults.js?v=202611101919"></script>
+<script src="hub-shared.js?v=202611101919"></script>
+<script src="hub-rotation.js?v=202611101919"></script>
+<script src="hub-due.js?v=202611101919"></script>
+<script src="hub-sync.js?v=202611101919"></script>
+<script src="hub-notebook.js?v=202611101919"></script>
+<script src="hub-hand.js?v=202611101919"></script>
+<script src="hub-ink.js?v=202611101919"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1310,6 +1318,47 @@ if (window.hubCentreRoomOnly && hubCentreRoomOnly())
   throw new Error('Connect Lite: stopping this page on purpose \u2014 the center\u2019s room is not open to this link.');
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---- THE DOOR (Ramy, 10 Nov 2026) ---------------------------------------------------------------------------------
+   "a password to the course admin ... set by the course admin when they're setting up the course ... four numbers."
+   Every tutor on a course opens the same tutor link, and Course admin is where a trainee is removed and the links are
+   rotated. A course can now keep this room behind a four-number PIN, chosen further down the page (Course links). The
+   store keeps it and refuses the acts that cannot be undone without it; this door keeps the room itself shut. A device
+   that has typed the PIN is not asked again. A course with no PIN opens as it always has, and so does a page that
+   cannot reach the store (the store still refuses, so nothing is lost by it). */
+(function adminDoor(){
+  const S = window.HubStore;
+  if (!S || !S.adminPin || !S.key || !S.key()) return;
+  let card = null;
+  const shut = msg => {
+    document.body.classList.add('adm-locked');
+    if (!card) { card = document.createElement('div'); card.className = 'adm-door'; document.body.appendChild(card);
+      card.innerHTML = '<h1>Course admin is locked</h1><p>This course keeps its set-up behind a four-number PIN, chosen by the tutor who set the course up. The timetable, the TP points and your trainees’ work are on your own pages.</p><p class="warn" role="status"></p><div class="row"><button type="button" class="btn primary" id="admType">Type the PIN</button><a class="btn quiet" href="5_tutor_dashboard.html">Back to the dashboard</a></div>';
+      card.querySelector('#admType').addEventListener('click', () => { type(); }); }
+    card.querySelector('.warn').textContent = msg || '';
+  };
+  const open = () => { document.body.classList.remove('adm-locked'); if (card) { card.remove(); card = null; } };
+  async function check(){
+    try { const r = await S.adminPin(); if (!r || !r.set || r.ok) { open(); return true; } shut(''); return false; }
+    catch (e) {
+      /* only a refusal ABOUT the PIN shuts the room. A store that could not be reached, or one from before this door
+         existed (it answers "Unknown op"), leaves the room as it is: open, as it always was. */
+      if (e && (e.adminPin || /Too many wrong tries/.test(e.message || ''))) { shut(/Too many/.test(e.message) ? e.message : ''); return false; }
+      return null;
+    }
+  }
+  async function type(){
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611101919'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    if (!sheet) return;
+    const given = await sheet.ask({ who: 'admin' }); if (!given) return;
+    S.adminEnter(given);
+    const ok = await check();
+    if (ok === null) shut('Lite could not reach the course just now. Try again in a moment.');
+  }
+  /* what this device last heard: locked at once if the course has a PIN this device has not typed */
+  if (S.adminKnown() === '1' && !S.adminHas()) shut('');
+  check().then(ok => { if (ok === false && !document.querySelector('.hub-pin-veil')) type(); });
+})();
 
 /* ---- tabs ---------------------------------------------------------------- */
 function showTab(key){
@@ -2730,6 +2779,17 @@ async function renderStoreRoster(next){
           <button class="btn quiet small" type="button" id="storePinSwitch">${PINS.on ? 'Switch off' : 'Switch on'}</button>
         </div>
       </div>
+      <!-- THE COURSE ADMIN PIN (Ramy, 10 Nov 2026: "a password to the course admin ... four numbers"). Shown once the store knows of it. -->
+      ${'admin' in PINS ? `<div class="linkrow">
+        <div class="body">
+          <b>Course admin PIN</b>
+          <p>${PINS.admin ? 'Set.' : 'Not set: every tutor on the tutor link can open Course admin.'} Four numbers, chosen by whoever sets the course up. With one set, Course admin asks for it, and so does removing a trainee, giving a trainee a new link, and rotating the tutor or the assessor link. A device that has typed it is not asked again.</p>
+          <p class="note" style="margin:6px 0 0;">A forgotten Course admin PIN is cleared from the console by the course’s owner.</p>
+        </div>
+        <div class="acts">
+          <button class="btn quiet small" type="button" id="storeAdminPin">${PINS.admin ? 'Change it' : 'Set a PIN'}</button>
+        </div>
+      </div>` : ''}
       <div id="assessorBlock" class="linkrow"><div class="body"><b>Assessor link</b><p class="hub-wait">Loading…</p></div></div>
     </div>
     </section>
@@ -2878,6 +2938,16 @@ async function renderStoreRoster(next){
     const bw = document.getElementById('bulkWrap'), open = bw.style.display === 'none';
     bw.style.display = open ? '' : 'none';
     e.target.textContent = open ? 'Hide the paste box' : 'Add several at once';
+  });
+
+  const admBtn = document.getElementById('storeAdminPin');
+  if (admBtn) admBtn.addEventListener('click', async () => {
+    try {
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611101919'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      if (!sheet) return;
+      const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
+      await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();
+    } catch (err) { alert(err.message); }
   });
 
   document.getElementById('storeRotateKey').addEventListener('click', async ()=>{

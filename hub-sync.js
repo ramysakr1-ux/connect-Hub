@@ -222,7 +222,7 @@
        here except the link itself and anything a REAL course still has waiting to be sent, and the boot below
        waits for the clean course. Every person and every role, on every demo; a real course never comes here. */
     if (!demoSession()) {
-      var KEEP = /^(hub:(t|k|a|v|o|p|kpin|pin)$|hub:o:|hub:pending:|hub:unsaved:|chub:tutorName$|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
+      var KEEP = /^(hub:(t|k|a|v|o|p|kpin|pin|apin|adminSet)$|hub:o:|hub:pending:|hub:unsaved:|chub:tutorName$|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
       var gone = [];
       for (var gi = localStorage.length - 1; gi >= 0; gi--) { var gk = localStorage.key(gi); if (gk && !KEEP.test(gk) && /^(chub[:_]|connect_|hub:)/.test(gk)) gone.push(gk); }
       gone.forEach(function(k){ try { origRemove(k); } catch (e) {} });
@@ -548,7 +548,7 @@
     samePres = ours(lastOwner) && ours(identity);
   } catch (e) {}
   if (!DEMO && lastOwner && !sameOwner && (mode === 'trainee' || mode === 'tutor' || mode === 'assessor')) { try {
-    var KEEPN = /^(hub:(t|k|a|v|o|p|kpin|pin)$|hub:o:|hub:pending:|hub:unsaved:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
+    var KEEPN = /^(hub:(t|k|a|v|o|p|kpin|pin|apin|adminSet)$|hub:o:|hub:pending:|hub:unsaved:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
     /* A Connect demo is one presenter's browser playing every part (27 Oct 2026): its switch's own keys (hub:present:*,
        written only by hub-present.js on a presentation course) stay, whoever the last link was. A volunteer's page does
        not hold the course settings, so the course itself cannot be asked. */

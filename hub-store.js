@@ -17,7 +17,7 @@ window.HubStore = (function(){
     /* A new link forgets the PIN kept for the old one (v87): the PIN belongs
        to the link, not to the browser. */
     if (params.get('t')) { if (localStorage.getItem('hub:t') !== params.get('t')) localStorage.removeItem('hub:pin'); localStorage.setItem('hub:t', params.get('t')); localStorage.removeItem('hub:k'); localStorage.removeItem('hub:a'); }
-    if (params.get('k')) { if (localStorage.getItem('hub:k') !== params.get('k')) localStorage.removeItem('hub:kpin'); localStorage.setItem('hub:k', params.get('k')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:a'); }
+    if (params.get('k')) { if (localStorage.getItem('hub:k') !== params.get('k')) { localStorage.removeItem('hub:kpin'); localStorage.removeItem('hub:apin'); localStorage.removeItem('hub:adminSet'); } localStorage.setItem('hub:k', params.get('k')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:a'); }
     // The assessor key travels as ?ak= -- ?a= is the assignment key on screens 9-11
     // (a collision found on the 20 Sep 2026 trainee walk: opening FOL stored 'fol' as an assessor key).
     if (params.get('ak')) { localStorage.setItem('hub:a', params.get('ak')); localStorage.removeItem('hub:t'); localStorage.removeItem('hub:k'); }
@@ -91,7 +91,7 @@ window.HubStore = (function(){
      see hub-sync.js. These are the calls that only read; anything else on a
      demo is answered here and never sent -- no email, no upload, no roster
      change. feedback and report are the visitor's own note to Lite's maker. */
-  var READS = { poolSet:1, version:1, tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1, bookings:1 };
+  var READS = { adminPin:1, poolSet:1, version:1, tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1, bookings:1 };
   function isDemo(){ if (window.HUB_DEMO != null) return !!window.HUB_DEMO; try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
   function cred(){ return key() || akey() || vtoken() || token() || ''; }
   function verGet(){ try { return JSON.parse(localStorage.getItem('hub:ver') || 'null'); } catch (e) { return null; } }
@@ -114,6 +114,11 @@ window.HubStore = (function(){
     // Bulunamadi", 1 in 3 during a bad minute on 20 Sep 2026): three tries.
     var pn = pinName(payload);
     if (pn && payload.pin == null && pinGet(pn)) payload.pin = pinGet(pn);
+    /* THE COURSE ADMIN PIN (store v210, 10 Nov 2026): four numbers chosen on Course admin. A device that has typed it
+       sends it with the tutor's calls; the store asks for it only on Course admin's door and on the acts that cannot be
+       undone, and this asks the person when the store does. */
+    if (payload.key && !payload.owner && payload.adminPin == null && pinGet('hub:apin')) payload.adminPin = pinGet('hub:apin');
+    var askedAdmin = 0;
     var out, tries = 0, waits = [900, 1800], asked = 0;
     /* A delete or a restore is never sent twice (24 Oct 2026): a request that
        timed out may still be running on the store, and a second one alongside
@@ -142,8 +147,17 @@ window.HubStore = (function(){
         }
         pinSet(pn, given); payload.pin = given; asked++; continue;
       }
+      if (!out.ok && payload.key && /^(Admin PIN required|Wrong admin PIN)$/.test(String(out.error || '')) && !window.HUB_NO_PIN_PROMPT) {
+        var wrongA = out.error === 'Wrong admin PIN'; if (wrongA) { pinSet('hub:apin', ''); delete payload.adminPin; }
+        if (askedAdmin >= 3) break;
+        var sheetA = await pinSheet();
+        var givenA = await sheetA.ask({ who: 'admin', wrong: wrongA });
+        if (!givenA) break;
+        pinSet('hub:apin', givenA); payload.adminPin = givenA; askedAdmin++; continue;
+      }
       break;
     }
+    if (out && out.ok && payload.op === 'boot' && out.result && typeof out.result.adminPin === 'boolean') pinSet('hub:adminSet', out.result.adminPin ? '1' : '0');
     // A refusal is the store answering, not the network failing, and the two
     // must not be treated alike: a refused credential means the link is dead,
     // a transport failure means try again later. `transient` already marks the
@@ -167,7 +181,7 @@ window.HubStore = (function(){
         else if (out.ver.before && V && V.cred === cred() && V.v === out.ver.before) verPut({ cred: V.cred, v: out.ver.after, at: V.at });
       } catch (e) {}
     }
-    if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; refusal.pin = /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')); throw refusal; }
+    if (!out.ok) { var refusal = new Error(out.error || 'Store error'); refusal.refused = true; refusal.pin = /^(PIN needed|PIN required|Wrong PIN)$/.test(String(out.error || '')); refusal.adminPin = /^(Admin PIN required|Wrong admin PIN)$/.test(String(out.error || '')); throw refusal; }
     return out.result;
   }
   function base(){ return location.origin + location.pathname.replace(/[^/]*$/, ''); }
@@ -208,6 +222,15 @@ window.HubStore = (function(){
        choose flow above). Course admin sees who has one and gives a trainee
        who lost theirs a NEW link; the old token dies with its PIN. */
     pins: function(){ return call({ op: 'pins' }); },
+    /* The Course admin PIN (v210). adminPin asks the store whether one is set and whether this device's opens it;
+       adminKnown is what this device last heard ('1' set, '0' none, '' not heard); setAdminPin chooses or changes it
+       (the store wants the current one first, and the sheet asks for it). Clearing a forgotten one is the owner's, on the console. */
+    adminPin: function(){ return call({ op: 'adminPin' }).then(function(r){ pinSet('hub:adminSet', r && r.set ? '1' : '0'); return r; }); },
+    adminKnown: function(){ return pinGet('hub:adminSet'); },
+    adminHas: function(){ return !!pinGet('hub:apin'); },
+    adminEnter: function(pin){ pinSet('hub:apin', String(pin || '')); },
+    setAdminPin: function(pin){ return call({ op: 'setAdminPin', pin: pin }).then(function(r){ if (r && r.saved && !r.demo) { pinSet('hub:apin', String(pin)); pinSet('hub:adminSet', '1'); } return r; }); },
+
     reissueTrainee: function(tok){ return call({ op: 'reissueTrainee', token: tok }); },
     purgeTrainee: function(tok){ return call({ op: 'purgeTrainee', token: tok }); },
     /* A materials file goes to Drive and comes back as a link; the bytes never
