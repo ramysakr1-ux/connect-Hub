@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611101919">
+<link rel="stylesheet" href="hub-tokens.css?v=202611102109">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -843,25 +843,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611101919">
+<link rel="stylesheet" href="hub-house.css?v=202611102109">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611101919"></script>
-<script src="hub-tracker.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611101919"></script>
-<script src="hub-xlsx.js?v=202611101919"></script>
-<script src="hub-docx.js?v=202611101919"></script>
-<script src="hub-timetable-parse.js?v=202611101919"></script>
-<script src="assignment-defaults.js?v=202611101919"></script>
-<script src="hub-shared.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611101919"></script>
-<script src="hub-say.js?v=202611101919"></script>
-<script src="hub-sync.js?v=202611101919"></script>
-<script src="hub-notebook.js?v=202611101919"></script>
+<script src="hub-due.js?v=202611102109"></script>
+<script src="hub-tracker.js?v=202611102109"></script>
+<script src="hub-rotation.js?v=202611102109"></script>
+<script src="hub-xlsx.js?v=202611102109"></script>
+<script src="hub-docx.js?v=202611102109"></script>
+<script src="hub-timetable-parse.js?v=202611102109"></script>
+<script src="assignment-defaults.js?v=202611102109"></script>
+<script src="hub-shared.js?v=202611102109"></script>
+<script src="hub-notes.js?v=202611101919"></script>
+<script src="input-sessions/library.js?v=202611101919"></script>
+<script src="hub-store.js?v=202611102109"></script>
+<script src="hub-say.js?v=202611102109"></script>
+<script src="hub-sync.js?v=202611102109"></script>
+<script src="hub-notebook.js?v=202611102109"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2875,6 +2877,10 @@ function checksHTML(){
     if (empty.length) lines.push(['note', `${empty.length === 1 ? 'An empty input place' : empty.length + ' empty input places'}: ${empty.join(', ')}`]);
     if (nobody.length) lines.push(['note', `No tutor yet: ${nobody.join(', ')}`]);
   })();
+  /* THE REST OF THE COURSE AGAINST THE BOARD (10 Nov 2026, hub-notes.js): a TP day with no feedback after it, an assignment
+     with a deadline and no set-up, a deadline on a day the course does not meet, an input session that opens nothing (no page
+     by the board's rule or the trainee's home's, and no materials link), and the classes against the board's new class day. Notes, never a block. */
+  try { if (window.hubNotes) hubNotes.now({ timetable: TT, settings: SETTINGS, pageFor: x => !!(x.lib || libPageFor(x.t) || (window.InputLib && InputLib.inputsOf({ days: [{ date: '2000-01-01', sessions: [x] }] }).some(i => i.slug))) }).filter(n => n.area === 'timetable' || n.area === 'classes' || /^assessor/.test(n.id)).forEach(n => lines.push(['note', n.text])); } catch (e) {}
   const un = Array.isArray(TT.unplaced) ? TT.unplaced : [];
   return `<div class="tchecks"><div class="cl"><span class="dot ${lines.some(l => l[0] === 'bad') || un.length ? 'bad' : 'ok'}"></span>${n} sessions on ${open.length} day${open.length === 1 ? '' : 's'}${un.length ? ` · <b>${un.length === 1 ? '1 day’s' : un.length + ' days’'} sessions don’t fit</b>` : ''}${lines.length ? '' : ' · no clashes'}</div>
     ${lines.map(l => `<div class="cl"><span class="dot ${l[0]}"></span>${esc(l[1])}</div>`).join('')}

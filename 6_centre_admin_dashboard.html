@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611101919">
+<link rel="stylesheet" href="hub-tokens.css?v=202611102109">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -682,7 +682,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611101919">
+<link rel="stylesheet" href="hub-house.css?v=202611102109">
 </head>
 <body>
 <div class="board">
@@ -1292,19 +1292,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611101919"></script>
-<script src="hub-xlsx.js?v=202611101919"></script>
-<script src="hub-say.js?v=202611101919"></script>
-<script src="agreement-defaults.js?v=202611101919"></script>
-<script src="observation-defaults.js?v=202611101919"></script>
-<script src="hub-shared.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611101919"></script>
-<script src="hub-due.js?v=202611101919"></script>
-<script src="hub-sync.js?v=202611101919"></script>
-<script src="hub-notebook.js?v=202611101919"></script>
-<script src="hub-hand.js?v=202611101919"></script>
-<script src="hub-ink.js?v=202611101919"></script>
+<script src="assignment-defaults.js?v=202611102109"></script>
+<script src="hub-store.js?v=202611102109"></script>
+<script src="hub-xlsx.js?v=202611102109"></script>
+<script src="hub-say.js?v=202611102109"></script>
+<script src="agreement-defaults.js?v=202611102109"></script>
+<script src="observation-defaults.js?v=202611102109"></script>
+<script src="hub-shared.js?v=202611102109"></script>
+<script src="hub-notes.js?v=202611101919"></script>
+<script src="hub-rotation.js?v=202611102109"></script>
+<script src="hub-due.js?v=202611102109"></script>
+<script src="hub-sync.js?v=202611102109"></script>
+<script src="hub-notebook.js?v=202611102109"></script>
+<script src="hub-hand.js?v=202611102109"></script>
+<script src="hub-ink.js?v=202611102109"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1348,7 +1349,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611101919'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611102109'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -1921,7 +1922,17 @@ function saveSettings(how){
 }
 document.getElementById('saveSettings').addEventListener('click', () => saveSettings('click'));
 let SAVE_T = null;
-function scheduleSave(){ clearTimeout(SAVE_T); const st = document.getElementById('settingsStatus'); if (st) st.textContent = 'Saving\u2026'; SAVE_T = setTimeout(() => saveSettings('auto'), 1200); }
+/* WORTH A LOOK (10 Nov 2026, hub-notes.js): Course admin's own mismatches (the classes, the groups' sizes, the assessor,
+   a name written two ways), under the tabs on every tab. Drawn on arrival and after each save. */
+function paintCourseNotes(){
+  let el = document.getElementById('courseNotes');
+  if (!el) { const tabs = document.getElementById('tabs'); if (!tabs) return; el = document.createElement('div'); el.id = 'courseNotes'; tabs.insertAdjacentElement('afterend', el); }
+  let html = ''; try { html = window.hubNotes ? hubNotes.html(hubNotes.now(), { areas: ['classes', 'roster', 'admin'], here: ['classes', 'roster', 'admin'] }) : ''; } catch (e) {}
+  el.innerHTML = html; el.style.margin = html ? '0 0 16px' : '0';
+}
+document.addEventListener('hub:ready', paintCourseNotes);
+setTimeout(paintCourseNotes, 0);
+function scheduleSave(){ clearTimeout(SAVE_T); const st = document.getElementById('settingsStatus'); if (st) st.textContent = 'Saving\u2026'; SAVE_T = setTimeout(() => { saveSettings('auto'); try { paintCourseNotes(); } catch (e) {} }, 1200); }
 /* Typing, switching, picking a date, a file arriving: all of it. The logo
    and the agreement buttons set values from script, so they call it too. */
 (function(){ const panel = document.getElementById('panel-settings'); ['input', 'change'].forEach(ev => panel.addEventListener(ev, scheduleSave)); })();
@@ -2093,6 +2104,9 @@ function renderClasses(){
         <span class="kg-w">then</span><div class="house-sel"><select class="kg-after">${kOpt(r[1])}</select></div></div>`; }).join('')
     + `<div class="wide ilrow"><b class="kl-n">The change</b><input type="date" id="classChange" aria-label="The change of level" value="${esc(change)}" style="width:auto">
        <small class="muted">${proposed ? 'The timetable’s new class is on ' + esc(nice(proposed)) + (C.change && C.change !== proposed ? '. <button type="button" class="linkbtn" id="classChangeTT">Use that day</button>' : '.') : 'From this day each group is with its second class and its tutor. Stage 2 tutorials stay with the first tutor; Stage 3 tutorials are with the second.'}</small></div>`;
+  /* NOTHING SAVED, SAID (Ramy set C/21's date three times on 10 Nov 2026 and nothing was kept: the card saves only once
+     a class has its TP points or its tutor, and it never said so) */
+  if (!list.some(k => k.tutor || k.set)) document.getElementById('classGroups').insertAdjacentHTML('beforeend', '<div class="wide"><p class="note" style="margin:8px 0 0; color:var(--brick); font-weight:600;">No classes are saved yet. Choose the TP points or the tutor for a class, and the card saves.</p></div>');
   host.querySelectorAll('.kl-del').forEach(b => b.addEventListener('click', () => { const c = readClassesRaw(); c.list.splice(+b.dataset.i, 1); CLASSES = c; renderClasses(); scheduleSave(); }));
   host.querySelectorAll('.kl-set').forEach(sel => sel.addEventListener('change', () => {
     /* a set with a level names the class's level, when the level is not chosen yet */
@@ -2943,7 +2957,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611101919'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611102109'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();

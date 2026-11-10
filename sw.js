@@ -20,7 +20,7 @@
  * VERSION is stamped by bump-assets.py with the same stamp as the ?v= links,
  * so each push retires the previous cache on activate.
  */
-const VERSION = 'lite-202611101919';
+const VERSION = 'lite-202611102109';
 const SHELL = [
   './', 'index.html', 'invite.html', 'hub-qr.js', 'vendor/qrcode.js', 'hub-pin.js',
   '1_trainee_plan_and_analysis.html', '2_trainee_self_evaluation.html', '3_tutor_feedback.html',
@@ -28,7 +28,7 @@ const SHELL = [
   '7_candidate_tracker.html', '8_assignment_wording.html', '9_assignment_submission.html',
   '10_tutor_assignment_marking.html', '11_assignment_record.html', '12_assessor_pack.html',
   '13_grades_report.html', '14_owner.html', '15_course_record.html', '16_final_report.html',
-  'hub-shared.js', 'hub-store.js', 'hub-sync.js', 'hub-tracker.js', 'hub-due.js', 'hub-exchange.js',
+  'hub-shared.js', 'hub-notes.js', 'hub-store.js', 'hub-sync.js', 'hub-tracker.js', 'hub-due.js', 'hub-exchange.js',
   'hub-crit-learn.js', 'hub-crit-vocab.js', 'hub-rotation.js', 'hub-peers.js', 'hub-timetable-parse.js', 'hub-docx.js', 'hub-xlsx.js', 'hub-attendance.js', 'hub-volunteer-i18n.js', 'hub-ink.js', 'hub-hand.js',
   /* The signature faces. They are in the SHELL but NOT in bump-assets.py's
      list, and that is deliberate rather than the oversight that list warns
