@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111356">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111429">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -847,27 +847,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111356">
+<link rel="stylesheet" href="hub-house.css?v=202611111429">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611111356"></script>
-<script src="hub-tracker.js?v=202611111356"></script>
-<script src="hub-rotation.js?v=202611111356"></script>
-<script src="hub-xlsx.js?v=202611111356"></script>
-<script src="hub-docx.js?v=202611111356"></script>
-<script src="hub-timetable-parse.js?v=202611111356"></script>
-<script src="assignment-defaults.js?v=202611111356"></script>
-<script src="hub-shared.js?v=202611111356"></script>
+<script src="hub-due.js?v=202611111429"></script>
+<script src="hub-tracker.js?v=202611111429"></script>
+<script src="hub-rotation.js?v=202611111429"></script>
+<script src="hub-xlsx.js?v=202611111429"></script>
+<script src="hub-docx.js?v=202611111429"></script>
+<script src="hub-timetable-parse.js?v=202611111429"></script>
+<script src="assignment-defaults.js?v=202611111429"></script>
+<script src="hub-shared.js?v=202611111429"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611111356"></script>
-<script src="hub-say.js?v=202611111356"></script>
-<script src="hub-sync.js?v=202611111356"></script>
-<script src="hub-notebook.js?v=202611111356"></script>
+<script src="hub-store.js?v=202611111429"></script>
+<script src="hub-say.js?v=202611111429"></script>
+<script src="hub-sync.js?v=202611111429"></script>
+<script src="hub-notebook.js?v=202611111429"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2758,9 +2758,26 @@ function wireStatus(){
     save('Changes thrown away'); render();
   });
 }
+/* UNDONE IS NOT NEWS (Ramy, 11 Nov 2026: C/21's trainees got "now called 'ABC & feedback'" and "now called
+   'ABC&feedback'" for a tile that ended as it began). A tile or a day's notes that are back to what was last published
+   take their changes off the list, so the Draft bar, the card at the foot and the trainees' note count only what moved. */
+function dropUndone(list){
+  if (!TT || !TT.published || !LIVE || !Array.isArray(LIVE.days) || !Array.isArray(TT.days)) return list;
+  const norm = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, key) => (o[key] = x[key], o), {}) : x);
+  const where = (days, id) => { for (const d of days) for (const x of (d.sessions || [])) if (x && x.id === id) return norm({ date: d.date, tp: d.tp || 0, set: d.setIndex == null ? null : d.setIndex, x }); return null; };
+  const dayOf = (days, date) => { const d = days.find(y => y.date === date); return d ? norm({ notes: d.notes || '', cells: d.cells || {} }) : null; };
+  const back = {};
+  return list.filter(c => {
+    const m = /^tile:([^:]+)/.exec((c && c.key) || ''), n = /^notes:(.+)$/.exec((c && c.key) || '');
+    if (m) { if (!(m[1] in back)) { const a = where(TT.days, m[1]); back[m[1]] = !!a && a === where(LIVE.days, m[1]); } return !back[m[1]]; }
+    if (n) return dayOf(TT.days, n[1]) !== dayOf(LIVE.days, n[1]);
+    return true;
+  });
+}
 function publish(){
+  CHANGES = dropUndone(CHANGES);
   const items = CHANGES.map(c => c.text);
-  TT.updates = [{ at: new Date().toISOString(), items }].concat(Array.isArray(TT.updates) ? TT.updates : []).slice(0, 12);
+  if (items.length) TT.updates = [{ at: new Date().toISOString(), items }].concat(Array.isArray(TT.updates) ? TT.updates : []).slice(0, 12);
   LIVE = pickLive(TT);
   CHANGES = []; UNDO.length = 0; CHANGES_OPEN = false;
   save('Published — the course sees it now and gets a short note'); render();
@@ -4205,6 +4222,7 @@ function save(word, change){
     if (c.key && last && last.key === c.key) CHANGES[CHANGES.length - 1] = c; else CHANGES.push(c);
   }
   compact(TT && TT.days);
+  if (IS_TUTOR) CHANGES = dropUndone(CHANGES);
   /* The usual day follows the board: the slots of the first teaching day, so a
      new day is laid out like the course as it is now, and a page that only
      wants "the" TP times (a volunteer's hours) still has them. */
@@ -4230,7 +4248,7 @@ function save(word, change){
   try { localStorage.setItem(KEY, JSON.stringify(out)); } catch(e) {}
   note = word || 'Saved';
   const st = document.querySelector('.status'); if (st) st.textContent = note;
-  draftNotice(!!change);
+  draftNotice(!!change || CHANGES.length > DRAFT_N); DRAFT_N = CHANGES.length;   /* a tile's rename or move pushes its change and then saves without one */
   setTimeout(() => { note = ''; const s2 = document.querySelector('.status'); if (s2 && !busy) s2.textContent = ''; }, 2500);
   if (word === 'Built') render();
 }
@@ -4239,7 +4257,7 @@ function save(word, change){
    course will not see this until you click publish"). The Draft bar sits at the top of the board, out of sight when
    the edit is a week further down, so a change to a published timetable also brings up this card at the foot of the
    screen. OK puts it away for this visit; the bar at the top still counts the changes. */
-let DRAFT_OK = false;
+var DRAFT_OK = false, DRAFT_N = 0;   /* var: save() can run before this line has been reached */
 function draftNotice(edited){
   let card = $('draftnote');
   const want = IS_TUTOR && TT && TT.published && CHANGES.length > 0 && !DRAFT_OK;
