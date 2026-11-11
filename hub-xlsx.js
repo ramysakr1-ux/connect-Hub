@@ -112,11 +112,14 @@
   /* The first sheet's cells -> rows of strings. */
   function sheetRows(xml, strings, styles){
     const rows = [];
-    const rowRe = /<row[^>]*>([\s\S]*?)<\/row>/g; let rm;
+    const rowRe = /<row([^>]*)>([\s\S]*?)<\/row>/g; let rm;
     while ((rm = rowRe.exec(xml))) {
       const cells = [];
+      /* the sheet's own row number rides on the row (11 Nov 2026): empty rows are dropped below, and a reader that
+         treats a blank line as the end of a section (the volunteer register) can still see where one was */
+      const rn = +((rm[1].match(/\br="(\d+)"/) || [])[1] || 0); if (rn) cells.row = rn;
       const cRe = /<c ([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g; let cm;
-      while ((cm = cRe.exec(rm[1]))) {
+      while ((cm = cRe.exec(rm[2]))) {
         const attrs = cm[1], body = cm[2] || '';
         const ref = (attrs.match(/r="([A-Z]+\d+)"/) || [])[1] || '';
         const type = (attrs.match(/\bt="(\w+)"/) || [])[1] || 'n';

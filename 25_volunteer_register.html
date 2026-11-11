@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111534">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111551">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -147,21 +147,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111534">
+<link rel="stylesheet" href="hub-house.css?v=202611111551">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611111534"></script>
-<script src="hub-shared.js?v=202611111534"></script>
-<script src="hub-timetable-parse.js?v=202611111534"></script>
-<script src="hub-xlsx.js?v=202611111534"></script>
-<script src="hub-attendance.js?v=202611111534"></script>
-<script src="hub-store.js?v=202611111534"></script>
-<script src="hub-say.js?v=202611111534"></script>
-<script src="hub-sync.js?v=202611111534"></script>
+<script src="hub-due.js?v=202611111551"></script>
+<script src="hub-shared.js?v=202611111551"></script>
+<script src="hub-timetable-parse.js?v=202611111551"></script>
+<script src="hub-xlsx.js?v=202611111551"></script>
+<script src="hub-attendance.js?v=202611111551"></script>
+<script src="hub-store.js?v=202611111551"></script>
+<script src="hub-say.js?v=202611111551"></script>
+<script src="hub-sync.js?v=202611111551"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -215,6 +215,9 @@ const LEVELS = ['A1','A2','A2+','B1','B2','C1','C2'];
 const LV = l => (window.hubLevelName ? hubLevelName(l) : l);
 const LEVEL_OPTS = (window.HUB_LEVELS || LEVELS.map(l => [l, l])).map(x => x[0]);
 const codeOf = v => { const t = String(v || '').trim(); if (LEVELS.includes(t.toUpperCase())) return t.toUpperCase(); const n = LV(t); return (LEVEL_OPTS.find(c => LV(c) === n) || ''); };
+/* a level as people write it in a sheet: "Pre-Intermediate", "upper intermediate", "B1" (11 Nov 2026) */
+const levelIn = v => { const c = codeOf(v); if (c) return c; const n = String(v || '').trim().toLowerCase().replace(/[\s_-]+/g, ' ');
+  return n ? (LEVEL_OPTS.find(o => String(LV(o) || '').toLowerCase().replace(/[\s_-]+/g, ' ') === n) || '') : ''; };
 
 /* A register written before the three tiers existed held `here: [dates]`,
    which meant "in the room". They become marks of 'present', so nothing a
@@ -304,6 +307,9 @@ function render(){
 
   const bar = IS_TUTOR ? `<div class="bar">
       <button class="btn" id="addOpen">${ADD_OPEN ? 'Close' : 'Add students'}</button>
+      ${(() => { /* SEND THEM ALL (Ramy, 11 Nov 2026: a file of twenty comes in with its addresses, and each row's button
+         was twenty clicks). Everyone with an address and no invitation yet, in one go. */
+        const n = unsent().length; return n ? `<button class="btn" id="sendAllNow">Send the invitations to ${n} ${n === 1 ? 'person' : 'people'}</button>` : ''; })()}
       <span class="status">${esc(note)}</span></div>` + (ADD_OPEN ? addHTML() : '') : '';
   /* Who has agreed to the center's joining note, counted at the top. The
      per-row lines say it one at a time, which means reading down a list of
@@ -396,6 +402,43 @@ function addNames(rows){
      else as the note. Without one: first column the name, second the note. */
   let col = { name: 0, level: -1, note: 1 };
   const head = rows[0] || [];
+  /* A SHEET WITHOUT A HEADER ROW (Ramy, 11 Nov 2026, C/21's list: a title, then "Pre-Intermediate" over eight people and
+     "Upper-Intermediate" over twelve, each person a number, a name, a phone and an address). The name column is the one
+     that most often holds a few words with no digits and no @; a row holding nothing but a level is a section heading,
+     and the people under it take that level until a blank row; any other row with one cell is a title. Phones and the
+     numbering are left out; other words beside a name are its note. */
+  const cell = x => String(x == null ? '' : x).trim();
+  const wordy = x => { const t = cell(x); return !!t && !/[\d@]/.test(t) && t.split(/\s+/).length <= 5 && !levelIn(t); };
+  const hasHead = head.some(h => /^(name|student|volunteer|full name)$/i.test(cell(h)));
+  if (!hasHead) {
+    const width = Math.max(0, ...rows.map(r => (r || []).length)), score = Array(width).fill(0);
+    rows.forEach(r => { const full = (r || []).filter(x => cell(x)).length; if (full < 2) return; (r || []).forEach((x, i) => { if (wordy(x)) score[i]++; }); });
+    const nameAt = score.indexOf(Math.max(0, ...score));
+    if (nameAt >= 0 && score[nameAt] > 0) {
+      let level = '', added = 0;
+      REG = REG || {}; if (!Array.isArray(REG.students)) REG.students = [];
+      const have = new Set(students().map(s => s.name.trim().toLowerCase()));
+      const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cell(x));
+      let lastRow = 0;
+      rows.forEach(r => {
+        const cells = (r || []).map(cell), full = cells.filter(Boolean);
+        /* a blank line in the sheet ends a section, whether the reader kept it or only its row number shows the gap */
+        if (r && r.row) { if (lastRow && r.row - lastRow > 1) level = ''; lastRow = r.row; }
+        if (!full.length) { level = ''; return; }
+        if (full.length === 1) { const lv = levelIn(full[0]); level = lv || ''; return; }
+        const name = cells[nameAt]; if (!wordy(name)) return;
+        if (have.has(name.toLowerCase())) return; have.add(name.toLowerCase());
+        const email = cells.find(isMail) || '';
+        const note = cells.filter((x, i) => i !== nameAt && x && !isMail(x) && !/\d/.test(x) && !levelIn(x)).join(' · ');
+        const own = cells.map(levelIn).find(Boolean) || '';
+        REG.students.push({ name, note, email, marks: {}, level: own || level, token: mintToken(), added: TODAY });
+        added++;
+      });
+      REG.students.sort((a, b) => a.name.localeCompare(b.name));
+      persist(added ? added + (added === 1 ? ' student added' : ' students added') : 'Nobody new in that list');
+      return;
+    }
+  }
   if (head.some(h => /^(name|student|volunteer|full name)$/i.test(String(h || '').trim()))) {
     col = { name: -1, level: -1, note: -1 };
     head.forEach((h, i) => {
@@ -432,6 +475,7 @@ function addNames(rows){
    name, with replies going to the center's volunteer contact, never a tutor's
    address. The register is saved first, so a student added a moment ago is
    on the course before the store looks for them. */
+const unsent = () => students().filter(st => st.token && !st.invited && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(st.email || '').trim()));
 async function inviteStudent(st, email, btn){
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { note = 'Type ' + st.name + '\u2019s email first.'; render(); return; }
   if (btn) { btn.disabled = true; btn.textContent = 'Sending\u2026'; }
@@ -456,6 +500,19 @@ async function inviteStudent(st, email, btn){
 function wire(){
   if (!IS_TUTOR) return;
   if ($('addOpen')) $('addOpen').addEventListener('click', () => { ADD_OPEN = !ADD_OPEN; LAST_SENT = ''; render(); });
+  if ($('sendAllNow')) $('sendAllNow').addEventListener('click', async () => {
+    const list = unsent(); if (!list.length) return;
+    if (!confirm('Send the invitation to ' + list.length + (list.length === 1 ? ' person' : ' people') + '? Each gets their own link by email, from Lite in the center\u2019s name.')) return;
+    const b = $('sendAllNow'); b.disabled = true;
+    let sent = 0; const failed = [];
+    if (window.HubSync && window.HubSync.flushNow) { try { await window.HubSync.flushNow(true); } catch (e) {} }
+    for (const st of list) {
+      b.textContent = 'Sending ' + (sent + failed.length + 1) + ' of ' + list.length + '\u2026';
+      try { const r = await window.HubStore.call({ op: 'volunteerInvite', v: st.token, email: String(st.email).trim() }); st.invited = (r && r.invited) || new Date().toISOString(); sent++; }
+      catch (e) { failed.push(st.name); }
+    }
+    persist(((sent ? 'Invitations sent to ' + sent + (sent === 1 ? ' person.' : ' people.') : '') + (failed.length ? ' Not sent to ' + failed.length + ': use Send the invitation on their rows.' : '')).trim());
+  });
   if ($('many')) $('many').addEventListener('toggle', e => { MANY_OPEN = e.target.open; });
   /* Add and send the invitation (Ramy, 21 Oct 2026): a name and an email
      typed once, the row made, and the invitation sent, in one tap. */
