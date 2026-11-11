@@ -2627,7 +2627,12 @@ window.hubHeadHTML = function (text, heads) {
     if (STRIP.hidden) return;
     STRIP.style.left = Math.round(r.left + x) + 'px'; STRIP.style.top = Math.round(r.bottom + y - 1) + 'px'; STRIP.style.width = Math.round(r.width) + 'px';
     /* never under the page's bottom bar or off the screen: the page moves up */
-    var bar = document.querySelector('.actionbar'), floor = window.innerHeight - (bar && getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().height : 0) - 10;
+    /* the floor is the top of whatever is fixed at the foot of the page: the bottom bar, and Dictate, which floats above it
+       (11 Nov 2026: on a phone the Marks row sat behind Dictate). The full set is cut to the room there is, and scrolls inside. */
+    var floor = window.innerHeight;
+    ['.actionbar', '.dictbar'].forEach(function(q){ var el = document.querySelector(q); if (!el || getComputedStyle(el).position !== 'fixed') return; var b = el.getBoundingClientRect(); if (b.height > 0 && b.top > window.innerHeight / 2) floor = Math.min(floor, b.top); });
+    floor -= 10;
+    STRIP.style.maxHeight = STRIP.classList.contains('full') ? Math.max(150, Math.round(floor - 70 - r.height)) + 'px' : '';
     var over = STRIP.getBoundingClientRect().bottom - floor; if (over > 0) window.scrollBy(0, Math.min(over, Math.max(0, r.top - 70)));
   }
   function paint(){
@@ -2637,9 +2642,9 @@ window.hubHeadHTML = function (text, heads) {
     if (target) target.classList.toggle('ipa-open', show);
     STRIP.hidden = !show; KEY.classList.toggle('on', show && byKey);
     if (!show) { all = false; place(); return; }
-    var full = byKey || all, last = line.slice(-1).toLowerCase(), kin = on && !full ? (KIN[last] || '').split(' ').filter(Boolean) : [];
+    var full = byKey || all, last = line.slice(-1).toLowerCase(), kin = on && !byKey ? (KIN[last] || '').split(' ').filter(Boolean) : [];
     var h = '';
-    if (full) h = SETS.map(function(g){ return '<span class="ipagrp"><span class="ipalbl">' + g[0] + '</span>' + g[1].split(' ').map(function(x){ return '<button type="button" class="ipasym" tabindex="-1">' + x + '</button>'; }).join('') + '</span>'; }).join('') +
+    if (full) h = SETS.map(function(g){ return '<span class="ipagrp"><span class="ipalbl">' + g[0] + '</span>' + g[1].split(' ').map(function(x){ return '<button type="button" class="ipasym"' + (kin.indexOf(x) > -1 ? ' data-swap="1"' : '') + ' tabindex="-1">' + x + '</button>'; })   /* reached from the slash, a symbol the last letter could be takes that letter's place */.join('') + '</span>'; }).join('') +
       (byKey ? '<span class="ipasay ipatip">Quicker: type / and carry on typing. Lite offers the symbols as you go.</span>' : '<button type="button" class="ipamore" tabindex="-1">Fewer</button>');
     else h = '<span class="ipasay">' + (kin.length ? '“' + last + '” could be' : 'Type as you would. The symbols appear here.') + '</span>' +
       kin.map(function(x, i){ return '<button type="button" class="ipasym" data-swap="1" tabindex="-1">' + x + '<kbd>' + (i + 1) + '</kbd></button>'; }).join('') + '<button type="button" class="ipamore" tabindex="-1">All symbols</button>';
@@ -2674,7 +2679,7 @@ window.hubHeadHTML = function (text, heads) {
     document.addEventListener('keydown', function(e){
       if (!target || e.target !== target || STRIP.hidden) return;
       if (e.key === 'Escape') { shut = true; byKey = false; all = false; paint(); return; }
-      if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) { var b = STRIP.querySelectorAll('button[data-swap]')[+e.key - 1]; if (b) { e.preventDefault(); put(b.firstChild.textContent, true); paint(); } }
+      if (/^[1-9]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey && !STRIP.classList.contains('full')) { var b = STRIP.querySelectorAll('button[data-swap]')[+e.key - 1]; if (b) { e.preventDefault(); put(b.firstChild.textContent, true); paint(); } }
     }, true);
     window.addEventListener('resize', place);
   }
