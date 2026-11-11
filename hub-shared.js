@@ -986,6 +986,16 @@ window.hubLevelName = function(v){
   var out = []; codes.forEach(function(c){ var n = map[c]; if (n && out.indexOf(n) === -1) out.push(n); });
   return out.join('/') || s;
 };
+/* TWO LEVELS THAT MEAN THE SAME (12 Nov 2026). The register keeps a student's level as a code ("B2", "A2+"); a lesson
+   plan's Level box is filled as a word ("Upper-intermediate"). Compared as written they never matched, so a handout a
+   trainee shared was hidden from the very class it was for. Both are read as the level's name first; two codes that
+   share a band ("A2" and "A2+") also count, as they did before. */
+window.hubSameLevel = function(a, b){
+  var n = function(v){ return String(window.hubLevelName(v) || '').trim().toLowerCase(); };
+  var c = function(v){ var m = String(v || '').match(/\b([ABC][12])/i); return m ? m[1].toUpperCase() : ''; };
+  var x = n(a), y = n(b); if (!x || !y) return false;
+  return x === y || (!!c(a) && c(a) === c(b));
+};
 /* where a full name will not fit (Ramy, 30 Oct 2026: "use abbreviation like pre-int, upper-int ... and if you can, the full wording") */
 window.hubLevelShort = function(v){ var n = window.hubLevelName(v); return n.replace(/Pre-intermediate/g, 'Pre-int').replace(/Upper-intermediate/g, 'Upper-int').replace(/(^|\/)Intermediate/g, '$1Int'); };
 /* HOW LONG A TP LESSON IS (Ramy, 30 Oct 2026: "they start 20 minutes and then by TP8 it's an hour"; the Courseboard spec, his
