@@ -145,7 +145,10 @@ window.hubObservationHours = function(records){
          wash with the label still paper. */
       /* ...and every other filled one the hover sweep found (26 Oct 2026, 947 controls on every screen): a chosen tab or
          language, the red "today" day, a red deadline, a gold Save, Print my TP point. hub-house.css lifts them instead. */
-      "button:not(:disabled):not(.primary):not(.btn):not(.btn-teal):not(.btn-gold):not(.btn-add):not(.btn-submit):not(.active):not(.on):not(.picked):not(.confirm-action):not(.act):not(.tab):not(.filter):not(.sg):not(.say-pill):not([aria-pressed=\"true\"]):not([aria-selected=\"true\"]):not(.today):not(.ls-primary):not(.gold):not(.due):hover{ background-color: var(--hub-wash); }"+
+      /* ONE HOVER FOR EVERY PILL (Ramy, 11 Nov 2026: "have one rule for all of them ... make it rise and just the edge
+         would change color"). The wash that stood here swapped a button's background for near-white, so every filled
+         button had to be named as an exception, and each new one that was not named turned white under the mouse.
+         It is gone: a hover never changes a fill. hub-house.css lifts the pill and colours its edge. */
       "@media (prefers-reduced-motion: reduce){ a.card, a.room, .cell, button, .btn{ transition: none; } a.card:hover, a.room:hover, .cell:hover{ transform: none; } }";
     document.head.appendChild(hcss);
   }
