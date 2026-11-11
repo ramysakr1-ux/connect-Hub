@@ -111,7 +111,7 @@ const cards = ids.map(id => {
       <span class="tv"><b>${t.tracks}</b> recordings named</span>
       <span class="tv"><b>${t.days}</b> teaching days</span>
     </div>
-    <p class="own">Every lesson names the pages it teaches from. Point Lite at your own copy of the book and it cuts them out for you.</p>
+    <p class="own">Every lesson names the pages and the recordings it teaches from. Take the set on your course and it is all there, with the cut pages and the recordings.</p>
   </article>`;
 }).join('\n');
 
@@ -170,10 +170,10 @@ ${cards}
     <h2>Contribute a set</h2>
     <p>The library is open to every centre on Lite, whether they have put anything into it or not. What offering a set buys is the credit on it: <b>Contributed by</b> and then whatever you choose &mdash; your centre&rsquo;s name or your own &mdash; travelling with those lessons wherever they are taught.</p>
     <p>Open <b>TP point sets</b> on your course, choose the set, and click <b>Contribute this set</b>. Say whose name the credit goes to, and that is all of it &mdash; it goes straight to Connect, where nobody else can see it until it is in the library. We read every one, run the library&rsquo;s checks over it and write back. Anything else: <a href="mailto:lite@celtaconnect.com">lite@celtaconnect.com</a>.</p>
-    <p class="small"><b>What is in the file:</b> the aims, the lesson shapes, every stage with its timing and its watch notes, and the page and track numbers each lesson teaches from. <b>What is not:</b> your scans, your recordings and your printed days &mdash; not one link leaves your course, and the centre that takes the set points Lite at its own copy of the book.</p>
+    <p class="small"><b>What is in the file:</b> the aims, the lesson shapes, every stage with its timing and its watch notes, and the page and track numbers each lesson teaches from. <b>What is not:</b> your scans, your recordings and your printed days &mdash; not one link leaves your course.</p>
     <p class="small"><b>It stays yours.</b> Offering it lets Connect edit it and publish it here for other centres to teach from, credited as you asked. Ask and it comes out again, and it is yours to go on using however you like. <b>It has to be yours to give</b> &mdash; your own lessons, not stages copied out of a teacher&rsquo;s book. Naming the pages of a coursebook is how every set here works; copying the publisher&rsquo;s procedure is not, and a set that does will not go in.</p>
   </section>
-    <p class="foot">What travels is the writing: the aims, the staging, the timings, and which page and which recording each lesson uses. The book stays yours — point Lite at your own copy and it cuts out the pages, onto your own course, and prints the day. Your trainees get their own lesson on their own card, with the other two at the foot of the day to sit in on.</p>
+    <p class="foot">A set is the writing: the aims, the staging, the timings, and which page and which recording each lesson uses. Take one and it is all there, with the cut pages and the recordings each lesson uses, and Lite prints the day. Teaching from a book of your own? Point Lite at your copy and it cuts out the pages, onto your own course. Your trainees get their own lesson on their own card, with the other two at the foot of the day to sit in on.</p>
 </div></body></html>`;
 const out = path.join(ROOT, 'library', 'index.html');
 fs.writeFileSync(out, html);
