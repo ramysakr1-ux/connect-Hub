@@ -184,7 +184,14 @@
     /* ---- Course admin ------------------------------------------------------------------------------------------ */
     var assDay = ''; sessions.forEach(function (o) { if (!assDay && (o.x.k === 'assessor' || /assessor/i.test(o.x.t || ''))) assDay = o.d.date; });
     var visit = String(cs.visitDate || '').slice(0, 10), who = String(cs.assessorName || '').trim();
-    if (assDay && (!visit || !who)) add('assessor-missing', 'admin', 'The timetable has the assessor on ' + nice(assDay) + ', but Course admin has ' + (!visit && !who ? 'no visit date and no assessor’s name' : !visit ? 'no visit date' : 'no assessor’s name') + '.');
+    /* The name is not known when a course starts: Cambridge gives it later. So a missing name is worth a look only
+       once the first week is over (Ramy, 11 Nov 2026: "a problem only … after the first week, like a reminder").
+       A missing visit date is said from the start. opt.today is for tests. */
+    var today = String(opt.today || dayIn(new Date().toISOString(), cs.timeZone)).slice(0, 10);
+    var st0 = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(cs.start || '')), week2 = '';
+    if (st0) week2 = new Date(Date.UTC(+st0[1], +st0[2] - 1, +st0[3] + 7)).toISOString().slice(0, 10);
+    var nameDue = !who && !!week2 && today >= week2;
+    if (assDay && (!visit || nameDue)) add('assessor-missing', 'admin', 'The timetable has the assessor on ' + nice(assDay) + ', but Course admin has ' + (!visit && nameDue ? 'no visit date and no assessor’s name' : !visit ? 'no visit date' : 'no assessor’s name') + '.');
     if (visit && days.length && !sessions.some(function (o) { return o.d.date === visit && (o.x.k === 'assessor' || /assessor/i.test(o.x.t || '')); })) add('assessor-day', 'admin', 'Course admin has the assessor’s visit on ' + nice(visit) + ', but the timetable has no assessor session that day.');
     var spellings = {};
     String(cs.tutorNames || '').split(/[,\n;]+/).concat((Array.isArray(cs.tutorContacts) ? cs.tutorContacts : []).map(function (t) { return (t && t.name) || ''; })).forEach(function (n) {
