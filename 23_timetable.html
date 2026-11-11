@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111330">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111356">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -491,6 +491,10 @@
   .gswitch span{font-size:0.8rem; color:var(--grey);}
   .swapbar{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; max-width:min(92vw, 760px); padding:11px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:12px; font-size:0.86rem; box-shadow:0 12px 30px -10px oklch(30% 0.04 60 / .45);}
   .swapbar[hidden]{display:none;}
+  .draftnote{border-left-color:var(--amber-edge); line-height:1.45; box-sizing:border-box; width:min(560px, calc(100vw - 32px)); max-width:none;}
+  /* on a phone, clear of the Lite button and the sync pill at the foot */
+  @media (max-width:700px){ .draftnote{bottom:84px;} }
+  .draftnote .dn-acts{display:flex; gap:16px;}
   .swapbar button{border:0; background:none; padding:0; font:700 0.86rem 'Karla',sans-serif; color:var(--teal); text-decoration:underline; cursor:pointer;}
   /* ---- stage 2: drop colors, draft, checks, closed days ----------------- */
   .tgrid .day.drop-clean .body{background:color-mix(in oklch, var(--teal) 7%, transparent);} .tgrid .day.drop-clean{border-color:var(--teal-lifted);}
@@ -843,27 +847,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111330">
+<link rel="stylesheet" href="hub-house.css?v=202611111356">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611111330"></script>
-<script src="hub-tracker.js?v=202611111330"></script>
-<script src="hub-rotation.js?v=202611111330"></script>
-<script src="hub-xlsx.js?v=202611111330"></script>
-<script src="hub-docx.js?v=202611111330"></script>
-<script src="hub-timetable-parse.js?v=202611111330"></script>
-<script src="assignment-defaults.js?v=202611111330"></script>
-<script src="hub-shared.js?v=202611111330"></script>
+<script src="hub-due.js?v=202611111356"></script>
+<script src="hub-tracker.js?v=202611111356"></script>
+<script src="hub-rotation.js?v=202611111356"></script>
+<script src="hub-xlsx.js?v=202611111356"></script>
+<script src="hub-docx.js?v=202611111356"></script>
+<script src="hub-timetable-parse.js?v=202611111356"></script>
+<script src="assignment-defaults.js?v=202611111356"></script>
+<script src="hub-shared.js?v=202611111356"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611111330"></script>
-<script src="hub-say.js?v=202611111330"></script>
-<script src="hub-sync.js?v=202611111330"></script>
-<script src="hub-notebook.js?v=202611111330"></script>
+<script src="hub-store.js?v=202611111356"></script>
+<script src="hub-say.js?v=202611111356"></script>
+<script src="hub-sync.js?v=202611111356"></script>
+<script src="hub-notebook.js?v=202611111356"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -4226,8 +4230,34 @@ function save(word, change){
   try { localStorage.setItem(KEY, JSON.stringify(out)); } catch(e) {}
   note = word || 'Saved';
   const st = document.querySelector('.status'); if (st) st.textContent = note;
+  draftNotice(!!change);
   setTimeout(() => { note = ''; const s2 = document.querySelector('.status'); if (s2 && !busy) s2.textContent = ''; }, 2500);
   if (word === 'Built') render();
+}
+
+/* SAVED, NOT PUBLISHED (Ramy, 11 Nov 2026: "when you make changes, something should pop up. Let me know that the
+   course will not see this until you click publish"). The Draft bar sits at the top of the board, out of sight when
+   the edit is a week further down, so a change to a published timetable also brings up this card at the foot of the
+   screen. OK puts it away for this visit; the bar at the top still counts the changes. */
+let DRAFT_OK = false;
+function draftNotice(edited){
+  let card = $('draftnote');
+  const want = IS_TUTOR && TT && TT.published && CHANGES.length > 0 && !DRAFT_OK;
+  if (!want) { if (card) card.hidden = true; return; }
+  if (!edited && (!card || card.hidden)) return;
+  if (!card) {
+    card = document.createElement('div'); card.id = 'draftnote'; card.className = 'swapbar draftnote'; card.setAttribute('role', 'status');
+    document.body.appendChild(card);
+    card.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.act === 'publish') publish();
+      DRAFT_OK = true; card.hidden = true;
+    });
+  }
+  const n = CHANGES.length;
+  card.innerHTML = `<span><b>Saved, not published.</b> The course will not see ${n === 1 ? 'this change' : 'these ' + n + ' changes'} until you press Publish to the course.</span><span class="dn-acts"><button type="button" data-act="publish">Publish to the course</button><button type="button" data-act="ok">OK</button></span>`;
+  const swap = $('swapbar');
+  card.hidden = !!(swap && !swap.hidden);
 }
 
 /* The reader taking over. NOT on `scroll`: my own scrollTo fires that event,
