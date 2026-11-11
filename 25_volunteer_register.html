@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111551">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111608">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -51,6 +51,8 @@
   .status{font-size:0.8rem; color:var(--grey);}
   .panel{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:14px 16px; margin:0 0 18px;}
   .panel h3{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
+  .mrow .mlv{flex:0 0 auto; align-self:center; font-size:0.78rem; color:var(--grey); white-space:nowrap;}
+  .panel .phead{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:space-between; margin:0 0 6px;} .panel .phead h3{margin:0;}
   .panel p{font-size:0.8rem; color:var(--grey); margin:0 0 10px; line-height:1.55;}
   .panel textarea{font-family:ui-monospace,Menlo,monospace; font-size:0.78rem; width:100%; min-height:88px; padding:8px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink);}
   .panel input[type=text]{font-family:inherit; font-size:0.86rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:7px; background:var(--paper); color:var(--ink); min-width:220px;}
@@ -147,21 +149,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111551">
+<link rel="stylesheet" href="hub-house.css?v=202611111608">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611111551"></script>
-<script src="hub-shared.js?v=202611111551"></script>
-<script src="hub-timetable-parse.js?v=202611111551"></script>
-<script src="hub-xlsx.js?v=202611111551"></script>
-<script src="hub-attendance.js?v=202611111551"></script>
-<script src="hub-store.js?v=202611111551"></script>
-<script src="hub-say.js?v=202611111551"></script>
-<script src="hub-sync.js?v=202611111551"></script>
+<script src="hub-due.js?v=202611111608"></script>
+<script src="hub-shared.js?v=202611111608"></script>
+<script src="hub-timetable-parse.js?v=202611111608"></script>
+<script src="hub-xlsx.js?v=202611111608"></script>
+<script src="hub-attendance.js?v=202611111608"></script>
+<script src="hub-store.js?v=202611111608"></script>
+<script src="hub-say.js?v=202611111608"></script>
+<script src="hub-sync.js?v=202611111608"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -376,99 +378,92 @@ function render(){
 
 let LAST_SENT = '';   // "Invitation sent to Amin." -- shown in the panel, which stays open for the next person
 let MANY_OPEN = false;
+let PREFILL = [];       // people read from a sheet, waiting in the boxes until Add and send (11 Nov 2026)
 let MANY_ROWS = 5;      // the boxes under "Add several at once"; "Add another row" adds one   // "Add several at once" stays open across a redraw once opened
 function addHTML(){
   /* One person at a time is the form (Ramy, 21 Oct 2026: "a bit busy").
      A list, pasted or from a file, sits behind "Add several at once". */
-  return `<div class="panel"><h3>Add a student</h3>
+  /* A SHEET COMES FIRST (Ramy, 11 Nov 2026, after importing C/21's twenty: "why does it say add several at once?"). The file
+     button sat at the foot of the typing rows, so importing opened five empty rows and two more dark buttons. It is now
+     beside the heading, and an import closes the panel on the list and its Send button. */
+  return `<div class="panel"><div class="phead"><h3>Add a student</h3><label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div>
     ${LAST_SENT ? `<p class="sentnote">${esc(LAST_SENT)}</p>` : ''}
     <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email" autocomplete="off"></div>
     <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button></div>
     <details class="many" id="many"${MANY_OPEN ? ' open' : ''}><summary>Add several at once</summary>
-      ${Array.from({ length: MANY_ROWS }, (_, k) => `<div class="row one mrow"><input type="text" class="mName" placeholder="Name" autocomplete="off"><input type="email" class="mEmail" placeholder="Their email" autocomplete="off"></div>`).join('')}
+      ${Array.from({ length: Math.max(MANY_ROWS, PREFILL.length) }, (_, k) => { const pp = PREFILL[k] || {};
+        return `<div class="row one mrow" data-level="${esc(pp.level || '')}" data-note="${esc(pp.note || '')}"><input type="text" class="mName" placeholder="Name" autocomplete="off" value="${esc(pp.name || '')}"><input type="email" class="mEmail" placeholder="Their email" autocomplete="off" value="${esc(pp.email || '')}">${pp.level ? `<span class="mlv">${esc(LV(pp.level))}</span>` : ''}</div>`; }).join('')}
       <p style="margin:6px 0 10px !important"><a href="#" id="moreRows" class="morerows">Add another row</a></p>
-      <div class="row"><button class="btn btn-gold" id="addSendAll">Add and send all the invitations</button>
-        <label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div>
+      <div class="row"><button class="btn btn-gold" id="addSendAll">Add and send all the invitations</button></div>
     </details></div>`;
 }
 
-function addNames(rows){
-  /* a course whose register was never written comes back as an empty
-     record with no list in it: give it one (C/18, 21 Oct 2026) */
-  REG = REG || {}; if (!Array.isArray(REG.students)) REG.students = [];
-  const have = new Set(students().map(s => s.name.trim().toLowerCase()));
-  /* A header row, when the sheet has one, says which column is which: the
-     name, a level (kept as the level when it is a CEFR code), and anything
-     else as the note. Without one: first column the name, second the note. */
-  let col = { name: 0, level: -1, note: 1 };
-  const head = rows[0] || [];
-  /* A SHEET WITHOUT A HEADER ROW (Ramy, 11 Nov 2026, C/21's list: a title, then "Pre-Intermediate" over eight people and
-     "Upper-Intermediate" over twelve, each person a number, a name, a phone and an address). The name column is the one
-     that most often holds a few words with no digits and no @; a row holding nothing but a level is a section heading,
-     and the people under it take that level until a blank row; any other row with one cell is a title. Phones and the
-     numbering are left out; other words beside a name are its note. */
+/* WHAT A LIST SAYS (11 Nov 2026): rows from a paste, a file or the typed boxes, read into people { name, email, level, note }
+   without adding anyone. A header row, when the sheet has one, says which column is which. Without one (Ramy's C/21 list:
+   a title, then "Pre-Intermediate" over eight people and "Upper-Intermediate" over twelve, each a number, a name, a phone
+   and an address): the name column is the one that most often holds a few words with no digits and no @; a row holding
+   nothing but a level is a section heading, and the people under it take that level until a blank line; any other row
+   with one cell is a title. The numbering and phones are left out; other words beside a name are its note. */
+function parsePeople(rows){
   const cell = x => String(x == null ? '' : x).trim();
-  const wordy = x => { const t = cell(x); return !!t && !/[\d@]/.test(t) && t.split(/\s+/).length <= 5 && !levelIn(t); };
-  const hasHead = head.some(h => /^(name|student|volunteer|full name)$/i.test(cell(h)));
-  if (!hasHead) {
-    const width = Math.max(0, ...rows.map(r => (r || []).length)), score = Array(width).fill(0);
-    rows.forEach(r => { const full = (r || []).filter(x => cell(x)).length; if (full < 2) return; (r || []).forEach((x, i) => { if (wordy(x)) score[i]++; }); });
-    const nameAt = score.indexOf(Math.max(0, ...score));
-    if (nameAt >= 0 && score[nameAt] > 0) {
-      let level = '', added = 0;
-      REG = REG || {}; if (!Array.isArray(REG.students)) REG.students = [];
-      const have = new Set(students().map(s => s.name.trim().toLowerCase()));
-      const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cell(x));
-      let lastRow = 0;
-      rows.forEach(r => {
-        const cells = (r || []).map(cell), full = cells.filter(Boolean);
-        /* a blank line in the sheet ends a section, whether the reader kept it or only its row number shows the gap */
-        if (r && r.row) { if (lastRow && r.row - lastRow > 1) level = ''; lastRow = r.row; }
-        if (!full.length) { level = ''; return; }
-        if (full.length === 1) { const lv = levelIn(full[0]); level = lv || ''; return; }
-        const name = cells[nameAt]; if (!wordy(name)) return;
-        if (have.has(name.toLowerCase())) return; have.add(name.toLowerCase());
-        const email = cells.find(isMail) || '';
-        const note = cells.filter((x, i) => i !== nameAt && x && !isMail(x) && !/\d/.test(x) && !levelIn(x)).join(' · ');
-        const own = cells.map(levelIn).find(Boolean) || '';
-        REG.students.push({ name, note, email, marks: {}, level: own || level, token: mintToken(), added: TODAY });
-        added++;
-      });
-      REG.students.sort((a, b) => a.name.localeCompare(b.name));
-      persist(added ? added + (added === 1 ? ' student added' : ' students added') : 'Nobody new in that list');
-      return;
-    }
-  }
-  if (head.some(h => /^(name|student|volunteer|full name)$/i.test(String(h || '').trim()))) {
-    col = { name: -1, level: -1, note: -1 };
+  const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cell(x));
+  const out = [];
+  const head = rows[0] || [];
+  if (head.some(h => /^(name|student|volunteer|full name)$/i.test(cell(h)))) {
+    const col = { name: -1, level: -1, note: -1, email: null };
     head.forEach((h, i) => {
-      const t = String(h || '').trim().toLowerCase();
+      const t = cell(h).toLowerCase();
       if (col.name < 0 && /^(name|student|volunteer|full name)$/.test(t)) col.name = i;
       else if (col.level < 0 && /^(level|cefr)$/.test(t)) col.level = i;
       else if (col.email == null && /^(e-?mail|email address)$/.test(t)) col.email = i;
       else if (col.note < 0 && t) col.note = i;
     });
     if (col.name < 0) col.name = 0;
+    rows.slice(1).forEach(r => {
+      const name = cell(r[col.name]); if (!name) return;
+      const email = col.email != null ? cell(r[col.email]) : (r.find(isMail) || '');
+      const note = col.note >= 0 ? cell(r[col.note]) : '';
+      out.push({ name, email: isMail(email) ? cell(email) : '', level: col.level >= 0 ? levelIn(r[col.level]) : '', note: isMail(note) ? '' : note });
+    });
+    return out;
   }
-  let added = 0;
+  const wordy = x => { const t = cell(x); return !!t && !/[\d@]/.test(t) && t.split(/\s+/).length <= 5 && !levelIn(t); };
+  const width = Math.max(0, ...rows.map(r => (r || []).length)), score = Array(width).fill(0);
+  rows.forEach(r => { const full = (r || []).filter(x => cell(x)).length; if (full < 2) return; (r || []).forEach((x, i) => { if (wordy(x)) score[i]++; }); });
+  let nameAt = score.indexOf(Math.max(0, ...score));
+  if (nameAt < 0 || !score[nameAt]) nameAt = 0;
+  let level = '', lastRow = 0;
   rows.forEach(r => {
-    const name = String(r[col.name] || '').trim();
-    if (!name) return;
-    /* A header row from a spreadsheet is not a person. */
-    if (/^(name|student|volunteer|full name)$/i.test(name)) return;
-    if (have.has(name.toLowerCase())) return;      // adding the same list twice is a mistake, not a second person
-    have.add(name.toLowerCase());
-    const lvl = col.level >= 0 ? String(r[col.level] || '').trim().toUpperCase() : '';
-    /* v56: an address, from its own column or from any cell shaped like one. */
-    const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(x || '').trim());
-    const email = col.email != null ? String(r[col.email] || '').trim() : (r.find(isMail) || '');
-    const note = col.note >= 0 ? String(r[col.note] || '').trim() : '';
-    REG.students.push({ name, note: isMail(note) ? '' : note, email: isMail(email) ? email : '', marks: {}, level: codeOf(lvl), token: mintToken(), added: TODAY });
+    const cells = (r || []).map(cell), full = cells.filter(Boolean);
+    /* a blank line in the sheet ends a section, whether the reader kept it or only its row number shows the gap */
+    if (r && r.row) { if (lastRow && r.row - lastRow > 1) level = ''; lastRow = r.row; }
+    if (!full.length) { level = ''; return; }
+    if (full.length === 1) { level = levelIn(full[0]) || ''; return; }
+    const name = cells[nameAt]; if (!wordy(name)) return;
+    const email = cells.find(isMail) || '';
+    const note = cells.filter((x, i) => i !== nameAt && x && !isMail(x) && !/\d/.test(x) && !levelIn(x)).join(' · ');
+    out.push({ name, email, level: cells.map(levelIn).find(Boolean) || level, note });
+  });
+  return out;
+}
+/* people onto the register: a name already there is not a second person */
+function addPeople(list, word){
+  REG = REG || {}; if (!Array.isArray(REG.students)) REG.students = [];
+  const have = new Set(students().map(s => s.name.trim().toLowerCase()));
+  let added = 0;
+  list.forEach(p => {
+    const name = String(p.name || '').trim(); if (!name || /^(name|student|volunteer|full name)$/i.test(name)) return;
+    if (have.has(name.toLowerCase())) return; have.add(name.toLowerCase());
+    REG.students.push({ name, note: p.note || '', email: p.email || '', marks: {}, level: p.level || '', token: mintToken(), added: TODAY });
     added++;
   });
   REG.students.sort((a, b) => a.name.localeCompare(b.name));
-  persist(added ? added + (added === 1 ? ' student added' : ' students added') : 'Nobody new in that list');
+  persist(word || (added ? added + (added === 1 ? ' student added' : ' students added') : 'Nobody new in that list'));
+  return added;
 }
+function addNames(rows){ return addPeople(parsePeople(rows)); }
+/* the several-at-once boxes as they stand now, with the level and note a sheet gave each row */
+function boxRows(){ return [...document.querySelectorAll('.mrow')].map(r => ({ name: r.querySelector('.mName').value.trim(), email: r.querySelector('.mEmail').value.trim(), level: r.dataset.level || '', note: r.dataset.note || '' })); }
 
 /* Send one volunteer their invitation (21 Oct 2026). Ramy: "the course tutors
    can't invite volunteer Ss". The store sends it from lite@ in the center's
@@ -521,16 +516,14 @@ function wire(){
     if (!v) { note = 'Type their name first.'; render(); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) { note = 'Type their email first.'; render(); return; }
     LAST_SENT = '';
-    addNames([[v, m]]);
+    addPeople([{ name: v, email: m }]);
     const st = students().find(x => x.name.trim().toLowerCase() === v.toLowerCase());
     if (!st || !st.token) { note = 'Added. The invitation can be sent from their row in a moment.'; render(); return; }
     inviteStudent(st, m, null);
   });
   if ($('moreRows')) $('moreRows').addEventListener('click', e => {
     e.preventDefault();
-    const keep = [...document.querySelectorAll('.mrow')].map(r => [r.querySelector('.mName').value, r.querySelector('.mEmail').value]);
-    MANY_ROWS++; MANY_OPEN = true; render();
-    document.querySelectorAll('.mrow').forEach((r, n) => { if (keep[n]) { r.querySelector('.mName').value = keep[n][0]; r.querySelector('.mEmail').value = keep[n][1]; } });
+    PREFILL = boxRows(); MANY_ROWS = PREFILL.length + 1; MANY_OPEN = true; render();
     const last = [...document.querySelectorAll('.mName')].pop(); if (last) last.focus();
   });
   /* Several at once (Ramy, 21 Oct 2026: "just open a bunch of boxes for the
@@ -538,11 +531,12 @@ function wire(){
      their invitation, one after another. */
   if ($('addSendAll')) $('addSendAll').addEventListener('click', async () => {
     const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);
-    const rows = [...document.querySelectorAll('.mrow')].map(r => [r.querySelector('.mName').value.trim(), r.querySelector('.mEmail').value.trim()]).filter(r => r[0]);
+    const people = boxRows().filter(p => p.name);
+    const rows = people.map(p => [p.name, p.email]);
     if (!rows.length) { note = 'Type at least one name.'; render(); return; }
     const bad = rows.filter(r => r[1] && !isMail(r[1]));
     if (bad.length) { note = 'Check the email for ' + bad.map(r => r[0]).join(', ') + '.'; render(); return; }
-    LAST_SENT = ''; addNames(rows.map(r => r[1] ? [r[0], r[1]] : [r[0]]));
+    LAST_SENT = ''; PREFILL = []; addPeople(people);
     let sent = 0, failed = [];
     for (const [nm, em] of rows) {
       if (!em) continue;
@@ -566,7 +560,15 @@ function wire(){
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     try {
       const rows = window.hubIsXlsx && window.hubIsXlsx(file) ? await window.hubXlsxRows(file) : window.hubTimetableParse.rowsFromText(await file.text());
-      addNames(rows);
+      /* the sheet fills the boxes (Ramy, 11 Nov 2026: "the name and their email inside those pills ... not sure why we
+         have two different views"): nobody is added until Add and send all the invitations */
+      const have = new Set(students().map(st => st.name.trim().toLowerCase()));
+      const list = parsePeople(rows).filter(pp => !have.has(pp.name.trim().toLowerCase()));
+      if (!list.length) { note = 'Nobody new in that file.'; render(); return; }
+      PREFILL = list; MANY_ROWS = list.length; ADD_OPEN = true; MANY_OPEN = true; LAST_SENT = '';
+      note = list.length + (list.length === 1 ? ' person' : ' people') + ' from the file. Check them, then press Add and send all the invitations.';
+      render();
+      const first = document.querySelector('.mrow'); if (first) first.scrollIntoView({ block: 'center' });
     } catch (err) { note = err && err.message ? err.message : 'That file could not be read.'; render(); }
   });
   document.querySelectorAll('[data-copy]').forEach(el => el.addEventListener('click', async () => {
