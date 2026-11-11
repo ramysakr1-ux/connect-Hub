@@ -1815,6 +1815,14 @@ case 'inbox': {
       // guidance: the tutors' marking guidance per criterion (v94, 17 Oct 2026) --
       // read by the tutors and the assessor only, never sent to a trainee.
       if (ck !== 'settings' && ck !== 'wording' && ck !== 'observations' && ck !== 'timetable' && ck !== 'tppoints' && ck !== 'volunteers' && ck !== 'guidance' && ck !== 'critLearn' && ck !== 'briefs') throw new Error('Not a course kind: ' + ck);
+      /* v218 (11 Nov 2026, Ramy: "lock the timetable with the pin"): once a course has a Course admin PIN, its timetable
+         changes only with it. The owner passes; a course with no PIN is not locked. */
+      if (ck === 'timetable') {
+        /* ... except a change that touches nothing but sessions' materials, online room links and preparation (Ramy, same day:
+           "will the other trainer be able to add links to her own input sessions with the lock?" ... "also adding Zoom link") */
+        try { requireAdminPin_(course, req, owner); }
+        catch (pe) { if (!/^(Admin PIN required|Wrong admin PIN)$/.test(String(pe.message || '')) || !ttOnlyNotes_(courseRead_(course.id, 'timetable'), req.data)) throw pe; }
+      }
       var data = req.data;
       if (ck === 'settings') {
         // The owner's centre number stays (1 Oct 2026): a course made for
@@ -4615,6 +4623,22 @@ function celtaShorthand_() {
 function requireTutor_(tutor) { if (!tutor) throw new Error('Tutors only'); }
 /* The Course admin PIN (v210): nothing to ask while the course has none; the owner passes. Four digits are few, so five
    wrong ones in a row close the door for ten minutes, which a right one or the wait reopens. */
+/* two timetables that differ only in sessions' mat, url and d, and in the notes that come with saving (the change list, the
+   course's update notes, the usual-day slots) (v218) */
+function ttOnlyNotes_(a, b) {
+  var strip = function (t) {
+    t = JSON.parse(JSON.stringify(t || {}));
+    delete t.updates; delete t.slots; delete t.rev; delete t.base;
+    var dayList = function (days) { (days || []).forEach(function (d) { (d && d.sessions || []).forEach(function (x) { if (x) { delete x.mat; delete x.url; delete x.d; } }); }); };
+    dayList(t.days);
+    if (t.draft) { delete t.draft.changes; dayList(t.draft.all); if (t.draft.days) dayList(Object.keys(t.draft.days).map(function (k) { return t.draft.days[k]; })); }
+    return t;
+  };
+  var stable = function (v) { return JSON.stringify(v, function (k, x) { return x && typeof x === 'object' && !Array.isArray(x) ? Object.keys(x).sort().reduce(function (o, key) { o[key] = x[key]; return o; }, {}) : x; }); };
+  var x = strip(a), y = strip(b);
+  if (x.draft && !Object.keys(x.draft).length) delete x.draft; if (y.draft && !Object.keys(y.draft).length) delete y.draft;
+  return stable(x) === stable(y);
+}
 function requireAdminPin_(course, req, owner) {
   if (owner || !course) return;
   var want = (courseRead_(course.id, 'pins') || {}).admin;

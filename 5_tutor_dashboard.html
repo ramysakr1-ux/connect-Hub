@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111725">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111749">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -363,6 +363,7 @@
   /* a post the trainees do not see yet: scheduled, or carried from the last course */
   .stream .slabel{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.1em;
     text-transform:uppercase; color:var(--grey); margin:14px 16px 4px;}
+  .stream .slabel.heldline{text-transform:none; letter-spacing:0; font-size:.84rem; line-height:1.5; font-weight:500; color:var(--ink-warm);} .stream .slabel.heldline .more{margin-left:4px; font:inherit; font-weight:700; background:none; border:0; padding:0; color:var(--teal-deep); text-decoration:underline; text-underline-offset:3px; cursor:pointer;} .stream .slabel.heldline .more:hover{color:var(--teal);}
   .stream .post.held{background:var(--sand-deep); opacity:.92;}
   .stream .heldpill{font-size:0.74rem; font-weight:700; color:var(--ink-warm); background:var(--gold-wash); border:1px solid var(--amber-edge);
     border-radius:999px; padding:2px 9px;}
@@ -548,7 +549,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111725">
+<link rel="stylesheet" href="hub-house.css?v=202611111749">
 </head>
 <body>
 <div class="board">
@@ -665,26 +666,26 @@
 
 </div>
 
-<script src="hub-due.js?v=202611111725"></script>
-<script src="observation-defaults.js?v=202611111725"></script>
-<script src="hub-rotation.js?v=202611111725"></script>
-<script src="hub-shared.js?v=202611111725"></script>
+<script src="hub-due.js?v=202611111749"></script>
+<script src="observation-defaults.js?v=202611111749"></script>
+<script src="hub-rotation.js?v=202611111749"></script>
+<script src="hub-shared.js?v=202611111749"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611111725"></script>
-<script src="hub-say.js?v=202611111725"></script>
-<script src="hub-hand.js?v=202611111725"></script>
-<script src="hub-ink.js?v=202611111725"></script>
-<script src="hub-shelf.js?v=202611111725"></script>
+<script src="hub-store.js?v=202611111749"></script>
+<script src="hub-say.js?v=202611111749"></script>
+<script src="hub-hand.js?v=202611111749"></script>
+<script src="hub-ink.js?v=202611111749"></script>
+<script src="hub-shelf.js?v=202611111749"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611111725"></script>
-<script src="hub-sync.js?v=202611111725"></script>
-<script src="hub-notebook.js?v=202611111725"></script>
-<script src="hub-tracker.js?v=202611111725"></script>
-<script src="hub-feedback.js?v=202611111725"></script>
+<script src="assignment-defaults.js?v=202611111749"></script>
+<script src="hub-sync.js?v=202611111749"></script>
+<script src="hub-notebook.js?v=202611111749"></script>
+<script src="hub-tracker.js?v=202611111749"></script>
+<script src="hub-feedback.js?v=202611111749"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -1500,6 +1501,7 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
         ? `<div class="heldacts"><input type="datetime-local" class="whenpick" value="${p.publishAt && window.HubDue ? e(HubDue.toLocalInput(p.publishAt)) : ''}"><button class="btn-post primary" type="button" data-set="${e(p.id)}"${busy ? ' disabled' : ''}>Set</button><button class="btn-back" type="button" data-unpick="1">Cancel</button></div>`
         : `<div class="heldacts"><button class="btn-post primary" type="button" data-now="${e(p.id)}"${busy ? ' disabled' : ''}>Post now</button><button class="btn-back" type="button" data-when="${e(p.id)}">${p.publishAt ? 'Change the date' : 'Show it from a date…'}</button></div>`)
     + `</div></article>`;
+  const heldOpen = () => { try { return localStorage.getItem('chub:heldOpen') === '1'; } catch (x) { return false; } };
   function draw(){
     const all = read();
     const back = all.filter(held).sort((a, b) => (a.draft ? 1 : 0) - (b.draft ? 1 : 0) || String(a.publishAt || '').localeCompare(String(b.publishAt || '')));
@@ -1516,11 +1518,14 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
       + `<div class="compose"${open ? '' : ' hidden'}><div class="row"><span class="who" aria-hidden="true">${e(initials(nameInput.value))}</span><textarea id="streamText" placeholder="Tell the course something — a room change, a deadline, where to find a file. Links become clickable."></textarea></div>
          ${pending ? (() => { const a = audience(pending.to); return `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">This post is going to <b>${e(a.name)}</b> — ${a.n} trainee${a.n === 1 ? '' : 's'}${pending.to ? '' : ', every group'}. ${pending.publishAt && window.HubDue ? `It goes out on <b>${e(HubDue.state(pending.publishAt).due)}</b>; until then only the tutors see it.` : 'They will see it on their home the moment you post.'}${pending.due && window.HubDue ? ` It counts down to <b>${e(HubDue.state(pending.due).due)}</b> and stays at the top of their noticeboard until then.` : ''}</div><div class="acts"><button class="btn-back" type="button" id="streamBack">Cancel</button><button class="btn-post primary" type="button" id="streamConfirm"${busy ? ' disabled' : ''}>${pending.publishAt ? 'Schedule it' : 'Post anyway'}</button></div></div>`; })() : ''}
          <div class="bar"${pending ? ' hidden' : ''}><div class="house-sel"><select id="streamTo"><option value="">The whole course</option>${gs.map(g => `<option value="${e(g)}"${g === last ? ' selected' : ''}>Group ${e(g)}</option>`).join('')}</select></div><label class="bywhen">Count down to <input type="datetime-local" id="streamDue" title="Optional — a deadline: trainees see a countdown, and the post stays at the top until then"></label><label class="bywhen">Show it from <input type="datetime-local" id="streamWhen" title="Optional — trainees see it from this time; leave it empty to post now"></label><span class="hint">The whole course is the main course tutor’s; a group is its tutor’s.</span><button class="btn-back" type="button" id="pinClose">Cancel</button><button class="btn-post primary" type="button" id="streamPost"${busy ? ' disabled' : ''}>Pin it</button></div></div>`
-      + (back.length ? `<p class="slabel">Held back — the trainees do not see these yet</p><div class="pins">` + back.map(heldRow).join('') + '</div>' + (posts.length ? `<p class="slabel">On the board</p>` : '') : '')
+      /* FOLDED UNTIL ASKED FOR (Ramy, 11 Nov 2026, with ten scheduled on C/21: "an option to hide all those announcements"):
+         the held posts are one line until a tutor opens them; this browser remembers which */
+      + (back.length ? `<p class="slabel heldline">Held back: ${back.length} post${back.length === 1 ? '' : 's'} the trainees do not see yet${back[0] && back[0].publishAt && window.HubDue ? '. The next goes up ' + e(HubDue.state(back[0].publishAt).due) : ''}. <button class="more" type="button" id="heldToggle">${heldOpen() ? 'Hide them' : 'Show them'}</button></p>` + (heldOpen() ? `<div class="pins">` + back.map(heldRow).join('') + '</div>' : '') + (posts.length ? `<p class="slabel">On the board</p>` : '') : '')
       + (list.length ? '<div class="pins">' : '') + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('') + (list.length ? '</div>' : '')
       + (posts.length || back.length ? '' : '<p class="empty">Nothing on the board yet. The trainees see this noticeboard on their home.</p>');
     const po = host.querySelector('#pinOpen'); if (po) po.addEventListener('click', () => { composing = true; draw(); host.querySelector('#streamText').focus(); });
     const pc = host.querySelector('#pinClose'); if (pc) pc.addEventListener('click', () => { composing = false; draw(); });
+    { const t = host.querySelector('#heldToggle'); if (t) t.addEventListener('click', () => { try { localStorage.setItem('chub:heldOpen', heldOpen() ? '0' : '1'); } catch (x) {} draw(); }); }
     host.querySelectorAll('[data-now]').forEach(b => b.addEventListener('click', () => postAt(b.dataset.now, '')));
     host.querySelectorAll('[data-when]').forEach(b => b.addEventListener('click', () => { whenFor = b.dataset.when; draw(); const i = host.querySelector('.whenpick'); if (i) i.focus(); }));
     host.querySelectorAll('[data-unpick]').forEach(b => b.addEventListener('click', () => { whenFor = null; draw(); }));

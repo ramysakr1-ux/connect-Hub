@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111725">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111749">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -492,6 +492,8 @@
   .gswitch span{font-size:0.8rem; color:var(--grey);}
   .swapbar{position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:50; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; max-width:min(92vw, 760px); padding:11px 16px; background:var(--paper); border:1px solid var(--sand-line); border-left:4px solid var(--a-mustard); border-radius:12px; font-size:0.86rem; box-shadow:0 12px 30px -10px oklch(30% 0.04 60 / .45);}
   .swapbar[hidden]{display:none;}
+  .lockmat{display:flex; flex-direction:column; gap:8px; margin:12px 0 0; padding:12px 0 0; border-top:1px solid var(--sand-line);}
+  .ttlock{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 12px; padding:10px 14px; border-radius:10px; background:var(--gold-wash); border:1px solid var(--amber-edge); font-size:.88rem; color:var(--ink);}
   .draftnote{border-left-color:var(--amber-edge); line-height:1.45; box-sizing:border-box; width:min(560px, calc(100vw - 32px)); max-width:none;}
   /* on a phone, clear of the Lite button and the sync pill at the foot */
   @media (max-width:700px){ .draftnote{bottom:84px;} }
@@ -848,27 +850,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111725">
+<link rel="stylesheet" href="hub-house.css?v=202611111749">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611111725"></script>
-<script src="hub-tracker.js?v=202611111725"></script>
-<script src="hub-rotation.js?v=202611111725"></script>
-<script src="hub-xlsx.js?v=202611111725"></script>
-<script src="hub-docx.js?v=202611111725"></script>
-<script src="hub-timetable-parse.js?v=202611111725"></script>
-<script src="assignment-defaults.js?v=202611111725"></script>
-<script src="hub-shared.js?v=202611111725"></script>
+<script src="hub-due.js?v=202611111749"></script>
+<script src="hub-tracker.js?v=202611111749"></script>
+<script src="hub-rotation.js?v=202611111749"></script>
+<script src="hub-xlsx.js?v=202611111749"></script>
+<script src="hub-docx.js?v=202611111749"></script>
+<script src="hub-timetable-parse.js?v=202611111749"></script>
+<script src="assignment-defaults.js?v=202611111749"></script>
+<script src="hub-shared.js?v=202611111749"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611111725"></script>
-<script src="hub-say.js?v=202611111725"></script>
-<script src="hub-sync.js?v=202611111725"></script>
-<script src="hub-notebook.js?v=202611111725"></script>
+<script src="hub-store.js?v=202611111749"></script>
+<script src="hub-say.js?v=202611111749"></script>
+<script src="hub-sync.js?v=202611111749"></script>
+<script src="hub-notebook.js?v=202611111749"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1961,7 +1963,7 @@ function render(){
   ZONE = SETTINGS.timeZone || '';
   PLACED = placedMap();
   STATE = stateMap();
-  GROUPS = groups(); DUES = dues(); OUTS = outs(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW;
+  GROUPS = groups(); DUES = dues(); OUTS = outs(); ROOMS = roomsByLabel(); EDIT = IS_TUTOR && !PREVIEW && !TT_LOCKED;
   document.body.classList.toggle('editing', EDIT);
   if (!render.printWired) { render.printWired = true; document.addEventListener('click', (e) => { if (e.target && e.target.id === 'ttPrint') window.print(); }); }
   const app = $('app');
@@ -2016,7 +2018,7 @@ function render(){
      The old row of buttons stays on the page, out of sight, because Course setup opens its panels through it. */
   if (WEEK == null || WEEK >= weeks.length || WEEK < 0) { const t = weeks.findIndex(w => w.some(d => d.date >= TODAY)); WEEK = t === -1 ? weeks.length - 1 : t; }
   const oldBar = IS_TUTOR ? `<div id="ttOldBar">${pub ? '<button type="button" id="unpublish">Take it back</button>' : ''}<button type="button" id="buildOpen">Set up the timetable</button><button type="button" id="setOpen">Timetable settings</button><button type="button" id="asgOpen">Assignment dates</button></div>` : '';
-  const bar = IS_TUTOR ? oldBar + (EDIT ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` + statusHTML() : '')
+  const bar = IS_TUTOR ? oldBar + lockHTML() + (EDIT ? `<p class="status" style="margin:0 0 10px">${esc(note)}</p>` + statusHTML() : '')
       + (PREVIEW ? '' : whoHTML() + asgDatesHTML() + buildPanelHTML() + settingsPanelHTML() + builtHTML() + importHTML()) : '';
   /* Where teaching practice starts at a different time from the teaching day
      before it, the week says so above its days, in words: "From Monday 26
@@ -3171,8 +3173,28 @@ function openDetails(date, id){
     ${x.k === 'feedback' && IS_TUTOR ? `<a class="res" href="40_tp_feedback.html?date=${esc(date)}${GVIEW ? '&group=' + encodeURIComponent(GVIEW) : ''}">Open the feedback screen</a>` : ''}
     ${x.k === 'feedback' && !IS_TUTOR ? `<a class="res" href="41_feedback_games.html">Feedback games</a>` : ''}
     ${room ? `<a class="res" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join · ${esc(room.label)}</a>` : ''}
-    ${!x.d && !page && !mat && !room && x.k !== 'feedback' ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}`;
+    ${!x.d && !page && !mat && !room && x.k !== 'feedback' && !(TT_LOCKED && IS_TUTOR) ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}
+    ${TT_LOCKED && IS_TUTOR && x.k !== 'tp' && x.k !== 'break' && x.k !== 'lunch' ? `<form class="lockmat" id="lockMat">
+      <label>Materials link<input name="mat" type="url" placeholder="https://" value="${esc(x.mat || '')}"></label>
+      <label>Online room link<input name="url" type="url" placeholder="https://" value="${esc(x.url && x.url !== 'https://' ? x.url : '')}"></label>
+      <label>Preparation<textarea name="d" placeholder="What trainees read or bring.">${esc(x.d || '')}</textarea></label>
+      <p class="muted">The schedule is locked, but a session’s materials, online room and preparation are any tutor’s to add. They show to the course at once.</p>
+      <p class="warn" id="lockErr"></p><button class="btn" type="submit">Save</button></form>` : ''}`;
   el.hidden = false; asDrawer(el, name);
+  /* MATERIALS UNDER THE LOCK (Ramy, 11 Nov 2026: "will the other trainer be able to add links to her own input sessions with
+     the lock?"). Written to the published day and the working copy alike, so no draft opens and nothing waits for Publish;
+     the store lets a change through without the PIN when it touches nothing but these two (v218). */
+  const lf = el.querySelector('#lockMat');
+  if (lf) lf.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const link = (v, what) => { v = v.trim(); if (!v) return ''; try { const u = new URL(v); if (!/^https?:$/.test(u.protocol)) throw 0; return u.href; } catch (e2) { throw new Error('The ' + what + ' must start with http:// or https://.'); } };
+    let m = '', u2 = ''; const d = lf.elements.d.value.trim();
+    try { m = link(lf.elements.mat.value, 'materials link'); u2 = link(lf.elements.url.value, 'online room link'); } catch (e3) { el.querySelector('#lockErr').textContent = e3.message; return; }
+    const put = t => { if (m) t.mat = m; else delete t.mat; if (u2) t.url = u2; else delete t.url; if (d) t.d = d; else delete t.d; };
+    put(x);
+    if (LIVE && Array.isArray(LIVE.days)) { const ld = LIVE.days.find(y => y.date === date), lt2 = ld && (ld.sessions || []).find(y => y.id === id); if (lt2) put(lt2); }
+    closePop(); save('Saved — the course sees it now'); render();
+  });
 }
 /* A new session (+ Session, an empty place, or the library): made on the draft at once and opened to change, the same as
    any other; closing it with nothing typed keeps an empty tile the tutor can name later or remove. */
@@ -4393,7 +4415,33 @@ function draftNotice(edited){
   setInterval(nowLine, 30000);
 })();
 
+/* THE TIMETABLE, LOCKED WITH THE COURSE ADMIN PIN (Ramy, 11 Nov 2026: "lock the timetable with the pin"; step 2 of the
+   PIN of 10 Nov). Once a course has a Course admin PIN, the store takes no change to the timetable without it (store
+   v218). A tutor on a device that has not typed it sees the board as the course does, with one line and a button; the
+   PIN typed once on a device opens the timetable and Course admin both. A course with no PIN is not locked. */
+var TT_LOCKED = false;
+function lockHTML(){
+  if (!TT_LOCKED) return '';
+  return `<p class="ttlock"><b>The timetable is locked.</b> Changing it needs the Course admin PIN; a session’s materials, online room link and preparation do not. <button class="btn quiet small" type="button" id="ttUnlock">Type the PIN</button></p>`;
+}
+async function checkLock(){
+  const S = window.HubStore; if (!IS_TUTOR || !S || !S.adminPin) return;
+  let r = null; try { r = await S.adminPin(); } catch (e) { r = e && e.adminPin ? { set: true, ok: false } : null; }
+  const was = TT_LOCKED; TT_LOCKED = !!(r && r.set && !r.ok);
+  if (was !== TT_LOCKED) render();
+}
+document.addEventListener('click', async e => {
+  if (!e.target.closest('#ttUnlock')) return;
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611111749'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  if (!sheet) return;
+  const given = await sheet.ask({ who: 'admin' }); if (!given) return;
+  window.HubStore.adminEnter(given);
+  await checkLock();
+  if (TT_LOCKED) { note = 'That PIN did not open it. Try again.'; render(); }
+});
+
 render();
+checkLock();
 </script>
 </body>
 </html>
