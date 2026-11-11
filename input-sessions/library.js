@@ -360,3 +360,14 @@ try {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire); else wire();
 })();
+
+/* A strip that scrolls sideways says so (12 Nov 2026): while there is more to the right, the strip carries .more-r and
+   session.css fades its right edge. On a phone the section links run off the screen and "Trainer notes" was unseen. */
+(function(){
+  function watch(el){ if (!el || el.__moreR) return; el.__moreR = 1;
+    var set = function(){ el.classList.toggle('more-r', el.scrollWidth - el.clientWidth - el.scrollLeft > 6); };
+    el.addEventListener('scroll', set, { passive: true }); window.addEventListener('resize', set); set(); setTimeout(set, 600); setTimeout(set, 2500); }
+  function go(){ var n = document.querySelectorAll('nav.sticky-nav'); for (var i = 0; i < n.length; i++) watch(n[i]); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  document.addEventListener('hub:ready', go);
+})();

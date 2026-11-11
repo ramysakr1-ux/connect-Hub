@@ -196,6 +196,7 @@
   /* ---- the sheet ----------------------------------------------------------- */
   var CSS = ''
     + '.nbk-arc{position:fixed;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent;right:18px;bottom:var(--nbk-bottom,var(--sync-bottom,16px));z-index:880;width:52px;height:52px;border-radius:50%;border:0;background:var(--a-forest);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 4px rgba(35,34,32,.1),0 14px 30px -12px rgba(35,34,32,.45);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease;background-image:linear-gradient(180deg,rgba(255,255,255,.1),transparent 60%);}'
+    + '@media screen and (max-width:560px){body{padding-bottom:calc(var(--nbk-bottom,var(--sync-bottom,16px)) + 60px);}}'   /* room under the last line, so the page can scroll its last button clear of this one (12 Nov 2026) */
     + '.nbk-arc:focus-visible{outline:3px solid var(--a-gold-ink);outline-offset:2px;}'
     /* OUT OF THE WAY (Ramy, 4 Nov 2026: the pen sat over the lunch tile and a field label on a phone). While the page
        scrolls, and while a field has the keyboard, the arc tucks to the edge, a third of it showing; it comes back when
