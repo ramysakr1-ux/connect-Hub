@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111608">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111627">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -684,7 +684,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111608">
+<link rel="stylesheet" href="hub-house.css?v=202611111627">
 </head>
 <body>
 <div class="board">
@@ -1294,20 +1294,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611111608"></script>
-<script src="hub-store.js?v=202611111608"></script>
-<script src="hub-xlsx.js?v=202611111608"></script>
-<script src="hub-say.js?v=202611111608"></script>
-<script src="agreement-defaults.js?v=202611111608"></script>
-<script src="observation-defaults.js?v=202611111608"></script>
-<script src="hub-shared.js?v=202611111608"></script>
+<script src="assignment-defaults.js?v=202611111627"></script>
+<script src="hub-store.js?v=202611111627"></script>
+<script src="hub-xlsx.js?v=202611111627"></script>
+<script src="hub-say.js?v=202611111627"></script>
+<script src="agreement-defaults.js?v=202611111627"></script>
+<script src="observation-defaults.js?v=202611111627"></script>
+<script src="hub-shared.js?v=202611111627"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611111608"></script>
-<script src="hub-due.js?v=202611111608"></script>
-<script src="hub-sync.js?v=202611111608"></script>
-<script src="hub-notebook.js?v=202611111608"></script>
-<script src="hub-hand.js?v=202611111608"></script>
-<script src="hub-ink.js?v=202611111608"></script>
+<script src="hub-rotation.js?v=202611111627"></script>
+<script src="hub-due.js?v=202611111627"></script>
+<script src="hub-sync.js?v=202611111627"></script>
+<script src="hub-notebook.js?v=202611111627"></script>
+<script src="hub-hand.js?v=202611111627"></script>
+<script src="hub-ink.js?v=202611111627"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1351,7 +1351,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611111608'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611111627'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -2760,24 +2760,6 @@ function rosterSets(list){
   });
   return out;
 }
-function mailLink(t){
-  const S = window.HubStore;
-  const course = (document.getElementById('courseName') || {}).value || 'your CELTA course';
-  const first = String(t.name || '').trim().split(/\s+/)[0] || '';
-  const cs = mailSettings(), cname = (document.getElementById('centreName') || {}).value.trim() || cs.centreName || 'the center';
-  const start = mailDay(cs.start), today = (window.hubToday && hubToday()) || new Date().toISOString().slice(0, 10), before = /^\d{4}-\d{2}-\d{2}/.test(String(cs.start || '')) && today < String(cs.start).slice(0, 10);
-  const agr = cs.agreement || {}, hasAgr = !!(String(((cs.docs || {}).docAgreement) || '').trim() || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions'].some(k => String(agr[k] || '').trim()));
-  const waiting = [cs.preCourseConnect ? 'your pre-course task' : '', hasAgr ? 'the course agreement' : ''].filter(Boolean);
-  const subject = encodeURIComponent('Your link for ' + course);
-  const body = encodeURIComponent((first ? 'Hello ' + first + ',' : 'Hello,')
-    + '\n\nWelcome to ' + course + ' at ' + cname + '.' + (before && start ? ' We\u2019re looking forward to meeting you on ' + start + '.' : '')
-    + '\n\nHere is your link to the course on Connect Lite:\n' + S.inviteFor('trainee', t.token)
-    + '\n\nIt is yours alone. Whoever opens it can read your feedback and hand in work in your name, so please keep it to yourself.'
-    + (cs.pinLinks ? '\n\nThe first time you open it, you\u2019ll choose a PIN. Please remember it: you\u2019ll type the same PIN when you open your link on another phone or computer. If you forget it, ask us for a new link.' : '')
-    + (before && waiting.length ? '\n\nOpen it once before day one: ' + waiting.join(' and ') + (waiting.length > 1 ? ' are' : ' is') + ' waiting for you there.' : '')
-    + '\n\nIf anything doesn\u2019t open, just reply to this email.' + mailSign(cname));
-  return 'mailto:' + encodeURIComponent(t.email || '') + '?subject=' + subject + '&body=' + body;
-}
 function rosterList(trainees){
   const S = window.HubStore;
   return ['Name\tEmail\tLink'].concat(trainees.map(t => [t.name || '', t.email || '', S.inviteFor('trainee', t.token)].join('\t'))).join('\n');
@@ -2928,14 +2910,14 @@ async function renderStoreRoster(next){
            email box looks like a box. The trainee's link is two matching pills,
            Copy link and Email it (greyed until there is an address); Links and
            Remove sit apart at the end, the one that undoes something last. -->
-      ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Copy it into Classroom, or email it once their address is in.</p>${trainees.length > 1 ? `<p class="rnote rhow"><b>To move a trainee</b>, drag them onto the trainee to swap places with, in either group, or onto a set’s heading to take a free place there. You can also click their name, then click where they go. <button type="button" class="linkbtn" id="mixOpen">Or let Lite mix the groups</button></p><div id="mixHost" hidden></div>` : ''}
+      ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Send it and Lite emails it to them from lite@ in the center’s name, with the PIN and what to do before day one; the email asks them not to reply.${(() => { const n = trainees.filter(t => t.email && !t.invited).length; return n ? ` <button class="btn quiet small" type="button" id="sendLinksAll">Send the links to ${n} trainee${n === 1 ? '' : 's'}</button>` : ''; })()}</p>${trainees.length > 1 ? `<p class="rnote rhow"><b>To move a trainee</b>, drag them onto the trainee to swap places with, in either group, or onto a set’s heading to take a free place there. You can also click their name, then click where they go. <button type="button" class="linkbtn" id="mixOpen">Or let Lite mix the groups</button></p><div id="mixHost" hidden></div>` : ''}
       <div class="grid roster ghead"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
       ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.empty ? `<div class="rset rempty" data-rgroup="${esc(sec.group)}" data-rset="${sec.set}">Nobody in this set yet. Drag a trainee here, or click a trainee and then this box.</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
         <div class="name">${t.letter ? `<span class="grip" title="Drag onto another trainee to swap places, or onto a set to move there. Or click, then click." aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}${t.certName && t.certName.at ? `<em class="certok" title="Confirmed ${esc(String(t.certName.at).slice(0, 10))}${t.certName.by === 'tutor' ? ' by a tutor' : ' by the trainee'}">Name confirmed</em>` : `<em class="certno" title="The trainee confirms it when they sign the agreement">Name not confirmed</em>`}${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
         <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
         <div class="acts col-link">
           <button class="pillbtn" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}">Copy link</button>
-          ${t.email ? `<a class="pillbtn mail" href="${mailLink(t)}" title="Opens your mail app with their link in the message">Email it</a>` : '<span class="pillbtn off" title="Add their email first">Email it</span>'}
+          ${t.email ? `<button class="pillbtn mail" type="button" data-send="${esc(t.token)}" data-name="${esc(t.name)}" title="Lite emails them their link, from lite@ in the center’s name">${t.invited ? 'Sent ' + esc(sentDay(t.invited)) : 'Send it'}</button>` : '<span class="pillbtn off" title="Add their email first">Send it</span>'}
         </div>
         <div class="acts more">
           <!-- No door to the trainee's work here. This row had "Record" (the
@@ -3028,7 +3010,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611111608'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611111627'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();
@@ -3521,7 +3503,7 @@ document.getElementById('storeRoster').addEventListener('change', async e=>{
 var SEND_WARNED = false;
 document.getElementById('storeRoster').addEventListener('click', async e => {
   if (SEND_WARNED) return;
-  const hit = e.target.closest('[data-copy], #copyRosterList, a.pillbtn.mail'); if (!hit) return;
+  const hit = e.target.closest('[data-copy], #copyRosterList, .pillbtn.mail, #sendLinksAll'); if (!hit) return;
   let n = 0; try { n = (typeof TRAINEE_COUNT === 'number' && TRAINEE_COUNT !== null) ? TRAINEE_COUNT : Object.keys(loadRoster().trainees || {}).length; } catch (err) {}
   const open = readyItems(n).filter(x => !x[0]); if (!open.length) return;
   e.preventDefault(); e.stopPropagation();
@@ -3531,6 +3513,39 @@ document.getElementById('storeRoster').addEventListener('click', async e => {
   if (!ok) return;
   SEND_WARNED = true; hit.click();
 }, true);
+/* A TRAINEE'S LINK, SENT BY LITE (Ramy, 11 Nov 2026: "we should do the same thing with the trainees ... everyone gets their own
+   link, the same way the volunteer students do ... do not reply"). The store writes and sends it (traineeInvite, v217) and
+   keeps the time; the roster shows "Sent 11 Nov" on the row. */
+function sentDay(iso){ const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }   /* a declaration: the roster can draw before this line runs */
+async function sendTraineeLink(token){
+  const r = await window.HubStore.call({ op: 'traineeInvite', t: token });
+  const list = Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {});
+  const t = list.find(x => x && x.token === token); if (t) t.invited = (r && r.invited) || new Date().toISOString();
+  return r;
+}
+document.getElementById('storeRoster').addEventListener('click', async e => {
+  const one = e.target.closest('[data-send]'), all = e.target.closest('#sendLinksAll');
+  if (!one && !all) return;
+  e.preventDefault();
+  const list = Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {});
+  if (one) {
+    const t = list.find(x => x && x.token === one.dataset.send) || {};
+    if (t.invited && !(await confirmModal('Lite sent ' + (one.dataset.name || 'them') + ' their link on ' + sentDay(t.invited) + '. Send it again?', 'Send again'))) return;
+    one.disabled = true; one.textContent = 'Sending…';
+    try { await sendTraineeLink(one.dataset.send); FRESH_PINS = PINS; renderStoreRoster(ROSTER); }
+    catch (err) { one.disabled = false; one.textContent = 'Send it'; alert(String((err && err.message) || err).replace(/^Error:\s*/, '')); }
+    return;
+  }
+  const todo = list.filter(t => t && t.email && !t.invited); if (!todo.length) return;
+  if (!(await confirmModal('Send ' + todo.length + ' trainee' + (todo.length === 1 ? '' : 's') + ' their link? Each gets their own, by email from lite@ in the center’s name.', 'Send'))) return;
+  all.disabled = true; let sent = 0; const failed = [];
+  for (const t of todo) {
+    all.textContent = 'Sending ' + (sent + failed.length + 1) + ' of ' + todo.length + '…';
+    try { await sendTraineeLink(t.token); sent++; } catch (err) { failed.push(t.name); }
+  }
+  FRESH_PINS = PINS; renderStoreRoster(ROSTER);   /* the PINs have not changed: redraw at once */
+  if (failed.length) alert('Sent to ' + sent + '. Not sent to ' + failed.join(', ') + ': use Send it on their row.');
+});
 document.getElementById('storeRoster').addEventListener('click', async e=>{
   const S = window.HubStore;
   const l = e.target.closest('#copyRosterList');

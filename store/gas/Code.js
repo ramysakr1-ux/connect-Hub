@@ -2555,6 +2555,58 @@ case 'inbox': {
       var scSet = courseRead_(course.id, 'settings') || {};
       return shapeCv_(req, 'shapeCv:' + me.token, scSet.demoToday || scSet.demoAskName ? 40 : 20, true);
     }
+    /* A TRAINEE'S LINK, SENT BY LITE (v217, 11 Nov 2026; Ramy: "we should do the same thing with the trainees ... everyone
+       gets their own link, the same way the volunteer students do ... do not reply"). From lite@ in the center's name, like
+       the volunteers' invitation; it says not to reply, and names no tutor's address. The time it went is kept in the
+       course kind `traineeInvites` { token: iso } and comes back on the roster. A demo course sends nothing. */
+    case 'traineeInvite': {
+      requireTutor_(tutor);
+      var tiTok = String(req.t || '');
+      var tiOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      var tiSet = courseRead_(course.id, 'settings') || {};
+      if (tiSet.demoToday) throw new Error('This is a demo course, so nothing is sent.');
+      var tiRow = roster_(course.id).filter(function (t) { return t.token === tiTok; })[0];
+      if (!tiRow) throw new Error('That trainee is not on this course.');
+      var tiTo = String(tiRow.email || '').trim();
+      if (!tiOk.test(tiTo)) throw new Error('Add ' + (tiRow.name || 'their') + '\u2019s email first.');
+      var tiAll = courseRead_(course.id, 'traineeInvites') || {};
+      if (tiAll[tiTok] && (new Date().getTime() - new Date(tiAll[tiTok]).getTime()) < 10 * 60 * 1000) throw new Error('Sent a few minutes ago. Give it a little while before sending again.');
+      var tiCentre = tiSet.centreName || 'Connect Lite', tiCourse = tiSet.courseName || 'your CELTA course';
+      var tiLink = SITE_ + 'invite.html?t=' + encodeURIComponent(tiTok);
+      var tiEsc = function (x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      var tiFirst = String(tiRow.name || '').trim().split(/\s+/)[0];
+      var tiStart = String(tiSet.start || '').slice(0, 10), tiToday = Utilities.formatDate(new Date(), tiSet.timeZone || 'UTC', 'yyyy-MM-dd');
+      var tiBefore = /^\d{4}-\d{2}-\d{2}$/.test(tiStart) && tiToday < tiStart;
+      var tiDay = '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(tiStart)) { var tiD = new Date(Date.UTC(+tiStart.slice(0, 4), +tiStart.slice(5, 7) - 1, +tiStart.slice(8, 10), 12)); tiDay = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][tiD.getUTCDay()] + ' ' + tiD.getUTCDate() + ' ' + ['January','February','March','April','May','June','July','August','September','October','November','December'][tiD.getUTCMonth()]; }
+      var tiAgr = tiSet.agreement || {}, tiHasAgr = !!(String(((tiSet.docs || {}).docAgreement) || '').trim() || ['agrAttendance','agrPlagiarism','agrComplaints','agrResubmissions','agrExpectations'].some(function (k) { return String(tiAgr[k] || '').trim(); }));
+      var tiWait = [tiHasAgr ? 'the course agreement to sign' : '', tiSet.preCourseConnect ? 'your pre-course task' : ''].filter(Boolean);
+      var tiLines = [
+        'Welcome to ' + tiCourse + ' at ' + tiCentre + '.' + (tiBefore && tiDay ? ' We\u2019re looking forward to meeting you on ' + tiDay + '.' : ''),
+        tiBefore ? 'Here is your own link to the course on Connect Lite. Until the course starts, it opens ' + (tiWait.length ? tiWait.join(' and ') : 'your welcome page') + '; everything else opens on day one.'
+                 : 'Here is your own link to the course on Connect Lite. Your timetable, lesson plans, feedback and assignments are all there.',
+        'BOLD:It is yours alone. Whoever opens it can read your feedback and hand in work in your name, so please keep it to yourself.',
+        tiSet.pinLinks ? 'The first time you open it, you\u2019ll choose a PIN: four to twelve letters or numbers. Please remember it: you\u2019ll type it once on each phone or computer you use. If you forget it, your tutor can give you a new link.' : '',
+        tiBefore && tiWait.length ? 'Please open it before ' + (tiDay || 'day one') + '.' : ''
+      ].filter(Boolean);
+      var tiP = 'font:16px/1.55 Arial,Helvetica,sans-serif;color:#232220;margin:0 0 14px';
+      var tiHtml = '<div style="max-width:520px">'
+        + '<p style="' + tiP + '">' + (tiFirst ? 'Hello ' + tiEsc(tiFirst) + ',' : 'Hello,') + '</p>'
+        + tiLines.slice(0, 2).map(function (l) { return '<p style="' + tiP + '">' + tiEsc(l) + '</p>'; }).join('')
+        + '<p style="margin:22px 0"><a href="' + tiLink + '" style="display:inline-block;padding:13px 22px;background:#1E3B2F;color:#ffffff;text-decoration:none;border-radius:10px;font:bold 16px Arial,Helvetica,sans-serif">Open my course</a></p>'
+        + tiLines.slice(2).map(function (l) { return '<p style="' + tiP + '">' + (l.indexOf('BOLD:') === 0 ? '<b>' + tiEsc(l.slice(5)) + '</b>' : tiEsc(l)) + '</p>'; }).join('')
+        + '<p style="' + tiP + '">' + (tiBefore && tiDay ? 'See you on ' + tiEsc(tiDay) + ',' : 'Best wishes,') + '<br>The CELTA team at ' + tiEsc(tiCentre) + '</p>'
+        + '<p style="font:13px/1.5 Arial,Helvetica,sans-serif;color:#777;margin:22px 0 0">Please don\u2019t reply to this email: replies aren\u2019t read. If your link doesn\u2019t open, contact ' + tiEsc(tiCentre) + '.</p>'
+        + '</div>';
+      var tiText = (tiFirst ? 'Hello ' + tiFirst + ',' : 'Hello,') + '\n\n' + tiLines.slice(0, 2).join('\n\n') + '\n\nYour link: ' + tiLink
+        + '\n\n' + tiLines.slice(2).map(function (l) { return l.replace(/^BOLD:/, ''); }).join('\n\n')
+        + '\n\n' + (tiBefore && tiDay ? 'See you on ' + tiDay + ',' : 'Best wishes,') + '\nThe CELTA team at ' + tiCentre
+        + '\n\nPlease don\u2019t reply to this email: replies aren\u2019t read. If your link doesn\u2019t open, contact ' + tiCentre + '.';
+      sendAs_({ to: tiTo, subject: 'Your link for ' + tiCourse, htmlBody: tiHtml, body: tiText, name: tiCentre });
+      var tiAt = new Date().toISOString();
+      courseUpdateObj_(course.id, 'traineeInvites', function (all) { all = all || {}; all[tiTok] = tiAt; return all; });
+      return { invited: tiAt, to: tiTo };
+    }
     case 'volunteerInvite': {
       requireTutor_(tutor);
       var viTok = String(req.v || '');
@@ -2859,6 +2911,9 @@ case 'inbox': {
     case 'roster': {
       if (!reader) throw new Error('Tutors only');
       var rl = withoutEmails_(rosterWithRecords_(course.id, TUTOR_WRITES), assessor);
+      /* when Lite last sent each trainee their link (v217) */
+      var rInv = courseRead_(course.id, 'traineeInvites') || {};
+      rl.forEach(function (t) { if (t && rInv[t.token]) t.invited = rInv[t.token]; });
       if (assessor) rl.forEach(function (t) { if (t && t.records) delete t.records.about; });   /* v180: see boot */
       return { trainees: rl };
     }

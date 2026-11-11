@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111608">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111627">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -51,6 +51,7 @@
   .status{font-size:0.8rem; color:var(--grey);}
   .panel{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:14px 16px; margin:0 0 18px;}
   .panel h3{font-family:'Newsreader',Georgia,serif; font-size:1.02rem; margin:0 0 4px;}
+  .addhint{margin:0 0 8px !important; font-size:0.84rem;}
   .mrow .mlv{flex:0 0 auto; align-self:center; font-size:0.78rem; color:var(--grey); white-space:nowrap;}
   .panel .phead{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:space-between; margin:0 0 6px;} .panel .phead h3{margin:0;}
   .panel p{font-size:0.8rem; color:var(--grey); margin:0 0 10px; line-height:1.55;}
@@ -149,21 +150,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111608">
+<link rel="stylesheet" href="hub-house.css?v=202611111627">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611111608"></script>
-<script src="hub-shared.js?v=202611111608"></script>
-<script src="hub-timetable-parse.js?v=202611111608"></script>
-<script src="hub-xlsx.js?v=202611111608"></script>
-<script src="hub-attendance.js?v=202611111608"></script>
-<script src="hub-store.js?v=202611111608"></script>
-<script src="hub-say.js?v=202611111608"></script>
-<script src="hub-sync.js?v=202611111608"></script>
+<script src="hub-due.js?v=202611111627"></script>
+<script src="hub-shared.js?v=202611111627"></script>
+<script src="hub-timetable-parse.js?v=202611111627"></script>
+<script src="hub-xlsx.js?v=202611111627"></script>
+<script src="hub-attendance.js?v=202611111627"></script>
+<script src="hub-store.js?v=202611111627"></script>
+<script src="hub-say.js?v=202611111627"></script>
+<script src="hub-sync.js?v=202611111627"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -379,23 +380,22 @@ function render(){
 let LAST_SENT = '';   // "Invitation sent to Amin." -- shown in the panel, which stays open for the next person
 let MANY_OPEN = false;
 let PREFILL = [];       // people read from a sheet, waiting in the boxes until Add and send (11 Nov 2026)
-let MANY_ROWS = 5;      // the boxes under "Add several at once"; "Add another row" adds one   // "Add several at once" stays open across a redraw once opened
+let MANY_ROWS = 3;      // the boxes under "Add several at once"; "Add another row" adds one   // "Add several at once" stays open across a redraw once opened
 function addHTML(){
-  /* One person at a time is the form (Ramy, 21 Oct 2026: "a bit busy").
-     A list, pasted or from a file, sits behind "Add several at once". */
-  /* A SHEET COMES FIRST (Ramy, 11 Nov 2026, after importing C/21's twenty: "why does it say add several at once?"). The file
-     button sat at the foot of the typing rows, so importing opened five empty rows and two more dark buttons. It is now
-     beside the heading, and an import closes the panel on the list and its Send button. */
-  return `<div class="panel"><div class="phead"><h3>Add a student</h3><label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div>
+  /* ONE SET OF BOXES (Ramy, 11 Nov 2026: "why do we have so many different views? Why can't we have the same view for
+     everybody?"). There were three: one person with its own button, "Add several at once" behind a switch, and a file that
+     filled the second. Now there is one list of Name and Email boxes: type into it, choose a file, or paste a list into a
+     name box, and each fills the same rows, with the level a sheet gives shown beside a row. One button adds them all and
+     sends everyone with an address their invitation. */
+  const n = Math.max(MANY_ROWS, PREFILL.length);
+  return `<div class="panel"><div class="phead"><h3>Add students</h3><label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div>
     ${LAST_SENT ? `<p class="sentnote">${esc(LAST_SENT)}</p>` : ''}
-    <div class="row one"><input type="text" id="oneName" placeholder="Name" autocomplete="off"><input type="email" id="oneEmail" placeholder="Their email" autocomplete="off"></div>
-    <div class="row" style="margin-top:8px"><button class="btn btn-gold" id="addSend">Add and send the invitation</button></div>
-    <details class="many" id="many"${MANY_OPEN ? ' open' : ''}><summary>Add several at once</summary>
-      ${Array.from({ length: Math.max(MANY_ROWS, PREFILL.length) }, (_, k) => { const pp = PREFILL[k] || {};
-        return `<div class="row one mrow" data-level="${esc(pp.level || '')}" data-note="${esc(pp.note || '')}"><input type="text" class="mName" placeholder="Name" autocomplete="off" value="${esc(pp.name || '')}"><input type="email" class="mEmail" placeholder="Their email" autocomplete="off" value="${esc(pp.email || '')}">${pp.level ? `<span class="mlv">${esc(LV(pp.level))}</span>` : ''}</div>`; }).join('')}
-      <p style="margin:6px 0 10px !important"><a href="#" id="moreRows" class="morerows">Add another row</a></p>
-      <div class="row"><button class="btn btn-gold" id="addSendAll">Add and send all the invitations</button></div>
-    </details></div>`;
+    <p class="muted addhint">Type each person, choose a file, or paste a list into a name box.</p>
+    ${Array.from({ length: n }, (_, k) => { const pp = PREFILL[k] || {};
+      return `<div class="row one mrow" data-level="${esc(pp.level || '')}" data-note="${esc(pp.note || '')}"><input type="text" class="mName" placeholder="Name" autocomplete="off" value="${esc(pp.name || '')}"><input type="email" class="mEmail" placeholder="Their email" autocomplete="off" value="${esc(pp.email || '')}">${pp.level ? `<span class="mlv">${esc(LV(pp.level))}</span>` : ''}</div>`; }).join('')}
+    <p style="margin:6px 0 10px !important"><a href="#" id="moreRows" class="morerows">Add another row</a></p>
+    <div class="row"><button class="btn btn-gold" id="addSendAll">Add and send the invitations</button></div>
+  </div>`;
 }
 
 /* WHAT A LIST SAYS (11 Nov 2026): rows from a paste, a file or the typed boxes, read into people { name, email, level, note }
@@ -511,16 +511,19 @@ function wire(){
   if ($('many')) $('many').addEventListener('toggle', e => { MANY_OPEN = e.target.open; });
   /* Add and send the invitation (Ramy, 21 Oct 2026): a name and an email
      typed once, the row made, and the invitation sent, in one tap. */
-  if ($('addSend')) $('addSend').addEventListener('click', () => {
-    const v = $('oneName').value.trim(), m = $('oneEmail').value.trim();
-    if (!v) { note = 'Type their name first.'; render(); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) { note = 'Type their email first.'; render(); return; }
-    LAST_SENT = '';
-    addPeople([{ name: v, email: m }]);
-    const st = students().find(x => x.name.trim().toLowerCase() === v.toLowerCase());
-    if (!st || !st.token) { note = 'Added. The invitation can be sent from their row in a moment.'; render(); return; }
-    inviteStudent(st, m, null);
-  });
+
+  /* a list pasted into a name box fills the rows from that box down (11 Nov 2026) */
+  document.querySelectorAll('.mName').forEach((box, at) => box.addEventListener('paste', e => {
+    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+    if (!/[\n\t]/.test(text.trim())) return;
+    e.preventDefault();
+    const got = window.hubTimetableParse.rowsFromText(text).filter(r => (r || []).some(x => String(x || '').trim()));
+    /* a plain list of names, one a line, is people, not headings */
+    const people = got.every(r => (r || []).filter(x => String(x || '').trim()).length === 1) ? got.map(r => ({ name: String(r.find(x => String(x || '').trim())).trim(), email: '', level: '', note: '' })).filter(pp => !/@/.test(pp.name)) : parsePeople(got);
+    if (!people.length) return;
+    const rows = boxRows(); rows.splice(at, people.length, ...people);
+    PREFILL = rows; MANY_ROWS = rows.length; render();
+  }));
   if ($('moreRows')) $('moreRows').addEventListener('click', e => {
     e.preventDefault();
     PREFILL = boxRows(); MANY_ROWS = PREFILL.length + 1; MANY_OPEN = true; render();
@@ -549,7 +552,7 @@ function wire(){
         st.invited = (r && r.invited) || new Date().toISOString(); sent++;
       } catch (e) { failed.push(nm); }
     }
-    MANY_ROWS = 5; MANY_OPEN = false;
+    MANY_ROWS = 3; MANY_OPEN = false;
     LAST_SENT = (sent ? 'Invitations sent to ' + sent + (sent === 1 ? ' person.' : ' people.') : 'Added.') + (failed.length ? ' Not sent yet: ' + failed.join(', ') + '; use Send the invitation on their row.' : '');
     ADD_OPEN = true;
     persist(sent ? sent + ' sent' : 'Added');
@@ -565,7 +568,8 @@ function wire(){
       const have = new Set(students().map(st => st.name.trim().toLowerCase()));
       const list = parsePeople(rows).filter(pp => !have.has(pp.name.trim().toLowerCase()));
       if (!list.length) { note = 'Nobody new in that file.'; render(); return; }
-      PREFILL = list; MANY_ROWS = list.length; ADD_OPEN = true; MANY_OPEN = true; LAST_SENT = '';
+      const typed = document.querySelector('.mrow') ? boxRows().filter(pp => pp.name || pp.email) : [];   /* rows already typed stay; the file goes below them */
+      PREFILL = typed.concat(list.filter(pp => !typed.some(t => t.name.toLowerCase() === pp.name.toLowerCase()))); MANY_ROWS = PREFILL.length; ADD_OPEN = true; MANY_OPEN = true; LAST_SENT = '';
       note = list.length + (list.length === 1 ? ' person' : ' people') + ' from the file. Check them, then press Add and send all the invitations.';
       render();
       const first = document.querySelector('.mrow'); if (first) first.scrollIntoView({ block: 'center' });
