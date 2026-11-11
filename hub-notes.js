@@ -56,7 +56,15 @@
       var door = area === 'timetable' ? 'Open the timetable' : area === 'tppoints' ? 'Open TP points' : 'Open Course admin';
       out.push({ id: id, area: area, text: text, href: href, door: door });
     };
-    var days = Array.isArray(tt.days) ? tt.days.filter(function (d) { return d && d.date && !d.closed; }) : [];
+    /* THE TIMETABLE AS TUTORS SEE IT (Ramy, 11 Nov 2026: "make sure that the worth a look is consistent with the
+       information on the timetable"). An edit made after publishing is a draft that rides beside the published days
+       (23_timetable.html, openDraft); the timetable shows tutors the draft, so the notes read it too. Only the
+       timetable page hands over a timetable with the draft already laid on; every other page reads the record. */
+    var dr = tt.draft;
+    var allDays = Array.isArray(tt.days) ? tt.days : [];
+    if (dr && Array.isArray(dr.all)) allDays = dr.all;
+    else if (dr && dr.days) allDays = allDays.map(function (d) { return (d && dr.days[d.date]) || d; });
+    var days = allDays.filter(function (d) { return d && d.date && !d.closed; });
     var lib = (P.set && P.set.library) || {}, setIds = Object.keys(lib);
     var setName = function (id) { var s = lib[id] || {}; return s.name || s.book || 'a set'; };
     var tps = parseInt(cs.tpCount, 10) || 8, half = Math.floor(tps / 2) + 1;
