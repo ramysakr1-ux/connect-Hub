@@ -1233,6 +1233,42 @@ window.hubTutorForTile = function(cs, group, date, title){
   }
   return window.hubTutorOn(cs, group, date);
 };
+/* A TUTORIAL WITH BOTH TUTORS (Ramy, 11 Nov 2026: "it'll have to read both tutors ... it should also be linked to the
+   zoom link if there's one"). A tile named Tutorial with its tutor set to all of them is one sheet with a list of places
+   for each tutor, side by side for the tile's length; a trainee's Join is their own tutor's room from Course admin >
+   Contacts (c.room). Places stay numbered 1, 2, 3 ... through the lists in tutor order, so the store's bookings keep their shape:
+   with three places a tutor, place 4 is the second tutor's first. The store's copy is sheetSplit_ in Code.js: change
+   one, change both. */
+window.hubSheetSplit = function(cs, x){
+  var names = window.hubTutorNames ? window.hubTutorNames(cs) : [];
+  var mm = function(hm){ var m = /^(\d{1,2}):(\d{2})/.exec(String(hm || '')); return m ? +m[1] * 60 + +m[2] : 0; };
+  var pl = x && [10, 15, 20, 30, 45, 60].indexOf(+x.pl) >= 0 ? +x.pl : 15;
+  var per = x ? Math.max(1, Math.floor((mm(x.e) - mm(x.s)) / pl)) : 1;
+  /* no tutor named counts as all of them (Ramy, 11 Nov 2026: "trainees have their own view anyway, so they should only be
+     able to see their own tutorials"): a course with two tutors gets a list each without touching the tile */
+  var noOne = !x || x.by === undefined || x.by === null || x.by === '';
+  var split = !!x && /tutorial/i.test(x.t || '') && (x.by === 'all' || noOne) && names.length > 1;
+  return { split: split, tutors: split ? names : [], per: per, total: split ? per * names.length : per, pl: pl, start: x ? mm(x.s) : 0 };
+};
+/* place n of a sheet: whose list it is on, and when it starts */
+window.hubSheetPlace = function(cs, x, n){
+  var s = window.hubSheetSplit(cs, x), i = Math.max(0, (+n || 1) - 1);
+  var ti = s.split ? Math.floor(i / s.per) : -1, slot = s.split ? i % s.per : i, m = s.start + slot * s.pl;
+  /* the tutor's own room: their row in Course admin > Contacts (Ramy, 11 Nov 2026: "we already decided which group which
+     tutor ... I don't know if you actually need to have that on the timetable") */
+  var link = '';
+  if (ti >= 0) (cs && Array.isArray(cs.tutorContacts) ? cs.tutorContacts : []).forEach(function(c){
+    if (!link && c && c.name && String(c.name).trim().toLowerCase() === s.tutors[ti].toLowerCase() && /^https?:\/\//i.test(String(c.room || ''))) link = String(c.room);
+  });
+  return { ti: ti, tutor: ti >= 0 ? s.tutors[ti] : '', slot: slot, at: ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2), link: link };
+};
+/* which list on a both-tutors sheet is this trainee's: their own tutor's for that tutorial; -1 when it cannot be told */
+window.hubSheetListFor = function(cs, x, group, date){
+  var s = window.hubSheetSplit(cs, x); if (!s.split) return -1;
+  var own = String(window.hubTutorForTile ? window.hubTutorForTile(cs, group, date, x && x.t) : '').trim().toLowerCase();
+  for (var i = 0; i < s.tutors.length; i++) if (own && s.tutors[i].toLowerCase() === own) return i;
+  return -1;
+};
 /* a trainee's own tutor on a day: their class's tutor; with no classes, their group's row in Tutor contacts */
 window.hubTutorOn = function(cs, group, date){
   var k = window.hubClassOn(cs, group, date || (window.hubToday ? window.hubToday() : new Date().toISOString().slice(0, 10)));

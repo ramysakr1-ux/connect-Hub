@@ -1766,6 +1766,13 @@ case 'inbox': {
       var own = ownTutor_(bSet, me, bDate, sheet.tile.t, courseRead_(course.id, 'timetable')), isTut = /tutorial/i.test(sheet.tile.t || ''), sheetBy = tutorName_(bSet, sheet.tile.by);
       var ownSheet = !own || !sheetBy || own.toLowerCase() === sheetBy.toLowerCase();
       if (isTut && !ownSheet) throw new Error('Tutorials are with your own tutor, ' + own + '. Book on their sheet.');
+      /* on a both-tutors tutorial, the trainee's own tutor's list (v216); with no own tutor known, any list */
+      var bFrom = 1, bTo = sheet.places;
+      if (sheet.split && own) {
+        var li = -1; sheet.tutors.forEach(function (n, i) { if (li < 0 && n.toLowerCase() === own.toLowerCase()) li = i; });
+        if (li < 0) throw new Error('Your tutor has no places on this tutorial. Ask your tutor.');
+        bFrom = li * sheet.per + 1; bTo = (li + 1) * sheet.per;
+      }
       if (!isTut && !ownSheet) {
         var subs = read_(course.id, me.token, 'assignments') || {};
         var sent = function (k) { var a = subs[k]; return !!(a && (a.sub1At || a.stage === 'submitted' || a.stage === 'resubmitted' || a.stage === 'resubmission_needed' || a.stage === 'closed')); };
@@ -1777,11 +1784,11 @@ case 'inbox': {
         var sh = all[key] || { places: {} }; sh.places = sh.places || {};
         var taken = Object.keys(sh.places).filter(function (n) { return sh.places[n] && sh.places[n].token; });
         if (isTut && taken.some(function (n) { return sh.places[n].token === me.token; })) throw new Error('You already have a place on this sheet.');
-        for (var n = 1; n <= sheet.places; n++) { if (!sh.places[n] || !sh.places[n].token) { sh.places[n] = { token: me.token, name: me.name || '', asg: bAsg, at: new Date().toISOString() }; got = n; break; } }
-        if (!got) throw new Error('No places left on this sheet.');
+        for (var n = bFrom; n <= bTo; n++) { if (!sh.places[n] || !sh.places[n].token) { sh.places[n] = { token: me.token, name: me.name || '', asg: bAsg, at: new Date().toISOString() }; got = n; break; } }
+        if (!got) throw new Error(sheet.split ? 'No places left on this tutorial.' : 'No places left on this sheet.');
         all[key] = sh; return all;
       });
-      return { booked: got, from: placeTime_(sheet.tile.s, got, sheet.tile) };
+      return { booked: got, from: placeTime_(sheet.tile.s, got, sheet.tile, sheet.split ? sheet.per : 0) };
     }
     case 'releaseSlot': {
       if (!course) throw new Error('This link is not on a course');
@@ -3580,11 +3587,30 @@ function bookableTile_(courseId, date, id) {
   if (!tile || !/consultation|tutorial/i.test(tile.t || '')) throw new Error('That is not a sheet you can book.');
   var len = mins_(tile.e) - mins_(tile.s);
   /* the place length the tutor chose for this sheet (31 Oct 2026); 15 minutes when none was set */
-  return { tile: tile, places: Math.max(1, Math.floor(len / placeLen_(tile))) };
+  var per = Math.max(1, Math.floor(len / placeLen_(tile)));
+  var sp = sheetSplit_(courseRead_(courseId, 'settings') || {}, tile, per);
+  return { tile: tile, places: sp.split ? per * sp.tutors.length : per, per: per, split: sp.split, tutors: sp.tutors };
+}
+/* A TUTORIAL WITH BOTH TUTORS (v216, 11 Nov 2026, Ramy: "it'll have to read both tutors"). A tile named Tutorial whose
+   tutor is set to all of them is a list of places for each tutor, side by side; places run 1, 2, 3 ... through the lists
+   in tutor order (with three a tutor, place 4 is the second tutor's first). The page's copy is hubSheetSplit in
+   hub-shared.js: change one, change both. The tutors are Course admin's two lists, as the page reads them. */
+function tutorList_(set) {
+  var out = [];
+  var add = function (n) { n = String(n || '').trim(); if (n && !out.some(function (x) { return x.toLowerCase() === n.toLowerCase(); })) out.push(n); };
+  String((set && set.tutorNames) || '').split(/[,\n;]+/).forEach(add);
+  ((set && Array.isArray(set.tutorContacts)) ? set.tutorContacts : []).forEach(function (c) { if (c) add(c.name); });
+  return out;
+}
+function sheetSplit_(set, tile, per) {
+  var names = tutorList_(set);
+  var noOne = !tile || tile.by === undefined || tile.by === null || tile.by === '';
+  var split = !!tile && /tutorial/i.test(tile.t || '') && (tile.by === 'all' || noOne) && names.length > 1;
+  return { split: split, tutors: split ? names : [], per: per };
 }
 function mins_(hm) { var m = /^(\d{1,2}):(\d{2})/.exec(String(hm || '')); return m ? +m[1] * 60 + +m[2] : 0; }
 function placeLen_(tile) { var p = +(tile && tile.pl); return [10, 15, 20, 30, 45, 60].indexOf(p) >= 0 ? p : 15; }
-function placeTime_(s, n, tile) { var m = mins_(s) + (n - 1) * placeLen_(tile); return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2); }
+function placeTime_(s, n, tile, per) { var i = n - 1; if (per) i = i % per; var m = mins_(s) + i * placeLen_(tile); return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2); }
 function tutorName_(set, by) {
   if (by === undefined || by === null || by === '') return '';
   var names = String((set && set.tutorNames) || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);

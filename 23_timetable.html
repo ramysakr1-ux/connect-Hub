@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111429">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111534">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -478,6 +478,7 @@
   body:not(.editing) .tgrid.tboard .tile.bookable{cursor:pointer;}
   body:not(.editing) .tgrid.tboard .tile.bookable:hover{transform:translateY(-2px);}
   .sheet-h{display:flex; flex-direction:column; gap:2px; margin:0 0 8px;} .sheet-h b{font-family:'Newsreader',Georgia,serif; font-size:1.05rem;} .sheet-h span{font-size:0.78rem; color:var(--grey);}
+  .sheet-who{margin:0 0 4px; font-size:0.84rem; color:var(--ink);} .sheet-l + .sheet-l{margin-top:4px;}
   .sheet-rows{display:flex; flex-direction:column; border:1px solid var(--sand-line); border-radius:8px; overflow:hidden; margin:0 0 10px;}
   .sheet-rows .sr{display:flex; gap:12px; align-items:center; padding:7px 10px; border-top:1px solid var(--row-line); font-size:0.84rem;} .sheet-rows .sr:first-child{border-top:0;}
   .sheet-rows .at{min-width:70px; font-weight:700; font-variant-numeric:tabular-nums;}
@@ -847,27 +848,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111429">
+<link rel="stylesheet" href="hub-house.css?v=202611111534">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611111429"></script>
-<script src="hub-tracker.js?v=202611111429"></script>
-<script src="hub-rotation.js?v=202611111429"></script>
-<script src="hub-xlsx.js?v=202611111429"></script>
-<script src="hub-docx.js?v=202611111429"></script>
-<script src="hub-timetable-parse.js?v=202611111429"></script>
-<script src="assignment-defaults.js?v=202611111429"></script>
-<script src="hub-shared.js?v=202611111429"></script>
+<script src="hub-due.js?v=202611111534"></script>
+<script src="hub-tracker.js?v=202611111534"></script>
+<script src="hub-rotation.js?v=202611111534"></script>
+<script src="hub-xlsx.js?v=202611111534"></script>
+<script src="hub-docx.js?v=202611111534"></script>
+<script src="hub-timetable-parse.js?v=202611111534"></script>
+<script src="assignment-defaults.js?v=202611111534"></script>
+<script src="hub-shared.js?v=202611111534"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611111429"></script>
-<script src="hub-say.js?v=202611111429"></script>
-<script src="hub-sync.js?v=202611111429"></script>
-<script src="hub-notebook.js?v=202611111429"></script>
+<script src="hub-store.js?v=202611111534"></script>
+<script src="hub-say.js?v=202611111534"></script>
+<script src="hub-sync.js?v=202611111534"></script>
+<script src="hub-notebook.js?v=202611111534"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1475,6 +1476,8 @@ function localStart(date, from){
 }
 function roomLabelOf(x){ return x.room || (x.k === 'tp' ? 'Teaching practice' : x.k === 'input' ? 'Input' : ''); }
 function joinFor(x, group, date){
+  const li = IS_TRAINEE && window.hubSheetListFor ? hubSheetListFor(SETTINGS, x, group, date) : -1;
+  if (li >= 0) { const sp = hubSheetSplit(SETTINGS, x), own = hubSheetPlace(SETTINGS, x, li * sp.per + 1).link; if (own) return { label: 'Online', url: own }; }
   if (x.url && /^https?:\/\//i.test(x.url) && x.url !== 'https://') return { label: 'Online', url: x.url };
   const lbl = roomLabelOf(x); if (!lbl) return null;
   const r = roomFor({ room: lbl }, group, x.k === 'tp' && window.hubLevelOn && group ? hubLevelOn(SETTINGS, group, date) : '');
@@ -2788,6 +2791,9 @@ function publish(){
    record. */
 function updatedHTML(){
   if (IS_TUTOR) return '';
+  /* NOT NEWS BEFORE DAY ONE (Ramy, 11 Nov 2026, sending C/21 its links): a trainee who opens the timetable for the first time
+     sees the timetable, not a list of what the tutors moved while setting it up */
+  if (SETTINGS.start && TODAY < String(SETTINGS.start).slice(0, 10)) return '';
   const u = (Array.isArray(TT.updates) ? TT.updates : [])[0];
   if (!u || !u.items || !u.items.length) return '';
   let seen = ''; try { seen = localStorage.getItem('chub:ttSeen') || ''; } catch (e) {}
@@ -3501,8 +3507,13 @@ let BOOK = null, BOOK_AT = 0;
    set, so every sheet made before keeps its places). */
 const placeLen = x => [10, 15, 20, 30, 45, 60].indexOf(+x.pl) >= 0 ? +x.pl : 15;
 const isSheet = x => x && /consultation|tutorial/i.test(x.t || '') && toMin(x.e) - toMin(x.s) >= placeLen(x);
-const placesOf = x => Math.max(1, Math.floor((toMin(x.e) - toMin(x.s)) / placeLen(x)));
-const placeAt = (x, n) => toHM(toMin(x.s) + (n - 1) * placeLen(x));
+const placesOf = x => window.hubSheetSplit ? hubSheetSplit(SETTINGS, x).total : Math.max(1, Math.floor((toMin(x.e) - toMin(x.s)) / placeLen(x)));
+const placeAt = (x, n) => window.hubSheetPlace ? hubSheetPlace(SETTINGS, x, n).at : toHM(toMin(x.s) + (n - 1) * placeLen(x));
+/* a both-tutors tutorial (11 Nov 2026): the places a trainee can book are their own tutor's list; anyone else sees them all */
+const myList = (x, date) => IS_TRAINEE && window.hubSheetListFor ? hubSheetListFor(SETTINGS, x, (rec('hub:me') || {}).group, date) : -1;
+const placesFor = (x, date) => { const sp = window.hubSheetSplit ? hubSheetSplit(SETTINGS, x) : null, li = myList(x, date);
+  if (!sp || !sp.split || li < 0) return Array.from({ length: placesOf(x) }, (_, i) => i + 1);
+  return Array.from({ length: sp.per }, (_, i) => li * sp.per + i + 1); };
 function loadBookings(force){
   if (!window.HubStore || !HubStore.call || (!force && BOOK && Date.now() - BOOK_AT < 60000)) return;
   BOOK_AT = Date.now();
@@ -3515,18 +3526,28 @@ function sheetOf(day, x){
 }
 function bookLine(day, x){
   if (!isSheet(x) || !BOOK) return '';
-  const sh = sheetOf(day, x), N = placesOf(x);
+  const sh = sheetOf(day, x), mine = placesFor(x, day.date), N = mine.length, used = sh.taken.filter(n => mine.indexOf(n) !== -1).length;
   if (sh.mine.length) return `<div class="bk mine">Your place · ${esc(hubClock(placeAt(x, sh.mine[0].n)))}</div>`;
-  return `<div class="bk${sh.taken.length >= N ? ' full' : ''}">${sh.taken.length >= N ? 'Full' : (N - sh.taken.length) + ' of ' + N + ' open'}</div>`;
+  return `<div class="bk${used >= N ? ' full' : ''}">${used >= N ? 'Full' : (N - used) + ' of ' + N + ' open'}</div>`;
 }
 function sheetHTML(day, x){
   const sh = sheetOf(day, x), N = placesOf(x), tut = x.by != null && TUTORS[+x.by] ? TUTORS[+x.by] : '';
-  const rows = Array.from({ length: N }, (_, i) => {
-    const n = i + 1, at = esc(hubClock(placeAt(x, n))), mine = sh.mine.some(m => m.n === n), who = sh.names && sh.names[n] && sh.names[n].token ? sh.names[n] : null;
+  const sp = window.hubSheetSplit ? hubSheetSplit(SETTINGS, x) : { split: false }, PL = placeLen(x);
+  const row = n => {
+    const at = esc(hubClock(placeAt(x, n))), mine = sh.mine.some(m => m.n === n), who = sh.names && sh.names[n] && sh.names[n].token ? sh.names[n] : null;
     const state = mine ? '<b class="pl you">Yours</b>' : (who ? `<span class="pl">${esc(who.name || 'Booked')}${who.asg ? ' · ' + esc(asgShort(who.asg)) : ''}</span>${EDIT ? ` <button type="button" class="linkish" data-free="${n}">Free it</button>` : ''}` : (sh.taken.indexOf(n) !== -1 ? '<span class="pl">Booked</span>' : '<span class="pl open">Open</span>'));
     return `<div class="sr"><span class="at">${at}</span>${state}</div>`;
-  }).join('');
-  return `<div class="sheet-h"><b>${esc(x.t || 'Sheet')}</b><span>${esc(dayName(day.date))}${tut ? ' · ' + esc(tut) : ''} · ${N} place${N === 1 ? '' : 's'} of 15 minutes</span></div><div class="sheet-rows">${rows}</div>`;
+  };
+  if (sp.split) {
+    const li = myList(x, day.date);
+    const lists = sp.tutors.map((name, ti) => ({ name, ti })).filter(o => li < 0 || o.ti === li).map(o => {
+      const link = hubSheetPlace(SETTINGS, x, o.ti * sp.per + 1).link;
+      return `<div class="sheet-l">${li < 0 ? `<p class="sheet-who"><b>${esc(o.name)}</b>${link ? ' · online' : ''}</p>` : ''}<div class="sheet-rows">${Array.from({ length: sp.per }, (_, i) => row(o.ti * sp.per + i + 1)).join('')}</div></div>`;
+    }).join('');
+    return `<div class="sheet-h"><b>${esc(x.t || 'Sheet')}</b><span>${esc(dayName(day.date))} · ${li < 0 ? sp.per + ' place' + (sp.per === 1 ? '' : 's') + ' of ' + PL + ' minutes with each tutor' : sp.per + ' place' + (sp.per === 1 ? '' : 's') + ' of ' + PL + ' minutes'}</span></div>${lists}`;
+  }
+  const rows = Array.from({ length: N }, (_, i) => row(i + 1)).join('');
+  return `<div class="sheet-h"><b>${esc(x.t || 'Sheet')}</b><span>${esc(dayName(day.date))}${tut ? ' · ' + esc(tut) : ''} · ${N} place${N === 1 ? '' : 's'} of ${PL} minutes</span></div><div class="sheet-rows">${rows}</div>`;
 }
 function openBooking(date, id){
   closePop();
@@ -3534,12 +3555,13 @@ function openBooking(date, id){
   const x = (day.sessions || []).find(s => s.id === id); if (!x || !isSheet(x)) return;
   const el = pop('ttpop'), sh = sheetOf(day, x), isTut = /tutorial/i.test(x.t || '');
   const demo = !!SETTINGS.demoToday;
-  const can = IS_TRAINEE && !demo && !sh.mine.length && sh.taken.length < placesOf(x) && date >= TODAY;
+  const can = IS_TRAINEE && !demo && !sh.mine.length && placesFor(x, date).some(n => sh.taken.indexOf(n) === -1) && date >= TODAY;
   el.innerHTML = sheetHTML(day, x) + (IS_TRAINEE ? (sh.mine.length
       ? `<div class="acts"><button type="button" class="btn quiet" id="bkFree">Cancel my place</button><button type="button" class="btn" id="bkOk">Done</button></div>`
       : can ? `${isTut ? '' : `<label>What is it about?<select id="bkAsg"><option value="">Something else</option>${['fol', 'lrt', 'lsrt', 'lfc'].map(k => `<option value="${k}">${asgShort(k)}</option>`).join('')}</select></label>`}
         <p class="bkrule">${(() => { /* their tutor ON THAT DAY, from the classes (7 Nov 2026): Stage 3 is the second tutor's */
           const own = window.hubTutorForTile ? hubTutorForTile(SETTINGS, (rec('hub:me') || {}).group, date, x.t) : '';
+          if (isTut && window.hubSheetSplit && hubSheetSplit(SETTINGS, x).split) return 'Book the next open place.';
           return isTut ? (own ? 'Tutorials are with your tutor, ' + esc(own) + '.' : 'Tutorials are with your own tutor.') : 'Before you submit an assignment, any tutor; after, your own tutor' + (own ? ', ' + esc(own) : '') + ', only.'; })()}</p>
         <div class="acts"><button type="button" class="btn quiet" id="bkOk">Close</button><button type="button" class="btn" id="bkGo">Book the next place</button></div><p class="bkmsg" id="bkMsg"></p>`
       : `${demo ? '<p class="bkrule">This is a demo course, so places are not booked here.</p>' : ''}<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`) : `<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`);

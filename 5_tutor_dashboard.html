@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611111429">
+<link rel="stylesheet" href="hub-tokens.css?v=202611111534">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -529,7 +529,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611111429">
+<link rel="stylesheet" href="hub-house.css?v=202611111534">
 </head>
 <body>
 <div class="board">
@@ -640,26 +640,26 @@
 
 </div>
 
-<script src="hub-due.js?v=202611111429"></script>
-<script src="observation-defaults.js?v=202611111429"></script>
-<script src="hub-rotation.js?v=202611111429"></script>
-<script src="hub-shared.js?v=202611111429"></script>
+<script src="hub-due.js?v=202611111534"></script>
+<script src="observation-defaults.js?v=202611111534"></script>
+<script src="hub-rotation.js?v=202611111534"></script>
+<script src="hub-shared.js?v=202611111534"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611111429"></script>
-<script src="hub-say.js?v=202611111429"></script>
-<script src="hub-hand.js?v=202611111429"></script>
-<script src="hub-ink.js?v=202611111429"></script>
-<script src="hub-shelf.js?v=202611111429"></script>
+<script src="hub-store.js?v=202611111534"></script>
+<script src="hub-say.js?v=202611111534"></script>
+<script src="hub-hand.js?v=202611111534"></script>
+<script src="hub-ink.js?v=202611111534"></script>
+<script src="hub-shelf.js?v=202611111534"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611111429"></script>
-<script src="hub-sync.js?v=202611111429"></script>
-<script src="hub-notebook.js?v=202611111429"></script>
-<script src="hub-tracker.js?v=202611111429"></script>
-<script src="hub-feedback.js?v=202611111429"></script>
+<script src="assignment-defaults.js?v=202611111534"></script>
+<script src="hub-sync.js?v=202611111534"></script>
+<script src="hub-notebook.js?v=202611111534"></script>
+<script src="hub-tracker.js?v=202611111534"></script>
+<script src="hub-feedback.js?v=202611111534"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -1346,9 +1346,12 @@ function paintBrief(){
       const B = (r && r.bookings) || {};
       const label = day.date === TODAY ? 'Your tutorials today' : 'Your tutorials, ' + dt(day.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
       const rows = sheetsOn(day).map(x => {
-        const n = Math.max(1, Math.floor((mm(x.e) - mm(x.s)) / pl(x))), places = (B[day.date + '|' + x.id] || {}).places || {};
-        const items = []; for (let i = 1; i <= n; i++) { const pp = places[i]; items.push('<li' + (pp && pp.token ? '' : ' class="free"') + '><b>' + esc(window.hubClock ? hubClock(hm(mm(x.s) + (i - 1) * pl(x))) : hm(mm(x.s) + (i - 1) * pl(x))) + '</b> ' + (pp && pp.token ? esc(pp.name || 'Booked') + (pp.asg ? ' \u00b7 ' + esc(String(pp.asg).toUpperCase()) : '') : 'Free') + '</li>'); }
-        const taken = Object.keys(places).filter(k => places[k] && places[k].token).length;
+        /* a both-tutors tutorial (11 Nov 2026): this tutor's own list only; a tutor the page cannot place sees them all */
+        const sp = window.hubSheetSplit ? hubSheetSplit(set, x) : { split: false }, mine = sp.split && myI >= 0 && myI < sp.tutors.length;
+        const first = mine ? myI * sp.per + 1 : 1, n = sp.split ? (mine ? sp.per : sp.total) : Math.max(1, Math.floor((mm(x.e) - mm(x.s)) / pl(x))), places = (B[day.date + '|' + x.id] || {}).places || {};
+        const timeOf = i => window.hubSheetPlace ? hubSheetPlace(set, x, i).at : hm(mm(x.s) + (i - 1) * pl(x));
+        const items = []; for (let i = first; i < first + n; i++) { const pp = places[i]; items.push('<li' + (pp && pp.token ? '' : ' class="free"') + '><b>' + esc(window.hubClock ? hubClock(timeOf(i)) : timeOf(i)) + '</b> ' + (pp && pp.token ? esc(pp.name || 'Booked') + (pp.asg ? ' \u00b7 ' + esc(String(pp.asg).toUpperCase()) : '') : 'Free') + '</li>'); }
+        const taken = Object.keys(places).filter(k => places[k] && places[k].token && +k >= first && +k < first + n).length;
         return '<div class="dv6-sheet"><p class="t">' + esc(x.t) + ' <span>' + taken + ' of ' + n + ' booked</span></p><ul>' + items.join('') + '</ul></div>';
       }).join('');
       let box = document.getElementById('dv6Tut');
