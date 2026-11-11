@@ -1875,7 +1875,10 @@ window.hubIsReference = function(s){
       onOpen: function(){ sync(el); }
     });
     el._fp = fp; el._fpLast = el.value;
-    if (fp.altInput) { fp.altInput.placeholder = el.getAttribute('placeholder') || (onlyTime ? 'Time' : withTime ? 'Pick a day and time' : 'Pick a day'); fp.altInput.setAttribute('aria-label', el.getAttribute('aria-label') || el.title || ''); }
+    if (fp.altInput) { fp.altInput.placeholder = el.getAttribute('placeholder') || (onlyTime ? 'Time' : withTime ? 'Pick a day and time' : 'Pick a day'); /* the box people see is the picker's own, and the page's <label for> points at the hidden one: a screen reader heard
+       "Pick a day" and not "Starts" (accessibility pass, 12 Nov 2026). The label's words go on the visible box. */
+    var lab = ''; try { var lb = el.id && document.querySelector('label[for="' + el.id + '"]'); lab = lb ? (lb.textContent || '').replace(/\s+/g, ' ').trim() : ''; } catch (e) {}
+    fp.altInput.setAttribute('aria-label', el.getAttribute('aria-label') || lab || el.title || ''); }
     seen.push(el);
   }
   /* A page that sets a box's value from script (every settings load does)
@@ -2966,3 +2969,21 @@ window.hubPoolTake = function(got, libId){
     var n = window.hubPoolFill(got, full); n.asked = !!full; return n;
   }, function(){ return { pages: 0, tracks: 0, wanted: 0, asked: false }; });
 };
+
+/* SKIP TO MAIN CONTENT (accessibility pass, 12 Nov 2026). The first Tab on any page shows a link that jumps past the
+   header to the page's heading; Course admin is long and its header has a dozen stops. Unseen until it has focus. */
+(function(){
+  function add(){
+    if (document.getElementById('hubSkip') || !document.body) return;
+    var h = document.querySelector('main h1, h1, main, .wrap h2'); if (!h) return;
+    if (!h.id) h.id = 'hubMain'; if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1');
+    var st = document.createElement('style');
+    st.textContent = '#hubSkip{position:fixed;left:12px;top:-60px;z-index:9999;padding:12px 18px;border-radius:10px;background:var(--a-forest,#1E3B2F);color:#fff;font:700 15px Karla,sans-serif;text-decoration:none;transition:top .12s ease;}#hubSkip:focus{top:12px;outline:3px solid var(--a-gold-ink,#B8862E);outline-offset:2px;}#' + h.id + ':focus{outline:none;}@media print{#hubSkip{display:none;}}';
+    document.head.appendChild(st);
+    var a = document.createElement('a'); a.id = 'hubSkip'; a.href = '#' + h.id; a.textContent = 'Skip to main content';
+    a.addEventListener('click', function(e){ e.preventDefault(); var t = document.getElementById(h.id); if (t) { t.focus(); t.scrollIntoView({ block: 'start' }); } });
+    document.body.insertBefore(a, document.body.firstChild);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
+  document.addEventListener('hub:ready', function(){ setTimeout(add, 60); });
+})();
