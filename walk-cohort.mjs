@@ -24,7 +24,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -86,6 +86,7 @@ const STORE_URL = `http://127.0.0.1:${storeServer.address().port}/exec`;
 
 /* ---------------- the site, pointed at it ---------------- */
 const dir = mkdtempSync(join(tmpdir(), 'lite-cohort-'));
+process.on('exit', () => { try { rmSync(dir, { recursive: true, force: true }); } catch (e) {} });   // the copy goes when the run ends; 383 of them had piled up to 14 GB (11 Nov 2026)
 // .webmanifest too, or every screen's install link 404s into the console (10 Oct 2026).
 const files = readdirSync(HERE).filter(f => /\.(html|js|css|webmanifest)$/.test(f) && !/^(check-screens|walk-roles|walk-cohort)\.mjs$/.test(f));
 for (const f of files) copyFileSync(join(HERE, f), join(dir, f));

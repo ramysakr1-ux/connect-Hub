@@ -24,7 +24,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -105,6 +105,8 @@ const NO_LINK = /Open your course link/i;
 
 /* 1. the harness: copy, THEN neutralise. */
 const dir = mkdtempSync(join(tmpdir(), 'lite-check-'));
+process.on('exit', () => { try { rmSync(dir, { recursive: true, force: true }); } catch (e) {} });   // the copy goes when the run ends; 383 of them had piled up to 14 GB (11 Nov 2026)
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(130));
 /* Ramy's own C/17 course pages live in this repo too and are not Lite
    screens; they have no link, no rooms and nothing to assert. */
 const NOT_A_SCREEN = new Set(['celta-c17-timetable.html']);

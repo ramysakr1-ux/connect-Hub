@@ -22,7 +22,7 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -80,6 +80,7 @@ if (!points.length) { console.log('nothing to learn from'); process.exit(0); }
 /* The page's own tokeniser, wording rule and model, rather than a second copy
    of any of them here. */
 const dir = mkdtempSync(join(tmpdir(), 'learn-'));
+process.on('exit', () => { try { rmSync(dir, { recursive: true, force: true }); } catch (e) {} });   // the copy goes when the run ends; 383 of them had piled up to 14 GB (11 Nov 2026)
 for (const f of readdirSync(HERE).filter(f => /\.(html|js|css)$/.test(f))) copyFileSync(join(HERE, f), join(dir, f));
 writeFileSync(join(dir, 'hub-store.js'), `window.HubStore={url:'x',token:function(){return '';},key:function(){return 'k';},assessorKey:function(){return '';},isTutor:function(){return true;},isAssessor:function(){return false;},isTrainee:function(){return false;},call:function(){return Promise.resolve({});},boot:function(){return Promise.resolve({});},me:function(){return Promise.resolve({});},get:function(){return Promise.resolve(null);},put:function(){return Promise.resolve({});},course:function(){return Promise.resolve({settings:{},wording:null,critLearn:null});},putCourse:function(){return Promise.resolve({saved:true});},seedCritLearn:function(){return Promise.resolve({seeded:false});},roster:function(){return Promise.resolve({});},withAccess:function(f){return f;}};`);
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' };

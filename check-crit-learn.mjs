@@ -20,12 +20,13 @@
  */
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const dir = mkdtempSync(join(tmpdir(), 'critlearn-'));
+process.on('exit', () => { try { rmSync(dir, { recursive: true, force: true }); } catch (e) {} });   // the copy goes when the run ends; 383 of them had piled up to 14 GB (11 Nov 2026)
 for (const f of readdirSync(HERE).filter(f => /\.(html|js|css)$/.test(f))) copyFileSync(join(HERE, f), join(dir, f));
 
 /* The store is a plain object in the page: this test is about the scorer, not
