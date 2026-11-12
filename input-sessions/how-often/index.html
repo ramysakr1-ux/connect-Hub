@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How often? — Connect Lite</title>
+<script src="../library.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+  .cal{max-width:320px; border:1.5px solid var(--line); border-radius:12px; overflow:hidden; margin:6px 0 14px; background:#fff;}
+  .calhead{background:var(--teal); color:#fff; font:700 .9rem Karla,sans-serif; letter-spacing:.12em; text-align:center; padding:6px;}
+  .calgrid{display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:.85rem; padding:6px;}
+  .calgrid b{font-size:.72rem; color:var(--grey);} .calgrid span{padding:4px 0;}
+  input.num{width:90px;} input.wide{display:block; width:100%; margin:6px 0 4px;}
+  .answer{display:block; color:var(--grey); margin:0 0 6px;}
+  .cline{display:flex; align-items:center; gap:10px; margin:6px 0 12px; font-weight:700; color:var(--teal);}
+  .cline i{flex:1; height:3px; background:linear-gradient(90deg, var(--line), var(--teal)); border-radius:3px;}
+  .rule{margin-top:14px; background:var(--gold-wash); border-radius:12px; padding:10px 14px;} .rule p{margin:4px 0;}
+  .eg{color:var(--grey);}
+  .fsw input{width:100%;}
+  @media print{ input.wide{border-bottom:1px solid #999; min-height:20px;} .cal{max-width:190px; float:right; margin:0 0 6px 12px;} .calgrid{font-size:7pt; padding:3px;} .calgrid span{padding:1px 0;} #s1.pair1{min-height:0;} .tfrow{padding:3px 0;} .tf button{min-height:24px; height:24px; min-width:30px;} #s1 td{padding:5px 8px;} }
+
+  :root{
+    --paper:#fbf8f2; --card:#ffffff; --ink:#232220; --grey:#6b665e; --line:#e3dccd;
+    --teal:#1f6f6b; --teal-wash:#e6f1ef; --gold:#b8862e; --gold-wash:#f7eedb; --red:#a3402f; --green:#2f6b3a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font:400 17px/1.55 Karla, system-ui, sans-serif;}
+  .page{max-width:1080px; margin:0 auto; padding:32px 16px 80px;}
+  h1{font:600 2.4rem/1.1 Newsreader, Georgia, serif; margin:0 0 6px;}
+  h2{font:600 1.45rem/1.2 Newsreader, Georgia, serif; margin:0 0 4px;}
+  .sub{color:var(--grey); margin:0;}
+  .ihbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 14px;}
+  .ihbar .back{color:var(--teal); font-weight:700; text-decoration:none; min-height:44px; display:inline-flex; align-items:center;}
+  .lockup{display:flex; align-items:center; gap:9px; text-decoration:none;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:#f8f6f1; box-shadow:inset 0 0 0 1px oklch(85% 0.02 80); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px; line-height:0.85; letter-spacing:-0.012em; color:oklch(63% 0.096 72);}
+  .hub-pair{display:inline-flex; align-items:baseline; gap:4px;}
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:8px; letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1;}
+  .cmark{float:right; display:inline-flex; align-items:center; gap:4px; margin-left:12px; opacity:.8;}
+  .cmark-tile{width:16px; height:16px; border-radius:4px; background:#f8f6f1; box-shadow:inset 0 0 0 1px #d8d0bf; display:inline-flex; align-items:center; justify-content:center;}
+  .cmark-c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:11pt; color:#a8803f; line-height:1;}
+  .cmark-l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:5pt; letter-spacing:.24em; text-transform:uppercase; color:#2b2218;}
+  @media print{ .logospace{display:block !important; width:60mm; height:20mm;} }
+  .trackmsg{margin:0 0 8px; font-size:.9rem; color:var(--grey);}
+  .ihlogo{height:52px; width:auto;}
+  .sources{font-size:.85rem; color:var(--grey); border-top:1px solid var(--line); padding-top:14px; margin-top:8px;}
+  .sources h2{font:700 .75rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.08em; color:var(--grey); margin:0 0 6px;}
+  .sources p{margin:4px 0;}
+  header{margin-bottom:22px;}
+  header h1{margin:0 0 14px;}
+  header .hero{display:block; width:100%; max-height:360px; object-fit:cover; border-radius:14px;}
+  table.pw, table.pw > tbody, table.pw > tbody > tr, table.pw > tbody > tr > td{display:block; padding:0; border:0;}
+  .pwfoot, .pagefoot{display:none;}
+  .name{margin-top:14px; display:flex; gap:10px; align-items:center; font-weight:600;}
+  .name input{flex:1; max-width:280px;}
+  section{background:var(--card); border:1px solid var(--line); border-top:3px solid var(--teal); border-radius:14px; padding:22px 22px 20px; margin:0 0 20px;}
+  section.go{border-top-color:var(--gold);}
+  .tag{display:inline-block; font:700 0.72rem Karla, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--teal); margin-bottom:6px;}
+  section.go .tag{color:var(--gold);}
+  .do{margin:6px 0 14px; color:var(--ink);}
+  .do b{font-weight:700;}
+  ol,ul{padding-left:22px; margin:8px 0;}
+  li{margin:6px 0;}
+  input[type=text], textarea, select{font:inherit; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; min-height:44px;}
+  textarea{width:100%; min-height:64px; resize:vertical;}
+  select{min-width:76px; cursor:pointer;}
+  button{font:700 0.95rem Karla, sans-serif; cursor:pointer; border-radius:999px; min-height:44px; padding:0 18px; border:1.5px solid var(--teal); background:var(--card); color:var(--teal); transition:transform .12s, box-shadow .12s;}
+  button:hover{transform:translateY(-2px); box-shadow:0 0 0 1.5px var(--teal), 0 10px 20px -12px rgba(0,0,0,.35);}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .check{margin-top:14px;}
+  .res{font-weight:700; margin-left:6px;}
+  .ok{color:var(--green);} .no{color:var(--red);}
+  audio{width:100%; margin:6px 0 12px;}
+  .audio{background:var(--teal-wash); border-radius:12px; padding:12px 14px; margin:8px 0 14px;}
+  .audio b{display:block; font-size:.9rem; color:var(--teal);}
+  table{width:100%; border-collapse:collapse; margin:6px 0;}
+  td,th{padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle;}
+  th{font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--grey);}
+  .rank td:first-child{width:90px;}
+  .tf{display:flex; gap:8px; flex:none;}
+  .tf button{min-width:56px; padding:0 12px;}
+  .tf button.on{background:var(--teal); color:#fff;}
+  .tf button.right{background:var(--green); border-color:var(--green); color:#fff;}
+  .tf button.wrong{background:var(--red); border-color:var(--red); color:#fff;}
+  .tfrow{display:flex; gap:14px; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .tfrow .fix{display:block; margin-top:6px; width:100%;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+  .chip{border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font-weight:600;}
+  .chip[data-s="1"]{background:#e3f0e4; border-color:var(--green); color:var(--green);}
+  .chip[data-s="2"]{background:var(--gold-wash); border-color:var(--gold); color:#8a5f14;}
+  .chip[data-s="3"]{background:#f6e2dd; border-color:var(--red); color:var(--red);}
+  .key{display:flex; gap:14px; flex-wrap:wrap; font-size:.9rem; color:var(--grey);}
+  .key span::before{content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; border:1.5px solid;}
+  .key .k1::before{background:#e3f0e4; border-color:var(--green);} .key .k2::before{background:var(--gold-wash); border-color:var(--gold);} .key .k3::before{background:#f6e2dd; border-color:var(--red);}
+  .lang{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:12px 0;}
+  .lang div{background:var(--gold-wash); border-radius:12px; padding:12px 14px;}
+  .lang h3{font:700 .8rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.06em; margin:0 0 6px; color:#8a5f14;}
+  .lang ul{margin:0; padding-left:18px;} .lang li{margin:4px 0;}
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .card{border:1.5px dashed var(--grey); border-radius:12px; padding:14px;}
+  .card h3{font:600 1.1rem Newsreader, Georgia, serif; margin:0 0 4px;}
+  .card .badge{font-size:.85rem; color:var(--grey); margin:0 0 8px;}
+  .card label{display:block; font-size:.82rem; font-weight:700; margin-top:8px;}
+  .card .ln{border-bottom:1px solid var(--line); height:28px;}
+  .card input{width:100%;}
+  .score td input{width:100%;}
+  .speed{gap:8px; font-weight:700; font-size:.9rem; color:var(--teal);}
+  .speed button{min-width:72px; padding:0 12px;}
+  .speed button.on{background:var(--teal); color:#fff;}
+  .ans{display:none; margin-top:10px; background:var(--gold-wash); border-left:4px solid var(--gold); border-radius:6px; padding:10px 14px; font-size:.95rem;}
+  body.showans .ans{display:block;}
+  .tnotes{background:#fff; border:1px solid var(--line); border-top:3px solid var(--gold); border-radius:14px; padding:18px 22px; margin:0 0 20px;}
+  .tnotes h2{display:flex; gap:10px; align-items:center;} .tnotes .badge{font:700 .7rem Karla,sans-serif; letter-spacing:.06em; text-transform:uppercase; background:var(--gold-wash); color:#8a5f14; border-radius:999px; padding:3px 10px;}
+  .tnotes h4{font:700 .8rem Karla,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--teal); margin:18px 0 6px;}
+  .tnotes p, .tnotes li{font-size:.95rem;} .tn-time{width:100%; border-collapse:collapse; font-size:.92rem;} .tn-time th, .tn-time td{border-bottom:1px solid var(--line); padding:7px 6px; vertical-align:top;} .tn-time td:first-child{width:44px; font-weight:700;}
+  .tw{display:block; margin:4px 0 14px; padding:10px 14px; background:var(--teal-wash); border-left:4px solid var(--teal); border-radius:8px; font-size:.92rem; line-height:1.5;}
+  .tw[hidden]{display:none;} .tw b{display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--teal); margin-bottom:2px;}
+  .notebar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 18px;} .notebar[hidden]{display:none;}
+  .lines .ln{border-bottom:1px solid var(--line); height:30px;}
+  .printonly{display:none;}
+  @media (max-width:640px){
+    .lang,.cards{grid-template-columns:1fr;}
+    .tfrow{flex-direction:column; align-items:flex-start;}
+    h1{font-size:2rem;}
+  }
+  @media print{
+    @page{margin:14mm;}
+    body{background:#fff; font-size:11.5pt;}
+    .page{padding:0; max-width:none;}
+    section{border:1px solid #bbb; border-top:2px solid #444; break-inside:auto; padding:12px 14px; margin-bottom:10px; border-radius:6px;}
+    .th{break-inside:avoid; break-after:avoid;} .th .tag{display:block;}
+    /* ONE TASK OR TWO TO A PAGE (Ramy, 12 Nov 2026): a page holds one task, or two split at the fold, so the teacher can fold it and show half. */
+    section{break-before:page; break-inside:avoid;} #s1{break-before:auto;} section.pair2{break-before:avoid;} section.pair1{min-height:118mm;}
+    section.pair2{position:relative; margin-top:6mm;} section.pair2::before{content:''; position:absolute; left:-14mm; right:-14mm; top:-4mm; border-top:1px dashed #999;}
+    td.sortcol{height:42mm !important;}
+    section.pair1, section.pair2{padding-top:8px; padding-bottom:8px;} #s8 .card label{margin-top:3px; font-size:8.5pt;} #s8 .card input{min-height:0; height:19px; padding:0;} #s8 .card{padding:8px 10px;} #s8 .card .badge{margin:0 0 2px;}
+    .score td{padding:2px 6px;} .score td input{min-height:0; height:20px; padding:0;} .score th{padding:3px 6px;} section.pair1{min-height:112mm;} tr, li, .tfrow, .card, .lang > div, .audio, .chips, table.sort, header{break-inside:avoid;}
+    audio,.check,.ans,.screenonly,.tw,.notebar,.tnotes{display:none !important;}
+    .audio{background:none; border:1px solid #bbb; padding:6px 10px;}
+    .printonly{display:block;}
+    input[type=text],textarea,select{border:0; border-bottom:1px solid #999; border-radius:0; background:none; min-height:0;}
+    select{appearance:none; -webkit-appearance:none; min-width:40px;}
+    textarea{min-height:44px;}
+    button{border-color:#999; color:#000; background:none !important; box-shadow:none !important; transform:none !important;}
+    .chip{background:none !important; color:#000 !important; border-color:#999 !important;}
+    .newpage{break-before:page;}
+    table.printonly.sort{display:table !important; width:100%; table-layout:fixed;} td.sortcol{height:62mm; border:1px solid #999; vertical-align:top;}
+    header .hero{max-height:72mm;}
+    table.pw{display:table !important; width:100%; border-collapse:collapse;} table.pw > tbody{display:table-row-group !important;} table.pw > tbody > tr{display:table-row !important;} table.pw > tbody > tr > td{display:table-cell !important;}
+    .pwfoot{display:table-footer-group !important;} .footspace{height:12mm;}
+    .pagefoot{display:block !important; position:fixed; left:0; right:0; bottom:0; font-size:7.5pt; line-height:1.35; color:#444; border-top:1px solid #bbb; padding-top:4px;}
+    .sources{display:none;}
+    .ihlogo{height:42px;}
+    .sources{font-size:9pt; break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<table class="pw"><tbody><tr><td>
+
+<div class="ihbar">
+  <a class="lockup screenonly" href="../index.html">
+    <span class="tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"/></svg></span>
+    <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+  </a>
+  <a class="back screenonly" href="../demo-lessons/">Back to the demo lessons</a>
+  <span class="logospace printonly" aria-hidden="true"></span></div>
+<header>
+  <h1>How often?</h1>
+</header>
+<div class="notebar screenonly" id="twBar" hidden><button id="twToggle">Hide the notes for trainees</button><a href="#trainer" id="tnLink" hidden style="color:var(--teal); font-weight:700">Trainer notes</a></div>
+
+<section id="s1" class="pair1">
+  <div class="th"><span class="tag">Task 1</span>
+  <h2>Days, weeks, months, years</h2>
+  <p class="do"><b>Look</b> at the calendar. <b>Answer</b> the questions with a partner.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> A lead-in with no new grammar yet. I check the four time words the lesson needs (day, week, month, year) before anything else, with a picture instead of an explanation.</aside>
+  <div class="cal" aria-hidden="true">
+    <div class="calhead">MARCH</div>
+    <div class="calgrid"><b>Mon</b><b>Tue</b><b>Wed</b><b>Thu</b><b>Fri</b><b>Sat</b><b>Sun</b>
+      <span></span><span></span><span></span><span></span><span></span><span>1</span><span>2</span>
+      <span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+      <span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span>
+      <span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span>
+      <span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span>
+      <span>31</span>
+    </div>
+  </div>
+  <table>
+    <tbody>
+      <tr><td>1. How many days are there in a week?</td><td><input type="text" class="num" data-accept="7|seven" aria-label="Days in a week"></td></tr>
+      <tr><td>2. How many months are there in a year?</td><td><input type="text" class="num" data-accept="12|twelve" aria-label="Months in a year"></td></tr>
+      <tr><td>3. How many weeks are there in a year?</td><td><input type="text" class="num" data-accept="52|fifty two|fifty-two" aria-label="Weeks in a year"></td></tr>
+      <tr><td>4. How many days are there in a year?</td><td><input type="text" class="num" data-accept="365|366" aria-label="Days in a year"></td></tr>
+    </tbody>
+  </table>
+  <div class="row check"><button data-check="s1">Check my answers</button><span class="res" data-res="s1"></span></div>
+</section>
+
+<section id="s2" class="pair2">
+  <div class="th"><span class="tag">Task 2</span>
+  <h2>Your teacher's week</h2>
+  <p class="do"><b>Read</b> the sentences about your teacher. <b>True or false?</b> Guess.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> This is the context for the language. The sentences are about me, so the students want to guess. Watch how I check the meaning of once and twice before I write anything up.</aside>
+  <div data-tf="?" class="tfrow"><div>1. I sleep <b>every day</b>.</div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="?" class="tfrow"><div>2. I go on holiday <b>once a year</b>.</div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="?" class="tfrow"><div>3. I play tennis <b>twice a week</b>.</div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="?" class="tfrow"><div>4. I eat <b>three times a day</b>.</div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="?" class="tfrow"><div>5. I <b>never</b> drink coffee.</div><div class="tf"><button>T</button><button>F</button></div></div>
+</section>
+
+<section id="s3">
+  <div class="th"><span class="tag">Task 3</span>
+  <h2>From never to every day</h2>
+  <p class="do"><b>Put</b> the words in order, from 1 (never) to 7 (every day).</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Now I clarify. The line shows the meaning; the box shows the form and where the words go in the sentence. I drill the new words, then the sentences: twice and once are hard to say.</aside>
+  <div class="cline" aria-hidden="true"><span>never</span><i></i><span>every day</span></div>
+  <table>
+    <tbody>
+      <tr><td>once a week</td><td><select data-ans="4" aria-label="once a week"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></td></tr>
+      <tr><td>every day</td><td><select data-ans="7" aria-label="every day"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></td></tr>
+      <tr><td>once a year</td><td><select data-ans="2" aria-label="once a year"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></td></tr>
+      <tr><td>three times a week</td><td><select data-ans="6" aria-label="three times a week"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></td></tr>
+      <tr><td>never</td><td><select data-ans="1" aria-label="never"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></td></tr>
+      <tr><td>twice a week</td><td><select data-ans="5" aria-label="twice a week"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></td></tr>
+      <tr><td>once a month</td><td><select data-ans="3" aria-label="once a month"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></td></tr>
+    </tbody>
+  </table>
+  <div class="row check"><button data-check="s3">Check my answers</button><span class="res" data-res="s3"></span></div>
+  <div class="rule">
+    <p><b>once</b> = 1 time &nbsp;·&nbsp; <b>twice</b> = 2 times &nbsp;·&nbsp; <b>three times</b>, <b>four times</b> …</p>
+    <p>a day &nbsp;·&nbsp; a week &nbsp;·&nbsp; a month &nbsp;·&nbsp; a year</p>
+    <p>I play tennis <b>twice a week</b>. &nbsp; I <b>never</b> drink coffee.</p>
+  </div>
+</section>
+
+<section id="s4" class="pair1">
+  <div class="th"><span class="tag">Task 4</span>
+  <h2>Make the question</h2>
+  <p class="do"><b>Put</b> the words in order. <b>Write</b> the question.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The first practice is controlled: the words are all there, only the order changes. It is quick and safe at this level, and it shows me who has the question form.</aside>
+  <ol>
+    <li>often / do / you / How / read<input type="text" class="wide" data-accept="how often do you read" aria-label="Question 1"></li>
+    <li>does / How / she / often / cook<input type="text" class="wide" data-accept="how often does she cook" aria-label="Question 2"></li>
+    <li>he / How / does / often / swim<input type="text" class="wide" data-accept="how often does he swim" aria-label="Question 3"></li>
+    <li>they / often / How / do / travel<input type="text" class="wide" data-accept="how often do they travel" aria-label="Question 4"></li>
+  </ol>
+  <div class="row check"><button data-check="s4">Check my answers</button><span class="res" data-res="s4"></span></div>
+</section>
+
+<section id="s5" class="pair2">
+  <div class="th"><span class="tag">Task 5</span>
+  <h2>What is the question?</h2>
+  <p class="do"><b>Read</b> the answer. <b>Write</b> the question.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> A step up: they build the whole question from the answer. Notice I model the first one, then let them work alone before pairs check.</aside>
+  <ol>
+    <li><input type="text" class="wide" data-accept="how often does she eat|how many times a day does she eat" aria-label="Question for answer 1"><span class="answer">She eats twice a day.</span></li>
+    <li><input type="text" class="wide" data-accept="how often does he play tennis" aria-label="Question for answer 2"><span class="answer">He plays tennis once a week.</span></li>
+    <li><input type="text" class="wide" data-accept="how often do they go to the cinema" aria-label="Question for answer 3"><span class="answer">They go to the cinema twice a month.</span></li>
+    <li><input type="text" class="wide" data-accept="how often do you drive|how often do you drive a car" aria-label="Question for answer 4"><span class="answer">We drive every week.</span></li>
+    <li><input type="text" class="wide" data-accept="how often do you study english" aria-label="Question for answer 5"><span class="answer">I study English every day.</span></li>
+  </ol>
+  <div class="row check"><button data-check="s5">Check my answers</button><span class="res" data-res="s5"></span></div>
+</section>
+
+<section id="s6" class="pair1">
+  <div class="th"><span class="tag">Task 6</span>
+  <h2>Do or does?</h2>
+  <p class="do"><b>Choose</b> do or does. Then <b>ask</b> your partner the questions with you.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Do or does is the mistake beginners make most here. One small task just for that, then they use the questions with a partner.</aside>
+  <table>
+    <tbody>
+      <tr><td>1. How often</td><td><select data-ans="does" aria-label="Question 1"><option></option><option>do</option><option>does</option></select></td><td>he have lunch with his family?</td></tr>
+      <tr><td>2. How often</td><td><select data-ans="does" aria-label="Question 2"><option></option><option>do</option><option>does</option></select></td><td>she talk on the phone with her mother?</td></tr>
+      <tr><td>3. How often</td><td><select data-ans="do" aria-label="Question 3"><option></option><option>do</option><option>does</option></select></td><td>you wake up after 11 a.m.?</td></tr>
+      <tr><td>4. How often</td><td><select data-ans="do" aria-label="Question 4"><option></option><option>do</option><option>does</option></select></td><td>they go to bed after midnight?</td></tr>
+      <tr><td>5. How often</td><td><select data-ans="does" aria-label="Question 5"><option></option><option>do</option><option>does</option></select></td><td>your brother sleep eight hours?</td></tr>
+    </tbody>
+  </table>
+  <div class="row check"><button data-check="s6">Check my answers</button><span class="res" data-res="s6"></span></div>
+</section>
+
+<section id="s7" class="pair2">
+  <div class="th"><span class="tag">Task 7</span>
+  <h2>Before you speak</h2>
+  <p class="do"><b>Write</b> the questions for Task 8.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Planning time before the speaking. Beginners need to see the question written before they can ask it standing up.</aside>
+  <ol>
+    <li>do sport? <input type="text" class="wide" data-accept="how often do you do sport|how often do you do sports" aria-label="Question about sport"></li>
+    <li>study English at home? <input type="text" class="wide" data-accept="how often do you study english at home" aria-label="Question about English"></li>
+    <li>go to the cinema? <input type="text" class="wide" data-accept="how often do you go to the cinema" aria-label="Question about the cinema"></li>
+    <li>cook dinner? <input type="text" class="wide" data-accept="how often do you cook dinner" aria-label="Question about cooking"></li>
+  </ol>
+  <div class="row check"><button data-check="s7">Check my answers</button><span class="res" data-res="s7"></span></div>
+</section>
+
+<section id="s8" class="pair1 go">
+  <div class="th"><span class="tag">Task 8</span>
+  <h2>Find someone who…</h2>
+  <p class="do"><b>Stand up.</b> Ask your classmates <i>How often do you…?</i> Find one person for each line. <b>Write</b> their name and how often.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The freer practice. Everyone stands and moves, and they ask the same question many times, which is the point. I monitor and note errors; I do not correct during the mingle.</aside>
+  <table class="fsw">
+    <thead><tr><th>Find someone who…</th><th>Name</th><th>How often?</th></tr></thead>
+    <tbody>
+      <tr><td>does sport twice a week or more</td><td><input type="text" aria-label="Name 1"></td><td><input type="text" aria-label="How often 1"></td></tr>
+      <tr><td>studies English at home every day</td><td><input type="text" aria-label="Name 2"></td><td><input type="text" aria-label="How often 2"></td></tr>
+      <tr><td>goes to the cinema once a month</td><td><input type="text" aria-label="Name 3"></td><td><input type="text" aria-label="How often 3"></td></tr>
+      <tr><td>cooks dinner every day</td><td><input type="text" aria-label="Name 4"></td><td><input type="text" aria-label="How often 4"></td></tr>
+      <tr><td>sleeps eight hours or more</td><td><input type="text" aria-label="Name 5"></td><td><input type="text" aria-label="How often 5"></td></tr>
+      <tr><td>goes to bed before 11 p.m.</td><td><input type="text" aria-label="Name 6"></td><td><input type="text" aria-label="How often 6"></td></tr>
+      <tr><td>goes out with friends once a week</td><td><input type="text" aria-label="Name 7"></td><td><input type="text" aria-label="How often 7"></td></tr>
+      <tr><td>never drinks coffee</td><td><input type="text" aria-label="Name 8"></td><td><input type="text" aria-label="How often 8"></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="s9" class="pair2 go">
+  <div class="th"><span class="tag">Task 9</span>
+  <h2>Tell the class</h2>
+  <p class="do"><b>Write</b> three sentences about your classmates. <b>Tell</b> the class.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> They report what they found, so the third person form comes back. I finish with the errors I noted, on the board, for the class to correct.</aside>
+  <p class="eg">Example: <i>Ali does sport three times a week.</i></p>
+  <ol>
+    <li><input type="text" class="wide" aria-label="Sentence 1"></li>
+    <li><input type="text" class="wide" aria-label="Sentence 2"></li>
+    <li><input type="text" class="wide" aria-label="Sentence 3"></li>
+  </ol>
+</section>
+
+
+<section class="tnotes screenonly" id="trainer" hidden><h2>Trainer notes <span class="badge">Tutor only</span></h2><div id="tnBody"></div></section>
+<footer class="sources">
+  <h2>Sources</h2>
+  <p><b>Material:</b> written by Ramy Sakr for this demo lesson. Find someone who is a common classroom activity type.</p>
+</footer>
+
+</td></tr></tbody><tfoot class="pwfoot"><tr><td><div class="footspace"></div></td></tr></tfoot></table>
+<div class="pagefoot"><span class="cmark"><span class="cmark-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"/></svg></span><span class="cmark-c">Connect</span><span class="cmark-l">Lite</span></span>Original material: Ramy Sakr, <i>How often?</i>, a beginner demo lesson for Connect Lite (2026). The Find someone who task follows a common classroom activity type.</div>
+
+</div>
+<script>
+(function(){
+  function mark(sec){
+    var sel = document.querySelectorAll('#' + sec + ' select[data-ans]'), n = 0;
+    sel.forEach(function(s){ var ok = s.value === s.dataset.ans; if (ok) n++; s.style.borderColor = s.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+    return n + ' of ' + sel.length + ' right';
+  }
+  function norm(t){ return String(t || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  document.querySelectorAll('[data-check]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.dataset.check, sec = document.getElementById(k), n = 0, all = 0;
+      sec.querySelectorAll('select[data-ans]').forEach(function(x){ all++; var ok = x.value === x.dataset.ans; if (ok) n++; x.style.borderColor = x.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+      sec.querySelectorAll('input[data-accept]').forEach(function(x){ all++; var ok = x.dataset.accept.split('|').indexOf(norm(x.value)) !== -1; if (ok) n++; x.style.borderColor = x.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+      sec.querySelectorAll('input[data-p]').forEach(function(x){ all++; var ok = x.checked === (x.dataset.p === 'y'); if (ok) n++; x.parentNode.style.color = ok ? 'var(--green)' : 'var(--red)'; });
+      sec.querySelectorAll('[data-tf]').forEach(function(row){ if (row.dataset.tf === '?') return; all++; var on = row.querySelector('.tf .on'); row.querySelectorAll('.tf button').forEach(function(x){ x.classList.remove('right','wrong'); });
+        if (on) { var ok = on.textContent === row.dataset.tf; if (ok) n++; on.classList.add(ok ? 'right' : 'wrong'); } });
+      document.querySelector('[data-res="' + k + '"]').textContent = n + ' of ' + all + ' right';
+    });
+  });
+  document.querySelectorAll('.tf').forEach(function(g){
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){ g.querySelectorAll('button').forEach(function(x){ x.classList.remove('on','right','wrong'); }); b.classList.add('on'); }); });
+  });
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.addEventListener('click', function(){ c.dataset.s = String(((+c.dataset.s || 0) + 1) % 4); });
+  });
+  document.querySelectorAll('audio').forEach(function(a){
+    a.addEventListener('play', function(){ document.querySelectorAll('audio').forEach(function(o){ if (o !== a) o.pause(); }); });
+  });
+  document.querySelectorAll('.speed').forEach(function(g){
+    var a = g.parentNode.querySelector('audio');
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){
+      a.preservesPitch = true; a.webkitPreservesPitch = true; a.defaultPlaybackRate = +b.dataset.rate; a.playbackRate = +b.dataset.rate;
+      g.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    }); });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var tw = [].slice.call(document.querySelectorAll('.tw')), b = document.getElementById('twToggle');
+  window.twShow = function(on){ tw.forEach(function(x){ x.hidden = !on; }); if (b) { b.textContent = on ? 'Hide the notes for trainees' : 'Show the notes for trainees'; b.dataset.on = on ? '1' : ''; } };
+  if (b) b.addEventListener('click', function(){ twShow(!b.dataset.on); });
+})();
+</script>
+<script src="../../hub-store.js"></script>
+<script>
+/* The two recordings come through Lite's store from the Connect Lite shared drive, not from this public page
+   (12 Nov 2026). They load when the page opens from a course link; the third listening reuses the second track. */
+(function(){
+  var aud = [].slice.call(document.querySelectorAll('audio[data-track]'));
+  function say(a, t){ var m = a.parentNode.querySelector('.trackmsg'); if (m) m.textContent = t; }
+  aud.forEach(function(a){ say(a, 'Loading the recording\u2026'); });
+  function load(a){
+    if (!window.HubStore || !HubStore.audio) return Promise.reject(new Error('no store'));
+    return HubStore.audio(a.dataset.track).then(function(r){
+      if (!r || !r.b64) throw new Error('empty');
+      var bin = atob(r.b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'audio/mp4' }));
+      a.src = url; say(a, '');
+      if (a.id === 'a2') document.querySelectorAll('audio[data-same="a2"]').forEach(function(x){ x.src = url; });
+    });
+  }
+  /* Who sees what (Ramy, 12 Nov 2026): the notes for the trainees watching show on a trainee's or a tutor's link,
+     never a volunteer's and never on paper; a tutor can hide them to project the page. The trainer notes come from
+     the store, for a tutor's link only, like every input session's. */
+  var H = window.HubStore;
+  if (H && (H.isTrainee() || H.isTutor() || H.isAssessor())) twShow(true);
+  if (H && (H.isTutor() || H.isAssessor())) document.getElementById('twBar').hidden = false;
+  if (H && H.isTutor()) H.ping().then(function(r){
+    if (!r || !r.tutor) return;
+    var sec = document.getElementById('trainer'), tb = document.getElementById('tnBody');
+    sec.hidden = false; document.getElementById('tnLink').hidden = false; tb.innerHTML = '<p>Loading the trainer notes…</p>';
+    H.call({ op: 'trainerNotes', slug: 'how-often' }).then(function(x){ tb.innerHTML = (x && x.html) || '<p>No trainer notes for this lesson yet.</p>'; },
+      function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+  }).catch(function(){});
+  aud.reduce(function(p, a){ return p.then(function(){ return load(a).catch(function(){ say(a, 'Open Lite from your course link to hear the recordings.'); }); }); }, Promise.resolve());
+})();
+</script>
+</body>
+</html>

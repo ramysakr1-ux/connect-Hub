@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The bridge story — Connect Lite</title>
+<script src="../library.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+  .map svg{width:100%; height:auto; border:1px solid var(--line); border-radius:12px; background:#FDFCF9;}
+  .cast{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:8px 0 12px;} .person{text-align:center; font-size:.85rem;} .person img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:50%; border:2px solid var(--line);} .person b{display:block;} .person span{color:var(--grey);}
+  .board{background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 14px; font-weight:600;}
+  .frame{font-weight:700; line-height:2.4;} .frame select{min-width:140px;}
+  .rule{margin-top:12px; background:var(--gold-wash); border-radius:12px; padding:10px 14px;} .rule p{margin:4px 0;}
+  .chunks li{margin:6px 0; font-weight:600;} .ipa{color:var(--grey); font-weight:400; margin-left:8px;}
+  .ends{margin:10px 0; columns:2; column-gap:24px;} .ends li{margin:4px 0;}
+  input.wide{display:block; width:100%; margin:4px 0;} .qs li{margin:8px 0;}
+  img.mini{width:34px; height:34px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;}
+  .twist{display:grid; grid-template-columns:repeat(5,1fr); gap:10px;} .tcard{display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; border-radius:14px; height:auto; background:#fff; border:1.5px solid var(--line); color:var(--ink);} .tcard img{width:64px; height:64px; border-radius:50%; object-fit:cover;} .tcard .v{font-size:1.1rem; color:var(--gold);}
+  .eg{color:var(--grey);}
+  @media (max-width:640px){ .cast, .twist{grid-template-columns:repeat(3,1fr);} .ends{columns:1;} }
+  @media print{ .map svg{max-height:95mm;} .cast img{width:60%;} .tcard img{width:40px; height:40px;} .tcard .v{display:none;} .ends{columns:2;} td{padding:4px 8px !important;} .qs li{margin:3px 0;} input.wide{border-bottom:1px solid #999; min-height:18px;} }
+
+  :root{
+    --paper:#fbf8f2; --card:#ffffff; --ink:#232220; --grey:#6b665e; --line:#e3dccd;
+    --teal:#1f6f6b; --teal-wash:#e6f1ef; --gold:#b8862e; --gold-wash:#f7eedb; --red:#a3402f; --green:#2f6b3a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font:400 17px/1.55 Karla, system-ui, sans-serif;}
+  .page{max-width:1080px; margin:0 auto; padding:32px 16px 80px;}
+  h1{font:600 2.4rem/1.1 Newsreader, Georgia, serif; margin:0 0 6px;}
+  h2{font:600 1.45rem/1.2 Newsreader, Georgia, serif; margin:0 0 4px;}
+  .sub{color:var(--grey); margin:0;}
+  .ihbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 14px;}
+  .ihbar .back{color:var(--teal); font-weight:700; text-decoration:none; min-height:44px; display:inline-flex; align-items:center;}
+  .lockup{display:flex; align-items:center; gap:9px; text-decoration:none;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:#f8f6f1; box-shadow:inset 0 0 0 1px oklch(85% 0.02 80); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px; line-height:0.85; letter-spacing:-0.012em; color:oklch(63% 0.096 72);}
+  .hub-pair{display:inline-flex; align-items:baseline; gap:4px;}
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:8px; letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1;}
+  .cmark{float:right; display:inline-flex; align-items:center; gap:4px; margin-left:12px; opacity:.8;}
+  .cmark-tile{width:16px; height:16px; border-radius:4px; background:#f8f6f1; box-shadow:inset 0 0 0 1px #d8d0bf; display:inline-flex; align-items:center; justify-content:center;}
+  .cmark-c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:11pt; color:#a8803f; line-height:1;}
+  .cmark-l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:5pt; letter-spacing:.24em; text-transform:uppercase; color:#2b2218;}
+  @media print{ .logospace{display:block !important; width:60mm; height:20mm;} }
+  .trackmsg{margin:0 0 8px; font-size:.9rem; color:var(--grey);}
+  .ihlogo{height:52px; width:auto;}
+  .sources{font-size:.85rem; color:var(--grey); border-top:1px solid var(--line); padding-top:14px; margin-top:8px;}
+  .sources h2{font:700 .75rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.08em; color:var(--grey); margin:0 0 6px;}
+  .sources p{margin:4px 0;}
+  header{margin-bottom:22px;}
+  header h1{margin:0 0 14px;}
+  header .hero{display:block; width:100%; max-height:360px; object-fit:cover; border-radius:14px;}
+  table.pw, table.pw > tbody, table.pw > tbody > tr, table.pw > tbody > tr > td{display:block; padding:0; border:0;}
+  .pwfoot, .pagefoot{display:none;}
+  .name{margin-top:14px; display:flex; gap:10px; align-items:center; font-weight:600;}
+  .name input{flex:1; max-width:280px;}
+  section{background:var(--card); border:1px solid var(--line); border-top:3px solid var(--teal); border-radius:14px; padding:22px 22px 20px; margin:0 0 20px;}
+  section.go{border-top-color:var(--gold);}
+  .tag{display:inline-block; font:700 0.72rem Karla, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--teal); margin-bottom:6px;}
+  section.go .tag{color:var(--gold);}
+  .do{margin:6px 0 14px; color:var(--ink);}
+  .do b{font-weight:700;}
+  ol,ul{padding-left:22px; margin:8px 0;}
+  li{margin:6px 0;}
+  input[type=text], textarea, select{font:inherit; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; min-height:44px;}
+  textarea{width:100%; min-height:64px; resize:vertical;}
+  select{min-width:76px; cursor:pointer;}
+  button{font:700 0.95rem Karla, sans-serif; cursor:pointer; border-radius:999px; min-height:44px; padding:0 18px; border:1.5px solid var(--teal); background:var(--card); color:var(--teal); transition:transform .12s, box-shadow .12s;}
+  button:hover{transform:translateY(-2px); box-shadow:0 0 0 1.5px var(--teal), 0 10px 20px -12px rgba(0,0,0,.35);}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .check{margin-top:14px;}
+  .res{font-weight:700; margin-left:6px;}
+  .ok{color:var(--green);} .no{color:var(--red);}
+  audio{width:100%; margin:6px 0 12px;}
+  .audio{background:var(--teal-wash); border-radius:12px; padding:12px 14px; margin:8px 0 14px;}
+  .audio b{display:block; font-size:.9rem; color:var(--teal);}
+  table{width:100%; border-collapse:collapse; margin:6px 0;}
+  td,th{padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle;}
+  th{font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--grey);}
+  .rank td:first-child{width:90px;}
+  .tf{display:flex; gap:8px; flex:none;}
+  .tf button{min-width:56px; padding:0 12px;}
+  .tf button.on{background:var(--teal); color:#fff;}
+  .tf button.right{background:var(--green); border-color:var(--green); color:#fff;}
+  .tf button.wrong{background:var(--red); border-color:var(--red); color:#fff;}
+  .tfrow{display:flex; gap:14px; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .tfrow .fix{display:block; margin-top:6px; width:100%;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+  .chip{border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font-weight:600;}
+  .chip[data-s="1"]{background:#e3f0e4; border-color:var(--green); color:var(--green);}
+  .chip[data-s="2"]{background:var(--gold-wash); border-color:var(--gold); color:#8a5f14;}
+  .chip[data-s="3"]{background:#f6e2dd; border-color:var(--red); color:var(--red);}
+  .key{display:flex; gap:14px; flex-wrap:wrap; font-size:.9rem; color:var(--grey);}
+  .key span::before{content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; border:1.5px solid;}
+  .key .k1::before{background:#e3f0e4; border-color:var(--green);} .key .k2::before{background:var(--gold-wash); border-color:var(--gold);} .key .k3::before{background:#f6e2dd; border-color:var(--red);}
+  .lang{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:12px 0;}
+  .lang div{background:var(--gold-wash); border-radius:12px; padding:12px 14px;}
+  .lang h3{font:700 .8rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.06em; margin:0 0 6px; color:#8a5f14;}
+  .lang ul{margin:0; padding-left:18px;} .lang li{margin:4px 0;}
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .card{border:1.5px dashed var(--grey); border-radius:12px; padding:14px;}
+  .card h3{font:600 1.1rem Newsreader, Georgia, serif; margin:0 0 4px;}
+  .card .badge{font-size:.85rem; color:var(--grey); margin:0 0 8px;}
+  .card label{display:block; font-size:.82rem; font-weight:700; margin-top:8px;}
+  .card .ln{border-bottom:1px solid var(--line); height:28px;}
+  .card input{width:100%;}
+  .score td input{width:100%;}
+  .speed{gap:8px; font-weight:700; font-size:.9rem; color:var(--teal);}
+  .speed button{min-width:72px; padding:0 12px;}
+  .speed button.on{background:var(--teal); color:#fff;}
+  .ans{display:none; margin-top:10px; background:var(--gold-wash); border-left:4px solid var(--gold); border-radius:6px; padding:10px 14px; font-size:.95rem;}
+  body.showans .ans{display:block;}
+  .tnotes{background:#fff; border:1px solid var(--line); border-top:3px solid var(--gold); border-radius:14px; padding:18px 22px; margin:0 0 20px;}
+  .tnotes h2{display:flex; gap:10px; align-items:center;} .tnotes .badge{font:700 .7rem Karla,sans-serif; letter-spacing:.06em; text-transform:uppercase; background:var(--gold-wash); color:#8a5f14; border-radius:999px; padding:3px 10px;}
+  .tnotes h4{font:700 .8rem Karla,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--teal); margin:18px 0 6px;}
+  .tnotes p, .tnotes li{font-size:.95rem;} .tn-time{width:100%; border-collapse:collapse; font-size:.92rem;} .tn-time th, .tn-time td{border-bottom:1px solid var(--line); padding:7px 6px; vertical-align:top;} .tn-time td:first-child{width:44px; font-weight:700;}
+  .tw{display:block; margin:4px 0 14px; padding:10px 14px; background:var(--teal-wash); border-left:4px solid var(--teal); border-radius:8px; font-size:.92rem; line-height:1.5;}
+  .tw[hidden]{display:none;} .tw b{display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--teal); margin-bottom:2px;}
+  .notebar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 18px;} .notebar[hidden]{display:none;}
+  .lines .ln{border-bottom:1px solid var(--line); height:30px;}
+  .printonly{display:none;}
+  @media (max-width:640px){
+    .lang,.cards{grid-template-columns:1fr;}
+    .tfrow{flex-direction:column; align-items:flex-start;}
+    h1{font-size:2rem;}
+  }
+  @media print{
+    @page{margin:14mm;}
+    body{background:#fff; font-size:11.5pt;}
+    .page{padding:0; max-width:none;}
+    section{border:1px solid #bbb; border-top:2px solid #444; break-inside:auto; padding:12px 14px; margin-bottom:10px; border-radius:6px;}
+    .th{break-inside:avoid; break-after:avoid;} .th .tag{display:block;}
+    /* ONE TASK OR TWO TO A PAGE (Ramy, 12 Nov 2026): a page holds one task, or two split at the fold, so the teacher can fold it and show half. */
+    section{break-before:page; break-inside:avoid;} #s1{break-before:auto;} section.pair2{break-before:avoid;} section.pair1{min-height:118mm;}
+    section.pair2{position:relative; margin-top:6mm;} section.pair2::before{content:''; position:absolute; left:-14mm; right:-14mm; top:-4mm; border-top:1px dashed #999;}
+    td.sortcol{height:42mm !important;}
+    section.pair1, section.pair2{padding-top:8px; padding-bottom:8px;} #s8 .card label{margin-top:3px; font-size:8.5pt;} #s8 .card input{min-height:0; height:19px; padding:0;} #s8 .card{padding:8px 10px;} #s8 .card .badge{margin:0 0 2px;}
+    .score td{padding:2px 6px;} .score td input{min-height:0; height:20px; padding:0;} .score th{padding:3px 6px;} section.pair1{min-height:112mm;} tr, li, .tfrow, .card, .lang > div, .audio, .chips, table.sort, header{break-inside:avoid;}
+    audio,.check,.ans,.screenonly,.tw,.notebar,.tnotes{display:none !important;}
+    .audio{background:none; border:1px solid #bbb; padding:6px 10px;}
+    .printonly{display:block;}
+    input[type=text],textarea,select{border:0; border-bottom:1px solid #999; border-radius:0; background:none; min-height:0;}
+    select{appearance:none; -webkit-appearance:none; min-width:40px;}
+    textarea{min-height:44px;}
+    button{border-color:#999; color:#000; background:none !important; box-shadow:none !important; transform:none !important;}
+    .chip{background:none !important; color:#000 !important; border-color:#999 !important;}
+    .newpage{break-before:page;}
+    table.printonly.sort{display:table !important; width:100%; table-layout:fixed;} td.sortcol{height:62mm; border:1px solid #999; vertical-align:top;}
+    header .hero{max-height:72mm;}
+    table.pw{display:table !important; width:100%; border-collapse:collapse;} table.pw > tbody{display:table-row-group !important;} table.pw > tbody > tr{display:table-row !important;} table.pw > tbody > tr > td{display:table-cell !important;}
+    .pwfoot{display:table-footer-group !important;} .footspace{height:12mm;}
+    .pagefoot{display:block !important; position:fixed; left:0; right:0; bottom:0; font-size:7.5pt; line-height:1.35; color:#444; border-top:1px solid #bbb; padding-top:4px;}
+    .sources{display:none;}
+    .ihlogo{height:42px;}
+    .sources{font-size:9pt; break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<table class="pw"><tbody><tr><td>
+
+<div class="ihbar">
+  <a class="lockup screenonly" href="../index.html">
+    <span class="tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"/></svg></span>
+    <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+  </a>
+  <a class="back screenonly" href="../demo-lessons/">Back to the demo lessons</a>
+  <span class="logospace printonly" aria-hidden="true"></span></div>
+<header>
+  <h1>The bridge story</h1>
+</header>
+<div class="notebar screenonly" id="twBar" hidden><button id="twToggle">Hide the notes for trainees</button><a href="#trainer" id="tnLink" hidden style="color:var(--teal); font-weight:700">Trainer notes</a></div>
+
+<section id="s1">
+  <div class="th"><span class="tag">Task 1</span>
+  <h2>The story</h2>
+  <p class="do"><b>Listen</b> to your teacher's story. Follow it on the map.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Books closed, nothing on the board: I tell the story, I don't read it. The map carries the places so my words don't have to. Watch how short I keep it.</aside>
+  <div class="map"><svg class="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 560" role="img" aria-label="A map of the story: their house in the forest on the near bank, the stone bridge and the ferryman's boat crossing the river, and on the far bank the hospital, his office and the friend's house" font-family="Karla, system-ui, sans-serif">
+<!-- The map of the story, redrawn 13 Oct 2026 (Ramy: "can we do better
+     with those pictures?"). Still a map, because the story turns on
+     geography: two ways across one river, and what each costs. But drawn
+     as a place rather than a diagram: a stone bridge with arches, a wooden
+     ferry, a lit window in the office, smoke from the house in the forest,
+     a city skyline behind the far bank. Three bands, as before, so nothing
+     drifts into the water: the city above y=215, the river to 325, the
+     forest below. House colours: teal ink, gold, brick for the hospital
+     cross and the lit window. -->
+<defs>
+  <style>
+    .ln{fill:none;stroke:#2B5C5C;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .fl{fill:#FDFCF9;stroke:#2B5C5C;stroke-width:1.7;stroke-linejoin:round}
+    .wall{fill:#F3EEE3;stroke:#2B5C5C;stroke-width:1.7;stroke-linejoin:round}
+    .roof{fill:#2B5C5C;stroke:#2B5C5C;stroke-width:1.7;stroke-linejoin:round}
+    .stone{fill:#E9E2D3;stroke:#2B5C5C;stroke-width:1.7;stroke-linejoin:round}
+    .pine{fill:#CFDDD9;stroke:#2B5C5C;stroke-width:1.4;stroke-linejoin:round}
+    .leaf{fill:#DCE7E3;stroke:#2B5C5C;stroke-width:1.4}
+    .trunk{stroke:#4A3A2C;stroke-width:2;stroke-linecap:round}
+    .sky{fill:#ECE6D9;stroke:#B8AE9C;stroke-width:1.2;stroke-linejoin:round}
+    .glass{fill:#FDFCF9;stroke:#2B5C5C;stroke-width:1.1}
+    .lit{fill:#E7B35A;stroke:#2B5C5C;stroke-width:1.1}
+    .num{font-size:12.5px;font-weight:700;fill:#FDFCF9}
+    .cap{font-size:14px;font-weight:700;fill:#2B5C5C}
+    .sub{font-size:11.5px;font-weight:600;fill:#7A7268}
+    .bank{font-size:12px;font-weight:700;fill:#9A9284;letter-spacing:.06em}
+  </style>
+</defs>
+<rect width="1100" height="560" fill="#FDFCF9"/>
+
+<!-- ================= THE CITY SKYLINE, far back ================= -->
+<g class="sky">
+  <path d="M0 150 h40 v-30 h22 v30 h26 v-46 h18 v46 h30 v-22 h20 v22 h60 v-36 h24 v36 h40 v-18 h30 v18 h52 v-54 h20 v54 h34 v-30 h18 v30 h80 v-40 h26 v40 h40 v-20 h22 v20 h70 v-44 h20 v44 h44 v-26 h18 v26 h60 v-34 h22 v34 h36 v-18 h24 v18 h40 v-28 h20 v28 h60 v-40 h22 v40 h40 v-22 h30 v22 h42 v-36 h20 v36 h30 v12 H0 z"/>
+</g>
+<!-- the road along the far bank -->
+<path d="M0 200 H1100" stroke="#D9D1C2" stroke-width="10"/>
+<path d="M0 200 H1100" stroke="#FDFCF9" stroke-width="1.2" stroke-dasharray="14 10"/>
+
+<!-- ================= THE RIVER ================= -->
+<path d="M0 214 C 220 202, 420 222, 620 234 C 800 245, 950 232, 1100 216 L1100 322 C 950 338, 800 351, 620 340 C 420 328, 220 308, 0 320 Z" fill="#DCE8EA"/>
+<path d="M0 230 C 220 218, 420 238, 620 250 C 800 261, 950 248, 1100 232 L1100 306 C 950 322, 800 335, 620 324 C 420 312, 220 292, 0 304 Z" fill="#D2E1E4"/>
+<path d="M0 214 C 220 202, 420 222, 620 234 C 800 245, 950 232, 1100 216" class="ln" stroke="#9FB9BC"/>
+<path d="M0 320 C 220 308, 420 328, 620 340 C 800 351, 950 338, 1100 322" class="ln" stroke="#9FB9BC"/>
+<g stroke="#A9C3C6" stroke-width="1.3" fill="none" stroke-linecap="round">
+  <path d="M120 262 q 18 -6 36 0 M170 280 q 18 -6 36 0 M250 258 q 18 -6 36 0 M330 290 q 18 -6 36 0 M690 284 q 18 -6 36 0 M760 262 q 18 -6 36 0 M860 296 q 18 -6 36 0 M960 270 q 18 -6 36 0 M1020 300 q 18 -6 36 0"/>
+</g>
+<!-- reeds at the water's edge -->
+<g class="ln" stroke="#6E8F86" stroke-width="1.3">
+  <path d="M60 318 v-16 M66 320 v-20 M72 318 v-14 M400 332 v-16 M406 334 v-20 M412 332 v-13 M980 326 v-16 M986 328 v-20 M992 326 v-14"/>
+</g>
+
+<!-- ================= FAR BANK: the city ================= -->
+<!-- 6 · the hospital, close to the bridge -->
+<g>
+  <path class="wall" d="M272 118 h120 v76 h-120 z"/>
+  <path class="wall" d="M300 104 h64 v14 h-64 z"/>
+  <g class="glass"><rect x="284" y="130" width="14" height="14"/><rect x="306" y="130" width="14" height="14"/><rect x="344" y="130" width="14" height="14"/><rect x="366" y="130" width="14" height="14"/><rect x="284" y="156" width="14" height="14"/><rect x="306" y="156" width="14" height="14"/><rect x="344" y="156" width="14" height="14"/><rect x="366" y="156" width="14" height="14"/></g>
+  <path class="fl" d="M322 170 h20 v24 h-20 z"/>
+  <g stroke="#A43A2E" stroke-width="3.4" stroke-linecap="round" fill="none"><path d="M332 108 v10 M327 113 h10"/></g>
+  <circle cx="272" cy="118" r="13" fill="#2B5C5C"/><text x="272" y="123" text-anchor="middle" class="num">6</text>
+</g>
+<text x="332" y="86" text-anchor="middle" class="cap">The hospital</text>
+<text x="332" y="70" text-anchor="middle" class="sub">close to the bridge</text>
+
+<!-- 4 · his office: a tower, one window lit late -->
+<g>
+  <path class="wall" d="M646 62 h84 v132 h-84 z"/>
+  <path class="ln" d="M646 76 h84"/>
+  <g class="glass">
+    <rect x="656" y="86" width="14" height="16"/><rect x="681" y="86" width="14" height="16"/><rect x="706" y="86" width="14" height="16"/>
+    <rect x="656" y="112" width="14" height="16"/><rect x="681" y="112" width="14" height="16"/><rect x="706" y="112" width="14" height="16"/>
+    <rect x="656" y="138" width="14" height="16"/><rect x="706" y="138" width="14" height="16"/>
+    <rect x="656" y="164" width="14" height="16"/><rect x="681" y="164" width="14" height="16"/><rect x="706" y="164" width="14" height="16"/>
+  </g>
+  <rect x="681" y="138" width="14" height="16" class="lit"/>
+  <path class="fl" d="M679 182 h18 v12 h-18 z"/>
+  <circle cx="646" cy="62" r="13" fill="#2B5C5C"/><text x="646" y="67" text-anchor="middle" class="num">4</text>
+</g>
+<text x="688" y="40" text-anchor="middle" class="cap">His office</text>
+<text x="688" y="24" text-anchor="middle" class="sub">where he works late</text>
+
+<!-- 5 · the friend's house: a town house with a warm window -->
+<g>
+  <path class="wall" d="M900 134 h96 v60 h-96 z"/>
+  <path class="roof" d="M892 134 l56 -38 l56 38 z"/>
+  <path class="ln" d="M968 108 v-16 h10 v24"/>
+  <rect x="912" y="146" width="16" height="16" class="lit"/>
+  <rect x="968" y="146" width="16" height="16" class="glass"/>
+  <path class="fl" d="M938 194 v-30 h20 v30"/>
+  <path class="ln" d="M896 194 h104"/>
+  <circle cx="892" cy="130" r="13" fill="#2B5C5C"/><text x="892" y="135" text-anchor="middle" class="num">5</text>
+</g>
+<text x="948" y="84" text-anchor="middle" class="cap">The friend’s house</text>
+<text x="948" y="68" text-anchor="middle" class="sub">in town for a few days</text>
+
+<!-- a lamp post on the far bank -->
+<g class="ln"><path d="M560 200 v-34"/><circle cx="560" cy="162" r="5" fill="#E7B35A"/></g>
+<g class="ln"><path d="M120 200 v-34"/><circle cx="120" cy="162" r="5" fill="#E7B35A"/></g>
+
+<!-- ================= ACROSS ================= -->
+<!-- 2 · the stone bridge: three arches, spans both banks -->
+<g>
+  <path class="stone" d="M444 196 h72 v146 h-72 z"/>
+  <g class="ln">
+    <path d="M444 210 h72 M444 328 h72"/>
+    <path d="M452 232 a10 10 0 0 1 20 0 v26 h-20 z M464 266 a10 10 0 0 1 20 0 v26 h-20 z M476 300 a10 10 0 0 1 20 0 v22 h-20 z" fill="#C9D9DA"/>
+    <path d="M458 196 v-16 M502 196 v-16 M458 180 h44"/>
+  </g>
+  <!-- parapet lamps -->
+  <g class="ln"><path d="M449 196 v-22 M511 196 v-22"/><circle cx="449" cy="172" r="4" fill="#E7B35A"/><circle cx="511" cy="172" r="4" fill="#E7B35A"/></g>
+  <circle cx="480" cy="156" r="13" fill="#2B5C5C"/><text x="480" y="161" text-anchor="middle" class="num">2</text>
+</g>
+<text x="480" y="134" text-anchor="middle" class="cap">The bridge</text>
+<text x="480" y="118" text-anchor="middle" class="sub">you can walk it</text>
+
+<!-- ================= NEAR BANK: the forest ================= -->
+<!-- the path from the house to the bridge, and to the ferry -->
+<path d="M250 420 C 300 400, 380 370, 444 342" stroke="#D9D1C2" stroke-width="7" fill="none" stroke-linecap="round"/>
+<path d="M250 420 C 300 400, 380 370, 444 342" stroke="#FDFCF9" stroke-width="1" fill="none" stroke-dasharray="8 8"/>
+<path d="M262 424 C 380 440, 520 418, 640 392" stroke="#D9D1C2" stroke-width="7" fill="none" stroke-linecap="round"/>
+<path d="M262 424 C 380 440, 520 418, 640 392" stroke="#FDFCF9" stroke-width="1" fill="none" stroke-dasharray="8 8"/>
+
+<!-- the forest -->
+<g>
+  <g class="pine"><path d="M50 412 l20 34 h-40 z M50 388 l16 28 h-32 z M50 366 l12 22 h-24 z"/></g><path class="trunk" d="M50 446 v12"/>
+  <g class="pine"><path d="M112 440 l22 36 h-44 z M112 414 l18 30 h-36 z M112 392 l13 24 h-26 z"/></g><path class="trunk" d="M112 476 v12"/>
+  <g class="pine"><path d="M24 470 l18 30 h-36 z M24 448 l14 24 h-28 z"/></g><path class="trunk" d="M24 500 v10"/>
+  <g class="pine"><path d="M330 396 l20 34 h-40 z M330 372 l16 28 h-32 z M330 350 l12 22 h-24 z"/></g><path class="trunk" d="M330 430 v12"/>
+  <g class="pine"><path d="M380 450 l18 30 h-36 z M380 428 l14 24 h-28 z"/></g><path class="trunk" d="M380 480 v10"/>
+  <g class="pine"><path d="M70 512 l18 30 h-36 z M70 490 l14 24 h-28 z"/></g><path class="trunk" d="M70 542 v8"/>
+  <g class="pine"><path d="M372 512 l16 26 h-32 z M372 492 l12 22 h-24 z"/></g><path class="trunk" d="M372 538 v8"/>
+  <circle cx="86" cy="390" r="16" class="leaf"/><path class="trunk" d="M86 406 v16"/>
+  <circle cx="280" cy="372" r="14" class="leaf"/><path class="trunk" d="M280 386 v14"/>
+  <circle cx="128" cy="536" r="12" class="leaf"/><path class="trunk" d="M128 548 v8"/>
+  <circle cx="860" cy="470" r="16" class="leaf"/><path class="trunk" d="M860 486 v14"/>
+  <g class="pine"><path d="M920 440 l20 34 h-40 z M920 416 l16 28 h-32 z"/></g><path class="trunk" d="M920 474 v12"/>
+  <g class="pine"><path d="M1000 490 l18 30 h-36 z M1000 468 l14 24 h-28 z"/></g><path class="trunk" d="M1000 520 v8"/>
+  <g class="pine"><path d="M1060 430 l18 30 h-36 z M1060 408 l14 24 h-28 z"/></g><path class="trunk" d="M1060 460 v10"/>
+</g>
+
+<!-- 1 · their house, in the forest: a cottage, smoke from the chimney -->
+<g>
+  <path class="wall" d="M166 388 h96 v58 h-96 z"/>
+  <path class="roof" d="M154 388 l60 -38 l60 38 z"/>
+  <path class="ln" d="M236 358 v-20 h12 v28"/>
+  <path d="M244 334 c -8 -10, 6 -16, -2 -26 c -6 -8, 6 -12, 0 -20" class="ln" stroke="#9A9284" stroke-width="1.6"/>
+  <rect x="178" y="402" width="16" height="15" class="glass"/>
+  <rect x="236" y="402" width="16" height="15" class="glass"/>
+  <path class="fl" d="M204 446 v-30 h20 v30"/>
+  <path class="ln" d="M160 446 h108"/>
+  <circle cx="154" cy="372" r="13" fill="#2B5C5C"/><text x="154" y="377" text-anchor="middle" class="num">1</text>
+</g>
+<text x="214" y="472" text-anchor="middle" class="cap">Their house</text>
+<text x="214" y="488" text-anchor="middle" class="sub">in the forest, outside the city</text>
+
+<!-- 3 · the ferryman: his hut on the bank, his boat in the water, his sign -->
+<g>
+  <path class="wall" d="M632 372 h60 v42 h-60 z"/>
+  <path class="roof" d="M622 372 l40 -26 l40 26 z"/>
+  <path class="fl" d="M654 414 v-20 h16 v20"/>
+  <path class="ln" d="M626 414 h72"/>
+  <!-- the jetty -->
+  <path class="ln" d="M660 346 v-18 M684 346 v-18 M652 346 h40"/>
+  <!-- the boat -->
+  <path class="fl" d="M612 300 c 10 18, 54 18, 64 0 z" fill="#E9E2D3"/>
+  <path class="ln" d="M612 300 h64"/>
+  <!-- the ferryman and his pole -->
+  <circle cx="650" cy="282" r="5" class="fl"/>
+  <path class="ln" d="M650 287 v10 M650 291 l-7 7 M650 291 l8 -3 M658 270 v34"/>
+  <!-- the sign -->
+  <path class="ln" d="M712 414 v-30"/>
+  <path class="fl" d="M700 384 h28 v14 h-28 z"/>
+  <circle cx="714" cy="391" r="3.2" fill="#E7B35A" stroke="#2B5C5C" stroke-width="1.2"/>
+  <circle cx="622" cy="356" r="13" fill="#2B5C5C"/><text x="622" y="361" text-anchor="middle" class="num">3</text>
+</g>
+<text x="662" y="442" text-anchor="middle" class="cap">The ferryman</text>
+<text x="662" y="458" text-anchor="middle" class="sub">payment first, always</text>
+
+<!-- the cast on the map, each face beside its place, as on the day-one demo's bridge story (Ramy, 4 Nov 2026: "their faces
+     were inside the story ... put them back in there where they belong") -->
+<defs><clipPath id="face"><circle r="29"/></clipPath></defs>
+<g transform="translate(318 372)"><circle r="32" fill="#FDFCF9" stroke="#2B5C5C" stroke-width="2"/><image href="../alternative-teaching-techniques/cast/wife.jpg" x="-29" y="-29" width="58" height="58" clip-path="url(#face)" preserveAspectRatio="xMidYMid slice"/><text y="48" text-anchor="middle" class="sub">the wife</text></g>
+<g transform="translate(776 122)"><circle r="32" fill="#FDFCF9" stroke="#2B5C5C" stroke-width="2"/><image href="../alternative-teaching-techniques/cast/husband.jpg" x="-29" y="-29" width="58" height="58" clip-path="url(#face)" preserveAspectRatio="xMidYMid slice"/><text y="48" text-anchor="middle" class="sub">the husband</text></g>
+<g transform="translate(1048 150)"><circle r="32" fill="#FDFCF9" stroke="#2B5C5C" stroke-width="2"/><image href="../alternative-teaching-techniques/cast/friend.jpg" x="-29" y="-29" width="58" height="58" clip-path="url(#face)" preserveAspectRatio="xMidYMid slice"/><text y="48" text-anchor="middle" class="sub">the friend</text></g>
+<g transform="translate(562 258)"><circle r="32" fill="#FDFCF9" stroke="#2B5C5C" stroke-width="2"/><image href="../alternative-teaching-techniques/cast/stranger.jpg" x="-29" y="-29" width="58" height="58" clip-path="url(#face)" preserveAspectRatio="xMidYMid slice"/><text y="48" text-anchor="middle" class="sub">the stranger</text></g>
+<g transform="translate(748 292)"><circle r="32" fill="#FDFCF9" stroke="#2B5C5C" stroke-width="2"/><image href="../alternative-teaching-techniques/cast/ferryman.jpg" x="-29" y="-29" width="58" height="58" clip-path="url(#face)" preserveAspectRatio="xMidYMid slice"/><text y="48" text-anchor="middle" class="sub">the ferryman</text></g>
+
+<!-- Which side you are on IS the story, so both sides are named. -->
+<text x="40" y="36" class="bank">THE CITY SIDE · work, and the friend</text>
+<text x="40" y="546" class="bank">THE FOREST SIDE · home</text>
+</svg></div>
+  <p class="do"><b>Check the map.</b></p>
+  <table><tbody>
+    <tr><td>1. How many ways are there across the river?</td><td><select data-ans="two" aria-label="Ways across"><option></option><option>one</option><option>two</option><option>three</option></select></td></tr>
+    <tr><td>2. Can you walk across the bridge?</td><td><select data-ans="yes" aria-label="Walk the bridge"><option></option><option>yes</option><option>no</option></select></td></tr>
+    <tr><td>3. Does the ferryman take people for free?</td><td><select data-ans="no" aria-label="Ferry for free"><option></option><option>yes</option><option>no</option></select></td></tr>
+  </tbody></table>
+  <div class="row check"><button data-check="s1">Check my answers</button><span class="res" data-res="s1"></span></div>
+</section>
+
+<section id="s2" class="pair1">
+  <div class="th"><span class="tag">Task 2</span>
+  <h2>Who is most responsible?</h2>
+  <p class="do"><b>Think.</b> Who is most responsible for what happened to her? <b>Tell</b> your partner why.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> One question the story was built for. To answer it properly they need the third conditional, so the sentence comes from them, not from me. I don't explain anything first.</aside>
+  <div class="cast"><div class="person"><img src="../alternative-teaching-techniques/cast/wife.jpg" alt="The wife"><b>The wife</b><span>She left the house.</span></div><div class="person"><img src="../alternative-teaching-techniques/cast/husband.jpg" alt="The husband"><b>The husband</b><span>He worked through the night.</span></div><div class="person"><img src="../alternative-teaching-techniques/cast/friend.jpg" alt="The friend"><b>The friend</b><span>He let her walk home.</span></div><div class="person"><img src="../alternative-teaching-techniques/cast/ferryman.jpg" alt="The ferryman"><b>The ferryman</b><span>He refused to take her.</span></div><div class="person"><img src="../alternative-teaching-techniques/cast/stranger.jpg" alt="The stranger"><b>The stranger</b><span>He was on the bridge.</span></div></div>
+  <p class="do">Write your reason in one sentence. Start with <i>If…</i></p>
+  <input type="text" class="wide" aria-label="Your sentence">
+</section>
+
+<section id="s3" class="pair2">
+  <div class="th"><span class="tag">Task 3</span>
+  <h2>What does it mean?</h2>
+  <p class="do"><b>Read</b> the sentence. <b>Answer</b> the questions.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Meaning before form. Every question has an answer you can hear. Nobody asks do you understand.</aside>
+  <p class="board">If she <u>had stayed</u> at home, she <u>would have survived</u>.</p>
+  <table><tbody><tr><td>1. Did she stay at home?</td><td><select data-ans="no" aria-label="Did she stay at home?"><option></option><option>yes</option><option>no</option></select></td></tr><tr><td>2. Did she leave the house?</td><td><select data-ans="yes" aria-label="Did she leave the house?"><option></option><option>yes</option><option>no</option></select></td></tr><tr><td>3. Did she survive?</td><td><select data-ans="no" aria-label="Did she survive?"><option></option><option>yes</option><option>no</option></select></td></tr><tr><td>4. Is it about the past, now or the future?</td><td><select data-ans="the past" aria-label="Is it about the past, now or the future?"><option></option><option>the past</option><option>now</option><option>the future</option></select></td></tr><tr><td>5. Can anyone change what happened?</td><td><select data-ans="no" aria-label="Can anyone change what happened?"><option></option><option>yes</option><option>no</option></select></td></tr><tr><td>6. "She stayed at home": is that real or imaginary?</td><td><select data-ans="imaginary" aria-label=""She stayed at home": is that real or imaginary?"><option></option><option>real</option><option>imaginary</option></select></td></tr></tbody></table>
+  <div class="row check"><button data-check="s3">Check my answers</button><span class="res" data-res="s3"></span></div>
+</section>
+
+<section id="s4" class="pair1">
+  <div class="th"><span class="tag">Task 4</span>
+  <h2>The form</h2>
+  <p class="do"><b>Complete</b> the pattern.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Now the form, built from their own sentence. Notice I swap the two halves: the comma goes, the grammar stays.</aside>
+  <p class="frame">If + subject + <select data-ans="had" aria-label="Gap 1"><option></option><option>had</option><option>would</option><option>have</option><option>past participle</option></select> + <select data-ans="past participle" aria-label="Gap 2"><option></option><option>had</option><option>would</option><option>have</option><option>past participle</option></select> , subject + <select data-ans="would" aria-label="Gap 3"><option></option><option>had</option><option>would</option><option>have</option><option>past participle</option></select> + <select data-ans="have" aria-label="Gap 4"><option></option><option>had</option><option>would</option><option>have</option><option>past participle</option></select> + <select data-ans="past participle" aria-label="Gap 5"><option></option><option>had</option><option>would</option><option>have</option><option>past participle</option></select></p>
+  <div class="row check"><button data-check="s4">Check my answers</button><span class="res" data-res="s4"></span></div>
+  <div class="rule">
+    <p><b>If she had stayed at home,</b> she would have survived. &nbsp; (comma)</p>
+    <p>She would have survived <b>if she had stayed at home.</b> &nbsp; (no comma)</p>
+    <p>she'd stayed = she <b>had</b> stayed &nbsp;·&nbsp; she'd have = she <b>would</b> have</p>
+    <p>Not: <s>If she would have stayed…</s></p>
+  </div>
+</section>
+
+<section id="s5" class="pair2">
+  <div class="th"><span class="tag">Task 5</span>
+  <h2>Say it</h2>
+  <p class="do"><b>Listen</b> and <b>repeat</b>, from the end of the sentence back to the start.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The drill goes backwards, from the end of the sentence, so the rhythm survives. Weak have and the contracted had are the point.</aside>
+  <ol class="chunks">
+    <li>survived</li><li>would have survived <span class="ipa">/ˈwʊd əv səˈvaɪvd/</span></li><li>she'd have survived</li>
+    <li>at home</li><li>stayed at home</li><li>if she'd stayed at home <span class="ipa">/ɪf ʃid ˈsteɪd ət ˈhəʊm/</span></li>
+    <li>If she'd STAYED at HOME, she'd have surVIVED.</li>
+  </ol>
+</section>
+
+<section id="s6">
+  <div class="th"><span class="tag">Task 6</span>
+  <h2>Match the two halves</h2>
+  <p class="do"><b>In pairs,</b> match each beginning to its ending. Who says each sentence?</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Controlled practice that checks the grammar and the story at once. When we feed back I ask who said each sentence: a second check of meaning for free.</aside>
+  <table><tbody><tr><td>1. If she had stayed at home,</td><td><select data-ans="b" aria-label="If she had stayed at home,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr><tr><td>2. If I had had time for my wife,</td><td><select data-ans="g" aria-label="If I had had time for my wife,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr><tr><td>3. If we hadn't bought that house,</td><td><select data-ans="d" aria-label="If we hadn't bought that house,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr><tr><td>4. If she had taken enough money,</td><td><select data-ans="f" aria-label="If she had taken enough money,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr><tr><td>5. If I hadn't kept filling her glass,</td><td><select data-ans="c" aria-label="If I hadn't kept filling her glass,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr><tr><td>6. If I had taken her on my boat,</td><td><select data-ans="a" aria-label="If I had taken her on my boat,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr><tr><td>7. If I hadn't escaped from the hospital,</td><td><select data-ans="e" aria-label="If I hadn't escaped from the hospital,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr><tr><td>8. If she hadn't been so lonely,</td><td><select data-ans="h" aria-label="If she hadn't been so lonely,"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option><option>g</option><option>h</option></select></td></tr></tbody></table>
+  <ol class="ends" type="a"><li>she wouldn't have had to cross the bridge.</li><li>she wouldn't have been hurt.</li><li>she wouldn't have left so late.</li><li>I wouldn't have had to work so hard.</li><li>I wouldn't have had the chance to hurt her.</li><li>she would have been able to take the ferry.</li><li>I would have gone home to have dinner with her.</li><li>would she have left the house?</li></ol>
+  <div class="row check"><button data-check="s6">Check my answers</button><span class="res" data-res="s6"></span></div>
+</section>
+
+<section id="s7" class="pair1">
+  <div class="th"><span class="tag">Task 7</span>
+  <h2>Finish the sentences your way</h2>
+  <p class="do"><b>Complete</b> each sentence with <i>would / wouldn't have…</i> Then compare with a partner.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Semi-controlled: the beginning is fixed, the ending is theirs. I ask for two or three endings to the same beginning.</aside>
+  <ol class="qs"><li>If she had found a job in the city,<input type="text" class="wide" aria-label="Ending 1"></li><li>If he hadn't worked every evening,<input type="text" class="wide" aria-label="Ending 2"></li><li>If they hadn't bought the house in the forest,<input type="text" class="wide" aria-label="Ending 3"></li><li>If she had taken some money with her,<input type="text" class="wide" aria-label="Ending 4"></li><li>If the ferryman had broken his promise,<input type="text" class="wide" aria-label="Ending 5"></li><li>If her husband had come home that night,<input type="text" class="wide" aria-label="Ending 6"></li></ol>
+</section>
+
+<section id="s8" class="pair2 go">
+  <div class="th"><span class="tag">Task 8</span>
+  <h2>Rank them, and argue</h2>
+  <p class="do"><b>Alone:</b> rank the five from 1 (most responsible) to 5 (least). <b>Then in groups:</b> agree an order. You can only defend a position with <i>If…</i></p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The freer stage. Groups almost never agree, and that is the point: the disagreement keeps them using the structure. I stay out and note errors for the end.</aside>
+  <table><tbody><tr><td><img class="mini" src="../alternative-teaching-techniques/cast/wife.jpg" alt=""> The wife</td><td><select aria-label="Rank The wife"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></td></tr><tr><td><img class="mini" src="../alternative-teaching-techniques/cast/husband.jpg" alt=""> The husband</td><td><select aria-label="Rank The husband"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></td></tr><tr><td><img class="mini" src="../alternative-teaching-techniques/cast/friend.jpg" alt=""> The friend</td><td><select aria-label="Rank The friend"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></td></tr><tr><td><img class="mini" src="../alternative-teaching-techniques/cast/ferryman.jpg" alt=""> The ferryman</td><td><select aria-label="Rank The ferryman"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></td></tr><tr><td><img class="mini" src="../alternative-teaching-techniques/cast/stranger.jpg" alt=""> The stranger</td><td><select aria-label="Rank The stranger"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></td></tr></tbody></table>
+</section>
+
+<section id="s9" class="go">
+  <div class="th"><span class="tag">Task 9</span>
+  <h2>The twist</h2>
+  <p class="do"><b>After the ranking:</b> each person in the story stands for something. <span class="printonly">Your teacher will tell you what.</span><span class="screenonly">Tap a person to see what.</span></p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The twist costs five minutes and makes the lesson memorable. I keep it light, then finish with the errors I noted.</aside>
+  <div class="twist"><button class="tcard" data-v="love"><img src="../alternative-teaching-techniques/cast/wife.jpg" alt=""><b>The wife</b><span class="v">?</span></button><button class="tcard" data-v="work"><img src="../alternative-teaching-techniques/cast/husband.jpg" alt=""><b>The husband</b><span class="v">?</span></button><button class="tcard" data-v="desire"><img src="../alternative-teaching-techniques/cast/friend.jpg" alt=""><b>The friend</b><span class="v">?</span></button><button class="tcard" data-v="money"><img src="../alternative-teaching-techniques/cast/ferryman.jpg" alt=""><b>The ferryman</b><span class="v">?</span></button><button class="tcard" data-v="power"><img src="../alternative-teaching-techniques/cast/stranger.jpg" alt=""><b>The stranger</b><span class="v">?</span></button></div>
+  <p class="screenonly eg">The person you blamed most is what you value least. The person you blamed least is what you value most.</p>
+</section>
+
+<section class="tnotes screenonly" id="trainer" hidden><h2>Trainer notes <span class="badge">Tutor only</span></h2><div id="tnBody"></div></section>
+<footer class="sources">
+  <h2>Sources</h2>
+  <p><b>The story:</b> made up for this lesson, on the shape of &lsquo;The Alligator River Story&rsquo; in Sidney Simon, Leland Howe and Howard Kirschenbaum, <i>Values Clarification</i> (Hart, 1972). <b>Lesson and tasks:</b> Ramy Sakr.</p>
+</footer>
+
+</td></tr></tbody><tfoot class="pwfoot"><tr><td><div class="footspace"></div></td></tr></tfoot></table>
+<div class="pagefoot"><span class="cmark"><span class="cmark-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"/></svg></span><span class="cmark-c">Connect</span><span class="cmark-l">Lite</span></span>The story: made up for this lesson, on the shape of &lsquo;The Alligator River Story&rsquo; in Simon, S., Howe, L. and Kirschenbaum, H. (1972) <i>Values Clarification</i>. New York: Hart. Lesson and tasks: Ramy Sakr, for Connect Lite (2026).</div>
+
+</div>
+<script>
+(function(){
+  function mark(sec){
+    var sel = document.querySelectorAll('#' + sec + ' select[data-ans]'), n = 0;
+    sel.forEach(function(s){ var ok = s.value === s.dataset.ans; if (ok) n++; s.style.borderColor = s.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+    return n + ' of ' + sel.length + ' right';
+  }
+  function norm(t){ return String(t || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  document.querySelectorAll('[data-check]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.dataset.check, sec = document.getElementById(k), n = 0, all = 0;
+      sec.querySelectorAll('select[data-ans]').forEach(function(x){ all++; var ok = x.value === x.dataset.ans; if (ok) n++; x.style.borderColor = x.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+      sec.querySelectorAll('input[data-accept]').forEach(function(x){ all++; var ok = x.dataset.accept.split('|').indexOf(norm(x.value)) !== -1; if (ok) n++; x.style.borderColor = x.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+      sec.querySelectorAll('input[data-p]').forEach(function(x){ all++; var ok = x.checked === (x.dataset.p === 'y'); if (ok) n++; x.parentNode.style.color = ok ? 'var(--green)' : 'var(--red)'; });
+      sec.querySelectorAll('[data-tf]').forEach(function(row){ if (row.dataset.tf === '?') return; all++; var on = row.querySelector('.tf .on'); row.querySelectorAll('.tf button').forEach(function(x){ x.classList.remove('right','wrong'); });
+        if (on) { var ok = on.textContent === row.dataset.tf; if (ok) n++; on.classList.add(ok ? 'right' : 'wrong'); } });
+      document.querySelector('[data-res="' + k + '"]').textContent = n + ' of ' + all + ' right';
+    });
+  });
+  document.querySelectorAll('.tf').forEach(function(g){
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){ g.querySelectorAll('button').forEach(function(x){ x.classList.remove('on','right','wrong'); }); b.classList.add('on'); }); });
+  });
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.addEventListener('click', function(){ c.dataset.s = String(((+c.dataset.s || 0) + 1) % 4); });
+  });
+  document.querySelectorAll('audio').forEach(function(a){
+    a.addEventListener('play', function(){ document.querySelectorAll('audio').forEach(function(o){ if (o !== a) o.pause(); }); });
+  });
+  document.querySelectorAll('.speed').forEach(function(g){
+    var a = g.parentNode.querySelector('audio');
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){
+      a.preservesPitch = true; a.webkitPreservesPitch = true; a.defaultPlaybackRate = +b.dataset.rate; a.playbackRate = +b.dataset.rate;
+      g.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    }); });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var tw = [].slice.call(document.querySelectorAll('.tw')), b = document.getElementById('twToggle');
+  window.twShow = function(on){ tw.forEach(function(x){ x.hidden = !on; }); if (b) { b.textContent = on ? 'Hide the notes for trainees' : 'Show the notes for trainees'; b.dataset.on = on ? '1' : ''; } };
+  if (b) b.addEventListener('click', function(){ twShow(!b.dataset.on); });
+})();
+</script>
+<script src="../../hub-store.js"></script>
+<script>
+/* The two recordings come through Lite's store from the Connect Lite shared drive, not from this public page
+   (12 Nov 2026). They load when the page opens from a course link; the third listening reuses the second track. */
+(function(){
+  var aud = [].slice.call(document.querySelectorAll('audio[data-track]'));
+  function say(a, t){ var m = a.parentNode.querySelector('.trackmsg'); if (m) m.textContent = t; }
+  aud.forEach(function(a){ say(a, 'Loading the recording\u2026'); });
+  function load(a){
+    if (!window.HubStore || !HubStore.audio) return Promise.reject(new Error('no store'));
+    return HubStore.audio(a.dataset.track).then(function(r){
+      if (!r || !r.b64) throw new Error('empty');
+      var bin = atob(r.b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'audio/mp4' }));
+      a.src = url; say(a, '');
+      if (a.id === 'a2') document.querySelectorAll('audio[data-same="a2"]').forEach(function(x){ x.src = url; });
+    });
+  }
+  /* Who sees what (Ramy, 12 Nov 2026): the notes for the trainees watching show on a trainee's or a tutor's link,
+     never a volunteer's and never on paper; a tutor can hide them to project the page. The trainer notes come from
+     the store, for a tutor's link only, like every input session's. */
+  var H = window.HubStore;
+  if (H && (H.isTrainee() || H.isTutor() || H.isAssessor())) twShow(true);
+  if (H && (H.isTutor() || H.isAssessor())) document.getElementById('twBar').hidden = false;
+  if (H && H.isTutor()) H.ping().then(function(r){
+    if (!r || !r.tutor) return;
+    var sec = document.getElementById('trainer'), tb = document.getElementById('tnBody');
+    sec.hidden = false; document.getElementById('tnLink').hidden = false; tb.innerHTML = '<p>Loading the trainer notes…</p>';
+    H.call({ op: 'trainerNotes', slug: 'the-bridge-story' }).then(function(x){ tb.innerHTML = (x && x.html) || '<p>No trainer notes for this lesson yet.</p>'; },
+      function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+  }).catch(function(){});
+  aud.reduce(function(p, a){ return p.then(function(){ return load(a).catch(function(){ say(a, 'Open Lite from your course link to hear the recordings.'); }); }); }, Promise.resolve());
+})();
+</script>
+<script>
+document.querySelectorAll('.tcard').forEach(function(c){ c.addEventListener('click', function(){ c.querySelector('.v').textContent = c.dataset.v; }); });
+</script>
+</body>
+</html>

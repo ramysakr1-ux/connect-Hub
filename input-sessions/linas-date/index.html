@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lina&rsquo;s date — Connect Lite</title>
+<script src="../library.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+  .dlg{background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 16px; margin:6px 0 10px;}
+  .dlg .line{margin:6px 0;} .dlg .line.b{padding-left:18px;} .dlg .line.speaking{background:var(--gold-wash); border-radius:6px;}
+  .speak{gap:8px; font-weight:700; font-size:.9rem; color:var(--teal); margin-bottom:10px;} .speak button{min-width:64px; padding:0 12px;} .speak button.on{background:var(--teal); color:#fff;}
+  .qs li{margin:8px 0;} input.wide{display:block; width:100%; margin:4px 0;}
+  .pics{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:8px 0;} .pics.four{grid-template-columns:repeat(4,1fr);}
+  .pic{border:1px solid var(--line); border-radius:12px; padding:8px; text-align:center; background:#fff;} .pic select{width:100%;}
+  .ph{display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; margin:0 0 6px;}
+  .places{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:8px 0;} .place{margin:0; text-align:center; font-weight:700;} .place .ph{margin:0 0 4px;}
+  .who{display:flex; gap:12px; align-items:center; margin:4px 0 8px;} .who .ph{width:120px; flex:none; margin:0;} .hero{display:block; width:100%; max-height:360px; object-fit:cover; border-radius:14px;}
+  .rule{margin-top:14px; background:var(--gold-wash); border-radius:12px; padding:10px 14px;} .rule p{margin:4px 0;}
+  .drawbox{border:1.5px dashed var(--line); border-radius:12px; height:150px; margin:8px 0;}
+  .eg{color:var(--grey);} .tfpick .tfrow{border:0; width:100%;}
+  @media (max-width:640px){ .pics, .pics.four{grid-template-columns:repeat(2,1fr);} }
+  @media print{ .hero{max-height:48mm !important;} #s1.pair1{min-height:0;} td{padding:4px 8px !important;} .qs li{margin:3px 0;} .qs input.wide{min-height:14px; height:16px; margin:2px 0;} .ph{aspect-ratio:3/2;} .who .ph{width:80px;} .places{gap:6px;} .pics{gap:6px;} .dlg{padding:4px 10px;} .dlg .line{margin:3px 0;} input.wide{border-bottom:1px solid #999; min-height:18px;} .drawbox{height:90px;} }
+
+  :root{
+    --paper:#fbf8f2; --card:#ffffff; --ink:#232220; --grey:#6b665e; --line:#e3dccd;
+    --teal:#1f6f6b; --teal-wash:#e6f1ef; --gold:#b8862e; --gold-wash:#f7eedb; --red:#a3402f; --green:#2f6b3a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font:400 17px/1.55 Karla, system-ui, sans-serif;}
+  .page{max-width:1080px; margin:0 auto; padding:32px 16px 80px;}
+  h1{font:600 2.4rem/1.1 Newsreader, Georgia, serif; margin:0 0 6px;}
+  h2{font:600 1.45rem/1.2 Newsreader, Georgia, serif; margin:0 0 4px;}
+  .sub{color:var(--grey); margin:0;}
+  .ihbar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 14px;}
+  .ihbar .back{color:var(--teal); font-weight:700; text-decoration:none; min-height:44px; display:inline-flex; align-items:center;}
+  .lockup{display:flex; align-items:center; gap:9px; text-decoration:none;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:#f8f6f1; box-shadow:inset 0 0 0 1px oklch(85% 0.02 80); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px; line-height:0.85; letter-spacing:-0.012em; color:oklch(63% 0.096 72);}
+  .hub-pair{display:inline-flex; align-items:baseline; gap:4px;}
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:8px; letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1;}
+  .cmark{float:right; display:inline-flex; align-items:center; gap:4px; margin-left:12px; opacity:.8;}
+  .cmark-tile{width:16px; height:16px; border-radius:4px; background:#f8f6f1; box-shadow:inset 0 0 0 1px #d8d0bf; display:inline-flex; align-items:center; justify-content:center;}
+  .cmark-c{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:11pt; color:#a8803f; line-height:1;}
+  .cmark-l{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:5pt; letter-spacing:.24em; text-transform:uppercase; color:#2b2218;}
+  @media print{ .logospace{display:block !important; width:60mm; height:20mm;} }
+  .trackmsg{margin:0 0 8px; font-size:.9rem; color:var(--grey);}
+  .ihlogo{height:52px; width:auto;}
+  .sources{font-size:.85rem; color:var(--grey); border-top:1px solid var(--line); padding-top:14px; margin-top:8px;}
+  .sources h2{font:700 .75rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.08em; color:var(--grey); margin:0 0 6px;}
+  .sources p{margin:4px 0;}
+  header{margin-bottom:22px;}
+  header h1{margin:0 0 14px;}
+  header .hero{display:block; width:100%; max-height:360px; object-fit:cover; border-radius:14px;}
+  table.pw, table.pw > tbody, table.pw > tbody > tr, table.pw > tbody > tr > td{display:block; padding:0; border:0;}
+  .pwfoot, .pagefoot{display:none;}
+  .name{margin-top:14px; display:flex; gap:10px; align-items:center; font-weight:600;}
+  .name input{flex:1; max-width:280px;}
+  section{background:var(--card); border:1px solid var(--line); border-top:3px solid var(--teal); border-radius:14px; padding:22px 22px 20px; margin:0 0 20px;}
+  section.go{border-top-color:var(--gold);}
+  .tag{display:inline-block; font:700 0.72rem Karla, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--teal); margin-bottom:6px;}
+  section.go .tag{color:var(--gold);}
+  .do{margin:6px 0 14px; color:var(--ink);}
+  .do b{font-weight:700;}
+  ol,ul{padding-left:22px; margin:8px 0;}
+  li{margin:6px 0;}
+  input[type=text], textarea, select{font:inherit; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; min-height:44px;}
+  textarea{width:100%; min-height:64px; resize:vertical;}
+  select{min-width:76px; cursor:pointer;}
+  button{font:700 0.95rem Karla, sans-serif; cursor:pointer; border-radius:999px; min-height:44px; padding:0 18px; border:1.5px solid var(--teal); background:var(--card); color:var(--teal); transition:transform .12s, box-shadow .12s;}
+  button:hover{transform:translateY(-2px); box-shadow:0 0 0 1.5px var(--teal), 0 10px 20px -12px rgba(0,0,0,.35);}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .check{margin-top:14px;}
+  .res{font-weight:700; margin-left:6px;}
+  .ok{color:var(--green);} .no{color:var(--red);}
+  audio{width:100%; margin:6px 0 12px;}
+  .audio{background:var(--teal-wash); border-radius:12px; padding:12px 14px; margin:8px 0 14px;}
+  .audio b{display:block; font-size:.9rem; color:var(--teal);}
+  table{width:100%; border-collapse:collapse; margin:6px 0;}
+  td,th{padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle;}
+  th{font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--grey);}
+  .rank td:first-child{width:90px;}
+  .tf{display:flex; gap:8px; flex:none;}
+  .tf button{min-width:56px; padding:0 12px;}
+  .tf button.on{background:var(--teal); color:#fff;}
+  .tf button.right{background:var(--green); border-color:var(--green); color:#fff;}
+  .tf button.wrong{background:var(--red); border-color:var(--red); color:#fff;}
+  .tfrow{display:flex; gap:14px; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .tfrow .fix{display:block; margin-top:6px; width:100%;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+  .chip{border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font-weight:600;}
+  .chip[data-s="1"]{background:#e3f0e4; border-color:var(--green); color:var(--green);}
+  .chip[data-s="2"]{background:var(--gold-wash); border-color:var(--gold); color:#8a5f14;}
+  .chip[data-s="3"]{background:#f6e2dd; border-color:var(--red); color:var(--red);}
+  .key{display:flex; gap:14px; flex-wrap:wrap; font-size:.9rem; color:var(--grey);}
+  .key span::before{content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; border:1.5px solid;}
+  .key .k1::before{background:#e3f0e4; border-color:var(--green);} .key .k2::before{background:var(--gold-wash); border-color:var(--gold);} .key .k3::before{background:#f6e2dd; border-color:var(--red);}
+  .lang{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:12px 0;}
+  .lang div{background:var(--gold-wash); border-radius:12px; padding:12px 14px;}
+  .lang h3{font:700 .8rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.06em; margin:0 0 6px; color:#8a5f14;}
+  .lang ul{margin:0; padding-left:18px;} .lang li{margin:4px 0;}
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .card{border:1.5px dashed var(--grey); border-radius:12px; padding:14px;}
+  .card h3{font:600 1.1rem Newsreader, Georgia, serif; margin:0 0 4px;}
+  .card .badge{font-size:.85rem; color:var(--grey); margin:0 0 8px;}
+  .card label{display:block; font-size:.82rem; font-weight:700; margin-top:8px;}
+  .card .ln{border-bottom:1px solid var(--line); height:28px;}
+  .card input{width:100%;}
+  .score td input{width:100%;}
+  .speed{gap:8px; font-weight:700; font-size:.9rem; color:var(--teal);}
+  .speed button{min-width:72px; padding:0 12px;}
+  .speed button.on{background:var(--teal); color:#fff;}
+  .ans{display:none; margin-top:10px; background:var(--gold-wash); border-left:4px solid var(--gold); border-radius:6px; padding:10px 14px; font-size:.95rem;}
+  body.showans .ans{display:block;}
+  .tnotes{background:#fff; border:1px solid var(--line); border-top:3px solid var(--gold); border-radius:14px; padding:18px 22px; margin:0 0 20px;}
+  .tnotes h2{display:flex; gap:10px; align-items:center;} .tnotes .badge{font:700 .7rem Karla,sans-serif; letter-spacing:.06em; text-transform:uppercase; background:var(--gold-wash); color:#8a5f14; border-radius:999px; padding:3px 10px;}
+  .tnotes h4{font:700 .8rem Karla,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--teal); margin:18px 0 6px;}
+  .tnotes p, .tnotes li{font-size:.95rem;} .tn-time{width:100%; border-collapse:collapse; font-size:.92rem;} .tn-time th, .tn-time td{border-bottom:1px solid var(--line); padding:7px 6px; vertical-align:top;} .tn-time td:first-child{width:44px; font-weight:700;}
+  .tw{display:block; margin:4px 0 14px; padding:10px 14px; background:var(--teal-wash); border-left:4px solid var(--teal); border-radius:8px; font-size:.92rem; line-height:1.5;}
+  .tw[hidden]{display:none;} .tw b{display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--teal); margin-bottom:2px;}
+  .notebar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 18px;} .notebar[hidden]{display:none;}
+  .lines .ln{border-bottom:1px solid var(--line); height:30px;}
+  .printonly{display:none;}
+  @media (max-width:640px){
+    .lang,.cards{grid-template-columns:1fr;}
+    .tfrow{flex-direction:column; align-items:flex-start;}
+    h1{font-size:2rem;}
+  }
+  @media print{
+    @page{margin:14mm;}
+    body{background:#fff; font-size:11.5pt;}
+    .page{padding:0; max-width:none;}
+    section{border:1px solid #bbb; border-top:2px solid #444; break-inside:auto; padding:12px 14px; margin-bottom:10px; border-radius:6px;}
+    .th{break-inside:avoid; break-after:avoid;} .th .tag{display:block;}
+    /* ONE TASK OR TWO TO A PAGE (Ramy, 12 Nov 2026): a page holds one task, or two split at the fold, so the teacher can fold it and show half. */
+    section{break-before:page; break-inside:avoid;} #s1{break-before:auto;} section.pair2{break-before:avoid;} section.pair1{min-height:118mm;}
+    section.pair2{position:relative; margin-top:6mm;} section.pair2::before{content:''; position:absolute; left:-14mm; right:-14mm; top:-4mm; border-top:1px dashed #999;}
+    td.sortcol{height:42mm !important;}
+    section.pair1, section.pair2{padding-top:8px; padding-bottom:8px;} #s8 .card label{margin-top:3px; font-size:8.5pt;} #s8 .card input{min-height:0; height:19px; padding:0;} #s8 .card{padding:8px 10px;} #s8 .card .badge{margin:0 0 2px;}
+    .score td{padding:2px 6px;} .score td input{min-height:0; height:20px; padding:0;} .score th{padding:3px 6px;} section.pair1{min-height:112mm;} tr, li, .tfrow, .card, .lang > div, .audio, .chips, table.sort, header{break-inside:avoid;}
+    audio,.check,.ans,.screenonly,.tw,.notebar,.tnotes{display:none !important;}
+    .audio{background:none; border:1px solid #bbb; padding:6px 10px;}
+    .printonly{display:block;}
+    input[type=text],textarea,select{border:0; border-bottom:1px solid #999; border-radius:0; background:none; min-height:0;}
+    select{appearance:none; -webkit-appearance:none; min-width:40px;}
+    textarea{min-height:44px;}
+    button{border-color:#999; color:#000; background:none !important; box-shadow:none !important; transform:none !important;}
+    .chip{background:none !important; color:#000 !important; border-color:#999 !important;}
+    .newpage{break-before:page;}
+    table.printonly.sort{display:table !important; width:100%; table-layout:fixed;} td.sortcol{height:62mm; border:1px solid #999; vertical-align:top;}
+    header .hero{max-height:72mm;}
+    table.pw{display:table !important; width:100%; border-collapse:collapse;} table.pw > tbody{display:table-row-group !important;} table.pw > tbody > tr{display:table-row !important;} table.pw > tbody > tr > td{display:table-cell !important;}
+    .pwfoot{display:table-footer-group !important;} .footspace{height:12mm;}
+    .pagefoot{display:block !important; position:fixed; left:0; right:0; bottom:0; font-size:7.5pt; line-height:1.35; color:#444; border-top:1px solid #bbb; padding-top:4px;}
+    .sources{display:none;}
+    .ihlogo{height:42px;}
+    .sources{font-size:9pt; break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+<table class="pw"><tbody><tr><td>
+
+<div class="ihbar">
+  <a class="lockup screenonly" href="../index.html">
+    <span class="tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"/></svg></span>
+    <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+  </a>
+  <a class="back screenonly" href="../demo-lessons/">Back to the demo lessons</a>
+  <span class="logospace printonly" aria-hidden="true"></span></div>
+<header>
+  <h1>Lina&rsquo;s date</h1>
+  <img class="hero" src="img/l1-0.jpg" alt="A couple on a date at a café table">
+</header>
+<div class="notebar screenonly" id="twBar" hidden><button id="twToggle">Hide the notes for trainees</button><a href="#trainer" id="tnLink" hidden style="color:var(--teal); font-weight:700">Trainer notes</a></div>
+
+<section id="s1" class="pair1">
+  <div class="th"><span class="tag">Task 1</span>
+  <h2>First dates</h2>
+  <p class="do"><b>Talk</b> with a partner.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The lead-in gets the topic going and lets the students bring their own ideas before they see any text.</aside>
+  <ol>
+    <li>Where do people usually go on a first date in your country?</li>
+    <li>Is online dating popular in your country?</li>
+    <li>What do people talk about on a first date?</li>
+  </ol>
+</section>
+
+<section id="s2" class="pair2">
+  <div class="th"><span class="tag">Task 2</span>
+  <h2>Words in the story</h2>
+  <p class="do"><b>Match</b> the words to their meanings.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Pre-teaching for the reading, so it is meaning only: I elicit, check with one question, and move on. These five words would stop them understanding the dialogue.</aside>
+  <table><tbody><tr><td>1. <b>guess what?</b></td><td><select data-ans="c" aria-label="guess what?"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option></select></td></tr><tr><td>2. <b>go out (with someone)</b></td><td><select data-ans="e" aria-label="go out (with someone)"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option></select></td></tr><tr><td>3. <b>planning to</b></td><td><select data-ans="a" aria-label="planning to"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option></select></td></tr><tr><td>4. <b>romantic comedy</b></td><td><select data-ans="b" aria-label="romantic comedy"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option></select></td></tr><tr><td>5. <b>easy to talk to</b></td><td><select data-ans="d" aria-label="easy to talk to"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option></select></td></tr></tbody></table>
+  <p>a. going to do something in the future &nbsp;·&nbsp; b. a funny film about love &nbsp;·&nbsp; c. you say this before exciting news &nbsp;·&nbsp; d. friendly and nice to talk with &nbsp;·&nbsp; e. spend romantic time together</p>
+  <div class="row check"><button data-check="s2">Check my answers</button><span class="res" data-res="s2"></span></div>
+</section>
+
+<section id="s3">
+  <div class="th"><span class="tag">Task 3</span>
+  <h2>Lina's news</h2>
+  <p class="do"><b>Read</b> quickly. Was it a good date or a bad date?</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Two readings, two jobs. The first is quick, for one idea only: good date or bad? The second is slower, for detail. Pairs compare before I take answers.</aside>
+  <div class="who"><img class="ph" src="img/l1-2.jpg" alt="Lina on the phone"><span>Lina calls her friend Noor.</span></div>
+  <div class="dlg" id="d1"><p class="line a"><b>Lina:</b> Hey Noor, guess what? I went on a date last night!</p><p class="line b"><b>Noor:</b> Really? That's exciting! How did it go?</p><p class="line a"><b>Lina:</b> It was really nice! We went to a nice café.</p><p class="line b"><b>Noor:</b> Oh, nice! What does he look like?</p><p class="line a"><b>Lina:</b> Well, he's tall with brown hair and green eyes. And he has a beard.</p><p class="line b"><b>Noor:</b> Sounds nice! What did you do at the café?</p><p class="line a"><b>Lina:</b> We talked a lot and had coffee. He's really funny and easy to talk to.</p><p class="line b"><b>Noor:</b> That sounds great! Did you like him?</p><p class="line a"><b>Lina:</b> Yeah, I think so! We're planning to go out again next week. I need to think of what we will do!</p><p class="line b"><b>Noor:</b> That's wonderful, Lina! I'm happy for you.</p><p class="line a"><b>Lina:</b> Thanks, Noor! It was fun.</p></div>
+  <div class="row speak screenonly"><button data-say="d1">Listen to the dialogue</button><span>Speed</span><button data-rate="1" class="on">Normal</button><button data-rate="0.85">0.85×</button><button data-rate="0.75">0.75×</button></div>
+  <div class="row tfpick"><div data-tf="Good" class="tfrow"><div>The date was…</div><div class="tf"><button>Good</button><button>Bad</button></div></div></div>
+  <div class="row check"><button data-check="s3">Check</button><span class="res" data-res="s3"></span></div>
+  <p class="do" style="margin-top:14px"><b>Read again.</b> Answer the questions.</p>
+  <ol class="qs">
+    <li>What did Lina do last night?<input type="text" class="wide" aria-label="Answer 1"></li>
+    <li>Where did Lina and her date go?<input type="text" class="wide" aria-label="Answer 2"></li>
+    <li>What does her date look like?<input type="text" class="wide" aria-label="Answer 3"></li>
+    <li>What did they do at the café?<input type="text" class="wide" aria-label="Answer 4"></li>
+    <li>Does Lina like him? How do you know?<input type="text" class="wide" aria-label="Answer 5"></li>
+    <li>How does Noor feel?<input type="text" class="wide" aria-label="Answer 6"></li>
+  </ol>
+</section>
+
+<section id="s4">
+  <div class="th"><span class="tag">Task 4</span>
+  <h2>The second date</h2>
+  <p class="do"><b>In groups:</b> where should Lina go on her second date? <b>Choose</b> one place and say why.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> A speaking task between the two texts. It also makes the students predict, so they read the second dialogue to see if they were right.</aside>
+  <div class="places"><figure class="place"><img class="ph" src="img/place-cinema.jpg" alt="the cinema"><figcaption>the cinema</figcaption></figure><figure class="place"><img class="ph" src="img/place-restaurant.jpg" alt="a restaurant"><figcaption>a restaurant</figcaption></figure><figure class="place"><img class="ph" src="img/place-museum.jpg" alt="a museum"><figcaption>a museum</figcaption></figure><figure class="place"><img class="ph" src="img/place-concert.jpg" alt="a concert"><figcaption>a concert</figcaption></figure><figure class="place"><img class="ph" src="img/place-picnic.jpg" alt="a picnic"><figcaption>a picnic</figcaption></figure><figure class="place"><img class="ph" src="img/place-bowling.jpg" alt="bowling"><figcaption>bowling</figcaption></figure></div>
+  <ul>
+    <li>Why is it a good place for a date?</li>
+    <li>What can they do there?</li>
+    <li>Is it good in summer and in winter?</li>
+  </ul>
+</section>
+
+<section id="s5">
+  <div class="th"><span class="tag">Task 5</span>
+  <h2>Lina's plan</h2>
+  <p class="do"><b>Read</b> Lina and Marco's chat. Was your group right? <b>Answer</b> the questions.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The second text uses the same people and the same language, so it is easier, and they read with a reason: to check their prediction.</aside>
+  <div class="who"><img class="ph" src="img/l1-3.jpg" alt="Marco on the phone"><span>Lina calls Marco.</span></div>
+  <div class="dlg" id="d2"><p class="line a"><b>Lina:</b> Hey, Marco! I had a great time yesterday.</p><p class="line b"><b>Marco:</b> Me too, Lina! I really enjoyed talking to you.</p><p class="line a"><b>Lina:</b> I'm happy to hear that! How about we go out again next Saturday afternoon? There's a new romantic comedy at the cinema, and I think it would be fun to see it together. The film starts at 3 p.m.</p><p class="line b"><b>Marco:</b> That sounds like a good idea! What's the film called?</p><p class="line a"><b>Lina:</b> It's called <i>Second Chances</i>. I heard it's really sweet and funny. We could eat something before the film too. There's a nice Italian restaurant near the cinema. How about we meet there at 2 p.m.?</p><p class="line b"><b>Marco:</b> Italian sounds great! 2 p.m. next Saturday works for me. I'll be there.</p></div>
+  <div class="row speak screenonly"><button data-say="d2">Listen to the dialogue</button><span>Speed</span><button data-rate="1" class="on">Normal</button><button data-rate="0.85">0.85×</button><button data-rate="0.75">0.75×</button></div>
+  <ol class="qs">
+    <li>Where does Lina want to go?<input type="text" class="wide" aria-label="Plan answer 1"></li>
+    <li>What time does the film start?<input type="text" class="wide" aria-label="Plan answer 2"></li>
+    <li>Where and when do they meet before the film?<input type="text" class="wide" aria-label="Plan answer 3"></li>
+  </ol>
+</section>
+
+<section id="s6">
+  <div class="th"><span class="tag">Task 6</span>
+  <h2>What does he look like?</h2>
+  <p class="do">Lina says: <i>He's tall with <u>brown hair</u> and <u>green eyes</u>. And he has <u>a beard</u>.</i> <b>Match</b> the words to the pictures.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Now the lesson turns to language, and it comes from the text they have read. Notice I ask what the words mean before I give the rule: guided discovery. Then meaning, form and pronunciation.</aside>
+  <div class="pics"><div class="pic"><img class="ph" src="img/match-curly-hair.jpg" alt="Picture A"><b>A</b><select data-ans="curly hair" aria-label="Picture A"><option></option><option>curly hair</option><option>a moustache</option><option>bald</option><option>blonde hair</option><option>a beard</option><option>brown eyes</option></select></div><div class="pic"><img class="ph" src="img/match-beard.jpg" alt="Picture B"><b>B</b><select data-ans="a beard" aria-label="Picture B"><option></option><option>curly hair</option><option>a moustache</option><option>bald</option><option>blonde hair</option><option>a beard</option><option>brown eyes</option></select></div><div class="pic"><img class="ph" src="img/match-bald.jpg" alt="Picture C"><b>C</b><select data-ans="bald" aria-label="Picture C"><option></option><option>curly hair</option><option>a moustache</option><option>bald</option><option>blonde hair</option><option>a beard</option><option>brown eyes</option></select></div><div class="pic"><img class="ph" src="img/match-brown-eyes.jpg" alt="Picture D"><b>D</b><select data-ans="brown eyes" aria-label="Picture D"><option></option><option>curly hair</option><option>a moustache</option><option>bald</option><option>blonde hair</option><option>a beard</option><option>brown eyes</option></select></div><div class="pic"><img class="ph" src="img/match-blonde-hair.jpg" alt="Picture E"><b>E</b><select data-ans="blonde hair" aria-label="Picture E"><option></option><option>curly hair</option><option>a moustache</option><option>bald</option><option>blonde hair</option><option>a beard</option><option>brown eyes</option></select></div><div class="pic"><img class="ph" src="img/match-moustache.jpg" alt="Picture F"><b>F</b><select data-ans="a moustache" aria-label="Picture F"><option></option><option>curly hair</option><option>a moustache</option><option>bald</option><option>blonde hair</option><option>a beard</option><option>brown eyes</option></select></div></div>
+  <div class="row check"><button data-check="s6">Check my answers</button><span class="res" data-res="s6"></span></div>
+  <div class="rule">
+    <p><b>has</b> + hair, eyes, a beard, a moustache: <i>He has curly hair.</i></p>
+    <p><b>is</b> + tall, short, bald, slim: <i>She is tall.</i></p>
+    <p><b>wears</b> + glasses: <i>He wears glasses.</i></p>
+    <p>long + straight + black + hair &nbsp;·&nbsp; size, then style, then colour</p>
+  </div>
+</section>
+
+<section id="s7" class="pair1">
+  <div class="th"><span class="tag">Task 7</span>
+  <h2>Two questions</h2>
+  <p class="do"><b>Which question</b> does each answer go with?</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Learners mix these two questions up all the time. One short task just to separate them.</aside>
+  <p><b>A.</b> What does he/she look like? &nbsp; <b>B.</b> What is he/she like?</p>
+  <table><tbody><tr><td>1. He's tall with brown hair.</td><td><select data-ans="A" aria-label="He's tall with brown hair."><option></option><option>A</option><option>B</option></select></td></tr><tr><td>2. She's friendly and very funny.</td><td><select data-ans="B" aria-label="She's friendly and very funny."><option></option><option>A</option><option>B</option></select></td></tr><tr><td>3. She has long, curly hair.</td><td><select data-ans="A" aria-label="She has long, curly hair."><option></option><option>A</option><option>B</option></select></td></tr><tr><td>4. He's quiet but kind.</td><td><select data-ans="B" aria-label="He's quiet but kind."><option></option><option>A</option><option>B</option></select></td></tr><tr><td>5. He wears glasses.</td><td><select data-ans="A" aria-label="He wears glasses."><option></option><option>A</option><option>B</option></select></td></tr><tr><td>6. She's easy to talk to.</td><td><select data-ans="B" aria-label="She's easy to talk to."><option></option><option>A</option><option>B</option></select></td></tr></tbody></table>
+  <div class="row check"><button data-check="s7">Check my answers</button><span class="res" data-res="s7"></span></div>
+</section>
+
+<section id="s8" class="pair2">
+  <div class="th"><span class="tag">Task 8</span>
+  <h2>has, is or wears?</h2>
+  <p class="do"><b>Choose</b> the right word.</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> Controlled practice of the form: one choice per sentence, quick to check.</aside>
+  <table><tbody><tr><td>1. Marco</td><td><select data-ans="has" aria-label="Marco"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>a beard.</td></tr><tr><td>2. Lina</td><td><select data-ans="is" aria-label="Lina"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>short.</td></tr><tr><td>3. My dad</td><td><select data-ans="wears" aria-label="My dad"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>glasses.</td></tr><tr><td>4. Noor</td><td><select data-ans="has" aria-label="Noor"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>long black hair.</td></tr><tr><td>5. My brother</td><td><select data-ans="is" aria-label="My brother"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>bald.</td></tr><tr><td>6. Ada</td><td><select data-ans="has" aria-label="Ada"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>green eyes.</td></tr><tr><td>7. My teacher</td><td><select data-ans="wears" aria-label="My teacher"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>a hat.</td></tr><tr><td>8. Kenji</td><td><select data-ans="is" aria-label="Kenji"><option></option><option>has</option><option>is</option><option>wears</option></select></td><td>very tall.</td></tr></tbody></table>
+  <div class="row check"><button data-check="s8">Check my answers</button><span class="res" data-res="s8"></span></div>
+</section>
+
+<section id="s9" class="pair1">
+  <div class="th"><span class="tag">Task 9</span>
+  <h2>What do they look like?</h2>
+  <p class="do"><b>Write</b> one sentence for each person. Example: <i>Leo has long blond hair.</i></p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> A little freer: they write their own sentences about the pictures. I monitor and pick up errors for later.</aside>
+  <div class="pics"><div class="pic"><img class="ph" src="img/person-Brad.jpg" alt="Leo"><b>Leo</b><input type="text" class="wide" aria-label="About Leo"></div><div class="pic"><img class="ph" src="img/person-Jessica.jpg" alt="Hana"><b>Hana</b><input type="text" class="wide" aria-label="About Hana"></div><div class="pic"><img class="ph" src="img/person-Matthew.jpg" alt="Omar"><b>Omar</b><input type="text" class="wide" aria-label="About Omar"></div><div class="pic"><img class="ph" src="img/person-Ravi.jpg" alt="Ravi"><b>Ravi</b><input type="text" class="wide" aria-label="About Ravi"></div><div class="pic"><img class="ph" src="img/person-Angela.jpg" alt="Sofia"><b>Sofia</b><input type="text" class="wide" aria-label="About Sofia"></div><div class="pic"><img class="ph" src="img/person-Amy-Paul.jpg" alt="Mia and Ben"><b>Mia and Ben</b><input type="text" class="wide" aria-label="About Mia and Ben"></div></div>
+</section>
+
+<section id="s10" class="pair2 go">
+  <div class="th"><span class="tag">Task 10</span>
+  <h2>Who is it?</h2>
+  <p class="do"><b>In pairs:</b> describe a friend or someone in your family. Your partner draws them. Then describe someone in this room. Don't say the name. Can your partner guess?</p>
+  </div>
+  <aside class="tw" hidden><b>For the trainees watching</b> The freest stage: real people, their own words, and a reason to listen, because the partner has to draw or guess.</aside>
+  <div class="drawbox"></div>
+  <p class="eg">Use: <i>He has… · She is… · He wears…</i></p>
+</section>
+
+<section class="tnotes screenonly" id="trainer" hidden><h2>Trainer notes <span class="badge">Tutor only</span></h2><div id="tnBody"></div></section>
+<footer class="sources">
+  <h2>Sources</h2>
+  <p><b>Material:</b> written by Ramy Sakr for this demo lesson. <b>Photos:</b> from the author&rsquo;s original lesson slides.</p>
+</footer>
+
+</td></tr></tbody><tfoot class="pwfoot"><tr><td><div class="footspace"></div></td></tr></tfoot></table>
+<div class="pagefoot"><span class="cmark"><span class="cmark-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"/></svg></span><span class="cmark-c">Connect</span><span class="cmark-l">Lite</span></span>Original material: Ramy Sakr, <i>Lina&rsquo;s date</i>, an elementary demo lesson for Connect Lite (2026). Photos: from the author&rsquo;s original lesson slides.</div>
+
+</div>
+<script>
+(function(){
+  function mark(sec){
+    var sel = document.querySelectorAll('#' + sec + ' select[data-ans]'), n = 0;
+    sel.forEach(function(s){ var ok = s.value === s.dataset.ans; if (ok) n++; s.style.borderColor = s.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+    return n + ' of ' + sel.length + ' right';
+  }
+  function norm(t){ return String(t || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  document.querySelectorAll('[data-check]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.dataset.check, sec = document.getElementById(k), n = 0, all = 0;
+      sec.querySelectorAll('select[data-ans]').forEach(function(x){ all++; var ok = x.value === x.dataset.ans; if (ok) n++; x.style.borderColor = x.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+      sec.querySelectorAll('input[data-accept]').forEach(function(x){ all++; var ok = x.dataset.accept.split('|').indexOf(norm(x.value)) !== -1; if (ok) n++; x.style.borderColor = x.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+      sec.querySelectorAll('input[data-p]').forEach(function(x){ all++; var ok = x.checked === (x.dataset.p === 'y'); if (ok) n++; x.parentNode.style.color = ok ? 'var(--green)' : 'var(--red)'; });
+      sec.querySelectorAll('[data-tf]').forEach(function(row){ if (row.dataset.tf === '?') return; all++; var on = row.querySelector('.tf .on'); row.querySelectorAll('.tf button').forEach(function(x){ x.classList.remove('right','wrong'); });
+        if (on) { var ok = on.textContent === row.dataset.tf; if (ok) n++; on.classList.add(ok ? 'right' : 'wrong'); } });
+      document.querySelector('[data-res="' + k + '"]').textContent = n + ' of ' + all + ' right';
+    });
+  });
+  document.querySelectorAll('.tf').forEach(function(g){
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){ g.querySelectorAll('button').forEach(function(x){ x.classList.remove('on','right','wrong'); }); b.classList.add('on'); }); });
+  });
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.addEventListener('click', function(){ c.dataset.s = String(((+c.dataset.s || 0) + 1) % 4); });
+  });
+  document.querySelectorAll('audio').forEach(function(a){
+    a.addEventListener('play', function(){ document.querySelectorAll('audio').forEach(function(o){ if (o !== a) o.pause(); }); });
+  });
+  document.querySelectorAll('.speed').forEach(function(g){
+    var a = g.parentNode.querySelector('audio');
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){
+      a.preservesPitch = true; a.webkitPreservesPitch = true; a.defaultPlaybackRate = +b.dataset.rate; a.playbackRate = +b.dataset.rate;
+      g.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    }); });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var tw = [].slice.call(document.querySelectorAll('.tw')), b = document.getElementById('twToggle');
+  window.twShow = function(on){ tw.forEach(function(x){ x.hidden = !on; }); if (b) { b.textContent = on ? 'Hide the notes for trainees' : 'Show the notes for trainees'; b.dataset.on = on ? '1' : ''; } };
+  if (b) b.addEventListener('click', function(){ twShow(!b.dataset.on); });
+})();
+</script>
+<script src="../../hub-store.js"></script>
+<script>
+/* The two recordings come through Lite's store from the Connect Lite shared drive, not from this public page
+   (12 Nov 2026). They load when the page opens from a course link; the third listening reuses the second track. */
+(function(){
+  var aud = [].slice.call(document.querySelectorAll('audio[data-track]'));
+  function say(a, t){ var m = a.parentNode.querySelector('.trackmsg'); if (m) m.textContent = t; }
+  aud.forEach(function(a){ say(a, 'Loading the recording\u2026'); });
+  function load(a){
+    if (!window.HubStore || !HubStore.audio) return Promise.reject(new Error('no store'));
+    return HubStore.audio(a.dataset.track).then(function(r){
+      if (!r || !r.b64) throw new Error('empty');
+      var bin = atob(r.b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'audio/mp4' }));
+      a.src = url; say(a, '');
+      if (a.id === 'a2') document.querySelectorAll('audio[data-same="a2"]').forEach(function(x){ x.src = url; });
+    });
+  }
+  /* Who sees what (Ramy, 12 Nov 2026): the notes for the trainees watching show on a trainee's or a tutor's link,
+     never a volunteer's and never on paper; a tutor can hide them to project the page. The trainer notes come from
+     the store, for a tutor's link only, like every input session's. */
+  var H = window.HubStore;
+  if (H && (H.isTrainee() || H.isTutor() || H.isAssessor())) twShow(true);
+  if (H && (H.isTutor() || H.isAssessor())) document.getElementById('twBar').hidden = false;
+  if (H && H.isTutor()) H.ping().then(function(r){
+    if (!r || !r.tutor) return;
+    var sec = document.getElementById('trainer'), tb = document.getElementById('tnBody');
+    sec.hidden = false; document.getElementById('tnLink').hidden = false; tb.innerHTML = '<p>Loading the trainer notes…</p>';
+    H.call({ op: 'trainerNotes', slug: 'linas-date' }).then(function(x){ tb.innerHTML = (x && x.html) || '<p>No trainer notes for this lesson yet.</p>'; },
+      function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+  }).catch(function(){});
+  aud.reduce(function(p, a){ return p.then(function(){ return load(a).catch(function(){ say(a, 'Open Lite from your course link to hear the recordings.'); }); }); }, Promise.resolve());
+})();
+</script>
+<script>
+/* The dialogues read aloud by the browser's own voices, at the speed chosen (12 Nov 2026). */
+(function(){
+  if (!window.speechSynthesis) { document.querySelectorAll('.speak').forEach(function(x){ x.hidden = true; }); return; }
+  function voices(){ var v = speechSynthesis.getVoices().filter(function(x){ return /^en/.test(x.lang); }); return v.length ? v : speechSynthesis.getVoices(); }
+  document.querySelectorAll('.speak').forEach(function(g){
+    var rate = 1, btn = g.querySelector('[data-say]'), box = document.getElementById(btn.dataset.say);
+    g.querySelectorAll('[data-rate]').forEach(function(b){ b.addEventListener('click', function(){ rate = +b.dataset.rate; g.querySelectorAll('[data-rate]').forEach(function(x){ x.classList.toggle('on', x === b); }); }); });
+    btn.addEventListener('click', function(){
+      speechSynthesis.cancel(); var v = voices(), lines = [].slice.call(box.querySelectorAll('.line'));
+      lines.forEach(function(l){
+        var u = new SpeechSynthesisUtterance(l.textContent.replace(/^[^:]+:\s*/, '')); u.rate = rate;
+        var who = l.classList.contains('a') ? 0 : 1; if (v.length) u.voice = v[Math.min(who, v.length - 1)];
+        u.onstart = function(){ l.classList.add('speaking'); }; u.onend = function(){ l.classList.remove('speaking'); };
+        speechSynthesis.speak(u);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
