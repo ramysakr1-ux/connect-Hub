@@ -805,6 +805,7 @@ window.hubDemoLessons = function(TT){
       if (a != null && b != null && b > a) e.minutes += b - a;
       if (x.s && (!e.from || String(x.s) < String(e.from))) e.from = x.s;
       if (x.e && (!e.to || String(x.e) > String(e.to))) e.to = x.e;
+      if (!e.mat && x.mat && /^https?:\/\//i.test(String(x.mat))) e.mat = String(x.mat);   /* the tile's materials link, for the home card (12 Nov 2026) */
     });
     Object.keys(byTitle).sort(function(p, q){ return String(byTitle[p].from).localeCompare(String(byTitle[q].from)); }).forEach(function(key){
       var e = byTitle[key], m = /(\d+)/.exec(e.title);

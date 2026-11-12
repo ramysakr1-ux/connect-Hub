@@ -453,7 +453,10 @@ function handle_(req) {
   /* v56 adds two more: answering a reminder (volunteerReply) and turning the
      mail off or on (volunteerNotify). Still their own row, still nothing else. */
   /* v136: volunteerCards reads the language of their own level's lessons, and nothing of a trainee's (see the op). */
-  if (vol && op !== 'boot' && op !== 'version' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards') throw new Error('This link only opens your own page');
+  /* v223 (12 Nov 2026): a volunteer may also play the input library's own files (LIBRARY_AUDIO_), so a demo lesson a tutor
+     shares with the class plays its recordings on the students' phones. Those files and nothing else. */
+  var volLib = op === 'audio' && LIBRARY_AUDIO_.indexOf(String(req.id || '').replace(/[^\w-]/g, '')) !== -1;
+  if (vol && !volLib && op !== 'boot' && op !== 'version' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards') throw new Error('This link only opens your own page');
   // A trainee's token names their course, and it must agree with any key sent.
   var me = null;
   if (req.token) {

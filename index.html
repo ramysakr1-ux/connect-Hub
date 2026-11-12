@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611121512">
+<link rel="stylesheet" href="hub-tokens.css?v=202611121536">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -469,7 +469,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611121512">
+<link rel="stylesheet" href="hub-house.css?v=202611121536">
 </head>
 <body>
 <div class="board">
@@ -682,20 +682,20 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202611121512"></script>
-<script src="observation-defaults.js?v=202611121512"></script>
-<script src="hub-shared.js?v=202611121512"></script>
-<script src="hub-hand.js?v=202611121512"></script>
-<script src="hub-ink.js?v=202611121512"></script>
+<script src="hub-due.js?v=202611121536"></script>
+<script src="observation-defaults.js?v=202611121536"></script>
+<script src="hub-shared.js?v=202611121536"></script>
+<script src="hub-hand.js?v=202611121536"></script>
+<script src="hub-ink.js?v=202611121536"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202611121512"></script>
-<script src="hub-say.js?v=202611121512"></script>
-<script src="hub-shelf.js?v=202611121512"></script>
-<script src="hub-front.js?v=202611121512"></script>
-<script src="hub-sync.js?v=202611121512"></script>
-<script src="hub-notebook.js?v=202611121512"></script>
-<script src="hub-feedback.js?v=202611121512"></script>
-<script src="hub-about.js?v=202611121512"></script>
+<script src="hub-store.js?v=202611121536"></script>
+<script src="hub-say.js?v=202611121536"></script>
+<script src="hub-shelf.js?v=202611121536"></script>
+<script src="hub-front.js?v=202611121536"></script>
+<script src="hub-sync.js?v=202611121536"></script>
+<script src="hub-notebook.js?v=202611121536"></script>
+<script src="hub-feedback.js?v=202611121536"></script>
+<script src="hub-about.js?v=202611121536"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1464,7 +1464,19 @@ if (fbBack){
     (hubDemoLessons(TT) || []).filter(x => x.date === TODAY).forEach(function(x){
       clockLines.push({ text: 'Today’s demo lesson' + (x.from && window.hubClock ? ', ' + hubClock(x.from) : '') + ': ' + x.title + ' — your observation sheet', href: '18_observation_tasks.html?task=live' + x.n,
         from: slotInstant(x.date, x.from), to: slotInstant(x.date, x.to) });
+      /* and its materials, when the tutor put a link on the tile (Ramy, 12 Nov 2026: "add it to the home card") */
+      if (x.mat) clockLines.push({ text: 'Today’s demo lesson: open the materials', href: x.mat, from: slotInstant(x.date, x.from), to: slotInstant(x.date, x.to) });
     });
+  }
+  /* TODAY'S STUDENT INTERVIEW (Ramy, 12 Nov 2026: "make sure that the FOL interview would also be on the card"). A timetable
+     tile whose title says interview, on a course that runs interviews: one line with its time, to the trainee's questions
+     and notes. */
+  if (!beforeStart && !afterEnd && !lastWrap && TT && TT.days && (CS.gtkyFormat === 'interview' || CS.gtkyFormat === 'both')) {
+    const dToday = (TT.days || []).find(d => d && d.date === TODAY);
+    const iv = ((dToday && (dToday.sessions || dToday.slots)) || []).filter(x => x && /interview/i.test(String(x.t || '')) && x.s)
+      .sort((a, b) => String(a.s).localeCompare(String(b.s)));
+    if (iv.length) clockLines.push({ text: 'Today’s student interview' + (window.hubClock ? ', ' + hubClock(iv[0].s) : '') + ': your questions and notes', href: '31_getting_to_know_you.html',
+      from: slotInstant(TODAY, iv[0].s), to: slotInstant(TODAY, iv[iv.length - 1].e) });
   }
   /* What is on the card: every slot that has started (or starts within a quarter of an hour), and the one coming
      next, so the morning's first session is there when they open the page and the end-of-day one waits its turn.
