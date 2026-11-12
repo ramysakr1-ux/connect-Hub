@@ -371,7 +371,11 @@ function settleVersions_(op) {
    The wrappers are put on for that one request and taken off again in profEnd_. */
 /* Recordings the input library plays through the store (op audio), whatever the course: the speed flat-mating
    demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
-var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt'];
+var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt',
+  /* the emergency demo's book pages, English File Upper-intermediate 3rd edn, File 5A (12 Nov 2026): shown to course links only */
+  '1DUl-xuKBH510QWd1gtT-i4e20NSD41VD', '1UA4nvhOa5CqcQbmTRl_JQKSNBe9JoEo0', '1D7HvcGLvJlv6GDAVidoDhIt6H-qI9KeX', '1CXseksocfa-0Vquuu88YAA3ZyQY8Npfi', '15i6klfDzf4EhsOJeZRZfNHugDYHspacT', '1zugnIES0HPB78LGxI10WxM0cRv_oD_QJ', '1EpSnAPJIXiny-YoAbpUQOIDpxGdmJXrm',
+  /* the amazing journeys demo: Speakout Pre-Intermediate 5.1 texts and photos (12 Nov 2026), course links only */
+  '1O4_f5xL7xkT2HhArazIkgSFlQVNrjMBl', '1swtaGu3PO-OujTUSxD5bMYgivDdF5llA', '1N-t-AS2tehxFFKlVmwCAKKPemOKlXeYE', '1fplCHdfoMh0StYfO4aOK-t-qmdqCdNPP', '1pF3baUq_ROwUYzaXkWpFXO10Tl18cceq', '1tVWKf1ZIppjkqHY5UCu344m3ufwKBcnx'];
 
 var PROF_NAMES_ = ['migrate_', 'courseByKey_', 'courseById_', 'traineeAnywhere_', 'courseRead_', 'courseBlock_', 'courseBlockRead_', 'courseCacheGet_', 'courseCachePut_', 'courseRows_',
   'rosterWithRecords_', 'recordsFor_', 'comingFor_', 'guidanceFor_', 'sharedNotesFor_', 'peerSheetsFor_', 'courseFeedbackFor_',
