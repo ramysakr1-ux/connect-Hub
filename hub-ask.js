@@ -93,7 +93,7 @@
       var body = { op: 'askQuestion', token: S.token(), text: ta.value.trim(), to: to, session: { k: 'input', id: ctx.id, title: T.x.t, date: T.date } };
       var step = got ? HubRec.b64(got.blob).then(function(b){ body.bytes = b; body.type = got.type; body.seconds = got.seconds; }) : Promise.resolve();
       step.then(function(){ return S.call(body, 120000); }).then(function(r){
-        msg.className = 'ask-msg ok'; msg.textContent = (r && r.demo) ? 'This is a demo, so nothing was sent. On a real course ' + who + ' would have it now.' : 'Sent. ' + (to ? who : 'Your tutor') + ' has it.';
+        msg.className = 'ask-msg ok'; msg.textContent = (r && r.demo && S.isTemplate && S.isTemplate()) ? 'This is the trainee view, so nothing was sent.' : (r && r.demo) ? 'This is a demo, so nothing was sent. On a real course ' + who + ' would have it now.' : 'Sent. ' + (to ? who : 'Your tutor') + ' has it.';
         go.textContent = 'Sent'; ta.value = ''; got = null; heard.classList.remove('on'); setTimeout(close, 2200);
       }, function(e){ go.disabled = false; go.textContent = 'Send'; msg.className = 'ask-msg err'; msg.textContent = 'Not sent: ' + ((e && e.message) || e); });
     });

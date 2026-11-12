@@ -325,7 +325,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -371,6 +371,9 @@ function settleVersions_(op) {
    The wrappers are put on for that one request and taken off again in profEnd_. */
 /* Recordings the input library plays through the store (op audio), whatever the course: the speed flat-mating
    demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
+/* What the trainee view (Maya, v224) may call: reads a trainee's pages make, and nothing that writes, mails or uploads. */
+var TEMPLATE_READS_ = { boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
+  passInfo: 1, peerSheets: 1, questions: 1, bookings: 1 };
 var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt',
   /* the emergency demo's book pages, English File Upper-intermediate 3rd edn, File 5A (12 Nov 2026): shown to course links only */
   '1DUl-xuKBH510QWd1gtT-i4e20NSD41VD', '1UA4nvhOa5CqcQbmTRl_JQKSNBe9JoEo0', '1D7HvcGLvJlv6GDAVidoDhIt6H-qI9KeX', '1CXseksocfa-0Vquuu88YAA3ZyQY8Npfi', '15i6klfDzf4EhsOJeZRZfNHugDYHspacT', '1zugnIES0HPB78LGxI10WxM0cRv_oD_QJ', '1EpSnAPJIXiny-YoAbpUQOIDpxGdmJXrm',
@@ -459,6 +462,20 @@ function handle_(req) {
   if (vol && !volLib && op !== 'boot' && op !== 'version' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards') throw new Error('This link only opens your own page');
   // A trainee's token names their course, and it must agree with any key sent.
   var me = null;
+  /* THE TRAINEE VIEW (v224, 12 Nov 2026). Ramy: "I want to show the trainees things from their perspective ... the
+     template trainee view ... a trainee that is not really on the course." Every course has one made-up trainee, Maya,
+     who is NOT on the roster: no row, no records, counted nowhere, never seen by the assessor. Her link is
+     "maya.<courseId>.<secret>", handed to a tutor by traineeViewLink. She is answered as a trainee in Group 1 would be,
+     and she only reads: any op that is not in TEMPLATE_READS_ is refused, and link PINs do not apply to her. */
+  if (req.token && String(req.token).indexOf('maya.') === 0) {
+    var tvParts = String(req.token).split('.');
+    var tvCourse = tvParts.length === 3 ? courseById_(tvParts[1]) : null;
+    if (!tvCourse || !tvParts[2] || PropertiesService.getScriptProperties().getProperty(keyProp_('maya', tvCourse.id)) !== tvParts[2]) throw new Error('This link is not on the course');
+    if (course && course.id !== tvCourse.id) throw new Error('This link is not on the course');
+    course = tvCourse;
+    me = { course: tvCourse.id, token: String(req.token), name: 'Maya Ramsey', group: '1', created: '', email: '', template: true };
+    if (!TEMPLATE_READS_[op]) throw new Error('This is the trainee view. Nothing is saved from it.');
+  } else
   if (req.token) {
     me = traineeAnywhere_(String(req.token));
     if (course && me.course !== course.id) throw new Error('This link is not on the course');
@@ -501,7 +518,7 @@ function handle_(req) {
     var pinsRec = courseRead_(course.id, 'pins') || {};
     var pinsOn = !!((courseRead_(course.id, 'settings') || {}).pinLinks);
     var want = tutor ? pinsRec.tutor : (me && !assessor && !vol) ? (pinsRec.trainees || {})[me.token] : null;
-    var subject = tutor ? 'tutor' : (me && !assessor && !vol) ? 'trainee' : '';
+    var subject = tutor ? 'tutor' : (me && !assessor && !vol && !me.template) ? 'trainee' : '';
     if (want && want.hash) {
       var given = String(req.pin || '');
       if (!given) throw new Error('PIN required');
@@ -1421,6 +1438,11 @@ case 'inbox': {
 
     // The assessor link: made once per course, shown to tutors on course
     // admin's Roster tab; rotating it kills every copy in circulation.
+    /* The trainee view's link, for a tutor (v224): made once per course, the same every time. */
+    case 'traineeViewLink': {
+      requireTutor_(tutor);
+      return { token: 'maya.' + course.id + '.' + courseKey_('maya', course.id), name: 'Maya Ramsey', group: '1' };
+    }
     case 'assessorLink': {
       requireTutor_(tutor);
       var ex0 = assessorExpiry_(course.id);
@@ -1439,6 +1461,8 @@ case 'inbox': {
       requireTutor_(tutor); requireAdminPin_(course, req, owner);
       var nk = newKey_();
       PropertiesService.getScriptProperties().setProperty(keyProp_('tutor', course.id), nk);
+      /* the trainee view's link dies with the tutor links: the next traineeViewLink makes a new one (12 Nov 2026) */
+      PropertiesService.getScriptProperties().deleteProperty(keyProp_('maya', course.id));
       var tpk = courseRead_(course.id, 'pins'); if (tpk && tpk.tutor) { delete tpk.tutor; courseWrite_(course.id, 'pins', tpk); }
       return { key: nk };
     }
@@ -3968,7 +3992,10 @@ function notebookFolder_(course) {
 function noteFileFor_(course, id, tutor, me, who, own) {
   if (!course) throw new Error('This link is not on a course');
   var f; try { f = DriveApp.getFileById(String(id || '')); } catch (e) { throw new Error('No such recording'); }
-  var inFolder = false, parents = f.getParents(), want = notebookFolder_(course).getId();
+  /* read the folder's id, never make the folder: a read must not write (12 Nov 2026) */
+  var want = PropertiesService.getScriptProperties().getProperty('NB_FOLDER_' + course.id);
+  if (!want) throw new Error('No such recording');
+  var inFolder = false, parents = f.getParents();
   while (parents.hasNext()) { if (parents.next().getId() === want) inFolder = true; }
   if (!inFolder) throw new Error('No such recording');
   var meta = {}; try { meta = JSON.parse(f.getDescription() || '{}'); } catch (e) {}
@@ -4007,7 +4034,9 @@ function interviewFolder_(course) {
 function interviewFileFor_(course, id, tutor, me, own) {
   if (!course) throw new Error('This link is not on a course');
   var f; try { f = DriveApp.getFileById(String(id || '')); } catch (e) { throw new Error('No such recording'); }
-  var inFolder = false, parents = f.getParents(), want = interviewFolder_(course).getId();
+  var want = PropertiesService.getScriptProperties().getProperty('IV_FOLDER_' + course.id);
+  if (!want) throw new Error('No such recording');
+  var inFolder = false, parents = f.getParents();
   while (parents.hasNext()) { if (parents.next().getId() === want) inFolder = true; }
   if (!inFolder) throw new Error('No such recording');
   var meta = {}; try { meta = JSON.parse(f.getDescription() || '{}'); } catch (e) {}
@@ -4122,6 +4151,20 @@ function courseFeedbackFor_(courseId) {
   });
 }
 
+/* MAYA'S PLACE (12 Nov 2026). The trainee view's made-up trainee is on no roster, so no teaching set and no TP point is
+   hers, and the pages that show "your TP point" or "You teach" stayed empty. On the read only, she stands in the first
+   place of Group 1's first set: the store answers that place under her own link. Nothing is written, and nobody else's
+   answer changes (seat is '' for everyone but her). */
+function mayaSeat_(courseId, me, tpp) {
+  if (!me || !me.template) return '';
+  try {
+    var p = tpp || courseRead_(courseId, 'tppoints') || {};
+    var sets = (p.sets || {})[String(me.group || '')];
+    var first = Array.isArray(sets) && Array.isArray(sets[0]) && sets[0][0];
+    if (!first) first = Object.keys((p.groups || {})[String(me.group || '')] || {})[0];
+    return first ? standIn_(courseId, first) : '';
+  } catch (e) { return ''; }
+}
 function settingsFor_(course, s, reader, me) {
   if (reader || !s || typeof s !== 'object') return s;
   var hide = hideTokens_(course.id, me), out = {};
@@ -4130,6 +4173,11 @@ function settingsFor_(course, s, reader, me) {
   delete out.askCode;   /* the room's question page is the tutors' to hand out (28 Oct 2026) */
   if (out.slotOf && typeof out.slotOf === 'object') { var so = {}; Object.keys(out.slotOf).forEach(function (t) { so[hide(t)] = out.slotOf[t]; }); out.slotOf = so; }
   if (Array.isArray(out.letterOrder)) out.letterOrder = out.letterOrder.map(hide);
+  var seatS = mayaSeat_(course.id, me);
+  if (seatS) {
+    if (out.slotOf && out.slotOf[seatS] != null) { out.slotOf[me.token] = out.slotOf[seatS]; delete out.slotOf[seatS]; }
+    if (Array.isArray(out.letterOrder)) out.letterOrder = out.letterOrder.map(function (t) { return t === seatS ? me.token : t; });
+  }
   return out;
 }
 function tpPointsFor_(p, reader, me) {
@@ -4151,6 +4199,8 @@ function tpPointsFor_(p, reader, me) {
   var hide = hideTokens_(me.course || '', me);
   var sets = (p.sets || {})[grp] || null;
   if (Array.isArray(sets)) sets = sets.map(function (set) { return Array.isArray(set) ? set.map(hide) : set; });
+  var seat = mayaSeat_(me.course || '', me, p);
+  if (seat && Array.isArray(sets)) sets = sets.map(function (set) { return Array.isArray(set) ? set.map(function (t) { return t === seat ? me.token : t; }) : set; });
   /* v153 (26 Oct 2026): the LEVEL of the set the group teaches from, and nothing else of the set, so the
      getting-to-know-you page can deal a trainee the three for their own students before day one (Ramy: "we know what
      level they're teaching, why don't they just get their own"). */
@@ -4158,7 +4208,7 @@ function tpPointsFor_(p, reader, me) {
   try { var st = p.set || {}, sid = (st.setFor || {})[grp], S = sid && (st.library || {})[sid]; level = S ? String(S.level || S.book || '').slice(0, 40) : ''; } catch (e) { level = ''; }
   if (!rel[grp]) return { released: false, group: grp, sets: sets, me: me.token, level: level };
   var pts = byGroup[grp] || {}, mine = {};
-  Object.keys(pts).forEach(function (t) { mine[hide(t)] = pts[t]; });
+  Object.keys(pts).forEach(function (t) { var k = hide(t); mine[seat && k === seat ? me.token : k] = pts[t]; });
   return { released: true, group: grp, points: mine, sets: sets, me: me.token, level: level };
 }
 function courseWriteRawInner_(courseId, kind, data) {
@@ -5012,6 +5062,7 @@ function purgeCourse_(id) {
     var props = PropertiesService.getScriptProperties();
     props.deleteProperty(keyProp_('tutor', id));
     props.deleteProperty(keyProp_('assessor', id));
+    props.deleteProperty(keyProp_('maya', id));   /* the trainee view's secret goes too, or an old link would open the next course given this id (12 Nov 2026) */
     removed.materials = trashMaterials_(id);
     return removed;
   } finally { lock.releaseLock(); }

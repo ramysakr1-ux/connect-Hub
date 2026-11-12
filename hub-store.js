@@ -91,8 +91,30 @@ window.HubStore = (function(){
      see hub-sync.js. These are the calls that only read; anything else on a
      demo is answered here and never sent -- no email, no upload, no roster
      change. feedback and report are the visitor's own note to Lite's maker. */
-  var READS = { adminPin:1, poolSet:1, version:1, tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1, bookings:1 };
-  function isDemo(){ if (window.HUB_DEMO != null) return !!window.HUB_DEMO; try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
+  var READS = { adminPin:1, poolSet:1, version:1, tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, traineeViewLink:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1, bookings:1 };
+  /* THE TRAINEE VIEW (12 Nov 2026). Ramy: "I want to show the trainees things from their perspective ... a trainee that is not
+     really on the course." A link whose token starts "maya." is the course's made-up trainee: she reads what a trainee in
+     Group 1 reads and writes nothing. Here she is treated as a demo visit, so every write is answered in the browser and
+     never sent (the store refuses them too), and every page says who she is. */
+  /* Decided once, from the link this page loaded with: a tutor's tab left open must not turn into a demo visit when Maya's link is opened in another tab. */
+  var TEMPLATE = token().indexOf('maya.') === 0;
+  function isTemplate(){ return TEMPLATE; }
+  (function(){
+    function strip(){
+      if (!isTemplate() || !document.body || document.getElementById('hubTraineeView')) return;
+      var st = document.createElement('style');
+      st.textContent = '#hubTraineeView{position:fixed;top:0;left:0;right:0;z-index:900;margin:0;padding:8px 16px;box-sizing:border-box;background:#7a2e2e;color:#fff;font:700 13px/1.4 Karla,system-ui,sans-serif;text-align:center;}#hubTraineeView span{font-weight:400;}@media print{#hubTraineeView{display:none;}html{padding-top:0 !important;}}';
+      document.head.appendChild(st);
+      var b = document.createElement('div'); b.id = 'hubTraineeView'; b.setAttribute('role', 'status');
+      b.innerHTML = 'Trainee view <span>\u00b7 Maya is a made-up trainee, not on the course. Nothing here is saved.</span>';
+      document.body.insertBefore(b, document.body.firstChild);
+      /* fixed, with its height kept free at the top of the page: a page whose body is a flex row laid a sticky strip out as a side column */
+      var fit = function(){ var h = b.offsetHeight; document.documentElement.style.paddingTop = h + 'px'; document.documentElement.style.scrollPaddingTop = h + 'px'; };
+      fit(); window.addEventListener('resize', fit);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', strip); else strip();
+  })();
+  function isDemo(){ if (isTemplate()) return true; if (window.HUB_DEMO != null) return !!window.HUB_DEMO; try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
   function cred(){ return key() || akey() || vtoken() || token() || ''; }
   function verGet(){ try { return JSON.parse(localStorage.getItem('hub:ver') || 'null'); } catch (e) { return null; } }
   function verPut(o){ try { localStorage.setItem('hub:ver', JSON.stringify(o)); } catch (e) {} }
@@ -201,6 +223,7 @@ window.HubStore = (function(){
        link does (the link cards, 7 Oct 2026); the card's button opens their
        page, and 26_volunteer.html?v= still works on its own. */
     volunteerLinkFor: function(v){ return base() + 'invite.html?v=' + encodeURIComponent(v); },
+    isTemplate: isTemplate,
     isTutor: function(){ return !!key(); }, isAssessor: function(){ return !!akey() && !key(); }, isTrainee: function(){ return !!token() && !key() && !akey(); },
     call: call,
     ping: function(){ return call({ op: 'ping' }); },
@@ -244,7 +267,8 @@ window.HubStore = (function(){
     me: function(){ return call({ op: 'me', token: token() }); },
     get: function(kind, tok){ return call({ op: 'get', token: tok || token(), kind: kind }).then(function(r){ return r.data; }); },
     put: function(kind, data, tok){ return call({ op: 'put', token: tok || token(), kind: kind, data: data }); },
-    course: function(){ return call({ op: 'course' }); },
+    /* a trainee's link goes with it (12 Nov 2026): without one the store answered "not on a course" and the input sessions page never refreshed */
+    course: function(){ var b = { op: 'course' }; if (!key() && !akey() && !vtoken() && token()) b.token = token(); return call(b); },
     /* A Pool set, whole: its pages and recordings as well as its writing (store v209, 10 Nov 2026). A tutor's key
        only. An older store does not know the op and the caller carries on with the public copy. */
     poolSet: function(id){ return call({ op: 'poolSet', set: id }); },

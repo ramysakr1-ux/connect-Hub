@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611121536">
+<link rel="stylesheet" href="hub-tokens.css?v=202611121814">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -854,27 +854,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611121536">
+<link rel="stylesheet" href="hub-house.css?v=202611121814">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611121536"></script>
-<script src="hub-tracker.js?v=202611121536"></script>
-<script src="hub-rotation.js?v=202611121536"></script>
-<script src="hub-xlsx.js?v=202611121536"></script>
-<script src="hub-docx.js?v=202611121536"></script>
-<script src="hub-timetable-parse.js?v=202611121536"></script>
-<script src="assignment-defaults.js?v=202611121536"></script>
-<script src="hub-shared.js?v=202611121536"></script>
+<script src="hub-due.js?v=202611121814"></script>
+<script src="hub-tracker.js?v=202611121814"></script>
+<script src="hub-rotation.js?v=202611121814"></script>
+<script src="hub-xlsx.js?v=202611121814"></script>
+<script src="hub-docx.js?v=202611121814"></script>
+<script src="hub-timetable-parse.js?v=202611121814"></script>
+<script src="assignment-defaults.js?v=202611121814"></script>
+<script src="hub-shared.js?v=202611121814"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611121536"></script>
-<script src="hub-say.js?v=202611121536"></script>
-<script src="hub-sync.js?v=202611121536"></script>
-<script src="hub-notebook.js?v=202611121536"></script>
+<script src="hub-store.js?v=202611121814"></script>
+<script src="hub-say.js?v=202611121814"></script>
+<script src="hub-sync.js?v=202611121814"></script>
+<script src="hub-notebook.js?v=202611121814"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -3580,7 +3580,8 @@ function openBooking(date, id){
   const day = dayOfDate(date); if (!day) return;
   const x = (day.sessions || []).find(s => s.id === id); if (!x || !isSheet(x)) return;
   const el = pop('ttpop'), sh = sheetOf(day, x), isTut = /tutorial/i.test(x.t || '');
-  const demo = !!SETTINGS.demoToday;
+  const tview = !!(window.HubStore && HubStore.isTemplate && HubStore.isTemplate());
+  const demo = !!SETTINGS.demoToday || tview;
   const can = IS_TRAINEE && !demo && !sh.mine.length && placesFor(x, date).some(n => sh.taken.indexOf(n) === -1) && date >= TODAY;
   el.innerHTML = sheetHTML(day, x) + (IS_TRAINEE ? (sh.mine.length
       ? `<div class="acts"><button type="button" class="btn quiet" id="bkFree">Cancel my place</button><button type="button" class="btn" id="bkOk">Done</button></div>`
@@ -3590,7 +3591,7 @@ function openBooking(date, id){
           if (isTut && window.hubSheetSplit && hubSheetSplit(SETTINGS, x).split) return 'Book the next open place.';
           return isTut ? (own ? 'Tutorials are with your tutor, ' + esc(own) + '.' : 'Tutorials are with your own tutor.') : 'Before you submit an assignment, any tutor; after, your own tutor' + (own ? ', ' + esc(own) : '') + ', only.'; })()}</p>
         <div class="acts"><button type="button" class="btn quiet" id="bkOk">Close</button><button type="button" class="btn" id="bkGo">Book the next place</button></div><p class="bkmsg" id="bkMsg"></p>`
-      : `${demo ? '<p class="bkrule">This is a demo course, so places are not booked here.</p>' : ''}<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`) : `<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`);
+      : `${demo ? `<p class="bkrule">${tview ? 'This is the trainee view, so places are not booked here.' : 'This is a demo course, so places are not booked here.'}</p>` : ''}<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`) : `<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`);
   el.hidden = false; el.classList.add('sheetpop'); asDrawer(el, x.t || 'Book a place');
   placeNear(el, document.querySelector(`.tile[data-date="${date}"][data-id="${id}"]`));
   $('bkOk').addEventListener('click', closePop);
@@ -4436,7 +4437,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611121536'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611121814'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);

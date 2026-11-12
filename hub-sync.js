@@ -49,6 +49,7 @@
   var pill;
 
   function status(text, kind){
+    if (kind === 'demo' && window.HubStore && HubStore.isTemplate && HubStore.isTemplate()) text = 'Trainee view \u00b7 nothing is saved';
     /* A page that saves nothing (the invitation card) never says it saved:
        <body data-sync-quiet>. Errors still show (20 Oct 2026: the card's
        corner read "Saved as you go" on a page with nothing to save). */
@@ -201,7 +202,8 @@
      gone when the tab closes. The next visit starts from the clean demo.
      hub-store.js refuses the writes that do not come through here (emails,
      uploads, roster changes). */
-  function demoNow(){ try { var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
+  /* the trainee view (Maya, 12 Nov 2026) is private to the tab in the same way: read from the store, nothing sent back */
+  function demoNow(){ try { if (window.HubStore && HubStore.isTemplate && HubStore.isTemplate()) return true; var c = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return !!c.demoToday; } catch (e) { return false; } }
   var DEMO = demoNow();
   window.HUB_DEMO = DEMO;
   function demoSession(){ try { return sessionStorage.getItem('hub:demoVisit') === '1'; } catch (e) { return false; } }
