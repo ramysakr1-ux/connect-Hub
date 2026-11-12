@@ -48,6 +48,17 @@
   var read = function () { try { return (JSON.parse(localStorage.getItem(KEY)) || []).filter(function (x) { return x && x.url && x.name; }); } catch (e) { return []; } };
   var write = function (list) { try { localStorage.setItem(KEY, JSON.stringify(list || [])); } catch (e) {} };
   var host_ = function (u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+  /* WHICH CLASS (Ramy, 12 Nov 2026, before his C/21 demo: "I want to share my demo material with ... the volunteer students.
+     Does Lite know which level to share the material with?"). It did not: a tutor's share carried no level, so every class saw it.
+     The course's classes (Course admin, Classes) are offered; Every class leaves it as before. */
+  var classPick = function () {
+    var cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+    var list = ((cs.classes && cs.classes.list) || []).filter(function (c) { return c && c.level; });
+    if (!list.length) return '';
+    var nm = function (l) { return window.hubLevelName ? hubLevelName(l) : l; };
+    return '<label class="shelf-class">For <select name="level"><option value="">every class</option>' + list.map(function (c, i) {
+      return '<option value="' + esc(c.level) + '">Class ' + (i + 1) + ' \u00b7 ' + esc(nm(c.level)) + '</option>'; }).join('') + '</select></label>';
+  };
   var when = function (iso) { var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
 
   /* opts: { role: 'tutor' | 'trainee', by: () => name, token: () => token | null,
@@ -75,12 +86,13 @@
           + (open ? '<form class="shelf-form" data-kind="' + ADD + '">'
               + '<input type="text" name="name" placeholder="What to call it, e.g. Demo lesson \u2014 A2 Speaking" required maxlength="120">'
               + '<input type="url" name="url" placeholder="The link \u2014 a Drive file, a Doc, a page" required>'
+              + classPick()
               + '<button class="btn small" type="submit">Share it</button>'
               + '<span class="shelf-hint">It is signed with your name.</span>'
             + '</form>' : '')
           + (list.length ? list.map(function (x) {
               return '<div class="shelf-row"><a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.name) + '</a>'
-                + '<span class="shelf-meta">' + esc(x.by || '') + (x.tp ? ' · ' + esc(x.tp) : '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
+                + '<span class="shelf-meta">' + (x.level && x.kind !== 'materials' ? esc(window.hubLevelName ? hubLevelName(x.level) : x.level) + ' \u00b7 ' : '') + esc(x.by || '') + (x.tp ? ' · ' + esc(x.tp) : '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
                 + (mine(x) ? '<button class="rm" type="button" data-rm="' + esc(x.id) + '">Stop sharing</button>' : '')
                 + '</div>';
             }).join('') : (may && !open ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
@@ -97,6 +109,7 @@
       busy = true; note = 'Sharing…'; draw();
       try {
         var body = { op: 'shareMaterial', name: name, url: url, by: by, tp: '', kind: f.dataset.kind };
+        if (f.level && f.level.value) body.level = f.level.value;
         if (opts.token && opts.token()) body.token = opts.token();
         var r = await window.HubStore.call(body);
         write(r.shared || []); open = null; note = 'Shared with the students.';
