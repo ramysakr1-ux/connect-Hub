@@ -28,6 +28,7 @@ window.InputLib = (function(){
     [/guided practice|less.guided|\bdrill/, 'guided-to-less-guided-practice'],
     [/speaking/, 'teaching-speaking'],
     [/\bexam/, 'teaching-exam-classes'],
+    [/flat.?mat|speed flat/, 'speed-flat-mating'],   /* the demo lesson, 12 Nov 2026 */
     /* "Lesson planning" alone is the day's planning slot, not the session; it opens nothing (Ramy, 4 Nov 2026: the
        demo's This week read "Writing the lesson plan" five times). A title that says more, "Intro to lesson planning",
        "Lesson planning: the plan", still opens it. */

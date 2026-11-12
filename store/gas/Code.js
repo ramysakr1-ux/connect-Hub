@@ -369,6 +369,10 @@ function settleVersions_(op) {
 /* THE TIMING SWITCH (5 Nov 2026; Ramy: "do the long-term fix" before C/21). A request with prof: 1 also gets back how
    long each named step took, inclusive, in milliseconds, with call counts: step names and numbers only, never data.
    The wrappers are put on for that one request and taken off again in profEnd_. */
+/* Recordings the input library plays through the store (op audio), whatever the course: the speed flat-mating
+   demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
+var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt'];
+
 var PROF_NAMES_ = ['migrate_', 'courseByKey_', 'courseById_', 'traineeAnywhere_', 'courseRead_', 'courseBlock_', 'courseBlockRead_', 'courseCacheGet_', 'courseCachePut_', 'courseRows_',
   'rosterWithRecords_', 'recordsFor_', 'comingFor_', 'guidanceFor_', 'sharedNotesFor_', 'peerSheetsFor_', 'courseFeedbackFor_',
   'settleVersions_', 'versionStamp_', 'spreadsheet_', 'spreadsheetOpen_', 'sheet_', 'settingsFor_', 'streamFor_', 'gridFor_', 'timetableFor_',
@@ -1377,9 +1381,13 @@ case 'inbox': {
       if (!course) throw new Error('Open your course link first');
       var aid = String(req.id || '').replace(/[^\w-]/g, '');
       if (aid.length < 20) throw new Error('Which track?');
-      var tpa = courseRead_(course.id, 'tppoints') || {};
-      var scopeA = reader ? tpa : (me && (tpa.released || {})[String(me.group || '')] ? (tpa.groups || {})[String(me.group || '')] : null);
-      if (!scopeA || JSON.stringify(scopeA).indexOf(aid) === -1) throw new Error('That track is not on this course');
+      /* The input library's own recordings (12 Nov 2026, the speed flat-mating demo lesson): any course link may
+         play these, and only these. The files stay private in the Connect Lite shared drive, out of the public repo. */
+      if (LIBRARY_AUDIO_.indexOf(aid) === -1) {
+        var tpa = courseRead_(course.id, 'tppoints') || {};
+        var scopeA = reader ? tpa : (me && (tpa.released || {})[String(me.group || '')] ? (tpa.groups || {})[String(me.group || '')] : null);
+        if (!scopeA || JSON.stringify(scopeA).indexOf(aid) === -1) throw new Error('That track is not on this course');
+      }
       var fa = DriveApp.getFileById(aid);
       if (fa.getSize() > 15 * 1024 * 1024) throw new Error('That track is too large to play here');
       var ba = fa.getBlob();

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speed flat-mating — Connect Lite</title>
+<script src="../library.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fbf8f2; --card:#ffffff; --ink:#232220; --grey:#6b665e; --line:#e3dccd;
+    --teal:#1f6f6b; --teal-wash:#e6f1ef; --gold:#b8862e; --gold-wash:#f7eedb; --red:#a3402f; --green:#2f6b3a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--paper); color:var(--ink); font:400 17px/1.55 Karla, system-ui, sans-serif;}
+  .page{max-width:820px; margin:0 auto; padding:32px 16px 80px;}
+  h1{font:600 2.4rem/1.1 Newsreader, Georgia, serif; margin:0 0 6px;}
+  h2{font:600 1.45rem/1.2 Newsreader, Georgia, serif; margin:0 0 4px;}
+  .sub{color:var(--grey); margin:0;}
+  .ihbar{display:flex; justify-content:space-between; align-items:center; margin:0 0 14px;}
+  .ihbar .back{color:var(--teal); font-weight:700; text-decoration:none; min-height:44px; display:inline-flex; align-items:center;}
+  .lockup{display:flex; align-items:center; gap:9px; text-decoration:none;}
+  .lockup .tile{width:30px; height:30px; border-radius:7px; background:#f8f6f1; box-shadow:inset 0 0 0 1px oklch(85% 0.02 80); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .lockup .word{font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:21px; line-height:0.85; letter-spacing:-0.012em; color:oklch(63% 0.096 72);}
+  .hub-pair{display:inline-flex; align-items:baseline; gap:4px;}
+  .hub-word{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:8px; letter-spacing:0.24em; text-transform:uppercase; color:var(--ink); line-height:1;}
+  .trackmsg{margin:0 0 8px; font-size:.9rem; color:var(--grey);}
+  .ihlogo{height:56px; width:auto;}
+  .sources{font-size:.85rem; color:var(--grey); border-top:1px solid var(--line); padding-top:14px; margin-top:8px;}
+  .sources h2{font:700 .75rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.08em; color:var(--grey); margin:0 0 6px;}
+  .sources p{margin:4px 0;}
+  header{display:flex; gap:20px; align-items:center; margin-bottom:26px;}
+  header img{width:200px; max-width:38%; border-radius:12px; flex:none;}
+  .name{margin-top:14px; display:flex; gap:10px; align-items:center; font-weight:600;}
+  .name input{flex:1; max-width:280px;}
+  section{background:var(--card); border:1px solid var(--line); border-top:3px solid var(--teal); border-radius:14px; padding:22px 22px 20px; margin:0 0 20px;}
+  section.go{border-top-color:var(--gold);}
+  .tag{display:inline-block; font:700 0.72rem Karla, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--teal); margin-bottom:6px;}
+  section.go .tag{color:var(--gold);}
+  .do{margin:6px 0 14px; color:var(--ink);}
+  .do b{font-weight:700;}
+  ol,ul{padding-left:22px; margin:8px 0;}
+  li{margin:6px 0;}
+  input[type=text], textarea, select{font:inherit; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); border-radius:8px; padding:8px 10px; min-height:44px;}
+  textarea{width:100%; min-height:64px; resize:vertical;}
+  select{min-width:76px; cursor:pointer;}
+  button{font:700 0.95rem Karla, sans-serif; cursor:pointer; border-radius:999px; min-height:44px; padding:0 18px; border:1.5px solid var(--teal); background:var(--card); color:var(--teal); transition:transform .12s, box-shadow .12s;}
+  button:hover{transform:translateY(-2px); box-shadow:0 0 0 1.5px var(--teal), 0 10px 20px -12px rgba(0,0,0,.35);}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .check{margin-top:14px;}
+  .res{font-weight:700; margin-left:6px;}
+  .ok{color:var(--green);} .no{color:var(--red);}
+  audio{width:100%; margin:6px 0 12px;}
+  .audio{background:var(--teal-wash); border-radius:12px; padding:12px 14px; margin:8px 0 14px;}
+  .audio b{display:block; font-size:.9rem; color:var(--teal);}
+  table{width:100%; border-collapse:collapse; margin:6px 0;}
+  td,th{padding:9px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle;}
+  th{font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--grey);}
+  .rank td:first-child{width:90px;}
+  .tf{display:flex; gap:8px; flex:none;}
+  .tf button{min-width:56px; padding:0 12px;}
+  .tf button.on{background:var(--teal); color:#fff;}
+  .tf button.right{background:var(--green); border-color:var(--green); color:#fff;}
+  .tf button.wrong{background:var(--red); border-color:var(--red); color:#fff;}
+  .tfrow{display:flex; gap:14px; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line);}
+  .tfrow .fix{display:block; margin-top:6px; width:100%;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+  .chip{border:1.5px solid var(--line); background:var(--paper); color:var(--ink); font-weight:600;}
+  .chip[data-s="1"]{background:#e3f0e4; border-color:var(--green); color:var(--green);}
+  .chip[data-s="2"]{background:var(--gold-wash); border-color:var(--gold); color:#8a5f14;}
+  .chip[data-s="3"]{background:#f6e2dd; border-color:var(--red); color:var(--red);}
+  .key{display:flex; gap:14px; flex-wrap:wrap; font-size:.9rem; color:var(--grey);}
+  .key span::before{content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; border:1.5px solid;}
+  .key .k1::before{background:#e3f0e4; border-color:var(--green);} .key .k2::before{background:var(--gold-wash); border-color:var(--gold);} .key .k3::before{background:#f6e2dd; border-color:var(--red);}
+  .lang{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:12px 0;}
+  .lang div{background:var(--gold-wash); border-radius:12px; padding:12px 14px;}
+  .lang h3{font:700 .8rem Karla, sans-serif; text-transform:uppercase; letter-spacing:.06em; margin:0 0 6px; color:#8a5f14;}
+  .lang ul{margin:0; padding-left:18px;} .lang li{margin:4px 0;}
+  .cards{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .card{border:1.5px dashed var(--grey); border-radius:12px; padding:14px;}
+  .card h3{font:600 1.1rem Newsreader, Georgia, serif; margin:0 0 4px;}
+  .card .badge{font-size:.85rem; color:var(--grey); margin:0 0 8px;}
+  .card label{display:block; font-size:.82rem; font-weight:700; margin-top:8px;}
+  .card .ln{border-bottom:1px solid var(--line); height:28px;}
+  .card input{width:100%;}
+  .score td input{width:100%;}
+  .speed{gap:8px; font-weight:700; font-size:.9rem; color:var(--teal);}
+  .speed button{min-width:72px; padding:0 12px;}
+  .speed button.on{background:var(--teal); color:#fff;}
+  .ans{display:none; margin-top:10px; background:var(--gold-wash); border-left:4px solid var(--gold); border-radius:6px; padding:10px 14px; font-size:.95rem;}
+  body.showans .ans{display:block;}
+  .lines .ln{border-bottom:1px solid var(--line); height:30px;}
+  .printonly{display:none;}
+  @media (max-width:640px){
+    header{flex-direction:column; align-items:flex-start;} header img{max-width:100%; width:100%;}
+    .lang,.cards{grid-template-columns:1fr;}
+    .tfrow{flex-direction:column; align-items:flex-start;}
+    h1{font-size:2rem;}
+  }
+  @media print{
+    @page{margin:14mm;}
+    body{background:#fff; font-size:11.5pt;}
+    .page{padding:0; max-width:none;}
+    section{border:1px solid #bbb; border-top:2px solid #444; break-inside:avoid; padding:12px 14px; margin-bottom:10px; border-radius:6px;}
+    audio,.check,.ans,.screenonly{display:none !important;}
+    .audio{background:none; border:1px solid #bbb; padding:6px 10px;}
+    .printonly{display:block;}
+    input[type=text],textarea,select{border:0; border-bottom:1px solid #999; border-radius:0; background:none; min-height:0;}
+    select{appearance:none; -webkit-appearance:none; min-width:40px;}
+    textarea{min-height:44px;}
+    button{border-color:#999; color:#000; background:none !important; box-shadow:none !important; transform:none !important;}
+    .chip{background:none !important; color:#000 !important; border-color:#999 !important;}
+    .newpage{break-before:page;}
+    table.printonly.sort{display:table !important; width:100%; table-layout:fixed;} td.sortcol{height:62mm; border:1px solid #999; vertical-align:top;}
+    header img{width:150px;}
+    .ihlogo{height:42px;}
+    .sources{font-size:9pt; break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="ihbar">
+  <a class="lockup" href="../index.html">
+    <span class="tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="#a8803f" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="#2b2218" stroke-width="13" stroke-linecap="round"/></svg></span>
+    <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+  </a>
+  <a class="back screenonly" href="../demo-lessons/">Back to the demo lessons</a>
+</div>
+<header>
+  <img src="photo.png" alt="People talking in pairs at a speed flat-mating evening">
+  <div>
+    <h1>Speed flat-mating</h1>
+    <p class="sub">Upper intermediate · Listening and speaking</p>
+    <div class="name">Name <input type="text" aria-label="Your name"></div>
+    <div class="row screenonly" style="margin-top:12px"><button id="teacher">Show answers</button><span style="color:var(--grey); font-size:.9rem">for the teacher</span></div>
+  </div>
+</header>
+
+<section id="s1">
+  <span class="tag">1 · Lead-in</span>
+  <h2>The flatmate from hell</h2>
+  <p class="do"><b>On your own:</b> rank these habits from 1 (the worst) to 6 (you could live with it). <b>Then in pairs:</b> compare and explain your top two.</p>
+  <table class="rank">
+    <tbody>
+      <tr><td><select data-rank aria-label="Rank"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></td><td>leaves dirty dishes in the sink for days</td></tr>
+      <tr><td><select data-rank aria-label="Rank"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></td><td>plays loud music late at night</td></tr>
+      <tr><td><select data-rank aria-label="Rank"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></td><td>is always late paying the rent</td></tr>
+      <tr><td><select data-rank aria-label="Rank"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></td><td>has friends round every weekend</td></tr>
+      <tr><td><select data-rank aria-label="Rank"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></td><td>takes 40-minute showers every morning</td></tr>
+      <tr><td><select data-rank aria-label="Rank"><option></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></td><td>eats your food without asking</td></tr>
+    </tbody>
+  </table>
+  <p class="do" style="margin-top:14px"><b>Discuss:</b> Who do you live with now? Is it easier to live with family, friends or on your own? Why?</p>
+</section>
+
+<section id="s2">
+  <span class="tag">2 · Vocabulary</span>
+  <h2>Words you will hear</h2>
+  <p class="do"><b>Match</b> each word in bold to its meaning.</p>
+  <table>
+    <tbody>
+      <tr><td>1. My <b>lodger</b> still hasn't paid for last month.</td><td><select data-ans="e" aria-label="Meaning of lodger"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option></select></td></tr>
+      <tr><td>2. You must wear a <b>label</b> to enter this building.</td><td><select data-ans="a" aria-label="Meaning of label"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option></select></td></tr>
+      <tr><td>3. I am always <b>seeking</b> new friends wherever I go.</td><td><select data-ans="b" aria-label="Meaning of seeking"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option></select></td></tr>
+      <tr><td>4. I can <b>buddy up</b> with you if you can't afford the rent alone.</td><td><select data-ans="f" aria-label="Meaning of buddy up"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option></select></td></tr>
+      <tr><td>5. <b>Choosy</b> people are hard to please.</td><td><select data-ans="c" aria-label="Meaning of choosy"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option></select></td></tr>
+      <tr><td>6. I'm so <b>braindead</b> from working all day.</td><td><select data-ans="d" aria-label="Meaning of braindead"><option></option><option>a</option><option>b</option><option>c</option><option>d</option><option>e</option><option>f</option></select></td></tr>
+    </tbody>
+  </table>
+  <p style="margin:12px 0 0">a. a name tag or badge &nbsp;·&nbsp; b. looking for &nbsp;·&nbsp; c. picky, hard to please &nbsp;·&nbsp; d. too tired to think &nbsp;·&nbsp; e. a paying guest in your home &nbsp;·&nbsp; f. share a room</p>
+  <div class="row check"><button data-check="s2">Check my answers</button><span class="res" data-res="s2"></span></div>
+  <p class="do" style="margin-top:16px"><b>In pairs, ask and answer:</b></p>
+  <ol>
+    <li>Have you ever been a lodger, or had one? How was it?</li>
+    <li>What are you choosy about: food, clothes, friends?</li>
+    <li>When do you feel braindead?</li>
+    <li>Who would you buddy up with on a long trip? Why?</li>
+  </ol>
+</section>
+
+<section id="s3">
+  <span class="tag">3 · Predict</span>
+  <h2>What happens at speed flat-mating?</h2>
+  <p class="do">You've heard of speed dating. Now look at the picture. <b>Tick</b> what you think happens at a speed flat-mating evening.</p>
+  <ul style="list-style:none; padding:0">
+    <li><label><input type="checkbox" data-p="n"> You visit lots of flats in one evening.</label></li>
+    <li><label><input type="checkbox" data-p="y"> You meet the people, not just see the room.</label></li>
+    <li><label><input type="checkbox" data-p="y"> You get a list of everyone who's there.</label></li>
+    <li><label><input type="checkbox" data-p="y"> Everyone wears a badge.</label></li>
+    <li><label><input type="checkbox" data-p="n"> Everyone there is looking for a room.</label></li>
+  </ul>
+</section>
+
+<section id="s4">
+  <span class="tag">4 · Listen for the main idea</span>
+  <h2>First listening</h2>
+  <div class="audio"><b>Audio 1 · The start of the program</b>
+    <audio controls preload="none" data-track="1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_"></audio><p class="trackmsg screenonly" aria-live="polite"></p>
+    <div class="row speed screenonly" role="group" aria-label="Speed"><span>Speed</span><button data-rate="1" class="on">Normal</button><button data-rate="0.85">0.85×</button><button data-rate="0.75">0.75×</button></div>
+    <span class="printonly">Your teacher will play the recording.</span>
+  </div>
+  <ol>
+    <li>Check your predictions in 3. Were you right?</li>
+    <li>What happens during the evening? <textarea aria-label="What happens during the evening"></textarea></li>
+    <li>What two things are you given when you arrive? <textarea aria-label="What two things are you given"></textarea></li>
+  </ol>
+  <div class="row check"><button data-check="s3">Check my predictions</button><span class="res" data-res="s3"></span></div>
+  <div class="ans">People with a spare room meet people looking for one, so they can meet who they'd live with, not just see the flat. You get a list of who's there (their area and budget) and a badge saying who you are and whether you've got a room or you're looking.</div>
+</section>
+
+<section id="s5">
+  <span class="tag">5 · Listen for opinions</span>
+  <h2>Second listening</h2>
+  <div class="audio"><b>Audio 2 · Four people at the event</b>
+    <audio id="a2" controls preload="none" data-track="1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt"></audio><p class="trackmsg screenonly" aria-live="polite"></p>
+    <div class="row speed screenonly" role="group" aria-label="Speed"><span>Speed</span><button data-rate="1" class="on">Normal</button><button data-rate="0.85">0.85×</button><button data-rate="0.75">0.75×</button></div>
+    <span class="printonly">Your teacher will play the recording.</span>
+  </div>
+  <p class="do">You will hear four people, one after another. <b>Match</b> each speaker to how they feel about speed flat-mating.</p>
+  <table>
+    <tbody>
+      <tr><td>Speaker 1</td><td><select data-ans="c" aria-label="Speaker 1"><option></option><option>a</option><option>b</option><option>c</option><option>d</option></select></td></tr>
+      <tr><td>Speaker 2</td><td><select data-ans="b" aria-label="Speaker 2"><option></option><option>a</option><option>b</option><option>c</option><option>d</option></select></td></tr>
+      <tr><td>Speaker 3</td><td><select data-ans="d" aria-label="Speaker 3"><option></option><option>a</option><option>b</option><option>c</option><option>d</option></select></td></tr>
+      <tr><td>Speaker 4</td><td><select data-ans="a" aria-label="Speaker 4"><option></option><option>a</option><option>b</option><option>c</option><option>d</option></select></td></tr>
+    </tbody>
+  </table>
+  <p style="margin:10px 0 0">a. It's important to be honest. &nbsp;·&nbsp; b. It's easy: you just know. &nbsp;·&nbsp; c. Confused. &nbsp;·&nbsp; d. Doesn't say.</p>
+  <div class="row check"><button data-check="s5">Check my answers</button><span class="res" data-res="s5"></span></div>
+</section>
+
+<section id="s6">
+  <span class="tag">6 · Listen for detail</span>
+  <h2>Third listening</h2>
+  <div class="audio screenonly"><b>Audio 2 again</b>
+    <audio controls preload="none" data-same="a2"></audio>
+    <div class="row speed screenonly" role="group" aria-label="Speed"><span>Speed</span><button data-rate="1" class="on">Normal</button><button data-rate="0.85">0.85×</button><button data-rate="0.75">0.75×</button></div>
+  </div>
+  <p class="do">Listen again. <b>True or false?</b> Correct the false sentences.</p>
+  <div data-tf="T" class="tfrow"><div>1. Speaker 1's pink badge means he's happy to share a bedroom.<input type="text" class="fix" aria-label="Correction 1" placeholder="Correction"></div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="F" class="tfrow"><div>2. He started looking for a room about a month ago.<input type="text" class="fix" aria-label="Correction 2" placeholder="Correction"></div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="F" class="tfrow"><div>3. He understands exactly how the event works.<input type="text" class="fix" aria-label="Correction 3" placeholder="Correction"></div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="T" class="tfrow"><div>4. Speaker 2 knew straight away that her two best lodgers were right.<input type="text" class="fix" aria-label="Correction 4" placeholder="Correction"></div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="F" class="tfrow"><div>5. She enjoys showing people round her house.<input type="text" class="fix" aria-label="Correction 5" placeholder="Correction"></div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="T" class="tfrow"><div>6. Speaker 4 thinks it's best to show people who you really are from the start.<input type="text" class="fix" aria-label="Correction 6" placeholder="Correction"></div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div data-tf="F" class="tfrow"><div>7. She hasn't met anyone she could live with.<input type="text" class="fix" aria-label="Correction 7" placeholder="Correction"></div><div class="tf"><button>T</button><button>F</button></div></div>
+  <div class="row check"><button data-check="s6">Check my answers</button><span class="res" data-res="s6"></span></div>
+  <div class="ans">2. F: a couple of weeks. 3. F: he's new to it and still trying to understand it. 5. F: it's embarrassing when they aren't interested. 7. F: she's met several people she could live with.</div>
+  <p class="do" style="margin-top:16px"><b>In groups:</b> Would you go to an evening like this? What would put you off?</p>
+</section>
+
+<section id="s7" class="newpage">
+  <span class="tag">7 · Plan</span>
+  <h2>Get ready for the event</h2>
+  <p class="do"><b>A. What would you ask a future flatmate?</b> Sort the topics: <span class="screenonly">tap a topic to change its color.</span><span class="printonly">write each one in a column below.</span></p>
+  <div class="key screenonly"><span class="k1">Fine to ask</span><span class="k2">Ask with care</span><span class="k3">Off limits</span></div>
+  <div class="chips">
+    <button class="chip">work</button><button class="chip">daily habits</button><button class="chip">cleaning</button><button class="chip">guests</button><button class="chip">noise</button><button class="chip">diet</button><button class="chip">partners</button><button class="chip">salary</button><button class="chip">politics</button><button class="chip">religion</button><button class="chip">music</button><button class="chip">references</button><button class="chip">weekends</button><button class="chip">allergies</button><button class="chip">hobbies</button><button class="chip">future plans</button>
+  </div>
+  <table class="printonly sort"><thead><tr><th>Fine to ask</th><th>Ask with care</th><th>Off limits</th></tr></thead><tbody><tr><td class="sortcol"></td><td class="sortcol"></td><td class="sortcol"></td></tr></tbody></table>
+
+  <p class="do" style="margin-top:16px"><b>B. Useful language.</b> Use these in your questions and answers.</p>
+  <div class="lang">
+    <div><h3>Asking with care</h3><ul>
+      <li>Do you mind me asking what you do?</li>
+      <li>Can I ask whether you smoke?</li>
+      <li>Would you say you're a tidy person?</li>
+      <li>How do you feel about having friends round?</li>
+    </ul></div>
+    <div><h3>Talking about yourself</h3><ul>
+      <li>I tend to cook quite late.</li>
+      <li>I'm the kind of person who washes up straight away.</li>
+      <li>I'm not much of a party person.</li>
+      <li>A deal-breaker for me is smoking indoors.</li>
+    </ul></div>
+  </div>
+  <p class="do"><b>C. Write five questions</b> you will ask at the event.</p>
+  <ol>
+    <li><input type="text" style="width:100%" aria-label="Question 1"></li>
+    <li><input type="text" style="width:100%" aria-label="Question 2"></li>
+    <li><input type="text" style="width:100%" aria-label="Question 3"></li>
+    <li><input type="text" style="width:100%" aria-label="Question 4"></li>
+    <li><input type="text" style="width:100%" aria-label="Question 5"></li>
+  </ol>
+</section>
+
+<section id="s8" class="go">
+  <span class="tag">8 · Your card</span>
+  <h2>Who are you tonight?</h2>
+  <p class="do">Your teacher will tell you which card is yours. <b>Fill it in</b>: you can be yourself or invent someone.</p>
+  <div class="cards">
+    <div class="card"><h3>I have a room</h3><p class="badge">White badge · you stay in your seat</p>
+      <label>The flat: where, how many bedrooms, rent a month</label><input type="text" aria-label="The flat">
+      <label>The room: single or shared, what's in it</label><input type="text" aria-label="The room">
+      <label>Who lives there now, and one of their habits</label><input type="text" aria-label="Who lives there">
+      <label>Three of my habits</label><input type="text" aria-label="My habits">
+      <label>My deal-breaker</label><input type="text" aria-label="My deal-breaker">
+    </div>
+    <div class="card"><h3>I need a room</h3><p class="badge">Pink badge if you'll share a bedroom · you move each round</p>
+      <label>My budget a month</label><input type="text" aria-label="Budget">
+      <label>When I can move in, and for how long</label><input type="text" aria-label="Move in">
+      <label>Where I want to live</label><input type="text" aria-label="Area">
+      <label>Three of my habits</label><input type="text" aria-label="My habits">
+      <label>My deal-breaker</label><input type="text" aria-label="My deal-breaker">
+    </div>
+  </div>
+</section>
+
+<section id="s9" class="go">
+  <span class="tag">9 · Speed flat-mating</span>
+  <h2>The event</h2>
+  <p class="do">Three and a half minutes with each person. When the bell rings, finish your sentence and give them a score. Room-seekers then move one seat.</p>
+  <table class="score">
+    <thead><tr><th>Round</th><th>Name</th><th>Score 1–5</th><th>Why?</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><input type="text" aria-label="Round 1 name"></td><td><input type="text" aria-label="Round 1 score"></td><td><input type="text" aria-label="Round 1 reason"></td></tr>
+      <tr><td>2</td><td><input type="text" aria-label="Round 2 name"></td><td><input type="text" aria-label="Round 2 score"></td><td><input type="text" aria-label="Round 2 reason"></td></tr>
+      <tr><td>3</td><td><input type="text" aria-label="Round 3 name"></td><td><input type="text" aria-label="Round 3 score"></td><td><input type="text" aria-label="Round 3 reason"></td></tr>
+      <tr><td>4</td><td><input type="text" aria-label="Round 4 name"></td><td><input type="text" aria-label="Round 4 score"></td><td><input type="text" aria-label="Round 4 reason"></td></tr>
+      <tr><td>5</td><td><input type="text" aria-label="Round 5 name"></td><td><input type="text" aria-label="Round 5 score"></td><td><input type="text" aria-label="Round 5 reason"></td></tr>
+      <tr><td>6</td><td><input type="text" aria-label="Round 6 name"></td><td><input type="text" aria-label="Round 6 score"></td><td><input type="text" aria-label="Round 6 reason"></td></tr>
+      <tr><td>7</td><td><input type="text" aria-label="Round 7 name"></td><td><input type="text" aria-label="Round 7 score"></td><td><input type="text" aria-label="Round 7 reason"></td></tr>
+      <tr><td>8</td><td><input type="text" aria-label="Round 8 name"></td><td><input type="text" aria-label="Round 8 score"></td><td><input type="text" aria-label="Round 8 reason"></td></tr>
+    </tbody>
+  </table>
+  <p class="do" style="margin-top:14px"><b>After the event:</b> Who would you live with, and why? Tell the class in one sentence.</p>
+</section>
+
+<footer class="sources">
+  <h2>Sources</h2>
+  <p><b>Audio:</b> <i>Speakout Upper Intermediate</i> (Pearson), Unit 1, the speed flat-mating recordings (audio 1 and 2).</p>
+  <p><b>Tasks:</b> the listening tasks in sections 4 to 6 are adapted from the same unit.</p>
+  <p><b>Photo:</b> a speed flat-mating evening run by SpareRoom; the photographer is not recorded.</p>
+  <p><b>Lesson:</b> Ramy Sakr.</p>
+</footer>
+
+</div>
+<script>
+(function(){
+  function mark(sec){
+    var sel = document.querySelectorAll('#' + sec + ' select[data-ans]'), n = 0;
+    sel.forEach(function(s){ var ok = s.value === s.dataset.ans; if (ok) n++; s.style.borderColor = s.value ? (ok ? 'var(--green)' : 'var(--red)') : ''; });
+    return n + ' of ' + sel.length + ' right';
+  }
+  document.querySelectorAll('[data-check]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.dataset.check, out = document.querySelector('[data-res="' + k + '"]'), msg = '';
+      if (k === 's3') {
+        var ps = document.querySelectorAll('#s3 [data-p]'), n = 0;
+        ps.forEach(function(p){ var ok = p.checked === (p.dataset.p === 'y'); if (ok) n++; p.parentNode.style.color = ok ? 'var(--green)' : 'var(--red)'; });
+        msg = n + ' of ' + ps.length + ' predictions right';
+      } else if (k === 's6') {
+        var rows = document.querySelectorAll('#s6 [data-tf]'), r = 0;
+        rows.forEach(function(row){ var on = row.querySelector('.tf .on'); row.querySelectorAll('.tf button').forEach(function(x){ x.classList.remove('right','wrong'); });
+          if (on) { var ok = on.textContent === row.dataset.tf; if (ok) r++; on.classList.add(ok ? 'right' : 'wrong'); } });
+        msg = r + ' of ' + rows.length + ' right';
+      } else msg = mark(k);
+      out.textContent = msg;
+    });
+  });
+  document.querySelectorAll('.tf').forEach(function(g){
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){ g.querySelectorAll('button').forEach(function(x){ x.classList.remove('on','right','wrong'); }); b.classList.add('on'); }); });
+  });
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.addEventListener('click', function(){ c.dataset.s = String(((+c.dataset.s || 0) + 1) % 4); });
+  });
+  document.querySelectorAll('audio').forEach(function(a){
+    a.addEventListener('play', function(){ document.querySelectorAll('audio').forEach(function(o){ if (o !== a) o.pause(); }); });
+  });
+  document.querySelectorAll('.speed').forEach(function(g){
+    var a = g.parentNode.querySelector('audio');
+    g.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', function(){
+      a.preservesPitch = true; a.webkitPreservesPitch = true; a.defaultPlaybackRate = +b.dataset.rate; a.playbackRate = +b.dataset.rate;
+      g.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    }); });
+  });
+  var t = document.getElementById('teacher');
+  t.addEventListener('click', function(){ document.body.classList.toggle('showans'); t.textContent = document.body.classList.contains('showans') ? 'Hide answers' : 'Show answers'; });
+})();
+</script>
+<script src="../../hub-store.js"></script>
+<script>
+/* The two recordings come through Lite's store from the Connect Lite shared drive, not from this public page
+   (12 Nov 2026). They load when the page opens from a course link; the third listening reuses the second track. */
+(function(){
+  var aud = [].slice.call(document.querySelectorAll('audio[data-track]'));
+  function say(a, t){ var m = a.parentNode.querySelector('.trackmsg'); if (m) m.textContent = t; }
+  aud.forEach(function(a){ say(a, 'Loading the recording\u2026'); });
+  function load(a){
+    if (!window.HubStore || !HubStore.audio) return Promise.reject(new Error('no store'));
+    return HubStore.audio(a.dataset.track).then(function(r){
+      if (!r || !r.b64) throw new Error('empty');
+      var bin = atob(r.b64), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([bytes], { type: r.mime || 'audio/mp4' }));
+      a.src = url; say(a, '');
+      if (a.id === 'a2') document.querySelectorAll('audio[data-same="a2"]').forEach(function(x){ x.src = url; });
+    });
+  }
+  aud.reduce(function(p, a){ return p.then(function(){ return load(a).catch(function(){ say(a, 'Open Lite from your course link to hear the recordings.'); }); }); }, Promise.resolve());
+})();
+</script>
+</body>
+</html>
