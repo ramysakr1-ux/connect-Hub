@@ -224,7 +224,7 @@
        here except the link itself and anything a REAL course still has waiting to be sent, and the boot below
        waits for the clean course. Every person and every role, on every demo; a real course never comes here. */
     if (!demoSession()) {
-      var KEEP = /^(hub:(t|k|a|v|o|p|kpin|pin|apin|adminSet)$|hub:o:|hub:pending:|hub:unsaved:|chub:tutorName$|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
+      var KEEP = /^(hub:(t|k|a|v|o|p|kpin|pin|apin|adminSet)$|hub:o:|hub:pending:|hub:unsaved:|chub:tutorName$|chub:nameFor:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
       var gone = [];
       for (var gi = localStorage.length - 1; gi >= 0; gi--) { var gk = localStorage.key(gi); if (gk && !KEEP.test(gk) && /^(chub[:_]|connect_|hub:)/.test(gk)) gone.push(gk); }
       gone.forEach(function(k){ try { origRemove(k); } catch (e) {} });
@@ -550,7 +550,7 @@
     samePres = ours(lastOwner) && ours(identity);
   } catch (e) {}
   if (!DEMO && lastOwner && !sameOwner && (mode === 'trainee' || mode === 'tutor' || mode === 'assessor')) { try {
-    var KEEPN = /^(hub:(t|k|a|v|o|p|kpin|pin|apin|adminSet)$|hub:o:|hub:pending:|hub:unsaved:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
+    var KEEPN = /^(hub:(t|k|a|v|o|p|kpin|pin|apin|adminSet)$|hub:o:|hub:pending:|hub:unsaved:|chub:nameFor:|chub:passDays$|chub:card|chub:installHintDone$|mk:)/;
     /* A Connect demo is one presenter's browser playing every part (27 Oct 2026): its switch's own keys (hub:present:*,
        written only by hub-present.js on a presentation course) stay, whoever the last link was. A volunteer's page does
        not hold the course settings, so the course itself cannot be asked. */
@@ -561,7 +561,23 @@
   /* WHO IS AT THE KEYBOARD GOES WITH THE LINK (Ramy, 27 Oct 2026: a fresh Connect demo greeted him by name). A tutor's
      name and signature are kept on the device; when another link opens here they go, demo or not -- the clean-up
      above stands down when the last course was a demo, and a demo visit keeps the name for its own next visit. */
+  /* EACH TUTOR LINK KEEPS ITS OWN NAME (Ramy, 13 Nov 2026: "every time I log in as a trainer, on C21, it asks me for my
+     name"). The name below goes whenever another link opens in this browser -- the scratch course, a demo, the trainee
+     view -- so coming back to C/21 asked again. Now the name a tutor link was signed with is kept for that link alone, on
+     this device, and comes back when that same link opens again (a blank field never wipes it). Another link never sees it, so the 27 Oct rule stands. */
+  var nameFor = function(id){ var h = 5381, x = String(id || ''); for (var i = 0; i < x.length; i++) h = ((h * 33) ^ x.charCodeAt(i)) >>> 0; return 'chub:nameFor:' + h.toString(36); };
   if (lastOwner && !sameOwner && !samePres) { ['chub:tutorName', 'chub:tutorSigKept', 'chub:setsUp', 'chub:joined', 'chub:setupSkipped'].forEach(function(k){ try { origRemove(k); } catch (e) {} }); }
+  if (mode === 'tutor' && /^tutor:./.test(identity)) { try {
+    var mine = JSON.parse(origGet(nameFor(identity)) || 'null');
+    if (mine && mine.n && !(origGet('chub:tutorName') || '').trim()) { origSet('chub:tutorName', mine.n); if (mine.sig) origSet('chub:tutorSigKept', mine.n); }
+  } catch (e) {} }
+  /* ...and whenever this tutor link's name is typed or changed, on any page, it is kept for the link at once */
+  if (mode === 'tutor' && /^tutor:./.test(identity)) {
+    var keepName = function(){ try { var n = (origGet('chub:tutorName') || '').trim(); if (n) origSet(nameFor(identity), JSON.stringify({ n: n, sig: (origGet('chub:tutorSigKept') || '').trim() === n })); } catch (e) {} };
+    keepName();
+    var pSetN = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(k, v){ pSetN.call(this, k, v); if (this === localStorage && (k === 'chub:tutorName' || k === 'chub:tutorSigKept')) keepName(); };
+  }
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   if (DEMO && !demoSession()) cached = false;   /* a new visit: wait for the clean course, not last visit's copy */
   var dirty = {}, started = false;

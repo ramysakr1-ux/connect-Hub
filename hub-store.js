@@ -6,6 +6,16 @@
 // tutor's carries ?k=<course key>, an assessor's ?ak=<assessor key> (read-only,
 // Ramy 20 Sep 2026). Any of them is remembered in this browser once seen, so
 // the pages can link to each other without repeating it.
+/* THE TRAINEE VIEW'S OWN TAB (Ramy, 13 Nov 2026: "make it one click"). The tutor's door opens Maya in a new tab with
+   ?tv=1 on her link. That tab keeps everything in its own sessionStorage, never in the browser's shared localStorage, so
+   the tutor's tab beside it keeps its link, its name and its unsaved work. Every page reads storage through the
+   localStorage name, so pointing that name at this tab's own storage is the whole change. The flag sits outside the hub:
+   and chub: names, which the visit clean-ups clear. */
+(function(){ try {
+  if (window.__liteTab) return; window.__liteTab = 1;
+  if (new URLSearchParams(location.search).get('tv') === '1') sessionStorage.setItem('liteTraineeViewTab', '1');
+  if (sessionStorage.getItem('liteTraineeViewTab') === '1') { var own = window.sessionStorage; Object.defineProperty(window, 'localStorage', { configurable: true, get: function(){ return own; } }); }
+} catch (e) {} })();
 window.HubStore = (function(){
   var URL = 'https://script.google.com/macros/s/AKfycbz5ESCtTg6kIDNCf7ynt1fB0tOSVusgOUiMub9-wEZunwQ2uTw2wzz1vmbHxzbvpG-eyA/exec';
   var params = new URLSearchParams(location.search);

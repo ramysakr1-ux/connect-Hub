@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611121832">
+<link rel="stylesheet" href="hub-tokens.css?v=202611130124">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -558,7 +558,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611121832">
+<link rel="stylesheet" href="hub-house.css?v=202611130124">
 </head>
 <body>
 <div class="board">
@@ -682,26 +682,26 @@
 
 </div>
 
-<script src="hub-due.js?v=202611121832"></script>
-<script src="observation-defaults.js?v=202611121832"></script>
-<script src="hub-rotation.js?v=202611121832"></script>
-<script src="hub-shared.js?v=202611121832"></script>
+<script src="hub-due.js?v=202611130124"></script>
+<script src="observation-defaults.js?v=202611130124"></script>
+<script src="hub-rotation.js?v=202611130124"></script>
+<script src="hub-shared.js?v=202611130124"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611121832"></script>
-<script src="hub-say.js?v=202611121832"></script>
-<script src="hub-hand.js?v=202611121832"></script>
-<script src="hub-ink.js?v=202611121832"></script>
-<script src="hub-shelf.js?v=202611121832"></script>
+<script src="hub-store.js?v=202611130124"></script>
+<script src="hub-say.js?v=202611130124"></script>
+<script src="hub-hand.js?v=202611130124"></script>
+<script src="hub-ink.js?v=202611130124"></script>
+<script src="hub-shelf.js?v=202611130124"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611121832"></script>
-<script src="hub-sync.js?v=202611121832"></script>
-<script src="hub-notebook.js?v=202611121832"></script>
-<script src="hub-tracker.js?v=202611121832"></script>
-<script src="hub-feedback.js?v=202611121832"></script>
+<script src="assignment-defaults.js?v=202611130124"></script>
+<script src="hub-sync.js?v=202611130124"></script>
+<script src="hub-notebook.js?v=202611130124"></script>
+<script src="hub-tracker.js?v=202611130124"></script>
+<script src="hub-feedback.js?v=202611130124"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -1611,20 +1611,36 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
 /* From the course: a tutor puts up the demonstration lesson and GTKY
    activities; signed with the name at the top, like a post. */
 /* THE TRAINEE VIEW (Ramy, 12 Nov 2026): the course from a trainee's side, as Maya, a made-up trainee who is not on the
-   roster and saves nothing. The link is copied; a private window keeps this browser signed in as a tutor. */
+   roster and saves nothing. ONE CLICK (13 Nov 2026: "you click, you wait, and then you have copy the link and then open"):
+   the door opens her in a new tab at once. That tab keeps her link to itself (?tv=1, see hub-store.js), so this tab stays
+   signed in as a tutor. The tab is opened on the click itself, before the store answers, or a browser would block it. */
 (function(){
   const door = document.getElementById('traineeViewDoor'), note = document.getElementById('traineeViewNote');
   if (!door || !note || !window.HubStore) return;
-  door.addEventListener('click', async function(ev){
-    ev.preventDefault(); note.hidden = false; note.textContent = 'Getting the trainee view\u2026';
-    try {
-      const r = await HubStore.call({ op: 'traineeViewLink' });
+  let asking = null;
+  const linkFor = function(){
+    if (!asking) asking = HubStore.call({ op: 'traineeViewLink' }).then(function(r){
       if (!r || !r.token) throw new Error('the store did not send a link. Reload the page and try again.');
-      const url = HubStore.inviteFor('trainee', r.token);
-      let copied = false; try { await navigator.clipboard.writeText(url); copied = true; } catch (e) {}
-      note.innerHTML = '<b>The trainee view.</b> ' + (copied ? 'Its link is copied. ' : '') + 'Open it in a private window, so this browser stays signed in as a tutor. It shows the course as Maya, a made-up trainee in Group 1, and saves nothing. <a id="tvCopy" href="#">Copy the link</a> \u00b7 <a id="tvOpen" href="' + url.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Open it in this browser</a>';
-      const c = document.getElementById('tvCopy'); if (c) c.addEventListener('click', async function(e2){ e2.preventDefault(); try { await navigator.clipboard.writeText(url); c.textContent = 'Copied'; } catch (e3) { c.textContent = 'Could not copy'; } });
-    } catch (err) { note.textContent = 'The trainee view could not be opened: ' + (err && err.message || err); }
+      return HubStore.inviteFor('trainee', r.token).replace('invite.html?', 'index.html?') + '&tv=1';   /* straight to her home: no card to click through */
+    }).catch(function(e){ asking = null; throw e; });
+    return asking;
+  };
+  /* the link is asked for as the Course menu opens, so the click itself has nothing to wait for */
+  const menuBtn = document.querySelector('#courseMenu > button');
+  if (menuBtn) menuBtn.addEventListener('click', function(){ linkFor().catch(function(){}); });
+  door.addEventListener('click', async function(ev){
+    ev.preventDefault();
+    let w = null; try { w = window.open('', '_blank'); } catch (e) {}
+    if (w) { try { w.document.title = 'The trainee view'; w.document.body.style.cssText = 'font:16px/1.5 Karla,system-ui,sans-serif;color:#232220;padding:40px 24px'; w.document.body.textContent = 'Opening the trainee view\u2026'; } catch (e) {} }
+    try {
+      const u = await linkFor();
+      if (w && !w.closed) { w.location.href = u; try { w.opener = null; } catch (e) {} note.hidden = true; return; }
+      note.hidden = false;
+      note.innerHTML = '<b>The trainee view.</b> This browser stopped the new tab. <a id="tvOpen" href="' + u.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Open the trainee view</a>';
+    } catch (err) {
+      if (w && !w.closed) { try { w.close(); } catch (e) {} }
+      note.hidden = false; note.textContent = 'The trainee view could not be opened: ' + (err && err.message || err);
+    }
   });
 })();
 if (window.hubShelf) hubShelf(document.getElementById('shelf'), { role: 'tutor', by: () => nameInput.value.trim(), token: () => null, canAdd: ['demo', 'gtky'] });
