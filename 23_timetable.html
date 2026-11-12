@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611121448">
+<link rel="stylesheet" href="hub-tokens.css?v=202611121512">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -498,6 +498,9 @@
   /* on a phone, clear of the Lite button and the sync pill at the foot */
   @media (max-width:700px){ .draftnote{bottom:84px;} }
   .draftnote .dn-acts{display:flex; gap:16px;}
+  /* the card's Publish is the same red pill as the one at the top (Ramy, 12 Nov 2026: "maybe that publish should be red as well") */
+  .swapbar.draftnote button[data-act="publish"]{background:var(--a-red); color:var(--paper); text-decoration:none; padding:8px 16px; border-radius:999px; min-height:36px;}
+  .draftnote .dn-acts{align-items:center;}
   .swapbar button{border:0; background:none; padding:0; font:700 0.86rem 'Karla',sans-serif; color:var(--teal); text-decoration:underline; cursor:pointer;}
   /* ---- stage 2: drop colors, draft, checks, closed days ----------------- */
   .tgrid .day.drop-clean .body{background:color-mix(in oklch, var(--teal) 7%, transparent);} .tgrid .day.drop-clean{border-color:var(--teal-lifted);}
@@ -851,27 +854,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611121448">
+<link rel="stylesheet" href="hub-house.css?v=202611121512">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611121448"></script>
-<script src="hub-tracker.js?v=202611121448"></script>
-<script src="hub-rotation.js?v=202611121448"></script>
-<script src="hub-xlsx.js?v=202611121448"></script>
-<script src="hub-docx.js?v=202611121448"></script>
-<script src="hub-timetable-parse.js?v=202611121448"></script>
-<script src="assignment-defaults.js?v=202611121448"></script>
-<script src="hub-shared.js?v=202611121448"></script>
+<script src="hub-due.js?v=202611121512"></script>
+<script src="hub-tracker.js?v=202611121512"></script>
+<script src="hub-rotation.js?v=202611121512"></script>
+<script src="hub-xlsx.js?v=202611121512"></script>
+<script src="hub-docx.js?v=202611121512"></script>
+<script src="hub-timetable-parse.js?v=202611121512"></script>
+<script src="assignment-defaults.js?v=202611121512"></script>
+<script src="hub-shared.js?v=202611121512"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611121448"></script>
-<script src="hub-say.js?v=202611121448"></script>
-<script src="hub-sync.js?v=202611121448"></script>
-<script src="hub-notebook.js?v=202611121448"></script>
+<script src="hub-store.js?v=202611121512"></script>
+<script src="hub-say.js?v=202611121512"></script>
+<script src="hub-sync.js?v=202611121512"></script>
+<script src="hub-notebook.js?v=202611121512"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -4301,7 +4304,7 @@ function save(word, change){
 /* SAVED, NOT PUBLISHED (Ramy, 11 Nov 2026: "when you make changes, something should pop up. Let me know that the
    course will not see this until you click publish"). The Draft bar sits at the top of the board, out of sight when
    the edit is a week further down, so a change to a published timetable also brings up this card at the foot of the
-   screen. OK puts it away for this visit; the bar at the top still counts the changes. */
+   screen. Later puts it away for this visit (Ramy, 12 Nov 2026: OK was unclear); the bar at the top still counts the changes. */
 var DRAFT_OK = false, DRAFT_N = 0;   /* var: save() can run before this line has been reached */
 function draftNotice(edited){
   let card = $('draftnote');
@@ -4318,7 +4321,7 @@ function draftNotice(edited){
     });
   }
   const n = CHANGES.length;
-  card.innerHTML = `<span><b>Saved, not published.</b> The course will not see ${n === 1 ? 'this change' : 'these ' + n + ' changes'} until you press Publish to the course.</span><span class="dn-acts"><button type="button" data-act="publish">Publish to the course</button><button type="button" data-act="ok">OK</button></span>`;
+  card.innerHTML = `<span><b>Saved, not published.</b> The course will not see ${n === 1 ? 'this change' : 'these ' + n + ' changes'} until you publish. Publishing sends all of them.</span><span class="dn-acts"><button type="button" data-act="publish">Publish to the course</button><button type="button" data-act="ok">Later</button></span>`;
   const swap = $('swapbar');
   card.hidden = !!(swap && !swap.hidden);
 }
@@ -4433,7 +4436,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611121448'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611121512'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);
