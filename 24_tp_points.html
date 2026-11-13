@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611131153">
+<link rel="stylesheet" href="hub-tokens.css?v=202611131558">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -735,7 +735,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611131153">
+<link rel="stylesheet" href="hub-house.css?v=202611131558">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -898,15 +898,15 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611131153"></script>
-<script src="hub-tracker.js?v=202611131153"></script>
-<script src="hub-rotation.js?v=202611131153"></script>
-<script src="hub-shared.js?v=202611131153"></script>
+<script src="hub-due.js?v=202611131558"></script>
+<script src="hub-tracker.js?v=202611131558"></script>
+<script src="hub-rotation.js?v=202611131558"></script>
+<script src="hub-shared.js?v=202611131558"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611131153"></script>
-<script src="hub-say.js?v=202611131153"></script>
-<script src="hub-sync.js?v=202611131153"></script>
-<script src="hub-notebook.js?v=202611131153"></script>
+<script src="hub-store.js?v=202611131558"></script>
+<script src="hub-say.js?v=202611131558"></script>
+<script src="hub-sync.js?v=202611131558"></script>
+<script src="hub-notebook.js?v=202611131558"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -2125,9 +2125,18 @@ function matsRead(c, mine){
   if (hasPlayer) lines = lines.filter(l => !/^class audio/i.test(l));
   const got = [];
   if (!lines.length && href) got.push(`<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">The coursebook</a>`);
-  lines.forEach((ln, i) => got.push(i === 0 && href
-    ? `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(ln)}</a>`
-    : `<span class="mref">${esc(ln)}</span>`));
+  /* A WEB ADDRESS INSIDE A LINE OPENS (Ramy, 13 Nov 2026: "make the link clickable"). A lesson whose listening is a
+     video carries "... p. 35 · Link to video: https://..." in its materials line; the whole line was one link to the
+     coursebook, the address only text inside it. Now the words stay as they were (the first line still opens the
+     book) and each address is a link of its own, to where it says. */
+  const webLink = u => { const tail = (/[.,;:)\]]+$/.exec(u) || [''])[0], url = tail ? u.slice(0, -tail.length) : u, show = url.replace(/^https?:\/\/(www\.)?/i, '');
+    return `<a class="mlink" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(show.length > 44 ? show.slice(0, 42) + '\u2026' : show)}</a>${esc(tail)}`; };
+  lines.forEach((ln, i) => {
+    const parts = ln.split(/(https?:\/\/[^\s<]+)/i).filter(x => x !== '');
+    let first = i === 0 && !!href;
+    got.push(parts.map(x => /^https?:\/\//i.test(x) ? webLink(x)
+      : (first && x.trim() ? (first = false, `<a class="mlink" href="${esc(href)}" target="_blank" rel="noopener">${esc(x.replace(/\s*[\u00b7|,;:-]\s*$/, m => m).trimEnd())}</a>${/\s$/.test(x) ? ' ' : ''}`) : `<span class="mref">${esc(x)}</span>`)).join(''));
+  });
   (c.pages || []).forEach(f => got.push(`<a class="mlink" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>`));
   const rowsHTML = rows.map(r => `<div class="aimrow"><span class="alab">${r[0]}</span><span class="aval">${r[1]}</span></div>`).join('');
 
