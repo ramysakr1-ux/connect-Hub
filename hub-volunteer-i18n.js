@@ -55,7 +55,7 @@
       close: 'Close',
       agreedOn: 'You agreed to the center’s note on {date}.',
       howTitle: 'How your page works',
-      howSub: 'You are being taught by teachers in training. Thank you. Here is how your page works.',
+      howSub: 'You are being taught by teachers in training. Thank you for being part of the course. Here is how your page works.',
       /* The last line said "just tell your teacher", in every language: the
          one thing a volunteer must not do (Ramy: volunteers never email
          tutors). Not coming is the No under "Are you coming?", which is in

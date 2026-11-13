@@ -35,7 +35,7 @@
 <title>Connect Lite — TP point sets</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611131618">
+<link rel="stylesheet" href="hub-tokens.css?v=202611131654">
 <style>
   .tchoice{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0 0;} @media (max-width:640px){ .tchoice{grid-template-columns:1fr;} }
   .tcard{display:flex; flex-direction:column; gap:6px; padding:18px 20px; border-radius:14px; text-align:left; font:inherit; color:var(--ink); cursor:pointer; border:1.5px solid transparent; transition:background-color .15s, transform .15s, box-shadow .15s;}
@@ -274,7 +274,7 @@
   .addmenu .addpop button{display:block; width:100%; text-align:left; font:inherit; background:none; border:0; border-radius:8px; padding:10px 12px; cursor:pointer; color:var(--ink);}
   .addmenu .addpop button:hover{background:var(--field);} .addmenu .addpop b{display:block; font-size:0.9rem;} .addmenu .addpop span{font-size:0.78rem; color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611131618">
+<link rel="stylesheet" href="hub-house.css?v=202611131654">
 <style>
 /* COLOR FOR A SET (Ramy, 21 Oct 2026: "I feel like we should give it some
    color"). The notebook's own: white cards with the shadow, a forest band for
@@ -317,12 +317,12 @@ body.hub-paper .shead .state.done{background:var(--a-forest, var(--teal)); color
   </script>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611131618"></script>
-<script src="hub-rotation.js?v=202611131618"></script>
-<script src="hub-store.js?v=202611131618"></script>
-<script src="hub-say.js?v=202611131618"></script>
-<script src="hub-sync.js?v=202611131618"></script>
-<script src="hub-pages.js?v=202611131618"></script>
+<script src="hub-shared.js?v=202611131654"></script>
+<script src="hub-rotation.js?v=202611131654"></script>
+<script src="hub-store.js?v=202611131654"></script>
+<script src="hub-say.js?v=202611131654"></script>
+<script src="hub-sync.js?v=202611131654"></script>
+<script src="hub-pages.js?v=202611131654"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -523,6 +523,7 @@ function offerFile(){
         tracks += lines.length;
         return { type: sl.type || '', aim: sl.aim || '', sub: sl.sub || '', watch: sl.watch || '',
                  shape: sl.shape || '', pages: sl.pages || '', page: sl.page || '',
+                 after: sl.after || '', afterDay: sl.afterDay || '',
                  tracks: lines.join('\n'),
                  files: files.map(f => ({ name: f.name || '', src: f.src || '', page: f.page })),
                  stages: (sl.stages || []).map(st => ({ name: st.name || '', aim: st.aim || '', minutes: st.minutes || 0,
@@ -1279,6 +1280,13 @@ function slotBody(id, i, sl, scaffold){
     ${FULL || sl.shape ? `<div class="frow"><label class="lab">Lesson shape</label><div>
       <input list="shapes" data-sl="${id}|${i}|shape" value="${esc(sl.shape)}" placeholder="Receptive Skills (reading or listening)">
       <p class="hint">${FULL ? 'Named as the trainee’s own plan names it, so their stages can be filled in one press.' : 'Not given from TP 3: the trainee chooses the shape. Clear this box.'}</p></div></div>` : ''}
+    <!-- A LESSON BUILT ON ANOTHER (Ramy, 13 Nov 2026). A grammar lesson taught from a text needs the lesson that reads
+         the text. Lite deals a smaller teaching set two of a day's three lessons, and deals this one only together with
+         the lesson named here, and after it. -->
+    <div class="frow"><label class="lab">Follows</label><div>
+      <div class="house-sel" style="max-width:340px"><select data-sl="${id}|${i}|after"><option value="">Stands alone</option>${[0, 1, 2].filter(k => k !== i && k < (S.sessions[id].slots || []).length).map(k => `<option value="${k + 1}"${String(sl.after || '') === String(k + 1) ? ' selected' : ''}>Lesson ${k + 1} of this day</option>`).join('')}</select></div>
+      ${/B$/.test(id) ? `<div class="house-sel" style="max-width:340px;margin-top:6px"><select data-sl="${id}|${i}|afterDay"><option value="">Needs nothing from the day before</option>${[1, 2, 3].map(k => `<option value="${k}"${String(sl.afterDay || '') === String(k) ? ' selected' : ''}>Lesson ${k} of the day before</option>`).join('')}</select></div>` : ''}
+      <p class="hint">If this lesson is built on another, for example a grammar lesson taught from the day’s reading, say which. A teaching set of two is dealt two of the day’s three lessons, and gets this one only together with the lesson it follows.</p></div></div>
     <div class="frow"><label class="lab">Pages</label><div class="pair">
       <textarea rows="2" data-sl="${id}|${i}|pages" placeholder="SB p. 12, ex. A–D&#10;WB p. 9, ex. 1a—one line each">${esc(sl.pages)}</textarea>
       <input type="number" min="1" data-sl="${id}|${i}|page" value="${esc(sl.page)}" placeholder="Open at p."></div></div>

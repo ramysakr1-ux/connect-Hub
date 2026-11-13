@@ -210,10 +210,10 @@
       const m = c && /\u00b7(\d+)$/.exec(String(c.from || ''));
       return m ? +m[1] - 1 : -1;
     });
-    if (pos.some((x) => x < 0 || x >= n) || new Set(pos).size !== n) return base;
-    const out = new Array(n);
-    base.forEach((p, i) => { out[pos[i]] = p; });
-    return out;
+    /* by the lesson's place in the day, whichever places are in use: a pair may teach the first and the third lesson
+       (13 Nov 2026), so a place past the number of people is not a reason to fall back on the rotation */
+    if (pos.some((x) => x < 0) || new Set(pos).size !== n) return base;
+    return base.map((p, i) => ({ p: p, k: pos[i] })).sort((a, b) => a.k - b.k).map((x) => x.p);
   }
 
   /* BOTH sets teach every practice, on consecutive days: "TP 1 · ABC" on one
@@ -313,57 +313,93 @@
   }
 
   /* ONE LEVEL, ONE TYPE ONCE (Ramy, 28 Oct 2026: "it's fine if they repeat grammar over two levels, but not in one level
-     unless they fail the grammar lesson ... they can do grammar at, say, A2 and B2. Just not back-to-back unless there's a
-     problem"). The set fixes WHAT a session's three slots are; the teaching order within a day may change WHO takes
-     which. dealSet(day, n, opts) chooses, for a set of n trainees, the slot each takes at every practice so that no trainee
-     meets a type twice inside one level, every trainee meets a language-focus lesson, and, as far as that allows, the
-     days keep the rotation's own order and everyone leads about as often.
-       day[t][s]  the type of slot s at practice t+1 ('' when unwritten)
+     unless they fail the grammar lesson ... they can do grammar at, say, A2 and B2").
+
+     THE DEAL, AS AGREED WITH RAMY ON 13 NOV 2026. C/21's group of four had two trainees a day, and the deal only ever
+     gave them a day's first two lessons, never the third: "Group one is shit. This is not rotation." The set fixes WHAT
+     a session's three lessons are; dealSet(day, n, opts) chooses, for a teaching set of n trainees, WHICH of them are
+     taught at each practice and WHO takes which.
+
+     Never broken:
+       1. a day's lessons run in the book's order (the page orders the day by the lesson's place, orderDealt);
+       2. a lesson built on another is dealt only when that one is taught the same day, before it (opts.needs), and a
+          lesson built on one from the other set's day only when that one was dealt (opts.closed).
+     Then, in this order:
+       3. no aim twice inside a level;
+       4. a mix of language and skills inside a level: two and two across four practices, one of each across two;
+       5. the teaching order even: everyone goes first about as often;
+       6. the trainees who share a day do not share an aim;
+       7. everyone meets a productive lesson (speaking or writing) somewhere, when it costs nothing above.
+     Not counted: the same aim at both levels, the last practice of one and the first of the next included ("that's not
+     a concern at all"). With three on a day all three lessons are taught; with two, the best two; with one, the best one.
+
+       day[t][s]      the type of lesson s at practice t+1 ('' when unwritten)
        opts.levelAt   the first practice of the second level (the change of class); default none
-       opts.fixed     { t: [aim or '' per trainee] } where a tutor's own cell stands; that practice is left as the rotation has it
-     Returns { perms: perms[t][i] = slot trainee i takes at practice t+1, repeats, spread }. Exhaustive: six practices of
-     three is 46,656 deals. */
+       opts.fixed     { t: [aim or '' per trainee] } where a tutor's own cell stands, and opts.held { t: [its place or -1] }
+       opts.needs     needs[t][s] = the lesson of the same day that lesson s follows (0-based), or -1
+       opts.closed    closed[t][s] = true where lesson s may not be dealt at practice t+1
+     Returns { perms: perms[t][i] = the lesson trainee i takes at practice t+1, rep, mix, spread, shared, noProd }.
+     Exhaustive: six practices of six ways is 46,656 deals. */
   function dealSet(day, n, opts) {
     opts = opts || {};
-    const T = (day || []).length, levelAt = opts.levelAt || 0, fixed = opts.fixed || {};
-    const perms = [];
-    (function gen(a, k) { if (k === a.length) { perms.push(a.slice()); return; }
-      for (let i = k; i < a.length; i++) { [a[k], a[i]] = [a[i], a[k]]; gen(a, k + 1); [a[k], a[i]] = [a[i], a[k]]; } })(Array.from({ length: n }, (_, i) => i), 0);
-    const rot = (t) => Array.from({ length: n }, (_, i) => (((i - t) % n) + n) % n);
+    const T = (day || []).length, levelAt = opts.levelAt || 0, fixed = opts.fixed || {}, needs = opts.needs || [], closed = opts.closed || [];
     const levelOf = (t) => (levelAt && t + 1 >= levelAt ? 1 : 0);
+    const rot = (t) => Array.from({ length: n }, (_, i) => (((i - t) % n) + n) % n);
+    const isLang = (ty) => LANGUAGE_FOCUS.indexOf(ty) >= 0, isProd = (ty) => FAMILY[ty] === 'productive';
+    /* every way of giving n trainees n different lessons out of a day's three */
+    const all = [];
+    (function gen(a) { if (a.length === n) { all.push(a.slice()); return; }
+      for (let s = 0; s < Math.max(3, n); s++) if (a.indexOf(s) < 0) { a.push(s); gen(a); a.pop(); } })([]);
+    const held = opts.held || {};
+    const choices = (t) => {
+      const types = day[t] || [], written = [0, 1, 2].filter((s) => types[s]), fx = fixed[t] || [], hd = held[t] || [];
+      if (written.length < n) return [rot(t)];                       /* nothing to choose between: the rotation's own order */
+      /* a tutor's own cell keeps its lesson (opts.held: the place it holds, -1 where it has none); the others on that
+         day are dealt round it, so nobody is handed the lesson a classmate was given by hand */
+      const ok = all.filter((perm) => perm.every((s, i) => {
+        if (fx[i]) return !(hd[i] >= 0) || s === hd[i];
+        const nd = (needs[t] || [])[s];
+        return types[s] && !((closed[t] || [])[s]) && (nd === undefined || nd < 0 || perm.indexOf(nd) >= 0);
+      }));
+      return ok.length ? ok : [rot(t)];
+    };
     const typeOf = (t, i, perm) => { const f = (fixed[t] || [])[i]; return f || ((day[t] || [])[perm[i]] || ''); };
-    const choices = (t) => (fixed[t] && fixed[t].some(Boolean)) ? [rot(t)] : perms;
-    const seen = Array.from({ length: n }, () => [{}, {}]), last = Array.from({ length: n }, () => '');
-    const lang = Array.from({ length: n }, () => 0), lead = Array.from({ length: n }, () => 0);
-    let best = null, cur = [];
-    function walk(t, rep, dist) {
+    /* how many practices each level holds, for the two-and-two */
+    const span = [0, 0]; for (let t = 0; t < T; t++) if ((day[t] || []).some(Boolean)) span[levelOf(t)]++;
+    const seen = Array.from({ length: n }, () => [{}, {}]);
+    const lang = Array.from({ length: n }, () => [0, 0]), prod = Array.from({ length: n }, () => 0), lead = Array.from({ length: n }, () => 0);
+    let best = null; const cur = [];
+    function walk(t, rep, shared, dist) {
       if (best && rep > best.rep) return;
       if (t === T) {
-        const noLang = lang.filter((x) => !x).length, spread = Math.max.apply(null, lead) - Math.min.apply(null, lead);
-        const score = rep * 1000 + noLang * 1000 + spread * 5 + dist;
-        if (!best || score < best.score) best = { score: score, rep: rep, spread: spread, perms: cur.slice() };
+        let mix = 0;
+        for (let i = 0; i < n; i++) for (let lv = 0; lv < 2; lv++) { if (!span[lv]) continue;
+          const lo = Math.floor(span[lv] / 2), hi = Math.ceil(span[lv] / 2), k = lang[i][lv];
+          mix += k < lo ? lo - k : k > hi ? k - hi : 0; }
+        const spread = Math.max.apply(null, lead) - Math.min.apply(null, lead), noProd = prod.filter((x) => !x).length;
+        const score = rep * 100000 + mix * 5000 + spread * 300 + shared * 40 + noProd * 6 + dist;
+        if (!best || score < best.score) best = { score: score, rep: rep, mix: mix, spread: spread, shared: shared, noProd: noProd, perms: cur.slice() };
         return;
       }
-      const r = rot(t);
+      const r = rot(t), lv = levelOf(t);
       choices(t).forEach((perm) => {
-        let add = 0, d = 0, back = 0; const undo = [], prev = last.slice();
+        let add = 0, d = 0, sh = 0; const undo = [], types = [];
+        const first = perm.indexOf(Math.min.apply(null, perm));
         for (let i = 0; i < n; i++) {
-          const ty = typeOf(t, i, perm), lv = levelOf(t);
-          if (ty && ty === last[i]) back++;     // the same type two practices running, across the change of class too
-          if (ty) { if (seen[i][lv][ty]) add++; seen[i][lv][ty] = (seen[i][lv][ty] || 0) + 1; undo.push([i, lv, ty]); }
-          last[i] = ty || last[i];
-          if (ty && LANGUAGE_FOCUS.indexOf(ty) >= 0) lang[i]++;
-          if (perm[i] === 0) lead[i]++;
+          const ty = typeOf(t, i, perm);
+          if (ty) { if (seen[i][lv][ty]) add++; seen[i][lv][ty] = (seen[i][lv][ty] || 0) + 1; undo.push([i, ty]);
+            if (types.indexOf(ty) >= 0) sh++; types.push(ty);
+            if (isLang(ty)) lang[i][lv]++; if (isProd(ty)) prod[i]++; }
           if (perm[i] !== r[i]) d++;
         }
-        cur[t] = perm.slice(); walk(t + 1, rep + add, dist + d + back * 200);   // 200 a back-to-back: below a repeat in a level, above the rotation's own order
-        undo.forEach((u) => { seen[u[0]][u[1]][u[2]]--; });
-        for (let i = 0; i < n; i++) last[i] = prev[i];
-        for (let i = 0; i < n; i++) { const ty = typeOf(t, i, perm); if (ty && LANGUAGE_FOCUS.indexOf(ty) >= 0) lang[i]--; if (perm[i] === 0) lead[i]--; }
+        lead[first]++;
+        cur[t] = perm.slice(); walk(t + 1, rep + add, shared + sh, dist + d);
+        lead[first]--;
+        undo.forEach((u) => { seen[u[0]][lv][u[1]]--; if (isLang(u[1])) lang[u[0]][lv]--; if (isProd(u[1])) prod[u[0]]--; });
       });
     }
-    walk(0, 0, 0);
-    return best || { perms: [], rep: 0, spread: 0, score: 0 };
+    walk(0, 0, 0, 0);
+    return best || { perms: [], rep: 0, mix: 0, spread: 0, shared: 0, noProd: 0, score: 0 };
   }
 
   /* The types a trainee meets twice inside one level, for the page's warning and the set page's paths:
