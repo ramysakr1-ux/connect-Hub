@@ -966,6 +966,30 @@ window.hubGtkyPlan = function(settings, tt){
    HH:MM either way; this is only how they read. 12-hour: "9:05 AM", "1:30 PM",
    and a range shares its AM or PM when both ends are in the same half:
    "1:30–2:15 PM". 24-hour: "09:05", "13:30", "13:30–14:15". */
+/* BEFORE THE COURSE (14 Nov 2026). Ramy, on the Candidate folders link: "It needs to have those substantial added value,
+   otherwise we don't need it." What the center's interviewer saw, read from the candidate's folder by the store
+   (folderRead) and kept in the tutors-only record `intake` as { card, files, description }. hubBeforeOf(t) gives it or
+   null; hubBeforeFold(t) is the closed line a tutor opens beside a trainee. Tutors only: the store never sends `intake`
+   to a trainee or the assessor. */
+window.hubBeforeOf = function(t){
+  var r = (t && t.records) || {}, it = Object.assign({}, r.intake || {}, (t && t.intake) || {}), c = it.card || {};
+  var has = !!(c.background || (c.strengths || []).length || (c.concerns || []).length || c.tasks || c.offer);
+  if (!has && !(it.files || []).length) return null;
+  return { has: has, card: c, files: it.files || [], teach: it.teach || '', why: it.why || '', at: it.at || '', description: it.description != null ? it.description : (c.description || '') };
+};
+window.hubBeforeFold = function(t){
+  var b = window.hubBeforeOf(t); if (!b || !b.has) return '';
+  var esc = function(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  if (!document.getElementById('hubBeforeCss')) { var st = document.createElement('style'); st.id = 'hubBeforeCss';
+    st.textContent = '.hbc{margin:12px 0 0; border-top:1px solid var(--sand-line); padding-top:10px; font-size:13.5px; line-height:1.45;}.hbc summary{cursor:pointer; font-weight:700; color:var(--teal); list-style:none;}.hbc summary::-webkit-details-marker{display:none;}.hbc summary small{font-weight:500; color:var(--grey); margin-left:6px;}.hbc p{margin:8px 0 2px; font-size:11px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--grey);}.hbc ul{margin:0; padding-left:16px;}.hbc .src{display:block; margin-top:8px; color:var(--grey); font-size:12px;}@media print{.hbc{display:none;}}';
+    document.head.appendChild(st); }
+  var c = b.card, n = (c.concerns || []).length;
+  return '<details class="hbc"><summary>Before the course<small>' + (n ? n + ' to watch' : 'from the interview') + '</small></summary>'
+    + ((c.strengths || []).length ? '<p>The interviewer saw</p><ul>' + c.strengths.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '')
+    + (n ? '<p>To watch</p><ul>' + c.concerns.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '')
+    + (c.offer ? '<p>With the offer</p>' + esc(c.offer) : '')
+    + '<a class="src" href="42_before_the_course.html">From the center’s interview notes. Open Before the course</a></details>';
+};
 /* THE LEVELS (Ramy, 30 Oct 2026: "since the books can't really seem to agree we're just gonna have to go with those levels
    ... this change should apply everywhere"). Every level on the platform reads as one of six names. Underneath, one code each
    stays where something counts on it: a volunteer's hours (Beginner and Elementary 100, the rest 200) and the store's match of
