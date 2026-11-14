@@ -2971,6 +2971,42 @@ window.hubPoolTake = function(got, libId){
   }, function(){ return { pages: 0, tracks: 0, wanted: 0, asked: false }; });
 };
 
+/* A SET TAKEN BEFORE SETS ARRIVED COMPLETE IS MENDED WHEN A TUTOR OPENS TP POINTS (14 Nov 2026). C/21's two sets were
+   taken days before 10 Nov, so their track lines were names with no file, and every trainee's card sent them to the
+   whole book's audio folder (Ramy, on Maya's card: "why is Maya's audio leading to the entire book's audio?"). For each
+   Pool set on the course that still names a page or a track with nothing behind it, ask the store once and lay the
+   library's copy over it (hubPoolTake); then give the dealt cards their track links, where a card is still that
+   lesson (the same place in the set, the same track names). Only what is empty is filled. Answers how many things
+   were filled, so the page saves only when something was. */
+window.hubCarryTracks = function(P, lib){
+  var n = 0; if (!P || !P.groups || !lib) return 0;
+  var names = function(t){ return String(t || '').split('\n').map(function(l){ return l.split('|')[0].trim().toLowerCase(); }).filter(Boolean).join('\n'); };
+  var mend = function(cell){
+    if (!cell || !cell.audio) return;
+    var u = String(cell.audio.url || ''); if (!u.trim() || /https?:\/\//.test(u)) return;
+    var m = /^(\d+[AB])\s*·\s*(\d)$/.exec(String(cell.from || '')); if (!m) return;
+    Object.keys(lib).some(function(k){
+      var sl = (((lib[k] || {}).sessions || {})[m[1]] || {}).slots; sl = sl && sl[+m[2] - 1];
+      var t = sl && String(sl.tracks || '');
+      if (!t || !/https?:\/\//.test(t) || names(t) !== names(u)) return false;
+      cell.audio.url = t.trim(); n++; return true;
+    });
+  };
+  Object.keys(P.groups).forEach(function(g){ Object.keys(P.groups[g] || {}).forEach(function(tk){ var row = P.groups[g][tk] || {};
+    Object.keys(row).forEach(function(key){ if (key === 'un') Object.keys(row.un || {}).forEach(function(x){ mend(row.un[x]); }); else mend(row[key]); }); }); });
+  return n;
+};
+window.hubPoolMend = function(P){
+  var lib = P && P.set && P.set.library; if (!lib) return Promise.resolve(0);
+  var bare = function(S){ return Object.keys(S.sessions || {}).some(function(k){ return ((S.sessions[k] || {}).slots || []).some(function(sl){
+    return sl && (String(sl.tracks || '').split('\n').some(function(l){ return l.trim() && !/https?:\/\//.test(l); }) || (sl.files || []).some(function(f){ return f && !f.url; })); }); }); };
+  var ids = Object.keys(lib).filter(function(k){ var S = lib[k]; return S && !S.own && /^s\d{1,3}$/.test(String(S.from || '')) && bare(S); });
+  return Promise.all(ids.map(function(k){ return window.hubPoolTake(lib[k], lib[k].from); })).then(function(rs){
+    var n = 0; rs.forEach(function(r){ n += (r.pages || 0) + (r.tracks || 0); });
+    return n + window.hubCarryTracks(P, lib);
+  }, function(){ return 0; });
+};
+
 /* SKIP TO MAIN CONTENT (accessibility pass, 12 Nov 2026). The first Tab on any page shows a link that jumps past the
    header to the page's heading; Course admin is long and its header has a dozen stops. Unseen until it has focus. */
 (function(){
