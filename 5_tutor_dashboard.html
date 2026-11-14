@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611141550">
+<link rel="stylesheet" href="hub-tokens.css?v=202611141618">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -558,7 +558,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611141550">
+<link rel="stylesheet" href="hub-house.css?v=202611141618">
 </head>
 <body>
 <div class="board">
@@ -685,26 +685,26 @@
 
 </div>
 
-<script src="hub-due.js?v=202611141550"></script>
-<script src="observation-defaults.js?v=202611141550"></script>
-<script src="hub-rotation.js?v=202611141550"></script>
-<script src="hub-shared.js?v=202611141550"></script>
+<script src="hub-due.js?v=202611141618"></script>
+<script src="observation-defaults.js?v=202611141618"></script>
+<script src="hub-rotation.js?v=202611141618"></script>
+<script src="hub-shared.js?v=202611141618"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611141550"></script>
-<script src="hub-say.js?v=202611141550"></script>
-<script src="hub-hand.js?v=202611141550"></script>
-<script src="hub-ink.js?v=202611141550"></script>
-<script src="hub-shelf.js?v=202611141550"></script>
+<script src="hub-store.js?v=202611141618"></script>
+<script src="hub-say.js?v=202611141618"></script>
+<script src="hub-hand.js?v=202611141618"></script>
+<script src="hub-ink.js?v=202611141618"></script>
+<script src="hub-shelf.js?v=202611141618"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611141550"></script>
-<script src="hub-sync.js?v=202611141550"></script>
-<script src="hub-notebook.js?v=202611141550"></script>
-<script src="hub-tracker.js?v=202611141550"></script>
-<script src="hub-feedback.js?v=202611141550"></script>
+<script src="assignment-defaults.js?v=202611141618"></script>
+<script src="hub-sync.js?v=202611141618"></script>
+<script src="hub-notebook.js?v=202611141618"></script>
+<script src="hub-tracker.js?v=202611141618"></script>
+<script src="hub-feedback.js?v=202611141618"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -1518,7 +1518,9 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
      the post stays at the top until the date passes. Shared with the home. */
   const dueState = p => (p && p.due && window.HubDue) ? HubDue.state(p.due) : { has: false };
   const duePill = p => { const d = dueState(p); return d.has ? `<span class="due${d.past ? ' past' : ''}">${d.past ? 'was due ' + e(d.due) : e(d.due) + ' · ' + e(d.text)}</span>` : ''; };
-  const orderPosts = list => list.slice().sort((a, b) => { const da = dueState(a), db = dueState(b); const la = da.has && !da.past, lb = db.has && !db.past; if (la !== lb) return la ? -1 : 1; if (la && lb) return da.at - db.at; return String(b.at).localeCompare(String(a.at)); });
+  /* a notice written to go out later is dated and ordered by the day it went out, as the trainees see it (14 Nov 2026) */
+  const outAt = p => (p.publishAt && String(p.publishAt) > String(p.at)) ? String(p.publishAt) : String(p.at);
+  const orderPosts = list => list.slice().sort((a, b) => { const da = dueState(a), db = dueState(b); const la = da.has && !da.past, lb = db.has && !db.past; if (la !== lb) return la ? -1 : 1; if (la && lb) return da.at - db.at; return outAt(b).localeCompare(outAt(a)); });
   /* Ramy, 28 Sep 2026: "some kind of warning -- this post is going to group
      one, this post is going to the whole course -- and then you can click
      post anyway." One more look before it goes: who, and how many. */
@@ -1565,7 +1567,7 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
       /* FOLDED UNTIL ASKED FOR (Ramy, 11 Nov 2026, with ten scheduled on C/21: "an option to hide all those announcements"):
          the held posts are one line until a tutor opens them; this browser remembers which */
       + (back.length ? `<p class="slabel heldline">Held back: ${back.length} post${back.length === 1 ? '' : 's'} the trainees do not see yet${back[0] && back[0].publishAt && window.HubDue ? '. The next goes up ' + e(HubDue.state(back[0].publishAt).due) : ''}. <button class="more" type="button" id="heldToggle">${heldOpen() ? 'Hide them' : 'Show them'}</button></p>` + (heldOpen() ? `<div class="pins">` + back.map(heldRow).join('') + '</div>' : '') + (posts.length ? `<p class="slabel">On the board</p>` : '') : '')
-      + (list.length ? '<div class="pins">' : '') + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(p.at))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('') + (list.length ? '</div>' : '')
+      + (list.length ? '<div class="pins">' : '') + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(p.text)}</p></div></article>`).join('') + (list.length ? '</div>' : '')
       + (posts.length || back.length ? '' : '<p class="empty">Nothing on the board yet. The trainees see this noticeboard on their home.</p>');
     const po = host.querySelector('#pinOpen'); if (po) po.addEventListener('click', () => { composing = true; draw(); host.querySelector('#streamText').focus(); });
     const pc = host.querySelector('#pinClose'); if (pc) pc.addEventListener('click', () => { composing = false; draw(); });
