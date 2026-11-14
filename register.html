@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — the volunteer register, for the center.
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 14 Nov 2026: "Can I share the register with someone from the center outside of Connect Lite? ... There is no
+  trainees attendance register, only volunteer students. So that's the one. Just want to share it with the center."
+  The page opens from a link of the form register.html?r=<key>, copied from the tutors' register. No sign-in. It shows
+  the volunteer students' register as it stands, read-only: names, levels, the days each came, the hours. No addresses,
+  no personal links, nothing else of the course. The store's registerView answers it, and stops when the course ends.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Volunteer register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202611141831">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif;}
+  .wrap{max-width:860px; margin:0 auto; padding:28px 18px 60px;}
+  .eye{font-size:11px; letter-spacing:.22em; text-transform:uppercase; font-weight:700; color:var(--brick); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:2rem; line-height:1.08; margin:0 0 8px;}
+  .lede{color:var(--grey); line-height:1.5; margin:0 0 6px; max-width:68ch;}
+  .asof{color:var(--grey); font-size:.86rem; margin:0 0 18px;}
+  .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 16px;}
+  .btn{border:1px solid var(--sand-line); background:var(--paper); color:var(--ink); border-radius:999px; padding:9px 16px; font:700 .9rem/1 'Karla',sans-serif; cursor:pointer;}
+  .reg{background:var(--paper); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
+  .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line); break-inside:avoid;}
+  .who:first-child{border-top:0;}
+  .nm{font-weight:700; font-size:.94rem;}
+  .nm small{display:block; font-weight:500; font-size:.76rem; color:var(--grey); margin-top:2px;}
+  .lvltag{display:inline-block; margin-left:8px; font-size:.72rem; font-weight:700; letter-spacing:.06em; color:var(--gold-deep); background:var(--box); padding:1px 7px; border-radius:999px;}
+  .segs{display:flex; flex-wrap:wrap; gap:3px; margin-top:6px;}
+  .seg{display:inline-block; width:15px; height:17px; border-radius:3px; background:oklch(88% 0.008 80);}
+  .seg.here{background:var(--teal);}
+  .seg.part{background:oklch(85% 0.09 78);}
+  .seg.miss{background:oklch(88% 0.055 27);}
+  .seg.soon{background:oklch(93% 0.006 80);}
+  .seg.before{background:transparent; box-shadow:inset 0 0 0 1.5px #D6D4DC;}
+  .hrs{text-align:right; white-space:nowrap;}
+  .hrs b{font-family:'Newsreader',Georgia,serif; font-size:1.2rem;}
+  .hrs small{display:block; font-size:.74rem; color:var(--grey);}
+  .legend{font-size:.76rem; color:var(--grey); margin:14px 0 0; line-height:1.7; display:flex; gap:0 16px; flex-wrap:wrap; align-items:center;}
+  .legend .seg{margin-right:5px; vertical-align:-3px;}
+  .empty{background:var(--paper); border:1px dashed var(--sand-line); border-radius:10px; padding:26px 22px; color:var(--grey); font-size:.9rem; line-height:1.6;}
+  .foot{margin-top:28px; text-align:center; font-size:.8rem; color:var(--grey);}
+  @media (max-width:560px){ .who{grid-template-columns:1fr; gap:6px;} .hrs{text-align:left;} }
+  @media print{ body{background:#fff;} .bar{display:none !important;} .wrap{max-width:none; padding:0;} .seg{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eye" id="eye">Connect Lite</p>
+  <h1>Volunteer register</h1>
+  <div id="app"><p class="lede">Opening the register.</p></div>
+  <p class="foot">designed and built by <b>Ramy</b></p>
+</div>
+<script src="hub-shared.js?v=202611141831"></script>
+<script src="hub-attendance.js?v=202611141831"></script>
+<script src="hub-store.js?v=202611141831"></script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var esc = function(s){ return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  var R = new URLSearchParams(location.search).get('r') || '';
+  var A = window.hubAttendance;
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var parse = function(s){ var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+  var dm = function(iso){ var d = parse(iso); return d ? d.getDate() + ' ' + MON[d.getMonth()] : iso; };
+  var ymd = function(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  var fmtH = function(h){ return (Math.round(h * 100) / 100).toString().replace(/\.00$/, ''); };
+  var LV = function(l){ return window.hubLevelName ? hubLevelName(l) : l; };
+  function closed(line){ $('app').innerHTML = '<div class="empty"><b>This register is not open.</b><br>' + esc(line) + '</div>'; }
+  if (!R) { closed('Use the link the course tutor sent you.'); return; }
+
+  function draw(d){
+    var TODAY = (d.course && d.course.today) || ymd(new Date());
+    var tt = d.timetable || {}, cd = A.classDays(tt), days = cd.days, perDay = cd.perDay, lessons = cd.lessons, lessonMinutes = cd.lessonMinutes;
+    var hm = function(t){ var m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
+    var hoursPerDay = (tt.slots || []).reduce(function(n, sl){ var a = hm(sl.from), b = hm(sl.to); return a != null && b != null && b > a ? n + b - a : n; }, 0) / 60;
+    var list = (d.students || []).map(function(st){ if (!st.marks) { st.marks = {}; (st.here || []).forEach(function(x){ st.marks[x] = 'present'; }); } return st; });
+    if (d.course && d.course.centre) $('eye').textContent = d.course.centre;
+    document.title = 'Volunteer register' + (d.course && d.course.name ? ' · ' + d.course.name : '');
+    var long = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+    var head = '<p class="lede">' + (d.course && d.course.name ? '<b>' + esc(d.course.name) + '.</b> ' : '') + 'The students who came in to be taught, and which teaching days each of them attended.</p>'
+      + '<p class="asof">As the tutors have marked it, opened ' + esc(long) + '. This page only shows the register; nothing can be changed from it.</p>';
+    if (!days.length) { $('app').innerHTML = head + '<div class="empty">The course has not set its teaching days yet, so there is nothing to count attendance against.</div>'; return; }
+    if (!list.length) { $('app').innerHTML = head + '<div class="empty">Nobody on the register yet.</div>'; return; }
+    var joined = function(st){
+      if (st.added) return String(st.added).slice(0, 10);
+      var inv = st.invited ? String(st.invited).slice(0, 10) : '';
+      if (inv && !Object.keys(st.marks || {}).some(function(x){ return x < inv; })) return inv;
+      return '';
+    };
+    var anyBefore = false;
+    var rows = list.map(function(st){
+      var r = A.record(st.marks || {}, days, lessons, lessonMinutes, perDay), j = joined(st);
+      if (j && j > days[0]) anyBefore = true;
+      var n = days.filter(function(x){ return (!j || x >= j) && (x < TODAY || (st.marks || {})[x]); }).length;
+      return '<div class="who"><div><div class="nm">' + esc(st.name) + (st.level ? '<span class="lvltag">' + esc(LV(st.level)) + '</span>' : '')
+        + (st.carried ? '<small>' + esc(st.carried) + ' h at this level before this course' + (st.carriedFrom ? ', at ' + esc(st.carriedFrom) : '') + '</small>' : '') + '</div>'
+        + '<div class="segs">' + r.days.map(function(x){
+            var past = x.date < TODAY, before = x.tier === 'absent' && x.date < j;
+            var cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : before ? 'before' : past ? 'miss' : 'soon';
+            var what = x.tier === 'absent' && !past ? 'Still to come' : A.describe(x.tier, (perDay[x.date] || {}).lessons || lessons, (perDay[x.date] || {}).lessonMinutes || lessonMinutes);
+            return '<span class="seg ' + cls + '" title="' + esc(dm(x.date)) + ' — ' + esc(what) + '"></span>'; }).join('') + '</div></div>'
+        + '<div class="hrs"><b>' + fmtH(r.hours) + ' h</b><small>' + r.present + ' of ' + n + ' days' + (j && j > days[0] ? ' since joining' : n < days.length ? ' so far' : '') + (r.partial ? ' · ' + r.partial + ' part' : '') + '</small></div></div>';
+    }).join('');
+    $('app').innerHTML = head
+      + '<div class="bar"><button type="button" class="btn" id="print">Print or save as PDF</button></div>'
+      + '<div class="reg">' + rows + '</div>'
+      + '<p class="legend"><span><span class="seg here"></span>in the room</span><span><span class="seg part"></span>came for part of it</span><span><span class="seg miss"></span>not marked, day has passed</span><span><span class="seg soon"></span>still to come</span>'
+      + (anyBefore ? '<span><span class="seg before"></span>before they joined</span>' : '') + '</p>'
+      + '<p class="legend">' + lessons + ' lesson' + (lessons === 1 ? '' : 's') + ' of ' + lessonMinutes + ' minutes a day · coming to ' + A.lessonsNeededForPresent(lessons) + ' of them counts as being in the room and credits the whole ' + fmtH(hoursPerDay) + ' hours · ' + days.length + ' teaching days, ' + fmtH(days.length * hoursPerDay) + ' h if somebody comes to all of them.</p>';
+    $('print').onclick = function(){ window.print(); };
+  }
+  HubStore.call({ op: 'registerView', r: R }).then(draw, function(e){ closed((e && e.message) || 'Try the link again in a moment.'); });
+})();
+</script>
+</body>
+</html>

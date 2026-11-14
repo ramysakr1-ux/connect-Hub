@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611141812">
+<link rel="stylesheet" href="hub-tokens.css?v=202611141831">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -150,21 +150,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611141812">
+<link rel="stylesheet" href="hub-house.css?v=202611141831">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611141812"></script>
-<script src="hub-shared.js?v=202611141812"></script>
-<script src="hub-timetable-parse.js?v=202611141812"></script>
-<script src="hub-xlsx.js?v=202611141812"></script>
-<script src="hub-attendance.js?v=202611141812"></script>
-<script src="hub-store.js?v=202611141812"></script>
-<script src="hub-say.js?v=202611141812"></script>
-<script src="hub-sync.js?v=202611141812"></script>
+<script src="hub-due.js?v=202611141831"></script>
+<script src="hub-shared.js?v=202611141831"></script>
+<script src="hub-timetable-parse.js?v=202611141831"></script>
+<script src="hub-xlsx.js?v=202611141831"></script>
+<script src="hub-attendance.js?v=202611141831"></script>
+<script src="hub-store.js?v=202611141831"></script>
+<script src="hub-say.js?v=202611141831"></script>
+<script src="hub-sync.js?v=202611141831"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -310,6 +310,7 @@ function render(){
 
   const bar = IS_TUTOR ? `<div class="bar">
       <button class="btn" id="addOpen">${ADD_OPEN ? 'Close' : 'Add students'}</button>
+      ${CENTER_KEY ? `<button class="btn" id="centerCopy" title="A page that shows this register and nothing else. It cannot be changed from there, and it stops working when the course ends.">Copy the center\u2019s link</button><button class="btn quiet sm" id="centerNew">Make a new link</button>` : ''}
       ${(() => { /* SEND THEM ALL (Ramy, 11 Nov 2026: a file of twenty comes in with its addresses, and each row's button
          was twenty clicks). Everyone with an address and no invitation yet, in one go. */
         const n = unsent().length; return n ? `<button class="btn" id="sendAllNow">Send the invitations to ${n} ${n === 1 ? 'person' : 'people'}</button>` : ''; })()}
@@ -377,6 +378,11 @@ function render(){
   wire();
 }
 
+/* THE CENTER'S LINK (14 Nov 2026). Ramy: "Just want to share it with the center." A link to a page that shows this
+   register read-only and nothing else of the course: no addresses, no personal links. The store makes it once per
+   course; the button appears when it has arrived, so the copy is one tap (a clipboard write after a wait is refused). */
+let CENTER_KEY = '';
+if (IS_TUTOR && window.HubStore) window.HubStore.call({ op: 'registerLink' }).then(r => { if (r && r.key) { CENTER_KEY = r.key; render(); } }, () => {});
 let LAST_SENT = '';   // "Invitation sent to Amin." -- shown in the panel, which stays open for the next person
 let MANY_OPEN = false;
 let PREFILL = [];       // people read from a sheet, waiting in the boxes until Add and send (11 Nov 2026)
@@ -574,6 +580,18 @@ function wire(){
       render();
       const first = document.querySelector('.mrow'); if (first) first.scrollIntoView({ block: 'center' });
     } catch (err) { note = err && err.message ? err.message : 'That file could not be read.'; render(); }
+  });
+  if ($('centerCopy')) $('centerCopy').addEventListener('click', async () => {
+    const link = window.HubStore.registerLinkFor(CENTER_KEY), el = $('centerCopy');
+    try { await navigator.clipboard.writeText(link); el.textContent = 'Copied'; setTimeout(() => { el.textContent = 'Copy the center\u2019s link'; }, 1600); }
+    catch(e) { prompt('The center\u2019s link:', link); }
+  });
+  if ($('centerNew')) $('centerNew').addEventListener('click', async () => {
+    if (!confirm('Make a new link for the center? The link they have now stops working.')) return;
+    try { const r = await window.HubStore.call({ op: 'rotateRegisterKey' });
+      if (r && r.key) { CENTER_KEY = r.key; persist('New link made. Copy it and send it to the center.'); }
+      else persist('Nothing is saved on a demo course, so the link stays as it is.'); }
+    catch(e) { note = (e && e.message) || 'The new link could not be made.'; render(); }
   });
   document.querySelectorAll('[data-copy]').forEach(el => el.addEventListener('click', async () => {
     const st = students()[+el.dataset.copy]; if (!st || !st.token) return;

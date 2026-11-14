@@ -109,7 +109,7 @@ const ARGS = {
 };
 /* Called ONLY as the roles that must be refused: the permitted role would
    mutate, mail, upload, rotate or delete something that is not this check's. */
-const DANGER = new Set(['deleteCourse', 'purgeCourse', 'undeleteCourse', 'restoreFromBackup', 'rotateKey', 'rotateAssessorKey', 'rotateOwnerKey', 'setOpenAiKey', 'setTutorPin', 'setMyPin',
+const DANGER = new Set(['deleteCourse', 'purgeCourse', 'undeleteCourse', 'restoreFromBackup', 'rotateKey', 'rotateAssessorKey', 'rotateRegisterKey', 'rotateOwnerKey', 'setOpenAiKey', 'setTutorPin', 'setMyPin',
   'installReminders', 'mailCourseFeedback', 'sendCard', 'volunteerInvite', 'volunteerNotify', 'transcribeInterview', 'transcriptionOn', 'putInterviewAudio', 'deleteInterviewAudio', 'getInterviewAudio',
   'putAsset', 'putMaterial', 'purgeMaterials', 'purgeTrainee', 'removeTrainee', 'reissueTrainee', 'renameTrainee', 'renameCourse', 'cloneCourse', 'createCourse', 'addTrainee', 'addTrainees',
   'centresSeed', 'putDefaultGuidance', 'inboxRow', 'postAt', 'contribute', 'poolHeard', 'feedback', 'report', 'webCheck', 'aiCheck', 'setSearchKey', 'setClaudeKey']);

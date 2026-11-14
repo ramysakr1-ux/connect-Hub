@@ -411,6 +411,10 @@ function handle_(req) {
   /* THE ROOM'S DOOR (28 Oct 2026): the one op with no key, no token. A Connect demo's audience asks a question on a page of
      its own (ask.html?c=<course>&k=<code>); the code is the course's own and says nothing but "ask". See roomAsk_. */
   if (op === 'roomAsk') return roomAsk_(req);
+  /* THE CENTER'S REGISTER LINK (v230, 14 Nov 2026). Ramy: "Can I share the register with someone from the center outside
+     of Connect Lite? ... only volunteer students. So that's the one." A link of its own (register.html?r=<key>) that
+     reads the volunteer register and nothing else of the course. See registerView_. */
+  if (op === 'registerView') return registerView_(req);
   /* THE CV PRESENT AS A THANK-YOU (v184, 31 Oct 2026; Ramy: "people who kind of maybe helped me out along the way ...
      people with experience ... a DELTA, a master's degree"). A gift link (cv/?g=<code>) made by the owner opens
      "Shape it for a job" for someone who was never a trainee: their own typed lines are the only facts. */
@@ -1444,6 +1448,18 @@ case 'inbox': {
     case 'traineeViewLink': {
       requireTutor_(tutor);
       return { token: 'maya.' + course.id + '.' + courseKey_('maya', course.id), name: 'Maya Ramsey', group: '1' };
+    }
+    /* The center's register link (v230): made once per course, copied from the tutors' register; a new one kills the old. */
+    case 'registerLink': {
+      requireTutor_(tutor);
+      var exr = assessorExpiry_(course.id);
+      return { key: courseKey_('register', course.id), expires: exr ? exr.toISOString() : null };
+    }
+    case 'rotateRegisterKey': {
+      requireTutor_(tutor);
+      var nr = newKey_();
+      PropertiesService.getScriptProperties().setProperty(keyProp_('register', course.id), nr);
+      return { key: nr };
     }
     case 'assessorLink': {
       requireTutor_(tutor);
@@ -4888,6 +4904,33 @@ function assessorExpiry_(courseId) {
   var d = new Date(String(s.end) + 'T23:59:59');
   if (isNaN(d.getTime())) return null;
   return d;
+}
+/* What the center's register link is sent (v230, 14 Nov 2026): the volunteer students' names, levels, marks and the
+   hours carried in, with the teaching days the marks are counted against. Never an address, a personal link, a note,
+   a reply, or anything else of the course. Read-only by shape: this is the only op the key opens. It stops when the
+   course ends, as the assessor's link does. */
+function registerView_(req) {
+  var course = courseByKey_('register', req.r);
+  if (!course) throw new Error('This register link is not valid. Ask the course tutor for the current one.');
+  var exp = assessorExpiry_(course.id);
+  if (exp && new Date() > exp) throw new Error('This register link stopped working when the course ended.');
+  var s = courseRead_(course.id, 'settings') || {};
+  var reg = courseRead_(course.id, 'volunteers') || {};
+  var tt = courseRead_(course.id, 'timetable') || {};
+  var day = function (v) { return v ? String(v).slice(0, 10) : ''; };
+  var students = (reg.students || []).filter(function (st) { return st && st.name; }).map(function (st) {
+    var marks = {}; Object.keys(st.marks || {}).forEach(function (d) { marks[d] = st.marks[d]; });
+    if (!st.marks) (st.here || []).forEach(function (d) { marks[d] = 'present'; });
+    return { name: String(st.name), level: st.level || '', marks: marks, added: day(st.added), invited: day(st.invited),
+             carried: st.carried != null ? st.carried : null, carriedFrom: (st.carriedBy && st.carriedBy.from) || '' };
+  });
+  var slots = (tt.slots || []).filter(function (x) { return x && x.kind === 'tp'; }).map(function (x) { return { kind: 'tp', from: x.from, to: x.to }; });
+  var days = (tt.days || []).filter(function (d) { return d && d.date; }).map(function (d) {
+    return { date: d.date, tp: d.tp ? 1 : 0, sessions: (d.sessions || []).filter(function (x) { return x && /teaching practice/i.test(String(x.room || '')); })
+      .map(function (x) { return { k: x.k, room: x.room, s: x.s, e: x.e }; }) };
+  });
+  return { course: { name: s.courseName || course.name || '', centre: s.centreName || '', today: s.demoToday || '' },
+           students: students, timetable: { slots: slots, days: days } };
 }
 function assertAssessorInDate_(course) {
   var exp = assessorExpiry_(course.id);

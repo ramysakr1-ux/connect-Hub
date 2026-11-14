@@ -101,7 +101,7 @@ window.HubStore = (function(){
      see hub-sync.js. These are the calls that only read; anything else on a
      demo is answered here and never sent -- no email, no upload, no roster
      change. feedback and report are the visitor's own note to Lite's maker. */
-  var READS = { adminPin:1, poolSet:1, version:1, tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, traineeViewLink:1, folderTrainees:1, folderRead:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1, bookings:1 };
+  var READS = { registerView:1, registerLink:1, adminPin:1, poolSet:1, version:1, tidyNotes:1, trainerNotes:1, overallFromNotes:1, stage1Words:1, volunteerCards:1, celta5Assets:1, boot:1, get:1, me:1, course:1, roster:1, audio:1, ping:1, pins:1, materials:1, stats:1, inbox:1, readContribution:1, feedbackSummary:1, centres:1, ownerCourses:1, assessorLink:1, traineeViewLink:1, folderTrainees:1, folderRead:1, getInterviewAudio:1, feedback:1, report:1, demoCard:1, similar:1, webCheck:1, aiCheck:1, checksOn:1, tutorNotes:1, getNoteAudio:1, passInfo:1, peerSheets:1, questions:1, getQuestionAudio:1, bookings:1 };
   /* THE TRAINEE VIEW (12 Nov 2026). Ramy: "I want to show the trainees things from their perspective ... a trainee that is not
      really on the course." A link whose token starts "maya." is the course's made-up trainee: she reads what a trainee in
      Group 1 reads and writes nothing. Here she is treated as a demo visit, so every write is answered in the browser and
@@ -247,6 +247,8 @@ window.HubStore = (function(){
     boot: function(){ return call({ op: 'boot', token: token() || undefined }, 60000); },
     assessorLink: function(){ return call({ op: 'assessorLink' }); },
     rotateAssessorKey: function(){ return call({ op: 'rotateAssessorKey' }); },
+    /* the center's link to the volunteer register and nothing else (14 Nov 2026) */
+    registerLinkFor: function(k){ return base() + 'register.html?r=' + encodeURIComponent(k); },
     assessorLinkFor: function(k){ return base() + '12_assessor_pack.html?ak=' + encodeURIComponent(k); },
     rotateKey: function(){ return call({ op: 'rotateKey' }).then(function(r){ try { localStorage.setItem('hub:k', r.key); } catch (e) {} BOUND = linkNow(); return true; }); },
     /* true once another link has replaced this page's in the browser (R1); hub-sync asks before it schedules or beacons */
