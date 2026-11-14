@@ -3084,7 +3084,7 @@ case 'inbox': {
         + 'teach: "first" or "second" only when the interviewer recommends placing the applicant in the first or the second teaching group; otherwise "". '
         + 'why: when teach is given, the interviewer\'s sentence that says so, copied exactly; otherwise "". '
         + 'said: one short line of the facts you used for experience, in the files\' own words (for example "Teaching experience: 4 years"), or "". '
-        /* BEFORE THE COURSE (v231, 14 Nov 2026). Ramy: "It needs to have those substantial added value, otherwise we don't need
+        /* INTERVIEW NOTES (v231, 14 Nov 2026). Ramy: "It needs to have those substantial added value, otherwise we don't need
            it." The same files, read further: what the interviewer saw, for the tutors' card beside each trainee. */
         + 'background: one or two plain sentences on the applicant\'s education, teaching experience, languages and reason for taking the course, from the files only; "" if they say nothing. '
         + 'strengths: a list of up to four short points the INTERVIEWER records as strengths, each in the interviewer\'s own words as far as possible; [] if the interviewer records none. '

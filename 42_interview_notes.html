@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <!--
-  Before the course — what the center's interviewer saw, one card per trainee.
+  Interview notes — what the center's interviewer saw, one card per trainee.
   © 2026 Ramy Sakr. All rights reserved.
 
   Ramy, 14 Nov 2026, on the Course menu's Candidate folders link, which only opened Drive: "How can we utilize this? It
   needs to have those substantial added value, otherwise we don't need it."
 
   Everything on a card is read from the candidate's own folder at the center (application form, pre-interview task,
-  the interviewer's assessment) by the store's folderRead, when a tutor presses Read the folders on Course admin, and
+  the interviewer's assessment) by the store's folderRead, when a tutor presses Read the folders here (or on Course admin), and
   kept in the tutors-only record `intake` ({ card, files, description }). Nothing here is written by Lite on its own:
   strengths and things to watch are the interviewer's. The files stay in the center's Drive; each opens from the card.
 
@@ -25,10 +25,10 @@
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="brand/favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
-<title>Before the course</title>
+<title>Interview notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611142115">
+<link rel="stylesheet" href="hub-tokens.css?v=202611142157">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -65,20 +65,26 @@
   .bar{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 14px;}
   .bar button{font:inherit; font-weight:700; font-size:13.5px; padding:9px 16px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--teal); cursor:pointer;}
   .bar span{font-size:13px; color:var(--grey);}
+  .readbar{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:0 0 18px;}
+  .readbar button{font:inherit; font-weight:700; font-size:14.5px; padding:11px 20px; border-radius:999px; cursor:pointer;}
+  .readbar button.quiet{background:var(--paper); color:var(--teal); border:1px solid var(--sand-line); font-size:13.5px; padding:9px 16px;}
+  .readbar button:disabled{opacity:.55; cursor:default;}
+  .readbar span{font-size:13.5px; color:var(--grey); line-height:1.45;}
+  .tr .err{margin:12px 0 0; color:var(--brick); font-size:13.5px;}
   @media (max-width:480px){ .wrap{padding:22px 16px 70px;} h1{font-size:27px;} .desc textarea{min-height:150px;} }
   @media print{ body{background:var(--paper);} .wrap{max-width:none; padding:0;} .back, .bar{display:none !important;} .tr, .desc{box-shadow:none; border:1px solid var(--sand-line); border-top:3px solid var(--teal);} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611142115">
+<link rel="stylesheet" href="hub-house.css?v=202611142157">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"><p class="lede">Loading the course…</p></div>
 </div>
-<script src="hub-shared.js?v=202611142115"></script>
-<script src="hub-store.js?v=202611142115"></script>
-<script src="hub-say.js?v=202611142115"></script>
-<script src="hub-sync.js?v=202611142115"></script>
+<script src="hub-shared.js?v=202611142157"></script>
+<script src="hub-store.js?v=202611142157"></script>
+<script src="hub-say.js?v=202611142157"></script>
+<script src="hub-sync.js?v=202611142157"></script>
 <script>
 if (window.hubTutorRoomOnly && hubTutorRoomOnly()) { /* refused; hubTutorRoomOnly drew the room */ }
 else (async function(){
@@ -97,7 +103,41 @@ else (async function(){
   const aboutOf = t => Object.assign({}, (t.records || {}).about || {});
   const folderOf = t => (((t.records || {}).staffLinks || []).find(l => l && l.url && (l.from === 'folder' || l.label === 'Application folder')) || {}).url || '';
   const before = t => window.hubBeforeOf(t);
-  const read = roster.filter(t => { const b = before(t); return b && b.has; });
+
+  /* THE PAGE READS THE FOLDERS ITSELF (Ramy, 14 Nov 2026, opening it on a course whose folders had not been read: "I
+     thought it would be a card ... something that we built, not just a link"). One button: each trainee's folder is read
+     by the store (folderRead, three at a time) and the card is kept in their tutors-only `intake` as it arrives. The
+     teaching group a tutor has already set, and a description a tutor has rewritten, are left as they are. Mixing the
+     groups from what was read stays on Course admin. */
+  const DEMO = !!cs.demoToday;
+  const SPIN = () => window.hubSpinner ? hubSpinner(16) : '';
+  let READING = false, DONE_N = 0, SAID = '';
+  const ON = {}, ERR = {};
+  const canRead = () => !DEMO && roster.some(folderOf);
+  async function readAll(){
+    if (READING) return;
+    const todo = roster.filter(folderOf); if (!todo.length) return;
+    READING = true; DONE_N = 0; SAID = ''; todo.forEach(t => { delete ERR[t.token]; }); draw();
+    let next = 0;
+    await Promise.all([0, 1, 2].map(async () => {
+      while (next < todo.length) {
+        const t = todo[next++]; ON[t.token] = true; draw();
+        try {
+          const r = await S.call({ op: 'folderRead', url: folderOf(t) });
+          const was = Object.assign({}, (t.records || {}).intake || {});
+          const it = Object.assign({}, was, { card: r.card || {}, files: r.files || [], at: new Date().toISOString() });
+          if (!was.teach && r.teach) { it.teach = r.teach; it.why = r.why || ''; it.by = 'folder'; }
+          await S.call({ op: 'put', token: t.token, kind: 'intake', data: it });
+          t.records = t.records || {}; t.records.intake = it;
+        } catch (e) { ERR[t.token] = (e && e.message) || 'Their folder could not be read.'; }
+        delete ON[t.token]; DONE_N++; draw();
+      }
+    }));
+    READING = false;
+    const bad = Object.keys(ERR).length;
+    SAID = bad ? (todo.length - bad) + ' of ' + todo.length + ' read. ' + bad + ' could not be read; the reason is on the card.' : 'All ' + todo.length + ' read.';
+    draw();
+  }
 
   function card(t){
     const b = before(t), a = aboutOf(t), f = folderOf(t), c = (b && b.card) || {};
@@ -114,7 +154,10 @@ else (async function(){
         ${c.offer ? `<p class="k">With the offer</p><p class="txt" style="margin-top:0">${esc(c.offer)}</p>` : ''}
         ${b.teach ? `<p class="k">Teaching group</p><p class="txt" style="margin-top:0">The interviewer placed them in the ${esc(b.teach)} teaching group.${b.why ? ' “' + esc(b.why) + '”' : ''}</p>` : ''}
         ${!(c.strengths || []).length && !(c.concerns || []).length && !c.tasks ? `<p class="wait">There are no interviewer’s notes in this folder.</p>` : ''}`
-      : `<p class="wait">Nothing has been read from this trainee’s folder yet.</p>`}
+      : ON[t.token] ? `<p class="wait">${SPIN()} Reading their folder…</p>`
+      : READING && folderOf(t) ? `<p class="wait">Waiting</p>`
+      : `<p class="wait">${folderOf(t) ? 'Their folder has not been read yet.' : 'No folder is linked to this trainee yet. Match the folders on Course admin.'}</p>`}
+      ${ERR[t.token] ? `<p class="err">${esc(ERR[t.token])}</p>` : ''}
       ${files.length ? `<p class="k">Their files</p><ul class="files">${files.map(x => `<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a></li>`).join('')}</ul>`
         : f ? `<p class="k">Their files</p><ul class="files"><li><a href="${esc(f)}" target="_blank" rel="noopener">Open their folder</a></li></ul>` : ''}
     </article>`;
@@ -129,15 +172,26 @@ else (async function(){
   }
 
   function draw(){
-    const head = `<p class="k">Course</p><h1>Before the course</h1>
+    const head = `<p class="k">Course</p><h1>Interview notes</h1>
       <p class="lede">What the center’s interviewer saw in each trainee, read from their application folder. For the tutors only: trainees and the assessor never see this page.${top ? ` <a href="${esc(top)}" target="_blank" rel="noopener">Open the folders in Drive</a>` : ''}</p>`;
     if (!roster.length) { $('app').innerHTML = head + '<div class="none">Nobody is on the course yet.</div>'; return; }
-    const noneYet = !read.length ? `<div class="none" style="margin-bottom:18px"><b>Lite has not read the folders yet.</b><br>On <a href="6_centre_admin_dashboard.html">Course admin</a>, under the assessor’s documents, press Read the folders, then Use what Lite read. It takes about half a minute, and the cards fill in here.</div>` : '';
-    $('app').innerHTML = head + noneYet + `<div class="grid">${roster.map(card).join('')}</div>` + (read.length ? descs() : '');
+    const haveNow = roster.filter(t => { const b = before(t); return b && b.has; }).length;
+    const total = roster.filter(folderOf).length;
+    const bar = DEMO ? '' : !canRead()
+      ? `<div class="none" style="margin-bottom:18px"><b>No folders are linked yet.</b><br>On <a href="6_centre_admin_dashboard.html">Course admin</a>, under the assessor’s documents, paste the application folder’s link and press Match the folders. Then come back here.</div>`
+      : `<div class="readbar">${READING
+          ? `<button type="button" class="${haveNow ? 'quiet' : 'btn-gold'}" disabled>Reading the folders</button><span>${SPIN()} ${DONE_N} of ${total} read. It takes about half a minute. Keep this page open.</span>`
+          : `<button type="button" id="readAll" class="${haveNow ? 'quiet' : 'btn-gold'}">${haveNow ? 'Read the folders again' : 'Read the folders'}</button><span>${esc(SAID || (haveNow ? '' : 'Lite reads each trainee’s application folder and builds their card here. It takes about half a minute.'))}</span>`}</div>`;
+    /* before anything is read there is nothing to put on a card, so there are no cards: the button, and who it will read
+       (Ramy, 14 Nov 2026: an empty card holding a folder link is "just a link") */
+    const waiting = !haveNow && !READING && !DEMO && canRead()
+      ? `<p class="lede">${total} trainee${total === 1 ? ' has' : 's have'} a folder: ${esc(roster.filter(folderOf).map(t => String(t.name || '').split(/\s+/)[0]).join(', '))}.</p>` : '';
+    $('app').innerHTML = head + bar + (waiting || `<div class="grid">${roster.map(card).join('')}</div>`) + (haveNow && !READING ? descs() : '');
     wire();
   }
 
   function wire(){
+    const ra = $('readAll'); if (ra) ra.addEventListener('click', readAll);
     /* a box is as tall as its words, so nothing of a description is hidden */
     const fit = el => { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 4) + 'px'; };
     document.querySelectorAll('.desc textarea').forEach(el => { fit(el); el.addEventListener('input', () => fit(el)); });
