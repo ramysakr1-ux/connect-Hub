@@ -50,6 +50,7 @@ import { readFileSync, writeFileSync, mkdtempSync, copyFileSync, readdirSync, rm
 import { join, extname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomBytes } from 'node:crypto';
+import { POOL_FOR, poolPoints } from './demo-pool-deal.mjs';
 import { COURSE as FINISHED, SLOTS, CANDIDATES, lesson, feedbackState, assignment, setTpDate } from './demo-lessons.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
@@ -322,6 +323,8 @@ const SHAPE_BY_AIM = { Reading: SLOTS[0], Grammar: SLOTS[1], 'Functional languag
 const BOOK = { A2: { title: 'Speakout A2, 3rd edition', url: 'https://drive.google.com/file/d/demo-speakout-a2/view' }, B1: { title: 'Speakout B1, 3rd edition', url: 'https://drive.google.com/file/d/demo-speakout-b1/view' } };
 const AUDIO = 'https://drive.google.com/drive/folders/demo-coursebook-audio';
 function tppoints(people, rot) {
+  /* the day-one demos teach from two Pool sets, with their pages and recordings (demo-pool-deal.mjs, 14 Nov 2026) */
+  if (POOL) { const sets = {}; GROUPS.forEach(g => { if (ROTS[g]) sets[g] = ROTS[g].sets.map(st => st.map(q => q.token)); }); return poolPoints(people, sets, POOL); }
   const rowsByGroup = {}, releasedByGroup = {}, setsByGroup = {};
   GROUPS.forEach(g => {
     const r = ROTS[g];
@@ -591,6 +594,20 @@ const rot = {
    alternate days are keyed on. */
 const setOf = token => { const g = groupOf(token); const r = ROTS[g]; return r ? r.sets.findIndex(s => s.some(q => q.token === token)) : 0; };
 GROUPS.forEach(g => { const r = ROTS[g]; if (r) console.log(`group ${g} sets: ` + r.sets.map(s => s.map(p => p.name.split(' ')[0]).join(', ')).join('  |  ')); });
+
+/* The Pool sets for the day-one demos, whole, from the store's library. Without them (a dry run, or a store with no
+   library) the hand-made cards below are built instead, and the seed says so. */
+let POOL = null;
+if (DAYONE && KEY) {
+  POOL = {};
+  for (const id of new Set(Object.values(POOL_FOR))) {
+    const r = await call({ op: 'poolSet', set: id, key: KEY });
+    const d = r && r.ok && r.result && r.result.found && r.result.data;
+    if (!d) { console.log('   Pool set ' + id + ' did not come from the store: building the hand-made TP points instead'); POOL = null; break; }
+    POOL[id] = d;
+  }
+  if (POOL) console.log('   TP points from the Pool: ' + Object.keys(POOL).map(id => POOL[id].name).join(' and '));
+}
 
 const settings = settingsFor(people.map(p => p.token));
 const vols = volunteers(course.id === '(dry run)' ? 'cX' : course.id);
