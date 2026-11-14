@@ -160,14 +160,9 @@ const ROOMS = [
   { label: 'Teaching practice', url: 'https://zoom.us/j/81000000003', group: '2', level: 'B1', assessor: false },
 ];
 const COURSE_LINKS = [
-  /* Ramy, 1 Oct 2026, reading the demo's own card: the Cambridge link is
-     Cambridge's and belongs there (trainees are told to read the syllabus);
-     the audio is not only audio, so it is media; and "centre handbook" said
-     nothing, so the shelf is named for what a centre actually keeps on it. */
+  /* The Cambridge link is Cambridge's and belongs there (Ramy, 1 Oct 2026: trainees are told to read the syllabus).
+     The made-up shelves that led nowhere were taken out on 14 Nov 2026: a demo's links open something or are not there. */
   { label: 'CELTA syllabus and assessment guidelines \u2014 Cambridge', url: 'https://www.cambridgeenglish.org/Images/21816-celta-syllabus.pdf', card: 'Course files', show: true },
-  { label: 'Coursebook audio and video, both levels', url: 'https://drive.google.com/drive/folders/demo-coursebook-audio', card: 'Course files', show: true },
-  { label: 'Centre handbook and policies', url: 'https://drive.google.com/drive/folders/demo-centre-handbook', card: 'Course files', show: true },
-  { label: 'Digital library: methodology, grammar and reading', url: 'https://drive.google.com/drive/folders/demo-digital-library', card: 'Course files', show: true },
 ];
 const DOCS = {
   docTimetable: 'https://drive.google.com/drive/folders/demo-course-timetable',
@@ -321,7 +316,6 @@ function timetable() {
 /* ---- the rotation, the aims, and what each aim looks like as a lesson ---- */
 const SHAPE_BY_AIM = { Reading: SLOTS[0], Grammar: SLOTS[1], 'Functional language': SLOTS[2], Speaking: SLOTS[3], Listening: SLOTS[4], Vocabulary: SLOTS[5], Writing: SLOTS[7] };
 const BOOK = { A2: { title: 'Speakout A2, 3rd edition', url: 'https://drive.google.com/file/d/demo-speakout-a2/view' }, B1: { title: 'Speakout B1, 3rd edition', url: 'https://drive.google.com/file/d/demo-speakout-b1/view' } };
-const AUDIO = 'https://drive.google.com/drive/folders/demo-coursebook-audio';
 function tppoints(people, rot) {
   /* the day-one demos teach from two Pool sets, with their pages and recordings (demo-pool-deal.mjs, 14 Nov 2026) */
   if (POOL) { const sets = {}; GROUPS.forEach(g => { if (ROTS[g]) sets[g] = ROTS[g].sets.map(st => st.map(q => q.token)); }); return poolPoints(people, sets, POOL); }
@@ -350,7 +344,7 @@ function tppoints(people, rot) {
           framework: shape.shape,
           point: `${shape.focus} at ${level}: unit ${unit} of the coursebook, one page, adapted. ${aim === 'Listening' ? 'Two listenings: gist then detail.' : 'Gist first, then the language.'}`,
           book: { url: BOOK[level].url, ref: `${BOOK[level].title}, SB p. ${page}, ex. 1–3\nWB p. ${page - 4}, ex. 1a, 1b`, page },
-          audio: /Listening|Speaking/.test(aim) ? { url: AUDIO } : { url: '' },
+          audio: { url: '' },
           pages: [], edited: true,
         });
       }
