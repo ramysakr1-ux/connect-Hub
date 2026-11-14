@@ -236,6 +236,10 @@
     + '.nbk-earlier{margin-top:22px;border-top:1px solid var(--row-line);padding-top:12px;}'
     + '.nbk-earlier h3{margin:0 0 8px;font:600 10.5px/1 Karla,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--grey);}'
     + '.nbk-earlier p{margin:0 0 8px;font-size:.88rem;line-height:1.5;color:var(--ink);} .nbk-earlier p small{display:block;color:var(--grey);font-size:.76rem;margin-bottom:2px;}'
+    + '.nbk-who{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:.84rem;color:var(--grey);}'
+    + '.nbk-who button{font:700 .82rem Karla,sans-serif;padding:8px 13px;border-radius:999px;border:1.5px solid var(--sand-line);background:var(--paper);color:var(--ink);cursor:pointer;}'
+    + '.nbk-who button:hover{border-color:var(--a-forest);} .nbk-who button.on{background:var(--a-forest);border-color:var(--a-forest);color:var(--paper);}'
+    + '.nbk-mail{font:700 .86rem Karla,sans-serif;color:var(--a-forest);text-decoration:none;padding:11px 4px;} .nbk-mail:hover{text-decoration:underline;} .nbk-mail.off{color:var(--grey);cursor:default;text-decoration:none;}'
     + '.nbk-foot{padding:12px 22px 18px;border-top:1px solid var(--row-line);font-size:.84rem;color:var(--grey);display:flex;justify-content:space-between;gap:12px;align-items:center;}'
     + '.nbk-foot a{color:var(--a-forest);font-weight:700;text-decoration:none;} .nbk-foot a:hover{text-decoration:underline;}'
     + '.nbk-saved{color:var(--a-forest);font-weight:700;}'
@@ -252,6 +256,12 @@
     var e = h[n] || ((live && tpOf((live.state && live.state.f && live.state.f.fTP) || live.label) === String(n)) ? live : null);
     var l = e && e.state && e.state.lists && e.state.lists.lAP; if (!l || !l.length) return null;
     return l.map(function(x){ return stripTags(x.html); }).filter(Boolean);
+  }
+  /* the tutor to email: with classes, the class's tutor today; else every tutor (the same rule as the notebook page) */
+  function tutorEmails(){
+    var cs = rd('connect_course_settings') || {}, me = rd('hub:me') || {};
+    try { var own = (window.hubClassPlan && hubClassPlan(cs, me.group) && window.hubTutorOn && window.hubTutorContact) ? hubTutorContact(cs, hubTutorOn(cs, me.group)) : null; if (own && own.email) return [own.email]; } catch (e) {}
+    return (cs.tutorContacts || []).map(function(c){ return c && c.email; }).filter(Boolean);
   }
   function carryHTML(th){
     if (MODE !== 'trainee' || !th || th.k !== 'tp' || !th.id) return '';
@@ -287,7 +297,12 @@
       + (needName ? '<p style="margin:0 0 6px;font-size:.88rem;color:var(--grey)">The notebook is yours alone, so it needs your name once: the same one the dashboard asks for.</p><input class="nbk-name" type="text" placeholder="Your name" autocomplete="name">' : '')
       + carryHTML(th)
       + '<textarea placeholder="' + (th.k === 'input' ? 'What you want to remember from this session.' : th.k === 'tp' ? 'What you noticed. What to try.' : 'Write it down.') + '" aria-label="Your note"></textarea>'
-      + '<div class="nbk-row">' + (mimePick() && navigator.mediaDevices ? '<button type="button" class="nbk-btn rec"><span class="dot"></span><span class="lbl">Record a voice note</span></button>' : '') + '<button type="button" class="nbk-btn go" disabled>Save the note</button></div>'
+      /* WHO SEES IT, AND THE TUTOR, FROM THE PEN ITSELF (Ramy, 14 Nov 2026, on Maya: "why can't Maya send a message to her
+         classmates from notes ... there should be an email your tutor shortcut from there"). Both lived only on the
+         notebook page, a page away from where the note is written. Only me is the choice until they pick another. */
+      + (MODE === 'trainee' ? '<div class="nbk-who" role="group" aria-label="Who sees this note"><span>Who sees it</span><button type="button" class="on" data-who="" aria-pressed="true">Only me</button><button type="button" data-who="group" aria-pressed="false">My TP group</button><button type="button" data-who="course" aria-pressed="false">The whole course</button></div>' : '')
+      + '<div class="nbk-row">' + (mimePick() && navigator.mediaDevices ? '<button type="button" class="nbk-btn rec"><span class="dot"></span><span class="lbl">Record a voice note</span></button>' : '') + '<button type="button" class="nbk-btn go" disabled>Save the note</button>'
+      + (MODE === 'trainee' && tutorEmails().length ? '<a class="nbk-mail off" href="#" aria-disabled="true">Email it to my tutor</a>' : '') + '</div>'
       + '<div class="nbk-audio" hidden></div>'
       + (earlier.length ? '<div class="nbk-earlier"><h3>Earlier in this thread</h3>' + earlier.map(function(n){ return '<p><small>' + esc(dayLabel(n.day)) + (n.audio ? ' · voice note' : '') + '</small>' + esc(String(n.text || '').slice(0, 220)) + (String(n.text || '').length > 220 ? '…' : '') + '</p>'; }).join('') + '</div>' : '')
       + '</div>'
@@ -295,6 +310,20 @@
     document.body.appendChild(back); document.body.appendChild(sheet);
     requestAnimationFrame(function(){ back.classList.add('on'); sheet.classList.add('on'); });
     var ta = sheet.querySelector('textarea'), go = sheet.querySelector('.nbk-btn.go'), rb = sheet.querySelector('.nbk-btn.rec'), au = sheet.querySelector('.nbk-audio'), nm = sheet.querySelector('.nbk-name'), msg = sheet.querySelector('.nbk-msg');
+    var scope = '', mail = sheet.querySelector('.nbk-mail');
+    Array.prototype.forEach.call(sheet.querySelectorAll('.nbk-who button'), function(b){ b.addEventListener('click', function(){
+      scope = b.getAttribute('data-who') || '';
+      Array.prototype.forEach.call(sheet.querySelectorAll('.nbk-who button'), function(x){ var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    }); });
+    if (mail) {
+      ta.addEventListener('input', function(){ var has = !!ta.value.trim(); mail.classList.toggle('off', !has); mail.setAttribute('aria-disabled', has ? 'false' : 'true'); });
+      mail.addEventListener('click', function(e){
+        var text = ta.value.trim(); if (!text) { e.preventDefault(); return; }
+        var me = rd('hub:me') || {}, onThread = th.k !== 'day' && th.t;
+        mail.href = 'mailto:' + encodeURIComponent(tutorEmails().join(',')) + '?subject=' + encodeURIComponent('A note from ' + (me.name || 'a trainee') + (onThread ? ' — ' + th.t : ''))
+          + '&body=' + encodeURIComponent(text + '\n\n(' + dayLabel(d, true) + (onThread ? ', ' + th.t : '') + ', from my notebook on Connect Lite)');
+      });
+    }
     sheet.querySelector('.nbk-x').addEventListener('click', close);
     function ready(){ go.disabled = !(ta.value.trim() || recBlob) || (nm && !nm.value.trim()); }
     ta.addEventListener('input', ready); if (nm) nm.addEventListener('input', ready);
@@ -328,12 +357,26 @@
       var where = location.pathname.split('/').slice(-2).join('/') + location.search; note.where = where.slice(0, 200);
       var ready2 = recBlob ? upload(recBlob, recSecs).then(function(a){ note.audio = a; }) : Promise.resolve();
       ready2.then(function(){
-        if (MODE === 'trainee') { var nb = load(); nb.notes.push(note); return save(nb); }
+        if (MODE === 'trainee') {
+          if (scope) note.shared = scope;
+          var nb = load(); nb.notes.push(note);
+          return save(nb).then(function(){
+            if (!scope) return null;
+            return S.call({ op: 'shareNote', token: S.token(), item: note, scope: scope }).then(function(r){
+              if (r && r.notes) { try { localStorage.setItem('connect_notes_v1', JSON.stringify(r.notes)); } catch (e) {} }
+              return r || {};
+            });
+          });
+        }
         note.by = who(); return tutor.put(note);
-      }).then(function(){
-        msg.innerHTML = '<span class="nbk-saved">Saved.</span> It is in your notebook, under ' + esc(dayLabel(d)) + (th.k !== 'day' ? ' and ' + esc(th.t) : '') + '.';
+      }).then(function(r){
+        var withWhom = scope === 'course' ? 'the whole course' : 'your TP group';
+        msg.innerHTML = '<span class="nbk-saved">Saved.</span> ' + (!scope ? 'It is in your notebook, under ' + esc(dayLabel(d)) + (th.k !== 'day' ? ' and ' + esc(th.t) : '') + '.'
+          : (r && r.demo) ? (S.isTemplate && S.isTemplate() ? 'Shown as connected with ' + withWhom + ' in this tab only. Nothing reaches the course.' : 'Demo: connected with ' + withWhom + ' on this device only.')
+          : 'Connected with ' + withWhom + '.');
         go.textContent = 'Saved'; ta.value = ''; recBlob = null; au.hidden = true; au.innerHTML = ''; if (rb) rb.querySelector('.lbl').textContent = 'Record a voice note';
-        paintCount(); setTimeout(close, 1400);
+        if (mail) { mail.classList.add('off'); mail.setAttribute('aria-disabled', 'true'); }
+        paintCount(); setTimeout(close, scope ? 2600 : 1400);
       }, function(e){ go.disabled = false; go.textContent = 'Save the note'; msg.textContent = 'Not saved — ' + ((e && e.message) || e); });
     });
     document.addEventListener('keydown', function esc_(e){ if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc_); } });
