@@ -384,9 +384,33 @@ window.InputLib = (function(){
   window.addEventListener('afterprint', screen);
   var st = document.createElement('style');
   /* an answer choice is a word to circle; a dropdown is a line to write on */
-  st.textContent = '@media print{html.hub-paper-print button{background:none !important;color:#000 !important;border:1px solid #999 !important;box-shadow:none !important;}'
+  st.textContent = '@media print{html.hub-paper-print .mhead span, html.hub-paper-print .lenlink{display:none !important;} html.hub-paper-print button{background:none !important;color:#000 !important;border:1px solid #999 !important;box-shadow:none !important;}'
     + 'html.hub-paper-print select{appearance:none;-webkit-appearance:none;background:none !important;border:0 !important;border-bottom:1px solid #999 !important;color:transparent !important;min-width:140px;}}';
   (document.head || document.documentElement).appendChild(st);
+})();
+
+/* TWO WAYS TO PRINT (Ramy, 15 Nov 2026: "I need to print clean ... without the trainer's notes, and without anything that is
+   meant for the interactive input session only ... two options under print"). A tutor's page had one button, Print with the
+   trainer notes. Every session now gives a tutor a second one, Print the handout: the paper the trainees get when they have no
+   laptop. It prints the page as a trainee would see it: no trainer notes, no answers (the tutor's print adds them; this one does not), no answer keys or model answers, no tutor-only boxes,
+   and the screen-only parts turned into paper (the paper print above). A trainee's own button already prints that way. */
+(function(){
+  if (window.INPUTLIB_ONLY) return;
+  var st = document.createElement('style');
+  st.textContent = '.print-btn.print-clean{display:none;} nav.sticky-nav .print-btn.print-clean{margin-left:18px;} body.tutor .print-btn.print-clean{display:block;} @media (max-width:560px){ body.tutor nav.sticky-nav .print-btn.print-clean{display:none;} }'
+    + '@media print{' + ['#trainer', '.trainer-notes', '.tn-link', '.tutor-only', '.wrap .tutor', '.wrap .key', '.model', '.print-btn', '.reveal-card .a', '.answer-key', '.why', '.reveal-block', 'details.reveal .content', '.keyblock', '.mhead span'].map(function(x){ return 'html.hub-clean body ' + x; }).join(', ') + '{display:none !important;}}';
+  (document.head || document.documentElement).appendChild(st);
+  function add(){
+    var b = document.querySelector('.print-btn'); if (!b || document.querySelector('.print-clean')) return;
+    var c = document.createElement('button'); c.type = 'button'; c.className = b.className + ' print-clean'; c.textContent = 'Print the handout';
+    c.addEventListener('click', function(){
+      var h = document.documentElement; h.classList.add('hub-clean');
+      var off = function(){ h.classList.remove('hub-clean'); window.removeEventListener('afterprint', off); };
+      window.addEventListener('afterprint', off); window.print();
+    });
+    b.parentNode.insertBefore(c, b.nextSibling);   /* after it: the tutor's relabel finds the first .print-btn */
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
 })();
 
 /* The offline copy (sw.js at the site root). The input sessions do not load hub-shared.js,
