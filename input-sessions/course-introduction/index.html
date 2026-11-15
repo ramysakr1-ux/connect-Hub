@@ -45,7 +45,7 @@
   .sq.got{border-style:solid; border-color:var(--a-forest); background:var(--paper);}
   .sq.got::after{content:''; position:absolute; top:10px; right:10px; width:22px; height:22px; border-radius:50%; background:var(--a-forest) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat;}
   .sq.line{border-color:var(--a-red);}
-  .sq .ask{display:none; margin-top:auto;}
+  .sq .ask{display:none; margin-top:auto;} .sq .askp{display:none;}
   .sq.open .ask{display:block;} .sq.open .who{display:none;}
   .sq .ask input{width:100%; font:inherit; font-size:.9rem; padding:7px 9px; margin:0 0 6px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper);}
   .sq .ask button{font:inherit; font-size:.82rem; font-weight:700; padding:7px 12px; border-radius:8px; border:0; background:var(--a-forest); color:#F0EEE9; cursor:pointer;}
@@ -58,6 +58,8 @@
   .confetti i{position:absolute; top:-16px; width:8px; height:12px; border-radius:2px; animation:fall linear forwards;}
   @keyframes fall{to{transform:translateY(720px) rotate(540deg); opacity:.2;}}
   @media (prefers-reduced-motion: reduce){ .confetti{display:none;} .sq{transition:none;} }
+  /* ON A PHONE (Ramy, 15 Nov 2026: "they may not have laptops"): the square being filled in opens a panel at the foot of the screen, full size, and the grid stays as it is */
+  @media (max-width:640px){ .sq.open, .sq.open:hover{border-style:solid; border-color:var(--a-forest); transform:none; box-shadow:none;} .sq.open .ask{position:fixed; left:0; right:0; bottom:0; z-index:60; margin:0; padding:14px 16px calc(16px + env(safe-area-inset-bottom)); background:var(--paper); border-top:3px solid var(--a-forest); box-shadow:0 -10px 30px -12px rgba(35,34,32,.35); cursor:default;} .sq .askp{display:block; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:0 0 8px;} .sq .ask input{font-size:16px; padding:10px;} .sq .ask button{padding:10px 18px;} .hunt a{display:inline-block; padding:8px 0 8px 10px;} }
   @media (max-width:640px){ .bgrid{gap:6px;} .sq{min-height:118px; padding:9px; gap:5px;} .sq .p{font-size:.8rem; padding-right:16px;} .sq.got::after{width:16px; height:16px; top:7px; right:7px; background-size:12px;} .sq .who{font-size:.72rem;} .sq .who b{font-size:.9rem;} }
   /* rounds */
   .round-eye{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; letter-spacing:.14em; color:var(--gold-deep); font-weight:600; text-transform:uppercase;}
@@ -114,7 +116,7 @@
   <header class="header">
     <p class="eyebrow">Input session · day one</p>
     <h1>Course introduction</h1>
-    <p class="sub">How the next four weeks run, found out rather than told. Meet the people first; then, in teams and on your own laptops, four rounds: your course as Lite holds it, the rules, your CELTA 5, and a hunt. Every answer is somewhere you can open.</p>
+    <p class="sub">How the next four weeks run, found out rather than told. Meet the people first; then, in teams and on your own laptops or phones, four rounds: your course as Lite holds it, the rules, your CELTA 5, and a hunt. Every answer is somewhere you can open.</p>
   </header>
 
   <nav class="sticky-nav" id="stickyNav">
@@ -140,7 +142,7 @@
   <section id="s1" data-n="1">
     <div class="card" data-n="1">
       <div class="stage-title">CELTA bingo <span class="badge">Walk round</span></div>
-      <p class="lead">Take your laptop and walk round the room. Find someone for each square, ask one more question, and write their name and what you found out. A name goes on one square only. Three in a line is bingo; then keep going for the full card.</p>
+      <p class="lead">Take your laptop or phone and walk round the room. Find someone for each square, ask one more question, and write their name and what you found out. A name goes on one square only. Three in a line is bingo; then keep going for the full card.</p>
       <div class="bingo-card">
         <div class="bgrid" id="bgrid"></div>
         <div class="bscore"><span id="bscore"><b>0</b> of 9 found</span><span id="bhint">A name can only go on one square.</span></div>
@@ -258,7 +260,7 @@
     g.innerHTML = P.map((p, i) => { const w = got[i];
       return '<div class="sq' + (w ? ' got' : '') + (inLine[i] ? ' line' : '') + (open === i ? ' open' : '') + '" data-i="' + i + '" role="button" tabindex="0"><span class="p">Find someone who ' + esc(p) + '</span>'
         + (w ? '<span class="who"><b>' + esc(w.name) + '</b><span>' + esc(w.fact) + '</span></span>' : '<span class="who"></span>')
-        + '<div class="ask"><input placeholder="Their name" data-bn="' + i + '" value="' + esc(w ? w.name : '') + '"><input placeholder="One thing you found out" data-f="' + i + '" value="' + esc(w ? w.fact : '') + '"><button type="button" data-ok="' + i + '">Done</button></div></div>'; }).join('');
+        + '<div class="ask"><span class="askp">Find someone who ' + esc(p) + '</span><input placeholder="Their name" data-bn="' + i + '" value="' + esc(w ? w.name : '') + '"><input placeholder="One thing you found out" data-f="' + i + '" value="' + esc(w ? w.fact : '') + '"><button type="button" data-ok="' + i + '">Done</button></div></div>'; }).join('');
     const n = Object.keys(got).length;
     document.getElementById('bscore').innerHTML = '<b>' + n + '</b> of 9 found' + (done.length ? ' · ' + done.length + ' line' + (done.length === 1 ? '' : 's') : '');
     done.forEach(l => { const k = l.join(); if (!said[k]) { said[k] = 1; party(n === 9 ? 'Full card!' : 'Bingo!'); } });
@@ -271,7 +273,7 @@
       const dup = Object.keys(got).filter(k => +k !== i && got[k].name.toLowerCase() === n.toLowerCase())[0];
       if (dup != null) { document.getElementById('bhint').textContent = n + ' is already on your card. Find someone new.'; return; }
       got[i] = { name: n, fact: f || '…' }; open = -1; document.getElementById('bhint').textContent = 'A name can only go on one square.'; drawBingo(); return; }
-    if (e.target.closest('input')) return;
+    if (e.target.closest('input, .ask')) return;
     const sq = e.target.closest('.sq'); if (!sq) return; open = +sq.dataset.i === open ? -1 : +sq.dataset.i; drawBingo();
   });
   drawBingo();
@@ -284,7 +286,18 @@
   const firstTime = (function(){ if (!first) return ''; const s = (first.sessions || []).filter(x => x && x.k === 'tp' && x.s).map(x => x.s).sort(); return s[0] || ''; })();
   const planFrom = parseInt(CS.planFrom, 10) >= 1 ? parseInt(CS.planFrom, 10) : 2, anaFrom = parseInt(CS.analysisFrom, 10) >= 1 ? parseInt(CS.analysisFrom, 10) : 3;
   const order = (Array.isArray(WORD._order) ? WORD._order : []).filter(k => ['fol','lrt','lsrt','lfc'].includes(k)); ['fol','lrt','lsrt','lfc'].forEach(k => { if (!order.includes(k)) order.push(k); });
-  const dues = order.map(k => { const w = WORD[k] || {}, t = w.title || (DEF[k] || {}).title || k.toUpperCase(), d = String(w.dueAt || w.due || '').slice(0, 10); return { t, d }; });
+  /* EACH TRAINEE'S OWN DEADLINE (Ramy, 15 Nov 2026: "update the answer key ... especially with deadlines and assignments"):
+     an assignment can be due on a different day for each teaching set (dueSets, set on the timetable), so the answer reads
+     this trainee's own set, with the time in the course's zone. On a screen with no trainee (a tutor's), both sets show. */
+  const zone = CS.timeZone || undefined;
+  const when = iso => { const d = new Date(iso); if (isNaN(d)) return ''; try { return d.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: zone }).replace(/ at /, ', '); } catch (e) { return longDay(iso); } };
+  const dues = order.map(k => {
+    const w = WORD[k] || {}, t = w.title || (DEF[k] || {}).title || k.toUpperCase(), base = w.dueAt || w.due || '';
+    const sets = w.dueSets && w.dueSets[String(ME.group == null ? '' : ME.group)] || (w.dueSets && !ME.token ? Object.values(w.dueSets)[0] : null);
+    if (sets && mySet >= 0 && sets[mySet]) return { t, d: when(sets[mySet]) };
+    if (sets && mySet < 0 && sets.filter(Boolean).length > 1 && sets[0] !== sets[1]) return { t, d: 'first teaching set ' + when(sets[0] || base) + ', second teaching set ' + when(sets[1] || base) };
+    return { t, d: base ? when(base) : '' };
+  });
   const visit = String(CS.visitDate || '').slice(0, 10) || (function(){ let f = ''; (TT.days || []).forEach(d => { if (d && d.date && (d.sessions || []).some(x => x && x.k === 'assessor') && (!f || d.date < f)) f = String(d.date).slice(0, 10); }); return f; })();
   document.getElementById('courseNote').textContent = hasCourse
     ? 'Reveal reads ' + (CS.courseName ? CS.courseName : 'your course') + (CS.centreName ? ' at ' + CS.centreName : '') + ' from this browser: the answers are yours, not anybody else’s.'
@@ -299,7 +312,7 @@
     { q: 'When do you write your self-evaluation?', where: 'Your home, after each TP.',
       a: String(CS.selfDueNote || '').trim() || 'After you teach and before you read your tutor’s feedback: Lite holds the feedback back until your self-evaluation is in.' },
     { q: 'When is each written assignment due?', where: 'The timetable marks them; each assignment page says its date.',
-      a: dues.some(x => x.d) ? dues.map(x => x.t + ': ' + (x.d ? longDay(x.d) : 'not set yet')).join('. ') + '.' : 'Four assignments, each with its own deadline on the timetable. (None is set in this browser.)' },
+      a: dues.some(x => x.d) ? dues.map(x => x.t + ': ' + (x.d || 'not set yet')).join('. ') + '.' : 'Four assignments, each with its own deadline on the timetable. (None is set in this browser.)' },
     { q: 'When does the Cambridge assessor visit?', where: 'The timetable, and Course documents.',
       a: visit ? longDay(visit) + '. The assessor watches some of the teaching, reads portfolios and meets you.' : 'The timetable marks the visit once the center sets it. The assessor watches some of the teaching, reads portfolios and meets you.' }
   ];
