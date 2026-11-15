@@ -106,9 +106,11 @@ window.LiteVoice = window.LiteVoice || (function(){
   var VOICED = ['phonology-sounds', 'word-and-sentence-stress', 'connected-speech', 'guided-to-less-guided-practice', 'error-correction', 'functional-language', 'classroom-management', 'receptive-skills', 'alternative-teaching-techniques', 'drama-in-the-elt-classroom'];
   var here = (location.pathname.match(/input-sessions\/([^/]+)\//) || [])[1];
   function start(){
-    if (VOICED.indexOf(here) === -1) return;
+    /* a short session (<slug>-short) speaks when it marks where the bar goes with data-voices-here; it has no hooks.js */
+    var short = /-short$/.test(here || '') && !!document.querySelector('[data-voices-here]');
+    if (VOICED.indexOf(here) === -1 && !short) return;
     mount();
-    if (here !== 'phonology-sounds') { var sc = document.createElement('script'); sc.src = 'audio/hooks.js?v=' + (window.LITE_V || '1'); document.body.appendChild(sc); }
+    if (here !== 'phonology-sounds' && !short) { var sc = document.createElement('script'); sc.src = 'audio/hooks.js?v=' + (window.LITE_V || '1'); document.body.appendChild(sc); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   return { say: say, sayAll: sayAll, button: button, fileFor: fileFor, slug: slug, set: function(o){ for (var k in o) cfg[k] = o[k]; paint(); }, voices: VOICES };

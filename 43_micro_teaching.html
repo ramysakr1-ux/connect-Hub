@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — micro-teaching
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 15 Nov 2026, the eve of C/21: "I'm thinking of having micro-teaching sort of sessions and that would be starting
+  from week 2. Instead of the second input session of the day ... 45 minutes of just 2 people micro-teaching their
+  lessons, like basically rehearsing their lesson before teaching it. On the day ... a feedback form that they can give
+  each other, or they can fill in as they're watching?"
+
+  THE RULE. A day whose timetable has a session called Micro-teaching is a rehearsal day. The people rehearsing are the
+  ones teaching that afternoon: the day's teaching set in each TP group, in the order the TP points deal them
+  (hub-peers.js), so nobody types a name. The rest of the group watches and writes four short notes about each lesson,
+  and sends them to that classmate (store: shareRehearsal, same group only). The notes are open at once, because the
+  point is to fix the plan before teaching it. They are not assessed and never go into the CELTA 5. The tutors read them
+  all here.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — Micro-teaching</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202611151336">
+<style>
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:var(--doc-width, 1120px); margin:0 auto; padding:26px 20px 64px;}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .back:hover{text-decoration:underline;}
+  .eyebrow{font-size:11px; letter-spacing:.2em; text-transform:uppercase; font-weight:700; color:var(--brick); margin:0 0 6px;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.6rem; margin:0 0 4px;}
+  .lede{color:var(--grey); font-size:0.88rem; line-height:1.6; margin:0 0 18px; max-width:66ch;}
+  .days{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px;}
+  .days button{font:600 .84rem 'Karla',sans-serif; padding:7px 13px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .days button.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .mcard{background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--teal); border-radius:var(--r-card, 14px); padding:16px 20px 12px; margin:0 0 16px;}
+  .mcard.me{border-top-color:var(--gold);}
+  .mcard h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.2rem; margin:0 0 2px;}
+  .mcard .what{font-size:.86rem; color:var(--grey); line-height:1.55; margin:0 0 12px;}
+  .mcard .what b{color:var(--ink);}
+  .grp{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem; margin:22px 0 10px;}
+  .q{margin:0 0 12px;}
+  .q label{display:block; font-weight:700; font-size:.86rem; margin:0 0 4px;}
+  .q textarea{width:100%; box-sizing:border-box; min-height:58px; font:400 .9rem/1.5 'Karla',sans-serif; color:var(--ink); background:var(--field, var(--paper)); border:1px solid var(--sand-line); border-radius:8px; padding:8px 10px; resize:vertical;}
+  .q textarea:focus{outline:none; border-color:var(--teal);}
+  .row{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:6px 0 4px;}
+  .row small{color:var(--grey); font-size:.8rem;}
+  .sent{color:var(--teal); font-weight:700; font-size:.84rem;}
+  .note{background:var(--surface); border:1px solid var(--sand-line); border-radius:10px; padding:10px 14px; margin:0 0 10px;}
+  .note .by{font-weight:700; font-size:.84rem; margin:0 0 6px;}
+  .note dl{margin:0;} .note dt{font-size:.74rem; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); margin:6px 0 2px;}
+  .note dd{margin:0; font-size:.9rem; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere;}
+  .watch{margin:4px 0 14px;}
+  .watch h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:12px 0 6px;}
+  .wi{display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--sand-line);}
+  .wi:first-of-type{border-top:0;}
+  .wi .tx{flex:1 1 260px; font-size:.9rem; line-height:1.5;}
+  .wi .tx small{display:block; color:var(--grey); font-size:.78rem; margin-top:2px;}
+  .wi .cd{font-weight:700; color:var(--teal); margin-right:4px;}
+  .wi .yn{display:flex; gap:6px; flex:none;}
+  .wi .yn button{font:600 .8rem 'Karla',sans-serif; padding:6px 11px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .wi .yn button.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .wi .yn button.on.no{background:var(--gold-wash, #f6ecd4); border-color:var(--amber-edge, #d9b56a); color:var(--ink);}
+  .opt{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:14px 0 6px;}
+  .empty{background:var(--paper); border:1px dashed var(--sand-line); border-radius:10px; padding:18px 20px; color:var(--grey); font-size:.9rem; line-height:1.6;}
+  @media(max-width:600px){ .mcard{padding:14px 14px 10px;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202611151336">
+</head>
+<body class="hub-paper hub-course">
+<div class="board">
+  <a class="back" id="back" href="index.html">Back</a>
+  <div id="app"></div>
+</div>
+<script src="celta5-criteria.js?v=202611151336"></script>
+<script src="hub-shared.js?v=202611151336"></script>
+<script src="hub-store.js?v=202611151336"></script>
+<script src="hub-say.js?v=202611151336"></script>
+<script src="hub-rotation.js?v=202611151336"></script>
+<script src="hub-peers.js?v=202611151336"></script>
+<script src="hub-sync.js?v=202611151336"></script>
+<script type="text/x-hub-app">
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+const P = new URLSearchParams(location.search);
+const KEYQ = ['t','k','ak'].filter(n => P.get(n)).map(n => n + '=' + encodeURIComponent(P.get(n))).join('&');
+const MODE = window.HubMode || '';
+const IS_TUTOR = MODE === 'tutor', IS_TRAINEE = MODE === 'trainee';
+const TT = rec('connect_timetable_v1') || {}, TPP = rec('connect_tp_points_v1') || {};
+const ME = rec('hub:me') || {};
+const TODAY = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+const QUESTIONS = ['Instructions: were they clear? What would you change?', 'Timing: will it fit the lesson?', 'One thing that worked', 'One question or suggestion before you teach'];
+const DRAFT = 'lite:rehearsal:v1';
+let drafts = rec(DRAFT) || {};
+const keepDrafts = () => { try { localStorage.setItem(DRAFT, JSON.stringify(drafts)); } catch (e) {} };
+
+const isMicro = x => x && /micro.?teach/i.test(String(x.t || ''));
+const DAYS = (TT.days || []).filter(d => d && d.date && d.tp && (d.sessions || []).some(isMicro)).sort((a, b) => a.date < b.date ? -1 : 1);
+const pickDay = () => { const d = P.get('d'); if (d && DAYS.some(x => x.date === d)) return d; const up = DAYS.find(x => x.date >= TODAY); return up ? up.date : (DAYS.length ? DAYS[DAYS.length - 1].date : ''); };
+let DATE = pickDay();
+const dayLong = iso => { const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : iso; };
+const dayShort = iso => { const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : iso; };
+const sitOf = d => Number(d.setIndex || 0) === 1 ? 'b' : 'a';
+const groupsOf = () => { if (!IS_TUTOR) return [String(ME.group || '')]; const r = (rec('connect_roster_v1') || {}).trainees || {}; return [...new Set(Object.values(r).map(t => String((t && t.group) || '')).filter(Boolean))].sort(); };
+const rowsFor = g => IS_TUTOR ? ((TPP.groups || {})[g] || {}) : (TPP.points || {});
+const label = p => p.token === String(ME.token || '') ? 'You' : (p.name || ('Trainee ' + p.letter));
+function lessonLine(p, g, tp){
+  const c = (rowsFor(g)[p.token] || {})['tp' + tp] || {};
+  const bits = [c.aim ? '<b>' + esc(c.aim) + '</b>' : '', c.framework ? esc(c.framework) : ''].filter(Boolean);
+  return bits.length ? bits.join(' · ') : 'Their TP point is not released yet.';
+}
+
+/* WHAT TO WATCH FOR (Ramy, 15 Nov 2026: "Give the observers something to say, or to write ... focusing mainly on classroom
+   management ... it could relate to the lesson itself as well ... Light can read the TP points ... depending on the stage
+   of the criteria ... something smart that only Light can do"). Two lists for each lesson, each point tied to a criterion
+   in Lite's own copy of the CELTA 5 wording (celta5-criteria.js):
+     - Classroom management, the points that matter at this point in the course: the first TPs are about being understood
+       and being in the room; the middle ones about running the room while learners work; the last ones about the learning.
+     - This lesson: one point for each stage of the rehearser's own TP point, chosen from what the stage is called. */
+const CRIT = {}; (window.CONNECT_HUB_CRITERIA || []).forEach(c => { CRIT[c[0]] = c[2]; });
+const CM_BY_TP = [
+  [2, [['5f', 'Instructions: short, shown with an example, then checked with a question (not "Do you understand?").'],
+       ['5a', 'Where they stand and sit: can every learner see them and the board?'],
+       ['2a', 'Their own English: graded to the level, no extra words.'],
+       ['1d', 'Rapport: names, eye contact across the whole room.']]],
+  [4, [['5j', 'Monitoring: moving round while learners work, listening, not interrupting.'],
+       ['5b', 'Pairs and groups: set up quickly, everyone knows who they work with.'],
+       ['5i', 'Pace: no stage drags, nobody waits with nothing to do.'],
+       ['5h', 'Feedback after each task: answers checked, not just "Finished?"']]],
+  [6, [['5g', 'Questions: eliciting rather than telling, concept checks after new language.'],
+       ['2b', 'Correction: the right moment, and learners get a chance to correct themselves.'],
+       ['5k', 'Timing: would the lesson finish on time at this pace?'],
+       ['1d', 'Everyone involved: quiet learners nominated, not only the fast ones.']]],
+  [99, [['5d', 'Aims: by the end, could learners do what the aim says?'],
+        ['5c', 'Techniques: right for this content and this level.'],
+        ['1a', 'The learners: does the lesson fit what this group needs and enjoys?'],
+        ['5i', 'Pace and flexibility: does the plan bend when learners need more time?']]]
+];
+const cmFor = tp => (CM_BY_TP.find(x => +tp <= x[0]) || CM_BY_TP[CM_BY_TP.length - 1])[1];
+const STAGE_RULES = [
+  [/lead.?in|warm|context|engage|hook/i, '2c', 'Does the context set up the topic quickly and get everyone talking?'],
+  [/pre.?teach|vocab|lexis|blocking/i, '2e', 'Meaning first, then a concept check, then form and pronunciation.'],
+  [/predict/i, '3a', 'Do learners have a real reason to read or listen?'],
+  [/gist|skim|scan|check(ing)? predictions|first (read|listen)/i, '3a', 'Task before the text, a time limit, then a pair check.'],
+  [/detail|comprehension|second (read|listen)|intensive/i, '3a', 'Questions before the text; learners compare in pairs before feedback.'],
+  [/clarif|present|language focus|focus on|analys|guided discovery|mfp|meaning|form|grammar/i, '2e', 'Meaning, form and pronunciation all covered, and concept-checked.'],
+  [/free|production|produce|speaking|writing|fluency|task|role.?play|discuss/i, '3b', 'Learners need the lesson’s language to do it; the teacher monitors and saves correction for later.'],
+  [/highlight|notic|target language|\bTL\b/i, '2e', 'Learners find the language in the text themselves before anything is explained.'],
+  [/drill|controlled|accuracy|restricted|practice|exercise/i, '2g', 'An example done together first, instructions checked, answers compared in pairs.'],
+  [/feedback|error|correct|delayed/i, '2b', 'Feedback on what they said first, then on how they said it.'],
+  [/test/i, '5c', 'The first test shows the gaps the teach stage then fills.']
+];
+function lessonWatch(p, g, tp){
+  const c = (rowsFor(g)[p.token] || {})['tp' + tp] || {};
+  return (c.stages || []).filter(st => st && st.name).map(st => {
+    const r = STAGE_RULES.find(x => x[0].test(st.name)) || [null, '5i', 'Is the time for this stage realistic?'];
+    return { code: r[1], text: r[2], stage: st.name, todo: st.todo || '' };
+  });
+}
+function watchItems(p, g, tp){
+  return lessonWatch(p, g, tp).map(w => ({ q: w.stage + ': ' + w.text, code: w.code, sub: w.todo }))
+    .concat(cmFor(tp).map(x => ({ q: x[1], code: x[0], cm: 1 })));
+}
+function watchHTML(p, g, tp, k){
+  const items = watchItems(p, g, tp), d = drafts[k] || {}, t = d.t || {};
+  if (!items.length) return '';
+  const row = (w, i) => '<div class="wi"><div class="tx"><span class="cd" title="' + esc(CRIT[w.code] || '') + '">' + esc(w.code) + '</span>' + esc(w.q)
+    + (w.sub ? '<small>' + (IS_TRAINEE && p.token === String(ME.token || '') ? 'Your plan: ' : 'Their plan: ') + esc(w.sub) + '</small>' : '') + (CRIT[w.code] ? '<small>' + esc(w.code) + ': ' + esc(CRIT[w.code]) + '</small>' : '') + '</div>'
+    + (IS_TRAINEE && p.token !== String(ME.token || '') ? '<div class="yn"><button type="button" data-tick="' + esc(k) + '|' + i + '|y" class="' + (t[i] === 'y' ? 'on' : '') + '">Saw it</button><button type="button" data-tick="' + esc(k) + '|' + i + '|n" class="' + (t[i] === 'n' ? 'on no' : '') + '">Not yet</button></div>' : '') + '</div>';
+  const lesson = items.filter(w => !w.cm), cm = items.filter(w => w.cm), idx = w => items.indexOf(w);
+  return '<div class="watch">' + (lesson.length ? '<h3>Watch for: this lesson</h3>' + lesson.map(w => row(w, idx(w))).join('') : '')
+    + '<h3>Watch for: classroom management at TP ' + esc(tp) + '</h3>' + cm.map(w => row(w, idx(w))).join('') + '</div>';
+}
+let NOTES = null;   // trainee: { about, sent }; tutor: { notes }
+function load(){
+  if (!window.HubStore || !HubStore.call || !(IS_TUTOR || IS_TRAINEE)) return;
+  HubStore.call({ op: 'rehearsalNotes', token: IS_TRAINEE ? HubStore.token() : undefined }).then(r => { NOTES = r || {}; draw(); }, () => { NOTES = NOTES || {}; draw(); });
+}
+function noteHTML(n, who){
+  return '<div class="note"><p class="by">' + esc(who) + '</p><dl>' + (n.rows || []).filter(r => r.a).map(r => '<dt>' + esc(r.q) + '</dt><dd>' + esc(r.a) + '</dd>').join('') + '</dl></div>';
+}
+function draw(){
+  const head = '<p class="eyebrow">Teaching practice</p><h1>Micro-teaching</h1>'
+    + '<p class="lede">Before they teach, the trainees teaching next rehearse their lesson to the rest of their group. <b>If you are watching</b>, each lesson has a short list of what to look for: tap Saw it or Not yet, add a note if you like, and send it to them before they teach. <b>If you are rehearsing</b>, what your group sends you appears on your own card. Nothing here is assessed.</p>';
+  if (!DAYS.length) { $('app').innerHTML = head + '<div class="empty">No micro-teaching on the timetable yet. A day gets it when the timetable has a session called Micro-teaching.</div>'; return; }
+  const chips = '<div class="days">' + DAYS.map(d => '<button type="button" data-day="' + d.date + '" class="' + (d.date === DATE ? 'on' : '') + '">' + esc(dayShort(d.date)) + (d.date === TODAY ? ' · today' : '') + '</button>').join('') + '</div>';
+  const day = DAYS.find(d => d.date === DATE), tp = day.tp, sit = sitOf(day);
+  let body = '<p class="what" style="margin:0 0 14px;color:var(--grey);font-size:.9rem">' + esc(dayLong(DATE)) + ' · TP ' + esc(tp) + '</p>';
+  groupsOf().forEach(g => {
+    const who = (window.hubPeerTeachers && hubPeerTeachers(g, tp, sit)) || [];
+    if (IS_TUTOR) body += '<h2 class="grp">Group ' + esc(g) + '</h2>';
+    if (!who.length) { body += '<div class="empty">The TP points do not say who teaches that day yet.</div>'; return; }
+    let yours = '', theirs = '';
+    who.forEach(p => {
+      const mine = IS_TRAINEE && p.token === String(ME.token || '');
+      let inner = '';
+      if (IS_TUTOR) {
+        inner += watchHTML(p, g, tp, '');
+        const got = ((NOTES && NOTES.notes) || []).filter(n => n.date === DATE && n.to === p.name);
+        inner += got.length ? got.map(n => noteHTML(n, 'From ' + n.by)).join('') : '<p class="what">No notes sent yet.</p>';
+      } else if (mine) {
+        const got = ((NOTES && NOTES.about) || []).filter(n => n.date === DATE);
+        inner = '<p class="what">Your group watches your lesson for the points below. What they send you appears under them, before you teach.</p>' + watchHTML(p, g, tp, '')
+          + (NOTES === null ? '<p class="what">Opening your notes.</p>' : got.length ? got.map(n => noteHTML(n, 'From ' + n.by)).join('') : '<p class="what">Nothing sent yet.</p>');
+      } else {
+        const k = DATE + '>' + p.token, d = drafts[k] || { a: [] };
+        const sentOne = ((NOTES && NOTES.sent) || []).find(n => n.date === DATE && n.to === p.token);
+        inner = watchHTML(p, g, tp, k) + '<p class="opt">Notes, if you want them</p>' + QUESTIONS.map((q, i) => '<div class="q"><label for="q' + i + p.token + '">' + esc(q) + '</label><textarea id="q' + i + p.token + '" data-k="' + esc(k) + '" data-i="' + i + '">' + esc((d.a[i] != null ? d.a[i] : sentOne && sentOne.rows && sentOne.rows[i] ? sentOne.rows[i].a : '') || '') + '</textarea></div>').join('')
+          + '<div class="row"><button type="button" class="btn primary" data-send="' + esc(p.token) + '">Send to ' + esc(label(p)) + '</button>'
+          + (d.sentAt || sentOne ? '<span class="sent">Sent</span>' : '<small>Only ' + esc(label(p)) + ' and the tutors will see it.</small>') + '<span class="sent" data-msg="' + esc(p.token) + '"></span></div>';
+      }
+      const title = IS_TUTOR ? esc(label(p)) + ' is rehearsing' : mine ? 'Your lesson' : esc(label(p)) + ' is rehearsing';
+      const card = '<div class="mcard' + (mine ? ' me' : '') + '"><h2>' + title + '</h2><p class="what">' + lessonLine(p, g, tp) + '</p>' + inner + '</div>';
+      if (mine) yours += card; else theirs += card;
+    });
+    if (IS_TUTOR) body += theirs;
+    else body += (yours ? '<h2 class="grp">You are rehearsing</h2>' + yours : '') + (theirs ? '<h2 class="grp">You are watching</h2>' + theirs : '');
+  });
+  $('app').innerHTML = head + chips + body;
+}
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-day]'); if (c) { DATE = c.dataset.day; draw(); return; }
+  const tk = e.target.closest('[data-tick]');
+  if (tk && IS_TRAINEE) { const [k, i, v] = tk.dataset.tick.split('|'); const d = drafts[k] = drafts[k] || { a: [] }; d.t = d.t || {}; d.t[i] = d.t[i] === v ? '' : v; delete d.sentAt; keepDrafts(); draw(); return; }
+  const s = e.target.closest('[data-send]'); if (!s || !IS_TRAINEE) return;
+  const tok = s.dataset.send, k = DATE + '>' + tok, day = DAYS.find(d => d.date === DATE);
+  const a = QUESTIONS.map((_, i) => { const t = document.querySelector('textarea[data-k="' + CSS.escape(k) + '"][data-i="' + i + '"]'); return t ? t.value.trim() : ''; });
+  const msg = document.querySelector('[data-msg="' + CSS.escape(tok) + '"]');
+  const person = (window.hubPeerTeachers && day ? (hubPeerTeachers(String(ME.group || ''), day.tp, sitOf(day)) || []) : []).find(x => x.token === tok);
+  const ticks = (drafts[k] || {}).t || {}, items = person ? watchItems(person, String(ME.group || ''), day.tp) : [];
+  const tickRows = items.map((w, i) => ticks[i] ? { q: w.code + ' · ' + w.q, a: ticks[i] === 'y' ? 'Saw it' : 'Not yet' } : null).filter(Boolean);
+  if (!a.some(Boolean) && !tickRows.length) { if (msg) msg.textContent = 'Tap Saw it or Not yet, or write a note, first.'; return; }
+  const was = s.textContent; s.disabled = true; s.textContent = 'Sending';
+  HubStore.call({ op: 'shareRehearsal', token: HubStore.token(), to: tok, date: DATE, tp: day ? day.tp : 0, rows: tickRows.concat(QUESTIONS.map((q, i) => ({ q, a: a[i] })).filter(r => r.a)) }).then(() => {
+    drafts[k] = { a, t: ticks, sentAt: new Date().toISOString() }; keepDrafts(); load(); draw();
+  }, err => { s.disabled = false; s.textContent = was; if (msg) msg.textContent = (err && err.message) || 'That did not go. Try again.'; });
+});
+document.addEventListener('input', e => {
+  const t = e.target.closest && e.target.closest('textarea[data-k]'); if (!t) return;
+  const d = drafts[t.dataset.k] = drafts[t.dataset.k] || { a: [] }; d.a[+t.dataset.i] = t.value; delete d.sentAt; keepDrafts();
+});
+if (KEYQ) $('back').href = 'index.html?' + KEYQ;
+draw(); load();
+</script>
+</body>
+</html>

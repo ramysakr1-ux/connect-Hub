@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611151057">
+<link rel="stylesheet" href="hub-tokens.css?v=202611151336">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -466,8 +466,17 @@
   .readycues .rk{font-size:.66rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
   .readycues li.ok{background:color-mix(in oklch, var(--teal) 8%, var(--paper));} .readycues li.ok .rk{color:var(--teal);}
   .shareVol .aud{display:block; font-size:.74rem; color:var(--grey); margin-top:2px;}
+  .rehbox{background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--teal); border-radius:10px; padding:14px 18px 8px; margin:14px 0 18px;}
+  .rehbox h2{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem; margin:0 0 2px;}
+  .rehbox .rl{font-size:.84rem; color:var(--grey); margin:0 0 10px; line-height:1.5;}
+  .rehbox .rn{border-top:1px solid var(--sand-line); padding:9px 0;}
+  .rehbox .rb{font-weight:700; font-size:.86rem; margin:0 0 4px;}
+  .rehbox .rr{font-size:.88rem; line-height:1.5; margin:2px 0; overflow-wrap:anywhere;}
+  .rehbox .rr b{font-weight:600;}
+  .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
+  @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611151057">
+<link rel="stylesheet" href="hub-house.css?v=202611151336">
 </head>
 <body>
 <div class="board">
@@ -496,6 +505,10 @@
       <div class="field"><label for="fLength">Lesson length (min)</label><input id="fLength" type="number" min="0" step="5" placeholder="45"><small id="fLengthFromTt" class="fromtt"></small></div>
     </div>
   </div>
+
+  <!-- FROM YOUR REHEARSAL (Ramy, 15 Nov 2026: "add it"). What the group sent after watching this lesson rehearsed in
+       micro-teaching (43_micro_teaching.html), beside the plan it is meant to change. Shown only when there is some. -->
+  <section class="rehbox" id="rehBox" hidden></section>
 
   <!-- READINESS ON A PHONE (30 Oct 2026, the specification's R11): the foot strip (Aims, Problems, Class, Materials, Stages,
        Time) is the readiness on a wide screen and is hidden under 640px; this card says the same there. Nothing is blocked. -->
@@ -699,13 +712,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611151057"></script>
-<script src="hub-shared.js?v=202611151057"></script>
-<script src="hub-rotation.js?v=202611151057"></script>
-<script src="hub-store.js?v=202611151057"></script>
-<script src="hub-say.js?v=202611151057"></script>
-<script src="hub-sync.js?v=202611151057"></script>
-<script src="hub-notebook.js?v=202611151057"></script>
+<script src="hub-due.js?v=202611151336"></script>
+<script src="hub-shared.js?v=202611151336"></script>
+<script src="hub-rotation.js?v=202611151336"></script>
+<script src="hub-store.js?v=202611151336"></script>
+<script src="hub-say.js?v=202611151336"></script>
+<script src="hub-sync.js?v=202611151336"></script>
+<script src="hub-notebook.js?v=202611151336"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -2499,6 +2512,29 @@ if (window.hubIPA) hubIPA.bar('textarea.phon, #laSection textarea');
   ['input', 'change', 'click', 'keyup'].forEach(ev => document.addEventListener(ev, soon, true));
   new MutationObserver(soon).observe(document.querySelector('.board') || document.body, { childList: true, subtree: true });
   paint(); setTimeout(paint, 800);
+})();
+</script>
+<script>
+/* FROM YOUR REHEARSAL: the notes about this trainee's micro-teaching for the TP this plan is for. */
+(function(){
+  if (!window.HubStore || !HubStore.call || !HubStore.isTrainee || !HubStore.isTrainee()) return;
+  /* only a course whose timetable has micro-teaching asks at all (Ramy, 15 Nov 2026: "if not, then none of this should
+     really appear, because then it will just be distracting") */
+  try { var TTm = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); if (!((TTm && TTm.days) || []).some(function(d){ return (d.sessions || []).some(function(x){ return /micro.?teach/i.test(String((x && x.t) || '')); }); })) return; } catch (e) { return; }
+  var esc = function(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); };
+  var all = null;
+  function paint(){
+    var box = document.getElementById('rehBox'), tpEl = document.getElementById('fTP'); if (!box || !tpEl || !all) return;
+    var n = tpNumberOf(tpEl.value), notes = all.filter(function(x){ return n && +x.tp === n; });
+    if (!notes.length) { box.hidden = true; box.innerHTML = ''; return; }
+    var day = notes[0].date;
+    box.innerHTML = '<h2>From your rehearsal</h2><p class="rl">What your group noticed when you rehearsed this lesson in micro-teaching. Use what helps before you teach.</p>'
+      + notes.map(function(x){ return '<div class="rn"><p class="rb">From ' + esc(x.by) + '</p>' + (x.rows || []).filter(function(r){ return r.a; }).map(function(r){ return '<p class="rr"><b>' + esc(r.q) + ':</b> ' + esc(r.a) + '</p>'; }).join('') + '</div>'; }).join('')
+      + '<p class="rl"><a href="43_micro_teaching.html?d=' + encodeURIComponent(day) + '">Open micro-teaching</a></p>';
+    box.hidden = false;
+  }
+  HubStore.call({ op: 'rehearsalNotes', token: HubStore.token() }).then(function(r){ all = (r && r.about) || []; paint(); }, function(){});
+  document.addEventListener('input', function(e){ if (e.target && e.target.id === 'fTP') paint(); });
 })();
 </script>
 </body>

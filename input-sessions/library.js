@@ -51,6 +51,45 @@ window.InputLib = (function(){
     [/literacy/, 'teaching-literacy'],
     [/productive/, 'teaching-productive-skills']
   ];
+  /* THE SHORT SESSIONS (Ramy, 15 Nov 2026: "a variation of long and short input sessions"). Connect's 45-minute sessions,
+     rebuilt on Lite (input-sessions/_short.py). [page, the name the timetable and the library give it, minutes, the long
+     session on the same topic, the library family it sits in, the card's line]. A short session opens when the timetable
+     places it from the library (the tile carries its page); a title typed by hand still opens the long session, so no
+     course that exists changes page. */
+  var SHORTS = [
+    ['receptive-skills-short', 'Receptive skills (short)', 45, 'receptive-skills', 'Loop input', 'Staged like the lesson it teaches: pre-taught vocabulary, predict, read, detail, the debrief.'],
+    ['listening-short', 'Listening', 45, 'receptive-skills', 'Loop input', 'A listening lesson as the learners get it: vocabulary, predict, a dialogue to listen to, the detail task.'],
+    ['teaching-productive-skills-short', 'Teaching productive skills (short)', 45, 'teaching-productive-skills', 'Loop input', 'Speaking and writing staged the same way: prepare ideas, get useful language, do the task, get feedback.'],
+    ['ppp-short', 'PPP (short)', 45, 'ppp', 'Loop input', 'Staged exactly like the framework it teaches: terms, predict, read, detail, debrief.'],
+    ['text-based-teaching-short', 'Text-based teaching (short)', 45, 'text-based-teaching', 'Loop input', 'A text first, the language from it, then the staging named.'],
+    ['guided-discovery-short', 'Guided discovery', 45, 'guided-discovery-vs-ppp', 'Loop input', 'Staged exactly like the framework it teaches, ending in the order of its stages.'],
+    ['test-teach-test-short', 'Test-teach-test (short)', 45, 'test-teach-test', 'Loop input', 'Staged exactly like the framework it teaches: test, teach, test again, then name the stages.'],
+    ['teaching-speaking-short', 'Teaching speaking (short)', 45, 'teaching-speaking', 'Loop input', 'Prepare ideas, get useful language, do the task, get feedback: the speaking lesson in order.'],
+    ['teaching-writing-short', 'Teaching writing (short)', 45, 'teaching-writing', 'Loop input', 'Product, process, and the difference it makes to the lesson.'],
+    ['drilling-techniques-short', 'Drilling techniques', 65, 'guided-to-less-guided-practice', 'Loop input', 'Six drill types, four more techniques, and which drill fixes which problem.'],
+    ['language-practice-short', 'Language practice', 72, 'guided-to-less-guided-practice', 'Loop input', 'From controlled to free: the three stages of practice, sorted and designed.'],
+    ['lesson-planning-short', 'Lesson planning, start to finish', 45, 'writing-the-lesson-plan', 'Planning', 'Why a plan, the jargon, then aims, problems and procedure for a real TP point.'],
+    ['language-analysis-short', 'Language analysis (short)', 45, 'language-analysis', 'Planning', 'Why analyze first, the jargon, then a live draft for your own next TP point.'],
+    ['mfp-short', 'MFPA', 45, 'language-analysis', 'Planning', 'Meaning, form, pronunciation, appropriacy: all four for every item you teach.'],
+    ['lesson-framework-short', 'Lesson frameworks (short)', 45, 'lesson-framework', 'Planning', 'The decision tree, the six shapes, a card sort, a sequence to build and a stage timer.'],
+    ['evaluating-your-plan-short', 'Evaluating your plan', 45, '', 'Planning', 'Your self-evaluation after TP: what was the plan, what was the teaching, and what changes next time.'],
+    ['tense-and-aspect-short', 'Tense and aspect (short)', 45, 'tense-and-aspect', 'Language awareness', 'Tense marks when, aspect marks how: match, choose, sort, then your own pairs.'],
+    ['eliciting-and-concept-checking-short', 'Eliciting and concept checking', 60, 'eliciting-and-ccqs', 'Language awareness', 'Drawing language out of learners, and checking they have understood it.'],
+    ['teaching-vocabulary-short', 'Teaching vocabulary (short)', 45, 'teaching-vocabulary', 'Language awareness', 'A word is not one fact: the terms, choosing a technique, building collocations.'],
+    ['functional-language-short', 'Functional language (short)', 45, 'functional-language', 'Language awareness', 'Phrases that do the same social job, ranked by formality.'],
+    ['sounds-short', 'Sounds', 45, 'phonology-sounds', 'Phonology, spoken aloud', 'Every phoneme and minimal pair spoken aloud: the chart, where sounds are made, a clap game, a dictation.'],
+    ['phonology-sounds-short', 'Phonology: sounds (short)', 60, 'phonology-sounds', 'Phonology, spoken aloud', 'Sounds against letters, where consonants are made, voicing, the whole chart spoken aloud.'],
+    ['stress-and-intonation-short', 'Stress and intonation', 45, 'word-and-sentence-stress', 'Phonology, spoken aloud', 'Word stress and sentence tune, both spoken aloud.'],
+    ['connected-speech-short', 'Connected speech (short)', 50, 'connected-speech', 'Phonology, spoken aloud', 'Five features, one example each: weak forms, linking, intrusion, assimilation, elision.'],
+    ['classroom-management-short', 'Classroom management (short)', 60, 'classroom-management', 'Classroom skills', 'Decisions in real time: a monitoring simulation, an instruction check, your internal clock.'],
+    ['error-correction-short', 'Error correction (short)', 45, 'error-correction', 'Classroom skills', 'Not whether to correct, but how to get the learner, or the person next to them, to do it.'],
+    ['giving-feedback-on-tasks-short', 'Giving feedback on tasks', 45, '', 'Classroom skills', 'Feedback on the task itself: did they finish it, did they get it right, and in what order to ask.'],
+    ['classroom-arrangements-short', 'Classroom arrangements', 45, '', 'Classroom skills', 'Four layouts, when to switch, and the materials in the learners’ hands.'],
+    ['rapport-and-teacher-talk-short', 'Rapport and teacher talk', 45, '', 'Classroom skills', 'What you do to build rapport and how much you talk: count it, grade it, involve everyone.'],
+    ['teaching-literacy-short', 'Teaching literacy (short)', 45, 'teaching-literacy', 'The wider profession', 'When the barrier isn’t the language: spot it, adapt the handout, the techniques.'],
+    ['teaching-exam-classes-short', 'Teaching exam classes (short)', 50, 'teaching-exam-classes', 'The wider profession', 'The CEFR ladder, the acronyms, the exams, and which one to recommend.'],
+    ['professional-development-short', 'Professional development', 30, 'life-after-celta', 'The wider profession', 'Lighter on purpose: four topic cards, a share-back, and a resource sheet to keep.']
+  ];
   function slugsFor(title){
     var t = String(title || '').toLowerCase(), out = [];
     for (var i = 0; i < RULES.length; i++) if (RULES[i][0].test(t) && out.indexOf(RULES[i][1]) === -1) out.push(RULES[i][1]);
@@ -215,7 +254,7 @@ window.InputLib = (function(){
   /* If anything goes wrong the page opens: a gate that can strand a trainee
      on a blank page is worse than no gate. */
   setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
-  return { matchesFor: matchesFor, hasInputs: function(tt){ return rawInputs(tt).length > 0; }, openMode: openMode, opensOn: opensOn, isOpen: isOpen, whenText: whenText, mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
+  return { shorts: SHORTS, matchesFor: matchesFor, hasInputs: function(tt){ return rawInputs(tt).length > 0; }, openMode: openMode, opensOn: opensOn, isOpen: isOpen, whenText: whenText, mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
 })();
 
 /* The demo is view only (Ramy, 24 Oct 2026): a session's "Print the handout"

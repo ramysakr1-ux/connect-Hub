@@ -412,7 +412,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -460,7 +460,7 @@ function settleVersions_(op) {
    demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
 /* What the trainee view (Maya, v224) may call: reads a trainee's pages make, and nothing that writes, mails or uploads. */
 var TEMPLATE_READS_ = { boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
-  passInfo: 1, peerSheets: 1, questions: 1, bookings: 1 };
+  passInfo: 1, peerSheets: 1, questions: 1, bookings: 1, rehearsalNotes: 1 };
 var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt',
   /* the emergency demo's book pages, English File Upper-intermediate 3rd edn, File 5A (12 Nov 2026): shown to course links only */
   '1DUl-xuKBH510QWd1gtT-i4e20NSD41VD', '1UA4nvhOa5CqcQbmTRl_JQKSNBe9JoEo0', '1D7HvcGLvJlv6GDAVidoDhIt6H-qI9KeX', '1CXseksocfa-0Vquuu88YAA3ZyQY8Npfi', '15i6klfDzf4EhsOJeZRZfNHugDYHspacT', '1zugnIES0HPB78LGxI10WxM0cRv_oD_QJ', '1EpSnAPJIXiny-YoAbpUQOIDpxGdmJXrm',
@@ -2166,6 +2166,47 @@ case 'inbox': {
         return pool;
       });
       return { shared: false };
+    }
+    /* MICRO-TEACHING (v236, 15 Nov 2026; Ramy: "starting from week 2 ... 1 input session and then a micro teaching ... 45
+       minutes of just 2 people micro-teaching their lessons, like basically rehearsing their lesson before teaching it. On
+       the day ... a feedback form that they can give each other, or they can fill in as they're watching"). A watcher's notes
+       on one classmate's rehearsal, sent to that classmate: a classmate in the same TP group only (peerTo_), one note per
+       rehearsal day and classmate, open at once (they rehearse to fix the plan before teaching it). Writing nothing takes
+       the note back. Not assessed and not in the CELTA 5; the tutors can read them. */
+    case 'shareRehearsal': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var srTo = peerTo_(course.id, me, req.to);
+      var srDate = String(req.date || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(srDate)) throw new Error('Which day?');
+      var srTp = parseInt(req.tp, 10); if (!(srTp >= 1 && srTp <= 20)) srTp = 0;
+      var srRows = (Array.isArray(req.rows) ? req.rows : []).slice(0, 12).map(function (r) {
+        return { q: String((r && r.q) || '').trim().slice(0, 300), a: String((r && r.a) || '').trim().slice(0, 3000) };
+      });
+      var srId = srDate + '>' + srTo, srAny = srRows.some(function (r) { return r.a; });
+      courseUpdateObj_(course.id, 'rehearsal', function (pool) {
+        var list = (pool[me.token] || []).filter(function (x) { return x && x.id !== srId; });
+        if (srAny) list.push({ id: srId, date: srDate, tp: srTp, rows: srRows, to: srTo, by: String(me.name || '').slice(0, 80), group: String(me.group || ''), at: new Date().toISOString() });
+        if (list.length) pool[me.token] = list.length > 200 ? list.slice(list.length - 200) : list; else delete pool[me.token];
+        return pool;
+      });
+      return { shared: srAny };
+    }
+    case 'rehearsalNotes': {
+      if (assessor) throw new Error('Not for the assessor');
+      if (!course) throw new Error('This link is not on a course');
+      var rnPool = courseRead_(course.id, 'rehearsal') || {}, rnAll = [];
+      Object.keys(rnPool).forEach(function (tok) { (rnPool[tok] || []).forEach(function (it) { if (it) rnAll.push({ from: tok, it: it }); }); });
+      if (tutor) {
+        var rnNames = {}; roster_(course.id).forEach(function (t) { rnNames[t.token] = t.name; });
+        return { notes: rnAll.map(function (m) { return { date: m.it.date, tp: m.it.tp, group: m.it.group, to: rnNames[m.it.to] || '', by: m.it.by, rows: m.it.rows, at: m.it.at }; })
+          .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : String(a.to).localeCompare(String(b.to)); }) };
+      }
+      if (!me) throw new Error('Trainees only');
+      return {
+        about: rnAll.filter(function (m) { return m.it.to === me.token; }).map(function (m) { return { date: m.it.date, tp: m.it.tp, by: m.it.by, rows: m.it.rows, at: m.it.at }; }),
+        sent: (rnPool[me.token] || []).map(function (it) { return { date: it.date, tp: it.tp, to: standIn_(course.id, it.to), rows: it.rows, at: it.at }; })
+      };
     }
     case 'peerSheets': {
       if (!me || tutor || assessor) throw new Error('Trainees only');

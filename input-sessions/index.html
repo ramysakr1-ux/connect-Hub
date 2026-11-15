@@ -51,6 +51,7 @@
   .pill{display:inline-flex; align-items:center; font-family:'Karla',sans-serif; font-size:.68rem; font-weight:700; padding:2px 9px; border-radius:999px; border:1px solid var(--sand-line); color:var(--grey); background:var(--paper);}
   .pill.wait{color:var(--teal); border-color:color-mix(in oklab, var(--teal) 35%, var(--paper));}
   .pill.now{color:var(--paper); background:var(--teal); border-color:var(--teal);}
+  .pill.len{color:var(--teal); border-color:color-mix(in oklab, var(--teal) 35%, var(--paper));}   /* a short session's length (15 Nov 2026) */
   .pill.room{color:var(--gold-deep); border-color:color-mix(in oklab, var(--gold-deep) 40%, var(--paper));}   /* a session for the room, not an online course (Ramy, 4 Nov 2026) */
   @media(max-width:640px){ .next{grid-template-columns:1fr;} }
   .back{display:inline-block; margin:0 0 16px; font-size:.84rem; font-weight:600; color:var(--teal); text-decoration:none;} .back:hover{text-decoration:underline; text-underline-offset:3px;}
@@ -153,7 +154,7 @@
 
   <div class="top">
     <h1>Input sessions</h1>
-    <p class="lede">Twenty-six sessions, each one built to be done rather than read: tasks first, the names at the end. Open one, work through it on a laptop or a phone, and print the handout when you need paper.</p>
+    <p class="lede">Each session is built to be done rather than read: tasks first, the names at the end. Most topics come in two lengths: the full session, and a short one for a 45-minute slot. Open one, work through it on a laptop or a phone, and print the handout when you need paper.</p>
   </div>
 
   <!-- The course strip (14 Oct 2026): what is next and this week, read from
@@ -301,6 +302,20 @@
   var rd = L.rd, iso = L.iso, dateOf = L.dateOf, today = L.today, inputsOf = L.inputsOf;
   function dayName(s, long){ var d = dateOf(s); return d ? d.toLocaleDateString('en-GB', long ? { weekday: 'long', day: 'numeric', month: 'long' } : { weekday: 'short', day: 'numeric' }) : ''; }
   function esc(x){ return String(x == null ? '' : x).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  /* THE SHORT SESSIONS, BESIDE THEIR TOPIC (Ramy, 15 Nov 2026: "organize our input session library accordingly"). Each
+     short one sits right after the long session on the same topic, in the same family, with its length on it; one with no
+     long session goes at the end of its family. The list is library.js's, so the timetable and this shelf cannot drift. */
+  (function(){
+    var fams = {}; document.querySelectorAll('#connectCard .family').forEach(function(f){ var h = f.querySelector('h2'); if (h) fams[h.textContent.trim()] = f; });
+    ((L && L.shorts) || []).forEach(function(x){
+      var f = fams[x[4]]; if (!f) return;
+      var a = document.createElement('a'); a.className = 's short'; a.href = x[0] + '/';
+      a.innerHTML = '<p class="k">' + esc(x[4]) + ' · short</p><h3>' + esc(x[1].replace(/ \(short\)$/, '')) + '</h3><p class="m"><span class="pill len">' + x[2] + ' minutes</span></p><p class="who">' + esc(x[5]) + '</p>';
+      var after = x[3] && f.querySelector('a.s[href="' + x[3] + '/"]');
+      while (after && after.nextElementSibling && after.nextElementSibling.classList.contains('short')) after = after.nextElementSibling;
+      if (after) after.parentNode.insertBefore(a, after.nextSibling); else f.querySelector('.cards').appendChild(a);
+    });
+  })();
   var NAMES = {};
   document.querySelectorAll('#connectCard a.s[href]').forEach(function(a){ var h3 = a.querySelector('h3'); NAMES[a.getAttribute('href').replace(/\/$/, '')] = h3 ? h3.textContent : ''; });
   function shownLink(l){ return !!(l && l.url && (l.show !== false || (l.showFrom && new Date(l.showFrom).getTime() <= Date.now()))); }

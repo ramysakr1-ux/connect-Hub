@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611151057">
+<link rel="stylesheet" href="hub-tokens.css?v=202611151336">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -854,27 +854,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611151057">
+<link rel="stylesheet" href="hub-house.css?v=202611151336">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611151057"></script>
-<script src="hub-tracker.js?v=202611151057"></script>
-<script src="hub-rotation.js?v=202611151057"></script>
-<script src="hub-xlsx.js?v=202611151057"></script>
-<script src="hub-docx.js?v=202611151057"></script>
-<script src="hub-timetable-parse.js?v=202611151057"></script>
-<script src="assignment-defaults.js?v=202611151057"></script>
-<script src="hub-shared.js?v=202611151057"></script>
+<script src="hub-due.js?v=202611151336"></script>
+<script src="hub-tracker.js?v=202611151336"></script>
+<script src="hub-rotation.js?v=202611151336"></script>
+<script src="hub-xlsx.js?v=202611151336"></script>
+<script src="hub-docx.js?v=202611151336"></script>
+<script src="hub-timetable-parse.js?v=202611151336"></script>
+<script src="assignment-defaults.js?v=202611151336"></script>
+<script src="hub-shared.js?v=202611151336"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611151057"></script>
-<script src="hub-say.js?v=202611151057"></script>
-<script src="hub-sync.js?v=202611151057"></script>
-<script src="hub-notebook.js?v=202611151057"></script>
+<script src="hub-store.js?v=202611151336"></script>
+<script src="hub-say.js?v=202611151336"></script>
+<script src="hub-sync.js?v=202611151336"></script>
+<script src="hub-notebook.js?v=202611151336"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2065,7 +2065,7 @@ function render(){
   /* THE PIECES (Ramy, 6 Nov 2026: "like pieces of chess or checkers ... you just move things around"): the kinds of tile
      to drop onto the board, then the library's input sessions */
   const lib = EDIT && LIB_OPEN ? `<aside class="slib"><h3>The pieces</h3><p>Drag a piece onto an empty place, or onto a tile to replace it. Drag a tile to move it; drop it on another to swap the two.</p>
-    <div class="pieces">${PIECES.map(p => `<button type="button" class="pc k-${p[0] === 'blank' ? 'event' : p[0]}" draggable="true" data-piece="${p[0]}">${esc(p[1])}</button>`).join('')}</div>
+    <div class="pieces">${PIECES.map(p => `<button type="button" class="pc k-${pieceKind(p[0])}" draggable="true" data-piece="${p[0]}">${esc(p[1])}</button>`).join('')}</div>
     <h3>Input sessions</h3><p>Click one to schedule it, or drag it like a piece. Drag a session from the board back here to take it off.</p><input id="libQ" type="search" placeholder="Search sessions" aria-label="Search the input sessions" value="${esc(LIB_Q)}"><div id="libList">${libListHTML()}</div></aside>` : '';
   app.innerHTML = head + updatedHTML() + zoneLine() + bar + tabs + tool + roomsStrip() + gsw
     + `<div class="slayout${lib ? ' libopen' : ''}">${lib}<div>${weekBoard(w, WEEK)}${key}</div></div>`
@@ -3121,6 +3121,11 @@ const STUDIO_LIB = [
   /* the four built on 4 Nov 2026 and never put on this list (Ramy, 8 Nov 2026: "I don't see tense and aspect in the input library") */
   ['tense-and-aspect', 'Tense and aspect'], ['test-teach-test', 'Test-teach-test'], ['flipped-classroom', 'The flipped classroom'], ['mixed-ability-classes', 'Teaching mixed-ability classes']
 ];
+/* THE SHORT SESSIONS (Ramy, 15 Nov 2026): Connect's 45-minute sessions on Lite, from library.js's list, each placed right
+   after the long session on its topic. Placing one from here puts its own page on the tile. */
+const SHORT_LIB = ((window.InputLib && InputLib.shorts) || []).map(x => [x[0], x[1], x[2], x[3]]);
+SHORT_LIB.slice().reverse().forEach(x => { const i = STUDIO_LIB.findIndex(y => y[0] === x[3]); if (i === -1) STUDIO_LIB.push([x[0], x[1]]); else STUDIO_LIB.splice(i + 1, 0, [x[0], x[1]]); });
+const libMinutes = t => { const n = normT(t), x = SHORT_LIB.find(y => normT(y[1]) === n); return x ? x[2] : 75; };
 /* titles that open a library page under another name (Ramy, 30 Oct 2026: lesson planning opens Writing the lesson plan, as library.js's own rule does) */
 const LIB_ALIASES = [['writing-the-lesson-plan', 'Lesson planning'], ['writing-the-lesson-plan', 'LP'], ['course-introduction', 'Course intro']];   /* short names (Ramy, 30 Oct 2026: "use the jargon"); matched whole, never inside other words */
 const initialsOf = n => window.hubInitials ? hubInitials(n) : String(n || '').split(/\s+/).map(w => w[0] || '').join('').slice(0, 3).toUpperCase();
@@ -3130,17 +3135,19 @@ function libPageFor(t){
   const n = normT(t); if (!n) return '';
   /* its own title first, then the longest library title inside it ("Guided discovery vs PPP" is not "PPP", 30 Oct 2026) */
   const all = STUDIO_LIB.concat(LIB_SESSIONS);
-  const hit = all.concat(LIB_ALIASES).find(x => normT(x[1]) === n) || (/^lp\b/.test(n) ? ['writing-the-lesson-plan'] : null) || all.filter(x => n.indexOf(normT(x[1])) !== -1).sort((a, b) => normT(b[1]).length - normT(a[1]).length)[0];
+  const hit = all.concat(LIB_ALIASES).find(x => normT(x[1]) === n) || (/^lp\b/.test(n) ? ['writing-the-lesson-plan'] : null) || all.filter(x => !/-short$/.test(x[0]) && n.indexOf(normT(x[1])) !== -1).sort((a, b) => normT(b[1]).length - normT(a[1]).length)[0];
   return hit ? 'input-sessions/' + hit[0] + '/' : '';
 }
-const PIECES = [['break', 'Break'], ['lunch', 'Lunch'], ['demo', 'Demo lesson'], ['feedback', 'TP feedback'], ['plan', 'Lesson planning'], ['reflect', 'Reflection'], ['event', 'Tutorial'], ['task', 'Study time'], ['assessor', 'Assessor'], ['blank', 'Blank']];
+const PIECES = [['break', 'Break'], ['lunch', 'Lunch'], ['demo', 'Demo lesson'], ['feedback', 'TP feedback'], ['plan', 'Lesson planning'], ['reflect', 'Reflection'], ['event', 'Tutorial'], ['task', 'Study time'], ['assessor', 'Assessor'], ['micro', 'Micro-teaching'], ['blank', 'Blank']];
+/* MICRO-TEACHING (15 Nov 2026): a whole-group session called Micro-teaching; its page is 43_micro_teaching.html */
+const pieceKind = k => k === 'blank' || k === 'micro' ? 'event' : k;
 const pieceLabel = k => (PIECES.find(p => p[0] === k) || [k, KIND_LABEL[k] || k])[1];
 function libListHTML(){
   const q = normT(LIB_Q);
   const list = STUDIO_LIB.filter(x => !q || normT(x[1]).indexOf(q) !== -1);
   /* where each session already sits (8 Nov 2026): placing it again moves it there */
   const on = x => (PLACED[x[0]] || []).map(p => dayName(p.date));
-  const line = x => { const d = on(x); return !d.length ? 'Input · 75 minutes · Schedule' : d.length > 1 ? '<span class="twc">Twice</span> ' + esc(d.join(' and ')) : 'On ' + esc(d[0]) + ' · Place it to move it'; };
+  const line = x => { const d = on(x); return !d.length ? 'Input · ' + libMinutes(x[1]) + ' minutes · Schedule' : d.length > 1 ? '<span class="twc">Twice</span> ' + esc(d.join(' and ')) : 'On ' + esc(d[0]) + ' · Place it to move it'; };
   return list.length ? list.map(x => `<button type="button" class="tpl${on(x).length ? ' placed' : ''}" draggable="true" data-lib="${esc(x[1])}"><b>${esc(x[1])}</b><small>${line(x)}</small></button>`).join('') : '<p>Nothing by that name in the library.</p>';
 }
 function shade(on){
@@ -3176,11 +3183,12 @@ function openDetails(date, id){
     ${tut ? `<p class="dt1">With ${esc(tut)} (${esc(initialsOf(tut))})</p>` : ''}
     ${x.d ? `<div class="prep">${esc(x.d)}</div>` : ''}
     ${page ? `<a class="res" href="${esc(page)}">Open the session</a>` : ''}
+    ${/micro.?teach/i.test(String(x.t || '')) && x.k !== 'input' ? `<a class="res" href="43_micro_teaching.html?d=${esc(date)}">Open micro-teaching</a>` : ''}
     ${mat ? `<a class="res" href="${esc(mat)}" target="_blank" rel="noopener noreferrer">Open the materials</a>` : ''}
     ${x.k === 'feedback' && IS_TUTOR ? `<a class="res" href="40_tp_feedback.html?date=${esc(date)}${GVIEW ? '&group=' + encodeURIComponent(GVIEW) : ''}">Open the feedback screen</a>` : ''}
     ${x.k === 'feedback' && !IS_TUTOR ? `<a class="res" href="41_feedback_games.html">Feedback games</a>` : ''}
     ${room ? `<a class="res" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join · ${esc(room.label)}</a>` : ''}
-    ${!x.d && !page && !mat && !room && x.k !== 'feedback' && !(TT_LOCKED && IS_TUTOR) ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}
+    ${!x.d && !page && !mat && !room && x.k !== 'feedback' && !/micro.?teach/i.test(String(x.t || '')) && !(TT_LOCKED && IS_TUTOR) ? '<p class="muted">Nothing to prepare for this one.</p>' : ''}
     ${TT_LOCKED && IS_TUTOR && x.k !== 'tp' && x.k !== 'break' && x.k !== 'lunch' ? `<form class="lockmat" id="lockMat">
       <label>Materials link<input name="mat" type="url" placeholder="https://" value="${esc(x.mat || '')}"></label>
       <label>Online room link<input name="url" type="url" placeholder="https://" value="${esc(x.url && x.url !== 'https://' ? x.url : '')}"></label>
@@ -3316,7 +3324,7 @@ document.addEventListener('click', e => {
     const gap = open.find(d => d.date >= TODAY && hole(d)) || open.find(hole);
     if (gap) { replaceTile(gap.date, hole(gap).id, { t: lib.dataset.lib }); return; }
     const day = open.find(d => d.date >= TODAY) || open[0]; if (!day) return;
-    const s = freeAfter(day); newSession(day.date, toHM(s), toHM(Math.min(23 * 60, s + 75)), lib.dataset.lib); return;
+    const s = freeAfter(day); newSession(day.date, toHM(s), toHM(Math.min(23 * 60, s + libMinutes(lib.dataset.lib))), lib.dataset.lib); return;
   }
   const cont = e.target.closest('.tgrid.tboard .cont[data-cont]');
   if (cont) { if (EDIT) openTile(cont.dataset.date, cont.dataset.cont); else openDetails(cont.dataset.date, cont.dataset.cont); return; }
@@ -3360,14 +3368,14 @@ function replaceTile(date, id, p){
   const day = dayOfDate(date); if (!day || day.closed) return;
   const x = (day.sessions || []).find(s => s.id === id); if (!x || x.k === 'tp') return;
   remember(); const was = tileName(x, day);
-  if (p.k) { x.k = p.k === 'blank' ? 'event' : p.k; x.t = p.k === 'blank' ? '' : pieceLabel(p.k); delete x.lib; if (x.room === 'Input') delete x.room; }
+  if (p.k) { x.k = pieceKind(p.k); x.t = p.k === 'blank' ? '' : pieceLabel(p.k); delete x.lib; if (x.room === 'Input') delete x.room; }
   else { x.k = 'input'; x.t = p.t; x.room = 'Input'; const sl = libSlugOf(p.t); if (sl) x.lib = sl; else delete x.lib; delete x.mat; }   /* another session's materials do not stay under this one */
   const freed = freeOthers(x);
   save('Changed', { text: '“' + was + '” on ' + dayName(date) + ' is now “' + tileName(x, day) + '”' + (freed.length ? '; its place on ' + freed.join(', ') + ' is empty again' : '') }); render();
 }
 function newPiece(date, s, e, k){
   const day = dayOfDate(date); if (!day || day.closed) return;
-  const x = { id: newId(), s, e, k: k === 'blank' ? 'event' : k, t: k === 'blank' ? '' : pieceLabel(k) };
+  const x = { id: newId(), s, e, k: pieceKind(k), t: k === 'blank' ? '' : pieceLabel(k) };
   openTile(date, x.id, x);
 }
 
@@ -4440,7 +4448,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611151057'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611151336'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);

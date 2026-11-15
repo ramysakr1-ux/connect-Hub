@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" class="gating">
+<head>
+<!--
+  Connect Lite — input session, the short one: Giving feedback on tasks
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Connect's 45-minute session on Lite's desk. Built by _short.py from _short_recipes/giving_feedback_on_tasks.py;
+  edit the recipe there, not this file.
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../library.js"></script>
+<script src="../voices.js"></script>
+<link rel="icon" href="../../brand/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../brand/apple-touch-icon.png">
+<title>Giving feedback on tasks · 45 minutes — Connect Lite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../hub-tokens.css">
+<link rel="stylesheet" href="../session.css">
+<style>
+
+  .len{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:2px 0 10px;}
+  .lenpill{display:inline-flex; align-items:center; font-family:'Karla',sans-serif; font-size:.74rem; font-weight:700; letter-spacing:.04em; padding:3px 11px; border-radius:999px; background:var(--teal); color:var(--paper);}
+  .lenlink{font-size:.84rem; font-weight:600; color:var(--teal); text-decoration:none;} .lenlink:hover{text-decoration:underline; text-underline-offset:3px;}
+  .btn[hidden], [hidden]{display:none !important;}   /* .btn is inline-flex in session.css, which beat [hidden] */
+  .mins{font-family:'Karla',sans-serif; font-weight:600; font-size:.8rem; color:var(--grey); margin-left:6px;}
+  .stack{display:flex; flex-direction:column; gap:8px; margin:12px 0 0;}
+  .tagrow{display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--paper); border:1.5px dashed var(--sand-line); border-radius:var(--r-strip); padding:11px 14px; font-weight:600; font-size:.9rem;}
+  .tagrow .pill{font-size:.72rem; font-weight:700; padding:2px 9px; border-radius:999px; color:var(--teal); border:1px solid color-mix(in oklab, var(--teal) 35%, var(--paper)); background:var(--paper);}
+
+  .quiet{font-size:.88rem; font-style:italic; color:var(--grey); margin:4px 0 10px;}
+  .task-box{background:var(--paper); border:1.5px dashed var(--sand-line); border-radius:var(--r-strip); padding:10px 14px; margin:0 0 10px; font-size:.9rem; line-height:1.5;}
+  .hint{display:block; margin-top:6px; font-size:.76rem; font-weight:600; color:var(--teal);}
+  .move{display:block; width:100%; text-align:left; font-family:'Karla',sans-serif; color:var(--ink); background:var(--paper); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 16px; margin:8px 0; cursor:pointer; font-size:.9rem; line-height:1.5;}
+  .move:hover:not(:disabled){border-color:var(--gold);}
+  .move:disabled{cursor:default;}
+  .move .top{display:flex; justify-content:space-between; gap:12px; align-items:flex-start;}
+  .move .mark{flex:none; font-weight:700; font-size:.86rem; white-space:nowrap;}
+  .move .why{display:block; margin-top:6px; font-size:.88rem;}
+  .move.good{border-color:var(--teal); background:color-mix(in oklab, var(--teal) 7%, var(--paper));} .move.good .mark, .move.good .why{color:var(--teal);}
+  .move.bad{border-color:var(--a-red); background:color-mix(in oklab, var(--a-red) 5%, var(--paper));} .move.bad .mark, .move.bad .why{color:var(--a-red);}
+  .ox{display:flex; flex-direction:column; margin-top:10px;}
+  .ox .order-line{justify-content:flex-start; width:100%; text-align:left; font-family:'Karla',sans-serif; color:var(--ink);}
+  .ox .order-line .num{flex:none; min-width:24px; height:24px; border-radius:50%; background:var(--box); color:var(--grey); display:inline-flex; align-items:center; justify-content:center; font-size:.78rem;}
+  .ox .order-line.done{border-color:var(--teal); background:color-mix(in oklab, var(--teal) 7%, var(--paper)); cursor:default;}
+  .ox .order-line.done .num{background:var(--teal); color:var(--paper);}
+  .ostat{font-size:.86rem; color:var(--grey); margin:4px 0 0;}
+  .ointro{font-size:.95rem; color:#3b3a37; margin:0 0 6px;}
+  .live .who{display:block; font:700 .68rem/1 'Karla',sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--grey); margin:0 0 6px;}
+  .live .task{font-size:.9rem; line-height:1.5;}
+  .live .watch{display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--row-line); font-size:.88rem; color:var(--teal);}
+  .live.open .watch{display:block;} .live.open .hint{display:none;}
+  @media print{ .hint, .move .why, .move .mark, .live .watch{display:none !important;} }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="chrome">
+    <a class="lockup" href="../index.html" title="The library">
+      <span class="tile"><svg viewBox="8 28 104 64" width="20" height="12" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"/></svg></span>
+      <span class="hub-pair"><span class="word">Connect</span><span class="hub-word">Lite</span></span>
+    </a>
+    <div class="role" id="roleLabel">Trainee</div>
+  </div>
+  <a class="back" href="../index.html">Back to the library</a>
+
+  <header class="header">
+    <p class="eyebrow">Input session · CELTA</p>
+    <h1>Giving feedback on tasks</h1>
+    <p class="len"><span class="lenpill">45 minutes</span></p>
+    <p class="sub">Not error correction; this is feedback on whether students completed the task itself: did they get the right answer, finish the discussion, reach a decision. Skipping this stage means students never find out if the activity actually worked.</p>
+  </header>
+
+  <nav class="sticky-nav" id="stickyNav">
+    <a href="#s1">1 · Lead-in</a>
+    <a href="#s2">2 · Method to task</a>
+    <a href="#s3">3 · Weak moves</a>
+    <a href="#s4">4 · The order</a>
+    <a href="#s5">5 · Run it live</a>
+    <a href="#s6">6 · Wrap-up</a>
+    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>
+    <button class="print-btn" onclick="window.print()">Print the handout</button>
+  </nav>
+
+  <section id="s1" data-n="1">
+    <div class="card" data-n="1">
+      <div class="stage-title">Lead-in <span class="badge">5 minutes</span></div>
+      <p class="lead">Think of the last TP you watched. After a task finished, how did the teacher check it, and how long did it take? In pairs: was there a moment where students never found out whether they were right?</p>
+      <p class="quiet">Two minutes in pairs, then three answers from the room. No feedback from the trainer yet: the session supplies it.</p>
+    </div>
+  </section>
+
+  <section id="s2" data-n="2">
+    <div class="card" data-n="2">
+      <div class="stage-title">Match the task to its feedback method <span class="badge">10 minutes</span></div>
+      <p class="lead">Every task type needs a different way of checking answers. Click each task for the fastest, clearest way to close the loop.</p>
+      <div id="methods"></div>
+    </div>
+  </section>
+
+  <section id="s3" data-n="3">
+    <div class="card" data-n="3">
+      <div class="stage-title">Spot the weak feedback move <span class="badge">13 minutes</span></div>
+      <p class="lead">Same task, five ways a teacher might run feedback on it. Pick each one to find out whether it works.</p>
+      <div class="task-box"><b>Task:</b> pairs read a short text and answer five true/false comprehension questions.</div>
+      <div id="moves"></div>
+    </div>
+  </section>
+
+  <section id="s4" data-n="4">
+    <div class="card" data-n="4">
+      <div class="stage-title">The order that actually works <span class="badge">7 minutes</span></div>
+      <div id="order"></div>
+    </div>
+  </section>
+
+  <section id="s5" data-n="5">
+    <div class="card" data-n="5">
+      <div class="stage-title">Run it live <span class="badge">8 minutes</span></div>
+      <p class="lead">In threes: one teacher, two students. The students do the task for 90 seconds, then the teacher runs feedback in under a minute, method matched to the task. Swap roles. Click a card to take it.</p>
+      <div id="live"></div>
+    </div>
+  </section>
+
+  <section id="s6" data-n="6">
+    <div class="card" data-n="6">
+      <div class="stage-title">Wrap-up <span class="badge">2 minutes</span></div>
+      <p class="lead">One line each, round the room: the feedback method you will use in your next TP, and for which task.</p>
+    </div>
+  </section>
+
+  <section id="trainer" class="trainer-notes" data-slug="giving-feedback-on-tasks-short" hidden>
+    <div class="card">
+      <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>
+      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>
+    </div>
+  </section>
+
+  <footer class="hub-brand-foot">
+    <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
+    <span>designed and built by <b>Ramy</b></span>
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+const METHODS = [
+  ['True/false or multiple-choice questions', 'Read out the statement, ask for a show of hands or a quick chorus answer: fast, and you can see who’s unsure without cold-calling anyone.'],
+  ['Open discussion task (no single right answer)', 'Whole-class round-up: ask a few pairs what they concluded and why, rather than an “answer key”: the goal is comparing reasoning, not marking right/wrong.'],
+  ['Ordering or matching task', 'Put the correct order on the board (or reveal an answer slide) and have students self-check against it: faster than going through it item by item out loud.'],
+  ['Writing task (a short paragraph or email)', 'Peer feedback first using a simple checklist, then a few models shared with the class, not marking every paper live in the lesson.'],
+  ['Information-gap or role-play', 'Ask a couple of pairs to briefly report what they found out: checks the task worked without restaging the whole role-play for the class.']
+];
+const MOVES = [
+  ['Nominate one pair to read out all five answers while everyone else listens.', false, 'Only checks one pair’s work: the rest of the room never finds out if they were right.'],
+  ['Put the answers on the board and have pairs self-check, then ask who got all five.', true, 'Every pair checks their own work directly, and the quick show of hands tells you where confusion is, fast.'],
+  ['Ask “does everyone understand?” and move on.', false, 'This checks nothing: it’s a closed question nobody ever answers honestly.'],
+  ['Go through the answers together, but ask a different pair to justify each one from the text.', true, 'Slower, but it surfaces reading strategy, not just the answer: worth it if you have the time.'],
+  ['Collect every pair’s answers to mark after the lesson, say nothing in class.', false, 'Feedback that arrives after the lesson has ended can’t inform anything that happens in it.']
+];
+const ORDER_CORRECT = ['Students finish the task', 'Check answers as a group (method matched to task type)', 'Address any answers that came up wrong', 'Move to language focus or the next stage'];
+const ORDER_SHUFFLED = ['Address any answers that came up wrong', 'Students finish the task', 'Move to language focus or the next stage', 'Check answers as a group (method matched to task type)'];
+const LIVE_CARDS = [
+  ['Students match six phrasal verbs to their meanings.', 'Did the answers go on the board so everyone self-checked, or did one student read them out while the rest waited?'],
+  ['Pairs decide the three most useful apps for learning English.', 'Open task: did the teacher compare reasoning across pairs, or try to find a “right answer”?'],
+  ['Students listen and note four prices from a short recording.', 'Fast method wanted: chorus or hands. Did the teacher also play the extract again for any price the room split on?']
+];
+
+// ---------- 2. Method to task ----------
+$('methods').innerHTML = METHODS.map(m => '<div class="reveal-card" onclick="this.classList.toggle(\'open\')"><div class="q">' + esc(m[0]) + '</div><div class="a">' + esc(m[1]) + '</div></div>').join('');
+
+// ---------- 3. Spot the weak move: one pick judges it, and it stays judged ----------
+$('moves').innerHTML = MOVES.map((m, i) => '<button type="button" class="move" data-m="' + i + '"><span class="top"><span>' + esc(m[0]) + '</span></span><span class="hint">Click to judge it</span></button>').join('');
+$('moves').addEventListener('click', e => {
+  const b = e.target.closest('[data-m]'); if (!b || b.disabled) return;
+  const m = MOVES[+b.dataset.m]; b.disabled = true; b.classList.add(m[1] ? 'good' : 'bad');
+  b.innerHTML = '<span class="top"><span>' + esc(m[0]) + '</span><span class="mark">' + (m[1] ? '✓ Works' : '✗ Weak') + '</span></span><span class="why">' + esc(m[2]) + '</span>';
+});
+
+// ---------- 4. The order (Connect's OrderExercise): only the right next stage locks in ----------
+function orderEx(el, correct, shuffled, intro){
+  const picked = [];
+  function draw(){
+    el.innerHTML = '<p class="ointro">' + intro + '</p><div class="ox">'
+      + shuffled.map((l, i) => { const n = picked.indexOf(l); return '<button type="button" class="order-line' + (n > -1 ? ' done' : '') + '" data-i="' + i + '"><span class="num">' + (n > -1 ? n + 1 : '?') + '</span><span>' + esc(l) + '</span></button>'; }).join('')
+      + '</div><p class="ostat">' + (picked.length === correct.length ? 'All ' + correct.length + ' in order: that’s the staging.' : picked.length + ' of ' + correct.length + ' placed: click the one that comes next.') + '</p>';
+  }
+  el.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (!b) return; const l = shuffled[+b.dataset.i]; if (picked.indexOf(l) === -1 && correct[picked.length] === l) { picked.push(l); draw(); } });
+  draw();
+}
+orderEx($('order'), ORDER_CORRECT, ORDER_SHUFFLED, 'Click each stage in the order you would run it.');
+
+// ---------- 5. Run it live: take a card to see what to watch for ----------
+$('live').innerHTML = LIVE_CARDS.map((c, i) => '<div class="reveal-card live" onclick="this.classList.toggle(\'open\')"><span class="who">Task card ' + (i + 1) + '</span><div class="task">' + esc(c[0]) + '</div><span class="hint">Click to take this card</span><div class="watch"><b>Watch for:</b> ' + esc(c[1]) + '</div></div>').join('');
+</script>
+<script src="../../hub-store.js"></script>
+<script src="../../hub-notebook.js"></script>
+<script src="../../hub-rec.js"></script>
+<script src="../../hub-ask.js"></script>
+<script>
+(function(){
+  if (window.InputLib) InputLib.gate();
+  if (!window.HubStore || !HubStore.isTutor()) return;
+  HubStore.ping().then(function(r){
+    if (!r || !r.tutor) return;
+    document.body.classList.add('tutor');
+    var s = document.getElementById('trainer'); if (s) s.hidden = false;
+    /* the notes come from the store, for a tutor's link only (26 Oct 2026) */
+    var tb = document.getElementById('tnBody');
+    if (s && tb && !tb.innerHTML.trim() && s.dataset.slug) {
+      tb.innerHTML = '<p>Loading the trainer notes…</p>';
+      HubStore.call({ op: 'trainerNotes', slug: s.dataset.slug }).then(function(x){
+        tb.innerHTML = (x && x.html) || '<p>No trainer notes for this session yet.</p>';
+      }, function(){ tb.innerHTML = '<p>The trainer notes could not be loaded. Check the connection and open the page again.</p>'; });
+    }
+    var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) a.hidden = false;
+    var b = document.querySelector('.print-btn'); if (b) b.textContent = 'Print with the trainer notes';
+    var r = document.getElementById('roleLabel'); if (r) r.textContent = 'Tutor';
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+# Connect's 45-minute "Guided discovery — taught the way you'll teach it" (src/app/input-sessions/sessions/guided-discovery.tsx),
+# on Lite's desk. Content word for word, American spelling; the reveals, the term match, the answer key, the staging example
+# and the stage order work as they do on Connect. The debrief (the stage order) is staff-only on Connect, so here it shows
+# only on a tutor's link (body.tutor, set by the gate at the foot of the page).
+TITLE = 'Guided discovery: taught the way you’ll teach it'
+LONG = 'guided-discovery-vs-ppp'
+SUB = ('This session is staged exactly like the lesson framework it teaches. Do the tasks first: naming what happened is what the '
+       'debrief is for.')
+NAV = [('s1', '1 · Lead-in'), ('s2', '2 · What is guided discovery?'), ('s3', '3 · Match the terms'), ('s4', '4 · Predict the staging'),
+       ('s5', '5 · Read the text'), ('s6', '6 · Detail questions'), ('s7', '7 · Debrief')]
+
+NOTES = '''<h4>Running this session</h4>
+<p>Don’t name “guided discovery” until the debrief: run stages 1 to 4 as if this were a real grammar lesson, not a session about one. Elicit the rule from the room; don’t confirm it until they’ve stated it themselves.</p>
+<h4>Watch for the confirm-then-restate habit</h4>
+<p>Some trainees elicit the rule, then explain it again anyway. The whole point is that the class states it: resist restating it for them.</p>
+<h4>Only for grammar or lexis</h4>
+<p>Guided discovery doesn’t work for writing or speaking: flag that limit explicitly during the debrief.</p>
+<h4>If the room goes quiet at Stage 2</h4>
+<p>Prompt with a CCQ of your own rather than filling the silence with the answer: it’s the same skill they’re about to teach with.</p>'''
+
+BODY = r'''
+  <section id="s1" data-n="1">
+    <div class="card" data-n="1">
+      <div class="stage-title">Lead-in <span class="badge">2 minutes</span></div>
+      <p class="lead">Quick show of hands: who worked out a grammar rule for themselves at school, rather than being told it? Did it stick better?</p>
+    </div>
+  </section>
+
+  <section id="s2" data-n="2">
+    <div class="card" data-n="2">
+      <div class="stage-title">What is guided discovery? <span class="badge">3 minutes</span></div>
+      <div class="reveal-card hero" onclick="this.classList.toggle('open')"><div class="q">What is guided discovery?</div><div class="hint">Click to reveal</div><div class="a">Students work out a rule themselves, from examples, guided by questions.</div></div>
+    </div>
+  </section>
+
+  <section id="s3" data-n="3">
+    <div class="card" data-n="3">
+      <div class="stage-title">Match the terms <span class="badge">5 minutes</span></div>
+      <div id="match"></div>
+    </div>
+  </section>
+
+  <section id="s4" data-n="4">
+    <div class="card" data-n="4">
+      <div class="stage-title">Stage 2 · Predict the staging <span class="badge">3 minutes</span></div>
+      <p class="lead">How do you think a guided discovery lesson should be staged?</p>
+      <p class="quiet">Discuss with your partner, about a minute, no wrong answers yet.</p>
+    </div>
+  </section>
+
+  <section id="s5" data-n="5">
+    <div class="card" data-n="5">
+      <div class="stage-title">Stage 3 · Read the text and check if your ideas were right or wrong <span class="badge">10 minutes</span></div>
+      <div class="text-block">
+        <p class="tb-title">Staging a guided discovery lesson</p>
+        <p>A guided discovery lesson starts with the target language already sitting inside a context (a short text, a story, a listening), never on the board in isolation. From that context the teacher lifts one or two marker sentences that contain the target form. Students don’t get a rule yet; instead the teacher asks concept checking questions (CCQs), simple questions that test understanding of <b>meaning</b> without ever naming the grammar. From there the class works together to complete a gapped rule about meaning and use: the teacher elicits it, doesn’t state it. Only once meaning is secure does the lesson turn to <b>form</b>, usually as a short board summary students copy down. The teacher then drills the sentence, marking stress and any weak forms or connected speech: the <b>pronunciation</b> stage, easy to skip but not optional. Controlled and then freer practice follow, ideally back inside a context close to the original one. Meaning, form, pronunciation (MFP) has to be covered for any target item, whichever framework is teaching it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="s6" data-n="6">
+    <div class="card" data-n="6">
+      <div class="stage-title">Stage 4 · Detail questions <span class="badge">10 minutes</span></div>
+      <p class="quiet">More time now: answer these from the text, then check with your partner.</p>
+      <div id="details"></div>
+      <div id="key"></div>
+      <div id="staging"></div>
+    </div>
+  </section>
+
+  <section id="s7" data-n="7" class="tutor-only">
+    <div class="card" data-n="7">
+      <div class="stage-title">Debrief: order the stages <span class="badge">10 minutes</span></div>
+      <div id="order"></div>
+    </div>
+  </section>
+'''
+
+STYLE = r'''
+  .tutor-only{display:none !important;} body.tutor .tutor-only{display:block !important;}
+  body:not(.tutor) nav.sticky-nav a[href="#s7"]{display:none;}
+  .quiet{font-size:.88rem; font-style:italic; color:var(--grey); margin:0 0 10px;}
+  .reveal-card .hint{margin-top:4px;} .reveal-card.open .hint{display:none;}
+  .reveal-card.hero{max-width:520px; padding:18px 20px;}
+  .reveal-card.hero .q{font-family:'Newsreader',Georgia,serif; font-size:1.3rem; line-height:1.25;}
+  .text-block p{margin:0 0 10px; line-height:1.6;} .text-block p:last-child{margin-bottom:0;}
+  .text-block .tb-title{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem; color:var(--ink);}
+  .mhead{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; font-size:.9rem;}
+  .mhead span{color:var(--grey);}
+  button.pill{font-family:'Karla',sans-serif; text-align:left; width:100%;}
+  button.pill.term{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:.98rem;}
+  button.pill.matched{cursor:default;}
+  button.order-line{width:100%; justify-content:flex-start; text-align:left; font-family:'Karla',sans-serif; color:var(--ink);}
+  .order-line .num{min-width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; text-align:center; background:var(--box); color:var(--grey); font-size:.8rem; flex:none;}
+  .order-line.done{border-color:var(--teal); background:color-mix(in oklab, var(--teal) 7%, var(--paper)); cursor:default;}
+  .order-line.done .num{background:var(--teal); color:#F0EEE9;}
+  .ostatus{font-size:.88rem; color:var(--grey); margin:4px 0 0;}
+  .ohead{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.15rem; margin:0 0 4px;}
+  .ohead + p{font-size:.88rem; color:var(--grey); margin:0 0 10px;} .ohead + p b{color:var(--ink);}
+  .btn-row{margin-top:14px;}
+  .keyblock{margin-top:14px; border-top:1px solid var(--row-line); padding-top:12px;}
+  .keyhead{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+  .keyhead .lbl{font-size:.74rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+  .keyhead .btn-row{margin:0;}
+  .keypart{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 16px; margin-top:10px;}
+  .keypart h4{margin:0 0 6px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem;}
+  .krow{display:grid; grid-template-columns:150px 1fr; gap:10px; padding:5px 0; border-bottom:1px solid var(--row-line); font-size:.88rem; line-height:1.45;}
+  .krow:last-child{border-bottom:0;} .krow b{font-family:'Newsreader',Georgia,serif;} .krow span{color:var(--grey);}
+  .krow.tf{grid-template-columns:1fr;} .krow.tf span{font-style:italic;}
+  @media(max-width:560px){ .krow{grid-template-columns:1fr; gap:2px;} }
+  .stagebox{margin-top:14px; border-top:1px solid var(--row-line); padding-top:12px;}
+  .stagebox h4{margin:12px 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem;}
+  table.grid td:nth-child(2){white-space:nowrap;}
+  @media print{ .keyblock{display:block;} .stagebox .btn{display:none;} }
+'''
+
+SCRIPT = r'''
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const reveal = (q, a) => '<div class="reveal-card" onclick="this.classList.toggle(\'open\')"><div class="q">' + esc(q) + '</div><div class="hint">Click to reveal</div><div class="a">' + esc(a) + '</div></div>';
+
+const TERMS = [
+  ['Marker sentence', 'An example sentence, taken from context, that contains the target language.'],
+  ['CCQ', 'A concept checking question: checks meaning without naming the grammar.'],
+  ['Inductive', 'Examples come first, the rule comes last, worked out by the students.'],
+  ['Elicit', 'Draw an answer out of students rather than giving it to them.'],
+  ['MFP', 'Meaning, form, pronunciation: the three things any target language item needs covered.']
+];
+const DETAILS = [
+  ['The teacher gives the rule before students see any examples.', 'False: examples come first.'],
+  ['Marker sentences should come from a context students have already met.', 'True.'],
+  ['CCQs check meaning, not form or pronunciation.', 'True.'],
+  ['Guided discovery skips form and goes straight to practice.', 'False: form is elicited too, usually as a board summary.'],
+  ['Pronunciation (stress, weak forms, connected speech) is covered in guided discovery too.', 'True: usually via drilling once form is on the board.'],
+  ['Practice should ideally return to something close to the original context.', 'True.']
+];
+const CORRECT_ORDER = ['Pre-teach terms', 'Predict the staging', 'Read the text, check ideas', 'Detail check'];
+const SHUFFLED = ['Read the text, check ideas', 'Pre-teach terms', 'Detail check', 'Predict the staging'];
+const EXAMPLE_TITLE = 'Example lesson: past continuous for interrupted actions';
+const EXAMPLE_ROWS = [
+  ['Context', '3′', 'Ss read a short text: two colleagues each had something interrupt them mid-action last week.'],
+  ['Marker sentences', '2′', '“As he was traveling on a plane, the door came open.” / “Her car caught fire while she was driving.”'],
+  ['CCQs', '5′', 'Same time? Which action started first? Long or short action?'],
+  ['Complete the rule', '5′', 'Ss complete a gapped rule in pairs, T elicits and confirms as a class.'],
+  ['Form + pronunciation', '5′', 'Board summary of positive/negative/question forms; T drills, marking weak “was/were”.'],
+  ['Controlled practice', '10′', 'Gap-fill using both tenses, checked in pairs.'],
+  ['Freer practice', '10′', 'Ss tell their own “interrupted” story to a partner.']
+];
+
+// ---------- match each term to its meaning (Connect's MatchTermsExercise: right column reversed, a wrong pair flashes red and clears) ----------
+function matchTerms(el, terms){
+  let selL = null, selR = null, matched = new Set(), shake = [];
+  const cls = (i, sel, side) => matched.has(i) ? ' matched' : (shake[side] === i ? ' wrong' : sel === i ? ' selected' : '');
+  function draw(){
+    el.innerHTML = '<div class="mhead"><b>Match each term to its meaning</b><span>' + matched.size + ' of ' + terms.length + ' matched</span></div>'
+      + '<div class="pill-match-wrap"><div class="pill-col">' + terms.map((t, i) => '<button type="button" class="pill term' + cls(i, selL, 0) + '" data-l="' + i + '">' + esc(t[0]) + '</button>').join('') + '</div>'
+      + '<div class="pill-col">' + terms.map((_, i) => terms.length - 1 - i).map(i => '<button type="button" class="pill' + cls(i, selR, 1) + '" data-r="' + i + '">' + esc(terms[i][1]) + '</button>').join('') + '</div></div>';
+  }
+  function tryMatch(){
+    if (selL === null || selR === null) return;
+    if (selL === selR) { matched.add(selL); selL = selR = null; }
+    else { shake = [selL, selR]; setTimeout(() => { selL = selR = null; shake = []; draw(); }, 400); }
+  }
+  el.addEventListener('click', e => {
+    if (shake.length) return;
+    const l = e.target.closest('[data-l]'), r = e.target.closest('[data-r]');
+    if (l && !matched.has(+l.dataset.l)) { selL = +l.dataset.l; tryMatch(); draw(); }
+    if (r && !matched.has(+r.dataset.r)) { selR = +r.dataset.r; tryMatch(); draw(); }
+  });
+  draw();
+}
+
+// ---------- put the stages back in order (Connect's OrderExercise: only the correct next one locks in) ----------
+function orderEx(el, correct, shuffled, title, intro){
+  let picked = [];
+  function draw(){
+    const done = picked.length === correct.length;
+    el.innerHTML = '<p class="ohead">' + title + '</p><p>' + intro + '</p>'
+      + shuffled.map(lbl => { const idx = picked.indexOf(lbl);
+          return '<button type="button" class="order-line' + (idx !== -1 ? ' done' : '') + '" data-o="' + esc(lbl) + '"><span class="num">' + (idx !== -1 ? idx + 1 : '?') + '</span><span>' + esc(lbl) + '</span></button>'; }).join('')
+      + '<p class="ostatus">' + (done ? 'All ' + correct.length + ' in order: that’s the staging.' : picked.length + ' of ' + correct.length + ' placed: click the one that comes next.') + '</p>';
+  }
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-o]'); if (!b) return;
+    const lbl = b.dataset.o;
+    if (picked.indexOf(lbl) === -1 && correct[picked.length] === lbl) { picked.push(lbl); draw(); }
+  });
+  draw();
+}
+
+// ---------- the answer key: hidden, then a handout to keep ----------
+function answerKey(el, terms, details){
+  let open = false;
+  function draw(){
+    if (!open) { el.innerHTML = '<div class="btn-row"><button type="button" class="btn" data-k="open">Reveal answer key: save or print to keep</button></div>'; return; }
+    el.innerHTML = '<div class="keyblock"><div class="keyhead"><span class="lbl">Answer key: handout, to keep</span><div class="btn-row"><button type="button" class="btn" data-k="hide">Hide</button><button type="button" class="btn" data-k="print">Print</button></div></div>'
+      + (terms.length ? '<div class="keypart"><h4>Terms</h4>' + terms.map(t => '<div class="krow"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>').join('') + '</div>' : '')
+      + (details.length ? '<div class="keypart"><h4>True or false</h4>' + details.map(d => '<div class="krow tf"><b>' + esc(d[0]) + '</b><span>' + esc(d[1]) + '</span></div>').join('') + '</div>' : '')
+      + '</div>';
+  }
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { window.print(); return; }
+    draw();
+  });
+  draw();
+}
+
+// ---------- the staging example ----------
+function stagingEx(el, title, rows){
+  let open = false;
+  function draw(){
+    el.innerHTML = '<div class="stagebox"><div class="btn-row"><button type="button" class="btn" data-s>' + (open ? 'Hide staging example' : 'See staging example') + '</button></div>'
+      + (open ? '<h4>' + esc(title) + '</h4><table class="grid"><thead><tr><th>Stage</th><th>Time</th><th>Procedure</th></tr></thead><tbody>'
+          + rows.map(r => '<tr><td><b>' + esc(r[0]) + '</b></td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + '</td></tr>').join('') + '</tbody></table>' : '') + '</div>';
+  }
+  el.addEventListener('click', e => { if (e.target.closest('[data-s]')) { open = !open; draw(); } });
+  draw();
+}
+
+matchTerms($('match'), TERMS);
+$('details').innerHTML = DETAILS.map(d => reveal(d[0], d[1])).join('');
+answerKey($('key'), TERMS, DETAILS);
+stagingEx($('staging'), EXAMPLE_TITLE, EXAMPLE_ROWS);
+orderEx($('order'), CORRECT_ORDER, SHUFFLED, 'Debrief: put the stages back in order',
+  'Click each stage in the order you just experienced it. This is a <b>loop input</b>: the session modeled the framework instead of only describing it.');
+'''
