@@ -68,8 +68,21 @@
           if (parts.length) out.push({ name: ((d.querySelector('h3') || {}).textContent || '').trim(), parts: parts, level: lv ? lv[1] : '', levelName: sec.querySelector('h2').textContent.trim() });
         });
       });
-      /* demo lessons only (Ramy, 15 Nov 2026: the input sessions came out of the share box again; the timetable gives them) */
-      LIB = out; then();
+      /* THE INPUT SESSIONS TOO (Ramy, 15 Nov 2026: "all the input sessions will have a share with option"): every session on the
+         library's shelf, and the short ones from library.js's own list, each as one part, for the trainees only: to share one
+         early, or one the timetable does not have. Out and back in the same evening (Ramy, 15 Nov 2026: "it's the only way we can
+         actually share something early"). */
+      return fetch('input-sessions/', { credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (h2) {
+        var d2 = new DOMParser().parseFromString(h2, 'text/html'), base = location.origin + '/input-sessions/';
+        d2.querySelectorAll('#connectCard a.s[href]').forEach(function (a) {
+          var href = a.getAttribute('href'); if (/demo-lessons/.test(href)) return;
+          out.push({ name: ((a.querySelector('h3') || {}).textContent || '').trim(), session: true, level: '', levelName: 'Input session', parts: [{ label: 'The session', url: new URL(href, base).href, page: true, noStudents: true }] });
+        });
+        return fetch('input-sessions/library.js', { credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (js) {
+          var m = js.match(/var SHORTS = (\[[\s\S]*?\n  \]);/), list = []; try { list = m ? (new Function('return ' + m[1]))() : []; } catch (e) {}
+          list.forEach(function (x) { out.push({ name: x[1], session: true, level: '', levelName: 'Input session \u00b7 ' + x[2] + ' minutes', parts: [{ label: 'The session', url: base + x[0] + '/', page: true, noStudents: true }] }); });
+        });
+      }).then(function () { LIB = out; then(); }, function () { LIB = out; then(); });
     }, function () { LIB = []; then(); });
   };
   var write = function (list) { try { localStorage.setItem(KEY, JSON.stringify(list || [])); } catch (e) {} };
@@ -114,7 +127,8 @@
               + '<form class="shelf-form" data-kind="' + ADD + '" data-mode="' + mode + '">'
               + (mode === 'lib'
                   ? (LIB === null ? '<span class="shelf-hint">Opening the library\u2026</span>' : LIB.length
-                      ? '<select name="lib" required><option value="">Choose a demo lesson</option>' + LIB.map(function (x, i) { return '<option value="' + i + '"' + (String(i) === libSel ? ' selected' : '') + '>' + esc(x.name) + ' \u00b7 ' + esc(x.levelName) + '</option>'; }).join('') + '</select>'
+                      ? '<select name="lib" required><option value="">Choose a demo lesson or an input session</option>' + [['Demo lessons', false], ['Input sessions', true]].map(function (g) {
+                          return '<optgroup label="' + g[0] + '">' + LIB.map(function (x, i) { return !!x.session !== g[1] ? '' : '<option value="' + i + '"' + (String(i) === libSel ? ' selected' : '') + '>' + esc(x.name) + (g[1] ? (/minutes/.test(x.levelName) ? ' \u00b7 ' + esc(x.levelName.replace(/^Input session \u00b7 /, '')) : '') : ' \u00b7 ' + esc(x.levelName)) + '</option>'; }).join('') + '</optgroup>'; }).join('') + '</select>'
                         + (libSel === '' ? '' :
                         '<div class="shelf-parts"><span class="hd"></span><span class="hd">Students</span><span class="hd">Trainees</span><span class="hd"></span>'
                         + ((LIB[+libSel] || {}).parts || []).map(function (w, i) {
@@ -205,12 +219,12 @@
     /* and when the tile's title names a library lesson ("Demo lesson 1: Speed flat-mating"), that lesson comes picked (Ramy, 15 Nov 2026:
        "how does Lite know which demo to share?"); a title that names none leaves the choice to the tutor */
     var norm = function (t) { return String(t || '').toLowerCase().replace(/[\u2018\u2019']/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); };
-    var openLib = function (title) {
+    var openLib = function (title, slug) {
       if (!(canAdd && canAdd.length)) return; open = ADD; mode = 'lib'; note = ''; libSel = ''; draw();
-      loadLib(function () { var t = ' ' + norm(title) + ' '; (LIB || []).some(function (x, i) { var n = norm(x.name); if (n && t.indexOf(' ' + n + ' ') !== -1) { libSel = String(i); return true; } return false; }); draw(); });
+      loadLib(function () { var t = ' ' + norm(title) + ' '; (LIB || []).some(function (x, i) { var n = norm(x.name); if (slug && !x.session && (x.parts || []).some(function (w) { return w.page && w.url.indexOf('/' + slug + '/') !== -1; })) { libSel = String(i); return true; } if (n && !x.session && t.indexOf(' ' + n + ' ') !== -1) { libSel = String(i); return true; } return false; }); draw(); });
       host.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
-    document.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('[data-share-demo]'); if (!a) return; e.preventDefault(); openLib(a.getAttribute('data-share-demo')); });
+    document.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('[data-share-demo]'); if (!a) return; e.preventDefault(); openLib(a.getAttribute('data-share-demo'), a.getAttribute('data-share-lib') || ''); });
     return { draw: draw, openLib: openLib };
   };
 })();
