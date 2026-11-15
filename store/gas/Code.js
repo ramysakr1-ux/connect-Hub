@@ -460,7 +460,7 @@ function settleVersions_(op) {
    demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
 /* What the trainee view (Maya, v224) may call: reads a trainee's pages make, and nothing that writes, mails or uploads. */
 var TEMPLATE_READS_ = { boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
-  passInfo: 1, peerSheets: 1, questions: 1, bookings: 1, rehearsalNotes: 1, ivClaims: 1 };
+  passInfo: 1, peerSheets: 1, questions: 1, bookings: 1, rehearsalNotes: 1, ivClaims: 1, trainerNotes: 1 };
 var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt',
   /* the emergency demo's book pages, English File Upper-intermediate 3rd edn, File 5A (12 Nov 2026): shown to course links only */
   '1DUl-xuKBH510QWd1gtT-i4e20NSD41VD', '1UA4nvhOa5CqcQbmTRl_JQKSNBe9JoEo0', '1D7HvcGLvJlv6GDAVidoDhIt6H-qI9KeX', '1CXseksocfa-0Vquuu88YAA3ZyQY8Npfi', '15i6klfDzf4EhsOJeZRZfNHugDYHspacT', '1zugnIES0HPB78LGxI10WxM0cRv_oD_QJ', '1EpSnAPJIXiny-YoAbpUQOIDpxGdmJXrm',
@@ -1723,13 +1723,13 @@ case 'inbox': {
                                           charge of them -- never a tutor. Name and address only. */
                                        volunteerContact: (vset.volunteerContact && vset.volunteerContact.email) ? { name: vset.volunteerContact.name || '', email: vset.volunteerContact.email } : null },
                            timetable: timetableFor_(courseRead_(course.id, 'timetable'), false),
-                           shared: courseRead_(course.id, 'shared') } };
+                           shared: (courseRead_(course.id, 'shared') || []).filter(function (x) { return x && x.to !== 'trainees'; }) } };   /* v243: what is for the trainees only is not sent */
       }
       /* The course's own id rides along for a tutor: the register mints a
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id, me) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
+      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: sharedFor_(course.id, tutor || assessor), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id, me) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
       if (tutor) boot.course.courseFeedback = courseFeedbackFor_(course.id);
       /* v205: the versions of the three records a page writes whole, so its next write can say which one it started from */
       if (tutor) boot.course.revs = courseRead_(course.id, 'revs') || {};
@@ -1868,7 +1868,7 @@ case 'inbox': {
     // ---- course-level, readable by all on the course, written by tutors ----
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
-      var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
+      var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: sharedFor_(course.id, tutor || assessor), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
       if (tutor) cres.courseFeedback = courseFeedbackFor_(course.id);
       /* briefs: every version of each assignment brief, by its key, so the marking page opens the one an attempt answered (R30, 31 Oct 2026) */
       if (tutor || assessor) cres.briefs = courseRead_(course.id, 'briefs') || null;
@@ -2036,11 +2036,16 @@ case 'inbox': {
                    /* the class it was made for ("A2"), from the plan, so a volunteer sees their
                       own class's handouts and not the other level's (Fable read, 26 Oct 2026) */
                    level: String(req.level || '').slice(0, 30),
-                   kind: String(req.kind || '').slice(0, 20) };
+                   kind: String(req.kind || '').slice(0, 20),
+                   /* WHO SEES IT (v241, 15 Nov 2026; Ramy: "the PDF ... with the students, but then the interactive one with the
+                      notes, with the trainees"): 'students' (the volunteers' page only), 'trainees' (the course only), or both;
+                      notes: the trainees may read the page's teaching notes. A student never gets the notes. */
+                   to: /^(students|trainees)$/.test(String(req.to || '')) ? String(req.to) : '',
+                   notes: !!req.notes && String(req.to || '') !== 'students' };
       /* One row per link: sharing the same file twice is a slip, not two
          handouts, and a volunteer should not see it listed twice. */
       return { shared: courseUpdate_(course.id, 'shared', function (list) {
-        var out = list.filter(function (x) { return x && x.url !== item.url; });
+        var out = list.filter(function (x) { return x && !(x.url === item.url && String(x.to || '') === item.to); });   /* one row per link and audience */
         out.push(item);
         return out.length > 120 ? out.slice(out.length - 120) : out;
       }) };
@@ -2550,8 +2555,13 @@ case 'inbox': {
        TrainerNotes.js, generated by input-sessions/_house.py, and a session page
        asks for its own after the tutor ping. Tutors only. */
     case 'trainerNotes': {
-      requireTutor_(tutor);
       var tnSlug = String(req.slug || '').replace(/[^a-z0-9-]/g, '').slice(0, 80);
+      /* a trainee reads a page's teaching notes only where a tutor shared that page with the trainees, notes included (v241) */
+      if (!tutor) {
+        if (!me || assessor || !course) throw new Error('Tutors only');
+        var tnOk = (courseRead_(course.id, 'shared') || []).some(function (x) { return x && x.notes && x.to !== 'students' && x.kind !== 'materials' && String(x.url || '').replace(/index\.html$/, '').replace(/\/$/, '').split('/').pop() === tnSlug; });
+        if (!tnOk) throw new Error('Tutors only');
+      }
       var tnAll = (typeof TRAINER_NOTES_ === 'object' && TRAINER_NOTES_) || {};
       return { html: tnAll[tnSlug] || '' };
     }
@@ -3051,6 +3061,18 @@ case 'inbox': {
         return reg;
       });
       return { notify: nOn };
+    }
+    /* A NOTE TO THE VOLUNTEER STUDENTS (v241, 15 Nov 2026; Ramy: "can I make an announcement? Let's say to the volunteer
+       students"). A tutor's short message, for one class or every class, kept on the share list as kind 'note' (no link),
+       shown at the top of the students' own page. Taken back like any share (unshareMaterial). Not an email. */
+    case 'volunteerNote': {
+      requireTutor_(tutor);
+      if (!course) throw new Error('This link is not on a course');
+      var snText = String(req.text || '').replace(/\s+\n/g, '\n').trim().slice(0, 400);
+      if (!snText) throw new Error('Write the note first');
+      var snItem = { id: newKey_().slice(0, 12), at: pinnedAt_(course, req.at), kind: 'note', name: 'Note', url: '', text: snText,
+                     by: String(req.by || '').slice(0, 80), level: String(req.level || '').slice(0, 30) };
+      return { shared: courseUpdate_(course.id, 'shared', function (list) { return list.concat([snItem]); }) };
     }
     case 'unshareMaterial': {
       if (!course) throw new Error('This link is not on a course');
@@ -4410,6 +4432,13 @@ function classOn_(set, group, date, tt) {
    stage of the course"). A trainee gets the students at the level of the class their group teaches today; a student the
    register has no level for yet is shown to nobody until it has one (Ramy: "it shouldn't show at all"). A course with no
    classes shows everyone, as before. */
+/* the share list as a reader gets it (v243): tutors and the assessor all of it; a trainee without what is for the students
+   only and without the tutors' notes to the students */
+function sharedFor_(courseId, staff) {
+  var list = courseRead_(courseId, 'shared');
+  if (staff || !Array.isArray(list)) return list;
+  return list.filter(function (x) { return x && x.to !== 'students' && x.kind !== 'note'; });
+}
 function volunteerNamesFor_(courseId, me) {
   var reg = courseRead_(courseId, 'volunteers') || {};
   var all = (reg.students || []).filter(function (x) { return x && x.name; });

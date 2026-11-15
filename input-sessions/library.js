@@ -237,6 +237,19 @@ window.InputLib = (function(){
         return;
       }
       if (!H || H.isTutor() || H.isAssessor() || !H.token()) { reveal(); return; }
+      /* A PAGE THE TUTORS SHARED (Ramy, 15 Nov 2026): a demo lesson put on the course from the share box opens for the trainees,
+         though the timetable gives it as a demo, not as an input session */
+      var sh = rd('connect_shared_v1') || [];
+      var mineShared = sh.filter(function(x){ return x && x.url && x.kind !== 'materials' && x.to !== 'students' && String(x.url).replace(/index\.html$/, '').replace(/\/$/, '').split('/').pop() === slug; });
+      if (mineShared.length) {
+        reveal();
+        /* shared with the teaching notes: the trainee reads them too (the store checks the same share) */
+        if (mineShared.some(function(x){ return x.notes; }) && H && H.call) {
+          var sec = document.getElementById('trainer'), tb = document.getElementById('tnBody');
+          if (sec && tb) H.call({ op: 'trainerNotes', token: H.token(), slug: slug }).then(function(r){ if (r && r.html) { tb.innerHTML = r.html; sec.hidden = false; var a = document.querySelector('nav.sticky-nav a.tn-link'); if (a) { a.hidden = false; a.textContent = 'Teaching notes'; } var t = sec.querySelector('.stage-title'); if (t) t.innerHTML = 'Teaching notes <span class="badge">Shared by your tutor</span>'; } }, function(){});
+        }
+        return;
+      }
       if (!connectOn(cs)) { seal('own'); return; }
       var now = today(cs), mine = inputsOf(tt).filter(function(x){ return x.slug === slug; });
       if (mine.some(function(x){ return isOpen(x, cs); })) reveal(); else seal(mine.length ? 'later' : 'never');

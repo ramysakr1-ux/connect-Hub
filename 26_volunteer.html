@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611151653">
+<link rel="stylesheet" href="hub-tokens.css?v=202611151755">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -275,17 +275,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611151653">
+<link rel="stylesheet" href="hub-house.css?v=202611151755">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202611151653"></script>
-<script src="hub-attendance.js?v=202611151653"></script>
-<script src="hub-volunteer-i18n.js?v=202611151653"></script>
-<script src="hub-store.js?v=202611151653"></script>
-<script src="hub-say.js?v=202611151653"></script>
-<script src="hub-sync.js?v=202611151653"></script>
+<script src="hub-shared.js?v=202611151755"></script>
+<script src="hub-attendance.js?v=202611151755"></script>
+<script src="hub-volunteer-i18n.js?v=202611151755"></script>
+<script src="hub-store.js?v=202611151755"></script>
+<script src="hub-say.js?v=202611151755"></script>
+<script src="hub-sync.js?v=202611151755"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -319,7 +319,7 @@ const myLevel = cefr((rec('hub:volunteer') || {}).level);
 const myLevelRaw = (rec('hub:volunteer') || {}).level;
 /* a tutor's share with a class on it reaches that class only, like a trainee's handout (12 Nov 2026) */
 const forMyClass = x => !x.level || !myLevel || cefr(x.level) === myLevel || (window.hubSameLevel ? hubSameLevel(x.level, myLevelRaw) : false);
-const SHARED = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name && (!x.kind || x.kind === 'materials' || SHELF_KINDS[x.kind])).filter(forMyClass).slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+const SHARED = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name && x.to !== 'trainees' && (!x.kind || x.kind === 'materials' || SHELF_KINDS[x.kind])).filter(forMyClass).slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
 /* The teachers a volunteer can write to, from the course's own tutor
    contacts. A volunteer has no group, so they see all of them. */
 /* 1 Oct 2026. The block here used to list the course TUTORS with mail links.
@@ -733,6 +733,10 @@ function render(){
     const reply = next ? ((ME.replies || {})[next] || null) : null;
     const askBlock = next ? `<div class="ask" id="ask"><span class="k">Are you coming?</span><button type="button" class="yn${reply && reply.coming === 'yes' ? ' on' : ''}" data-coming="yes">Yes</button><button type="button" class="yn${reply && reply.coming === 'no' ? ' on' : ''}" data-coming="no">No</button>${reply ? `<small>${reply.coming === 'yes' ? 'Thank you, see you then.' : 'Thank you for telling us.'}</small>` : ''}</div>` : '';
   const isToday = next === TODAY;
+  /* A NOTE FROM THE TUTORS (Ramy, 15 Nov 2026: "can I make an announcement? Let's say to the volunteer students"): their short
+     notes for this student's class, newest first, above the next class. Not an email; taken down by the tutor who posted it. */
+  const NOTES = (rec('connect_shared_v1') || []).filter(x => x && x.kind === 'note' && x.text).filter(forMyClass).slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+  const noteBlock = NOTES.length ? '<div class="card vnote" data-tone="mustard"><h3>A note from your teachers</h3>' + NOTES.map(n => '<p>' + esc(n.text).replace(/\n/g, '<br>') + '</p>').join('') + '</div>' : '';
   const nextBlock = !days.length
     ? `<div class="next done"><div class="k">Your classes</div><h2>Nothing is scheduled yet</h2><div class="tiny">The center has not set the timetable. This page fills in when it does.</div></div>`
     : next
@@ -749,7 +753,7 @@ function render(){
     <p class="eyebrow eb-top">${esc(SETTINGS.centreName || SETTINGS.courseName || '')}</p>
     <h1>Hello${first ? ' ' + esc(first) : ''}</h1>
     <p class="sub">Thank you for coming in to be taught. Here is everything for your classes.</p>
-    ${nextBlock}
+    ${noteBlock}${nextBlock}
     <!-- The next class, and then everything else folded away. It used to be
          one flat list of every material ever shared, growing all month
          (Ramy, 1 Oct 2026: "is it going to be just a list of all the material,

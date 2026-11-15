@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611151653">
+<link rel="stylesheet" href="hub-tokens.css?v=202611151755">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -550,7 +550,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611151653">
+<link rel="stylesheet" href="hub-house.css?v=202611151755">
 </head>
 <body>
 <div class="board">
@@ -747,14 +747,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611151653"></script>
-<script src="hub-shared.js?v=202611151653"></script>
-<script src="hub-store.js?v=202611151653"></script>
-<script src="hub-say.js?v=202611151653"></script>
-<script src="hub-crit-learn.js?v=202611151653"></script>
-<script src="hub-crit-vocab.js?v=202611151653"></script>
-<script src="hub-sync.js?v=202611151653"></script>
-<script src="hub-notebook.js?v=202611151653"></script>
+<script src="hub-exchange.js?v=202611151755"></script>
+<script src="hub-shared.js?v=202611151755"></script>
+<script src="hub-store.js?v=202611151755"></script>
+<script src="hub-say.js?v=202611151755"></script>
+<script src="hub-crit-learn.js?v=202611151755"></script>
+<script src="hub-crit-vocab.js?v=202611151755"></script>
+<script src="hub-sync.js?v=202611151755"></script>
+<script src="hub-notebook.js?v=202611151755"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1345,7 +1345,26 @@ function prefill(d){
   /* nobody typed one: the group's class or set (hubLevelFor, 9 Nov 2026) */
   if(!$('fLevel').value && window.hubLevelFor){ try { const ps=new URLSearchParams(location.search).get('trainee')||''; const r=JSON.parse(localStorage.getItem('connect_roster_v1')||'{}')||{}; const t=(r.trainees||{})[ps]||Object.values(r.trainees||{}).find(x=>x&&(x.token===ps||x.id===ps)); if(t) $('fLevel').value=hubLevelFor(t.group, m.date||$('fDate').value); } catch(e){} }
   if(!$('fTime').value) $('fTime').value=m.length||'';
+  fillAims();
 }
+/* THE AIMS, ONE WORD EACH, FROM THE TP POINT (Ramy, 15 Nov 2026: "main and sub aim should also be there as just one word").
+   The main aim is the TP point's own word (Grammar, Reading ...). The sub aim is its word where the point gives one, or the
+   skill its sentence names ("spoken fluency practice" is Speaking); "You decide" stays empty for the tutor. Only empty
+   boxes are filled, and the tutor can change them. */
+function fillAims(){
+  try {
+    const n=(String($('fTP').value||'').match(/\d+/)||[])[0]; if(!n) return;
+    const ps=new URLSearchParams(location.search).get('trainee')||'';
+    const r=JSON.parse(localStorage.getItem('connect_roster_v1')||'{}')||{}, t=(r.trainees||{})[ps]||Object.values(r.trainees||{}).find(x=>x&&(x.token===ps||x.id===ps)); if(!t) return;
+    const P=JSON.parse(localStorage.getItem('connect_tp_points_v1')||'{}')||{}, tok=t.token||t.id||ps;
+    const cell=(((P.groups||{})[String(t.group||'')]||{})[tok]||{})['tp'+n]; if(!cell) return;
+    const WORDS=[[/speak|fluency|role.?play|discuss/i,'Speaking'],[/listen/i,'Listening'],[/read/i,'Reading'],[/writ/i,'Writing'],[/vocab|lexis/i,'Vocabulary'],[/function/i,'Functional language'],[/gramma/i,'Grammar'],[/pronunc|phonolog/i,'Pronunciation']];
+    const word=v=>{ v=String(v||'').trim(); if(!v||/^you decide$/i.test(v)) return ''; if(v.split(/\s+/).length<=2) return v; const w=WORDS.find(x=>x[0].test(v)); return w?w[1]:''; };
+    if(!$('fMain').value && word(cell.aim)) $('fMain').value=word(cell.aim);
+    if(!$('fSub').value && word(cell.sub)) $('fSub').value=word(cell.sub);
+  } catch(e) {}
+}
+document.addEventListener('change', e=>{ if(e.target && e.target.id==='fTP') fillAims(); });
 function showSeen(d){
   const m=d.meta||{}, p=d.plan||{}, l=d.la||{};
   const rows=(p.rows||[]).filter(r=>(r.stage||'').trim()||(r.proc||'').trim());
