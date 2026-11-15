@@ -361,6 +361,29 @@
     if (cs && String(cs.clock) === '24') return (m[1].length < 2 ? '0' : '') + m[1] + ':' + m[2];
     var h = +m[1]; return (h % 12 || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM');
   }
+  var DEMO_LIB = null;   /* [name, slug] of each lesson on the Demo lessons page */
+  function loadDemoLib(then){
+    DEMO_LIB = [];
+    fetch('demo-lessons/', { credentials: 'same-origin' }).then(function(r){ return r.text(); }).then(function(h){
+      var d = new DOMParser().parseFromString(h, 'text/html');
+      d.querySelectorAll('.demo').forEach(function(x){ var n = ((x.querySelector('h3') || {}).textContent || '').trim(), a = [].slice.call(x.querySelectorAll('.go a[href]')).filter(function(l){ return !/\.(pdf|mp3|m4a|docx?)$/i.test(l.getAttribute('href')); })[0];
+        var m = a && /\.\.\/([^\/]+)\/?$/.exec(a.getAttribute('href')); if (n && m) DEMO_LIB.push([n, m[1]]); });
+      if (DEMO_LIB.length) then();
+    }, function(){});
+  }
+  function demosOf(tt){
+    var norm = function(t){ return String(t || '').toLowerCase().replace(/[\u2018\u2019']/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }, out = [], seen = {};
+    ((tt && tt.days) || []).forEach(function(d){
+      if (!d || !d.date) return;
+      (d.sessions || d.slots || []).forEach(function(x){
+        if (!x || x.k !== 'demo' || !/\bdemo/i.test(x.t || '') || /interview/i.test(x.t || '')) return;
+        var key = d.date + '|' + norm(x.t); if (seen[key]) return; seen[key] = 1;
+        var t = ' ' + norm(x.t) + ' ', hit = (DEMO_LIB || []).filter(function(l){ return t.indexOf(' ' + norm(l[0]) + ' ') !== -1; })[0];
+        out.push({ date: d.date, s: x.s || '', t: x.t, demo: true, lesson: hit ? hit[0] : '', href: hit ? hit[1] + '/' : 'demo-lessons/' });
+      });
+    });
+    return out;
+  }
   function paintTutor(tt, cs){
     var list = inputsOf(tt), now = today(cs);
     if (!list.length) { setStrip(false); return; }
@@ -385,7 +408,11 @@
       var name = cx ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug] || x.t) + '</a>' : esc(x.t);
       return '<li class="' + cls + '"><span class="d">' + esc(dayName(x.date)) + '</span><span>' + name + '</span><span class="st">' + (x.date < now ? 'Done' : x.date === now ? 'Today' : (cx ? 'Lite’s' : 'Your own')) + '</span></li>';
     }).join('') : '<li><span class="none">No input sessions this week.</span></li>';
-    paintWeeks(list, now, cs);
+    /* THE DEMO LESSONS IN THEIR WEEK (Ramy, 15 Nov 2026: "add the demo to week 1 inputs. So when you search by week, the demo
+       should be there"): each demo lesson on the timetable, once per day, beside that week's input sessions. It opens the
+       library's lesson when the tile's title names one, and the Demo lessons page when it does not. */
+    paintWeeks(list.concat(demosOf(tt)).sort(function(a, b){ return (a.date + (a.s || '')).localeCompare(b.date + (b.s || '')); }), now, cs);
+    if (!DEMO_LIB) loadDemoLib(function(){ paintTutor(tt, cs); });
     var bySlug = {};
     list.forEach(function(x){ if (!x.slug) return; var cur = bySlug[x.slug]; if (!cur || (cur.date < now && x.date >= cur.date)) bySlug[x.slug] = x; });
     document.querySelectorAll('#connectCard a.s[href]').forEach(function(a){
@@ -414,6 +441,8 @@
       var kind = w.mon === cur ? 'now' : w.mon === nxt ? 'next' : w.sun < now ? 'past' : '';
       var tag = kind === 'now' ? 'This week' : kind === 'next' ? 'Next week' : kind === 'past' ? 'Done' : '';
       var cards = w.items.map(function(x){
+        if (x.demo) { var dn = '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(x.t) + '</h3><p class="m"><span class="src cx">Demo lesson</span>' + (x.lesson && x.t.toLowerCase().indexOf(x.lesson.toLowerCase()) === -1 ? ' ' + esc(x.lesson) : '') + '</p>';
+          return '<a class="s' + (x.date < now ? ' done' : '') + '" href="' + esc(x.href) + '">' + dn + '</a>'; }
         var cx = !!(x.slug && NAMES[x.slug] != null), done = x.date < now;
         var inner = '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(cx ? NAMES[x.slug] : x.t) + '</h3><p class="m"><span class="src ' + (cx ? 'cx">Lite’s' : 'own">Your own') + '</span>' + (x.date === now ? '<span class="pill now">Today</span>' : done ? '<span class="pill">Done</span>' : '') + '</p>';
         return cx ? '<a class="s' + (done ? ' done' : '') + '" href="' + esc(x.slug) + '/">' + inner + '</a>' : '<div class="s still' + (done ? ' done' : '') + '">' + inner + '</div>';
