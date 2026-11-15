@@ -124,7 +124,7 @@
                               + '<label><input type="checkbox" name="t_' + i + '"' + (on || w.noStudents ? ' checked' : '') + ' aria-label="' + esc(w.label) + ' for the trainees"></label>'
                               + '<button type="button" class="shelf-copy" data-copy="' + esc(w.url) + '">Copy the link</button>'; }).join('')
                         + (((LIB[+libSel] || {}).parts || []).some(function (w) { return w.page; }) ? '<span class="nm"></span><span></span><label class="nt"><input type="checkbox" name="t_notes"> with the teaching notes</label><span></span>' : '') + '</div>')
-                        + '<button class="btn small" type="submit">Share</button><span class="shelf-hint">' + (LIB[+libSel] && !LIB[+libSel].session ? 'Students: only the ' + esc(LIB[+libSel].levelName.replace(/\s*\(.*\)$/, '').toLowerCase()) + ' students see it. ' : '') + 'Trainees: every trainee sees it' + (LIB[+libSel] && LIB[+libSel].session ? ' now, whatever day the timetable gives it' : '') + '. Only trainees can get the teaching notes. Copy the link to send it to someone outside the course.</span>'
+                        + '<button class="btn small" type="submit">Share</button><span class="shelf-hint">' + (libSel !== '' && LIB[+libSel] && !LIB[+libSel].session ? 'Students: only the ' + esc(LIB[+libSel].levelName.replace(/\s*\(.*\)$/, '').toLowerCase()) + ' students see it. ' : '') + 'Trainees: every trainee sees it' + (libSel !== '' && LIB[+libSel] && LIB[+libSel].session ? ' now, whatever day the timetable gives it' : '') + '. Only trainees can get the teaching notes. Copy the link to send it to someone outside the course.</span>'
                       : '<span class="shelf-hint">The library could not be opened. Use A link instead.</span>')
                   : mode === 'link'
                   ? '<input type="text" name="name" placeholder="What to call it, e.g. Demo lesson \u2014 A2 Speaking" required maxlength="120">'
@@ -201,6 +201,16 @@
       busy = false; draw(); setTimeout(function () { note = ''; draw(); }, 2600);
     }
     draw();
-    return { draw: draw };
+    /* opened from elsewhere on the page, at From the library (the hero's Share your demo lesson, 15 Nov 2026) */
+    /* and when the tile's title names a library lesson ("Demo lesson 1: Speed flat-mating"), that lesson comes picked (Ramy, 15 Nov 2026:
+       "how does Lite know which demo to share?"); a title that names none leaves the choice to the tutor */
+    var norm = function (t) { return String(t || '').toLowerCase().replace(/[\u2018\u2019']/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); };
+    var openLib = function (title) {
+      if (!(canAdd && canAdd.length)) return; open = ADD; mode = 'lib'; note = ''; libSel = ''; draw();
+      loadLib(function () { var t = ' ' + norm(title) + ' '; (LIB || []).some(function (x, i) { var n = norm(x.name); if (n && t.indexOf(' ' + n + ' ') !== -1) { libSel = String(i); return true; } return false; }); draw(); });
+      host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('[data-share-demo]'); if (!a) return; e.preventDefault(); openLib(a.getAttribute('data-share-demo')); });
+    return { draw: draw, openLib: openLib };
   };
 })();
