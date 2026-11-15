@@ -2605,6 +2605,39 @@ case 'inbox': {
       var onOut = JSON.parse(JSON.parse(onResp.getContentText()).choices[0].message.content || '{}');
       return { text: String(onOut.text || '').trim().slice(0, 2000) };
     }
+    /* FIND SOMEONE WHO, FROM THE INTERVIEW NOTES (v239, 15 Nov 2026; Ramy: "Use the information from the interview notes for
+       the find someone who for the input session ... Lite would always use the information from those files"). From every
+       trainee's interview card (intake: the background, strengths and description the folders gave), sixteen bingo squares
+       that are each true of someone in the room and that a classmate can find out by asking. Nobody is named, and nothing
+       private or judged goes in: no ages, health, religion, family, nationality, and nothing about the interview itself.
+       Kept as settings.gtkyBingoAuto; a list typed on Course admin (gtkyBingo) still comes first. */
+    case 'bingoFromCards': {
+      requireTutor_(tutor);
+      if (!course) throw new Error('This link is not on a course');
+      var bfKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+      if (!bfKey) throw new Error('Reading is not switched on');
+      var bfCards = rosterWithRecords_(course.id, { intake: 1 }).map(function (t) {
+        var c = ((t.records || {}).intake || {}).card || {};
+        return [c.background, (c.strengths || []).join('; '), c.description].filter(Boolean).join(' ').slice(0, 1500);
+      }).filter(Boolean);
+      if (bfCards.length < 3) throw new Error('Read the folders first: fewer than three trainees have an interview card');
+      var bfSys = 'You write squares for "Find someone who..." bingo, played by CELTA trainees on their first morning to get to know each other. '
+        + 'You get short anonymous profiles of the trainees on the course. Write 16 endings that complete "Find someone who ...", each true of at least one trainee and of no more than half of them, '
+        + 'each something a classmate could find out by asking a friendly question: languages they speak, places they have lived or studied, what they studied, jobs they have done, who and how they have taught (children, adults, online, one-to-one, subjects other than English), interests, why they are doing the course. '
+        + 'Mix the easy with the surprising. Never a name, an age, health, religion, family, nationality or ethnicity, money, and nothing about the interview, grades, weaknesses or concerns. '
+        + 'Each ending lowercase, starting with a verb such as "has", "speaks", "is", "studied", "can", under 70 characters, no final full stop. American spelling. Answer as JSON: {"prompts":["..."]}.';
+      var bfResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + bfKey },
+        payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.5, response_format: { type: 'json_object' },
+          messages: [{ role: 'system', content: bfSys }, { role: 'user', content: bfCards.map(function (c, i) { return 'Trainee ' + (i + 1) + ': ' + c; }).join('\n') }] })
+      });
+      if (bfResp.getResponseCode() !== 200) throw new Error('The squares could not be written (' + bfResp.getResponseCode() + ')');
+      var bfList = (JSON.parse(JSON.parse(bfResp.getContentText()).choices[0].message.content || '{}').prompts || [])
+        .map(function (x) { return String(x || '').replace(/^find someone who\s+/i, '').replace(/\.$/, '').trim().slice(0, 90); }).filter(Boolean).slice(0, 20);
+      if (bfList.length < 9) throw new Error('Too few squares came back. Try again.');
+      courseUpdateObj_(course.id, 'settings', function (st) { st.gtkyBingoAuto = bfList.join('\n'); st.gtkyBingoAutoAt = new Date().toISOString(); return st; });
+      return { prompts: bfList };
+    }
     case 'stage1Words': {
       requireTutor_(tutor);
       var swKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
