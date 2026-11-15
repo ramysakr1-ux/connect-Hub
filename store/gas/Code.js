@@ -107,6 +107,91 @@ function nextClass_(courseId) {
   }
   return null;
 }
+/* A VOLUNTEER'S OWN CLASSES (v235, 15 Nov 2026). Ramy, the eve of C/21: "it should read the trainers' names and the
+   trainees' names ... We don't want to patch this one. We want to have a rule. So it's clear from the names of the
+   trainers, the levels, the timetable." The rule, for every course:
+     - THE LEVEL. The student's level on the register, matched by name to a class on Course admin > Classes (B2 and
+       "Upper-intermediate" are the same class). No classes, or no match: no level and no tutor are named.
+     - THE TUTOR. That class's tutor, and only that one.
+     - A TEACHING PRACTICE DAY. The group that teaches that class at that TP (the class plan), and in it the set whose
+       day it is (the timetable's set for the day). Those trainees are the teachers, in the order the TP points deal
+       them, and the time is the timetable's teaching practice lessons THEY teach: first lesson's start to last's end.
+       Nobody dealt yet: the day's teaching practice lessons as the timetable has them, and no names.
+     - ANY OTHER DAY with sessions in the Teaching practice room (a demonstration lesson, getting to know a new class):
+       those sessions, and the tutor the timetable names on the demonstration lesson.
+   Only first names leave the store, and only for the student's own class. Nothing else of the course does. */
+function levelName_(v) {
+  var s = String(v == null ? '' : v).trim(), low = s.toLowerCase(); if (!s) return '';
+  if (/pre[- ]?int/.test(low)) return 'Pre-intermediate';
+  if (/upper[- ]?int/.test(low)) return 'Upper-intermediate';
+  if (/\bintermediate/.test(low)) return 'Intermediate';
+  if (/elementary/.test(low)) return 'Elementary';
+  if (/beginner|starter/.test(low)) return 'Beginner';
+  if (/advanced|proficien/.test(low)) return 'Advanced';
+  var codes = s.toUpperCase().match(/[ABC][12]\+?/g); if (!codes) return s;
+  if (codes.length === 2 && /^A2\+?$/.test(codes[0]) && codes[1] === 'B1') return 'Pre-intermediate';
+  var map = { 'A1': 'Beginner', 'A2': 'Elementary', 'A2+': 'Pre-intermediate', 'B1': 'Intermediate', 'B1+': 'Intermediate', 'B2': 'Upper-intermediate', 'B2+': 'Upper-intermediate', 'C1': 'Advanced', 'C2': 'Advanced' };
+  var out = []; codes.forEach(function (c) { var n = map[c]; if (n && out.indexOf(n) === -1) out.push(n); });
+  return out.join('/') || s;
+}
+function volunteerClasses_(courseId, set, vol) {
+  set = set || {};
+  var tt = courseRead_(courseId, 'timetable') || {};
+  if (!tt.published) return [];
+  var tutors = String(set.tutorNames || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+  var lvl = levelName_(vol && vol.level), list = (set.classes && Array.isArray(set.classes.list)) ? set.classes.list : [];
+  var k = null; if (lvl) for (var i = 0; i < list.length; i++) if (list[i] && list[i].id && levelName_(list[i].level) === lvl) { k = list[i]; break; }
+  var tpp = courseRead_(courseId, 'tppoints') || {}, people = {};
+  roster_(courseId).forEach(function (t) { people[t.token] = String(t.name || '').trim().split(/\s+/)[0]; });
+  var groups = {}; roster_(courseId).forEach(function (t) { if (t.group) groups[t.group] = 1; });
+  var groupFor = function (tp) {
+    if (!k) return '';
+    var gs = Object.keys(groups).concat(Object.keys((set.classes && set.classes.plan) || {})).filter(function (g, i, a) { return a.indexOf(g) === i; });
+    for (var j = 0; j < gs.length; j++) {
+      var b = classBlocks_(set, gs[j]); if (!b) continue;
+      for (var n = 0; n < b.length; n++) if (+tp >= b[n].from && +tp <= b[n].to && b[n].k && b[n].k.id === k.id) return gs[j];
+    }
+    return '';
+  };
+  var hm = function (t) { var m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
+  var ok = function (x) { return x && x.k !== 'break' && x.k !== 'lunch' && hm(x.s) != null && hm(x.e) > hm(x.s); };
+  var out = [];
+  (tt.days || []).forEach(function (d) {
+    if (!d || !d.date) return;
+    var row = null;
+    if (d.tp) {
+      var tiles = (d.sessions || []).filter(function (x) { return ok(x) && x.k === 'tp'; }).sort(function (a, b) { return hm(a.s) - hm(b.s); });
+      if (!tiles.length) return;
+      var g = groupFor(d.tp), who = [], at = [];
+      var sets = (tpp.sets && g) ? (Array.isArray(tpp.sets) ? tpp.sets : tpp.sets[g]) : null;
+      var mine = (sets && sets[+d.setIndex || 0]) || [];
+      var rows = ((tpp.groups || {})[g]) || {};
+      mine.forEach(function (tok) {
+        var c = (rows[tok] || {})['tp' + d.tp] || {}, pos = -1;
+        if (typeof c.at === 'number' && c.at % 1 === 0) pos = c.at; else { var m = /·(\d+)$/.exec(String(c.from || '')); if (m) pos = +m[1] - 1; }
+        who.push({ name: people[tok] || '', pos: pos });
+      });
+      var placed = who.length && who.every(function (w) { return w.pos >= 0 && w.pos < tiles.length; });
+      if (placed) who.sort(function (a, b) { return a.pos - b.pos; });
+      var used = placed ? who.map(function (w) { return tiles[w.pos]; }) : tiles;
+      used = used.slice().sort(function (a, b) { return hm(a.s) - hm(b.s); });
+      row = { day: d.date, tp: +d.tp, from: used[0].s, to: used[used.length - 1].e, lessons: used.length,
+              minutes: used.reduce(function (n, x) { return n + hm(x.e) - hm(x.s); }, 0),
+              teachers: who.map(function (w) { return w.name; }).filter(Boolean) };
+    } else {
+      var inRoom = (d.sessions || []).filter(function (x) { return ok(x) && /teaching practice/i.test(String(x.room || '')); }).sort(function (a, b) { return hm(a.s) - hm(b.s); });
+      if (!inRoom.length) return;
+      var demo = inRoom.filter(function (x) { return x.k === 'demo'; })[0] || null;
+      var by = demo && demo.by !== undefined && demo.by !== null && demo.by !== '' && tutors[+demo.by] ? tutors[+demo.by] : '';
+      row = { day: d.date, tp: 0, from: inRoom[0].s, to: inRoom[inRoom.length - 1].e, lessons: inRoom.length,
+              minutes: inRoom.reduce(function (n, x) { return n + hm(x.e) - hm(x.s); }, 0),
+              title: String((demo || inRoom[0]).t || ''), demoBy: by, teachers: [] };
+    }
+    row.level = k ? lvl : ''; row.tutor = k ? String(k.tutor || '') : '';
+    out.push(row);
+  });
+  return out.sort(function (a, b) { return a.day < b.day ? -1 : 1; });
+}
 // How many are coming to the next class, without a name.
 function comingFor_(courseId) {
   var nx = nextClass_(courseId); if (!nx) return null;
@@ -1608,6 +1693,8 @@ case 'inbox': {
         return { volunteer: { name: vol.name, here: vol.here || [], marks: vol.marks || null, level: vol.level || '', note: vol.note || '', agreed: vol.agreed || '', cert: vol.cert || null, carried: vol.carried || 0, levelFrom: vol.levelFrom || '' /* v79: the day they moved up, the count at the level starts there */,
                               /* v56: the reminders (1 Oct 2026) -- their answers by day, and whether they still want mail */
                               replies: vol.replies || {}, email: vol.email || '', notify: vol.notify === false ? false : true, nextClass: nextClass_(course.id),
+                              /* v235: the level, the class's tutor, the trainees teaching and the times, day by day (volunteerClasses_) */
+                              classes: volunteerClasses_(course.id, vset, vol),
                               /* v96 (21 Oct 2026): when they joined, so days before it are not shown as missed */
                               added: vol.added || '', invited: vol.invited || '' },
                  course: { settings: { centreName: vset.centreName, courseName: vset.courseName,
