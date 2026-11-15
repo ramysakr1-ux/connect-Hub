@@ -21,8 +21,9 @@ window.InputLib = (function(){
     [/classroom management|instructions and grouping/, 'classroom-management'],
     [/functional/, 'functional-language'],
     [/framework|lesson shape/, 'lesson-framework'],
-    [/guided discovery|language through text/, 'guided-discovery-vs-ppp'],
-    [/test.?teach.?test|\bttt\b/, 'test-teach-test'],   /* 4 Nov 2026 */
+    [/guided discovery.*(ttt|test.?teach)|(ttt|test.?teach).*guided discovery/, 'guided-discovery-vs-ttt'],   /* 15 Nov 2026, before the PPP one */
+    [/guided discovery(?!.*(ttt|test.?teach))|language through text/, 'guided-discovery-vs-ppp'],
+    [/^(?!.*guided discovery).*(test.?teach.?test|\bttt\b)/, 'test-teach-test'],   /* 4 Nov 2026 */
     [/(?<!vs |versus )\bppp\b|presenting grammar|presentation\W+practice/, 'ppp'],
     [/text.based/, 'text-based-teaching'],
     [/guided practice|less.guided|\bdrill/, 'guided-to-less-guided-practice'],

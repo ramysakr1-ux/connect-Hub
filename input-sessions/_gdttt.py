@@ -1,0 +1,358 @@
+#!/usr/bin/env python3
+"""GUIDED DISCOVERY VERSUS TTT (Ramy, 15 Nov 2026: "I don't see a guided discovery versus TTT input. I do have one on my
+computer. Find it ... we have guided discovery, versus PPP, and then we have another one, guided discovery versus TTT").
+
+Ramy's own session, from his handout "Guided Discovery Vs TTT" and its answer key (IH Izmir, July 2025 folder), the
+trailer link it used for the context, and the center's lesson shapes A and C. Loop input: the trainees sit in a guided
+discovery lesson on the past continuous and a test-teach-test lesson on the present continuous, then take them apart.
+Words are his, in American spelling. Built on the same desk as the short sessions (_short.py's head, chrome, foot and
+scripts); the trainer notes go to the store under "guided-discovery-vs-ttt".
+
+  python3 input-sessions/_gdttt.py
+"""
+import os, re, json, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _short
+
+SLUG = 'guided-discovery-vs-ttt'
+TITLE = 'Guided discovery versus TTT'
+
+NOTES = '''<h4>Running it</h4>
+<p>Two short lessons, taught to the trainees as learners, then the debrief. Do not name either approach until section 6: the point of the first two lessons is that they feel the difference before they can label it.</p>
+<h4>Lesson 1: guided discovery (sections 1 to 3)</h4>
+<p>Play the trailer first and get a few reactions. Then the two marker sentences, the questions in pairs, the rule, then the form. Answers: past; traveling; driving; yes; traveling; the door coming open; driving; the car catching fire; past continuous; past simple. Rule: two actions, at the same time, past continuous for the long action, past simple for the short one.</p>
+<h4>Lesson 2: test-teach-test (sections 4 and 5)</h4>
+<p>Straight into the matching with no presentation: monitor for what they get wrong, then teach from those mistakes with the uses, then the second test.</p>
+<h4>Keyed by Lite, not by the answer key</h4>
+<p>Your answer key has no answers for three tasks, so Lite marks them as follows; check them before the session: the second test (are increasing, visit, 'm watering, 'm visiting, are always stopping, runs, increase, water, always stop, 're usually running); the stages to take out (a gist read in the first test; the teacher repeating the rules in the teach stage; an information gap in the controlled test; five random sentences in the freer test). The ten quotes are not marked at all: a reading many tutors give is guided discovery for 1, 3, 5, 7 and 9, and TTT for 2, 4, 6, 8 and 10.</p>'''
+
+NAV = [('s1', '1 · The trailer'), ('s2', '2 · Two sentences'), ('s3', '3 · The rule and the form'), ('s4', '4 · Match the responses'),
+       ('s5', '5 · The uses, then try again'), ('s6', '6 · What just happened?'), ('s7', '7 · The stages of each'),
+       ('s8', '8 · Take out what does not fit'), ('s9', '9 · Which approach said it?'), ('s10', '10 · The lesson shapes')]
+
+QS = [['Are the sentences about the present or the past?', 'Past'],
+      ['In sentence [a], which action started first: the “traveling” or the “door coming open”?', 'Traveling'],
+      ['In sentence [b], which action started first?', 'Driving'],
+      ['In both sentences, did the actions happen at the same time?', 'Yes'],
+      ['In sentence [a], which is a long action: the “traveling” or the “door coming open”?', 'Traveling'],
+      ['In sentence [a], which is a short action: the “traveling” or the “door coming open”?', 'The door coming open'],
+      ['In sentence [b], which is the long action?', 'Driving'],
+      ['In sentence [b], which is the short action?', 'The car catching fire'],
+      ['What tense is in bold?', 'Past continuous'],
+      ['Which tense is underlined?', 'Past simple']]
+
+PAIRS = [  # [sentence 1, sentence 2, response a, response b, key for 1, key for 2]
+  ['What are you writing?', 'What do you write?', 'Short stories mostly and a bit of journalism.', 'A shopping list.', 'b', 'a'],
+  ['Helen comes from Auckland.', 'Helen’s coming from Auckland.', 'I never realized she was a New Zealander.', 'She’ll be here by Friday evening.', 'a', 'b'],
+  ['My sister lives in Paris.', 'My sister’s living in Paris.', 'She’s been posted there for a year.', 'Her husband’s French.', 'b', 'a'],
+  ['They’re always talking away in Turkish to each other when I arrive.', 'They always talk away in Turkish to each other when I arrive.', 'A comment on your clothes and make-up probably!', 'Yes, they never seem to do a scrap of work!', 'b', 'a'],
+  ['The leaves are turning red.', 'The leaves turn red.', 'That must look lovely reflected in this pool.', 'Yes, it’ll soon be winter!', 'b', 'a'],
+  ['Robert always arrives late.', 'Robert’s always arriving late.', 'I know. It’s so disruptive and he only lives ten minutes away!', 'So there’s no need to worry about him yet then.', 'b', 'a'],
+  ['Linda’s washing the car.', 'Linda washes the car.', 'Oh, don’t worry, I’ll call back.', 'Shouldn’t that be your job?', 'a', 'b'],
+  ['I’m having a party on my birthday.', 'I have a party on my birthday.', 'Every year? I try to forget mine.', 'Is that an invitation?', 'b', 'a'],
+  ['What do you weigh?', 'What are you weighing?', 'About 55 kilos.', 'Mum’s Christmas parcel.', 'a', 'b'],
+  ['They’re usually having lunch at twelve thirty.', 'They usually have lunch at twelve thirty.', 'So it won’t be a good time to drop in then.', 'OK, so we’ll schedule lunch for twelve thirty.', 'b', 'a']]
+
+USES = [['What are you writing?', 'Action in progress at the time of speaking'],
+        ['Helen’s coming from Auckland.', 'Future arrangement'],
+        ['My sister’s living in Paris.', 'Temporary action/state for a period'],
+        ['They’re always talking away to each other in Turkish when I arrive and I cannot understand anything.', 'Emphasizing very frequent action (often to criticize it) used with an adverb.'],
+        ['They’re usually having lunch at twelve thirty.', 'Action regularly in progress around a point in time used with an adverb.']]
+
+TENSES = [['Sales of cars', 'increase', 'are increasing', 'these days in Turkey.', 1],
+          ['I', 'visit', 'am visiting', 'my mother more or less once a month.', 0],
+          ['I’m out here on the balcony! I', 'water', '’m watering', 'the plants.', 1],
+          ['Oh, sorry, I won’t be able to come. I', 'visit', '’m visiting', 'my mother this weekend.', 1],
+          ['In Turkey people', 'always stop', 'are always stopping', 'suddenly in front of you on the pavement.', 1],
+          ['She', 'runs', '’s running', 'around the park every morning at six.', 0],
+          ['In England tourist numbers', 'increase', 'are increasing', 'dramatically in summer.', 0],
+          ['If you', 'water', '’re watering', 'plants too much, it’s bad for them.', 0],
+          ['In Thailand older people at least', 'always stop', 'are always stopping', 'when the national anthem starts playing.', 0],
+          ['That wouldn’t be a good time to ask the trainees because they', 'usually run', '’re usually running', 'around in a last-minute flap at that time.', 1]]
+
+BANK = ['normal', 'marker', 'test', 'mirror', 'timelines', 'further', 'context', 'mistakes', 'controlled and freer', 'learned', 'unfamiliar', 'avoid', 'several', 'explain']
+GD_STAGES = [
+  'Introduce the target language in [[context]]. The language will often be introduced in the form of a listening or a reading. The language will be contextualized, and students should be able to still answer the questions despite possibly being [[unfamiliar]] with the target language. This stage is set up like any [[normal]] reading or listening task.',
+  'Using a [[marker]] sentence taken from the reading or listening, the students answer a series of questions that will help them to “discover” the meaning/use of the target structure. Because the marker sentence is taken from context the students should be able to guess/work out why it is being used and what it is used to talk about. This is why context is paramount. [[avoid]] using sentences that are not connected to the original context.',
+  'The students complete a series of [[controlled and freer]] exercises to practice the target language. Often the context for the activate/freer speaking exercise will [[mirror]] or be related to the original context.']
+TTT_STAGES = [
+  'The teacher will introduce the target language and [[test]] the students’ current knowledge of it. The teacher could do this in [[several]] ways: getting the students to select the correct word/structure to complete a sentence from a choice of several, filling gaps with a suitable word/structure, discussing the differences in meaning between similar sentences with different structures/words or finding matching responses for sentences from a choice of several.',
+  'The teacher then uses the [[mistakes]] from the first stage to teach/revise the target language. The teacher could do this by getting the students to: arrange words/structures on a cline, draw their own [[timelines]] or discuss the answers to concept checking questions on a handout.',
+  'The teacher then gets the students to do [[further]] controlled practice exercises. Having hopefully [[learned]] from their correction and having their awareness raised further in the “teach” stage, the students should do the exercises better. The students will likely do similar activities as in stage 1. After this controlled stage the teacher will likely go on to do freer speaking exercises.']
+
+OUT = [['First test stage', [['students select the correct word/structure to complete a sentence from a choice of several', 0], ['students fill gaps with a suitable word/structure', 0], ['students discuss the differences in meaning between similar sentences with different structures/words', 0], ['students read a text and answer gist questions', 1], ['students find matching responses for sentences from a choice of several', 0]]],
+       ['Teach stage', [['students arrange words/structures on a cline', 0], ['students draw their own timelines', 0], ['students discuss the answers to concept checking questions on a handout', 0], ['teacher stands at the front and repeats the grammar rules', 1]]],
+       ['Second test stage: controlled', [['students complete an information gap', 1], ['students select the correct word/structure to complete a sentence from a choice of several', 0], ['students fill gaps with a suitable word/structure', 0], ['students find matching responses for sentences from a choice of several', 0]]],
+       ['Second test stage: freer', [['students do a discussion activity', 0], ['students do a role-play', 0], ['students write 5 random sentences using the target language', 1], ['students conduct a survey', 0]]]]
+
+QUOTES = ['By incorporating elements of discovery and problem solving it fosters a collaborative atmosphere.',
+          'Some learners may find the approach dry and unmotivating.',
+          'It is economical use of time as students are communicating in English and it incorporates other skills.',
+          'Its direct and uncompromising grammar focus is suitable for adult students who are not deterred by an analytical approach.',
+          'It encourages learners to take responsibility for their own learning.',
+          'Sometimes there is tendency for teachers to start lecturing the students.',
+          'It enables learners to see the patterns in English and for them to understand its use in their “language”.',
+          'It is economical of time through getting straight to the point.',
+          'The mental work involved in explaining grammar points to each other has a powerful effect on the memory.',
+          'In the absence of context sentences may become leached of meaning and the discussion of differences becomes theoretical and hard to grasp.']
+
+SHAPES = [['Lesson shape (A): Text Based Presentation of Language',
+           'The language is introduced using a reading or listening briefly first (but this is not the main aim) and then language from the text is clarified (checking meaning, form and pronunciation) before doing further practice. The main aim here will usually be: <b>To clarify and provide controlled practice of ____.</b>',
+           [['Lead in/ Building context', 'To generate interest in the topic/theme/context of the text or listening'],
+            ['Reading or Listening task', 'To practice reading or listening for ____ / To introduce the target language via a text or listening'],
+            ['Highlighting target language', 'To highlight the target language by use of eliciting/a guiding task/an underlining activity'],
+            ['Clarifying target language', 'To clarify meaning of target language; model and provide controlled practice of pronunciation; highlight form'],
+            ['Language practice', 'To provide controlled/less controlled/freer oral/written practice of ____'],
+            ['Feedback', 'To establish correct answers/ to deal with results of the task']],
+           'You may need to pre-teach some vocab before the reading task.'],
+          ['Lesson shape (C): Test-Teach-Test Presentation of Language',
+           'The students do an exercise at the start using the target language with no help from the teacher (diagnostic test). The teacher monitors the task very carefully to see what problems the students have and then clarifies (checking meaning, form and pronunciation) <u>as necessary</u>, i.e. any new language or items the students had problems with. For example, if there are 15 pieces of vocabulary in the test, the teacher would not clarify every item. This is followed by further practice (test). The main aim here will usually be: <b>To clarify and provide controlled practice of ____.</b>',
+           [['Lead in', 'To generate interest in the topic/theme of the lesson'],
+            ['First Test (diagnostic)', 'To test Ss’ current understanding and identify gaps in vocabulary related to ____'],
+            ['Teach (clarifying)', 'To deal with meaning, pronunciation and form of vocabulary related to ____, with emphasis on items Ss did not know or were confused about'],
+            ['Second Test (controlled practice, then freer practice)', 'To provide controlled/less controlled written/oral practice of ____; to provide less controlled/freer oral/written practice of ____'],
+            ['Feedback', 'To establish correct answers and/or deal with results of the task; to provide feedback on use of target language, dealing with errors and problems']],
+           'There might not be time to do the second test stage in a 40 min lesson. In this case, the next teacher will be doing this as their lesson (i.e. language practice as per lesson shape B).']]
+
+def esc(s): return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+def body():
+    j = json.dumps
+    return f'''
+  <section id="s1" data-n="1">
+    <div class="card" data-n="1">
+      <div class="stage-title">Lesson 1 · The trailer <span class="badge">You are the students</span></div>
+      <p class="lead">Watch the trailer. What happens to the family? Would you watch it?</p>
+      <div class="btn-row"><a class="btn primary" href="https://www.imdb.com/video/vi305639449?playlistId=tt1524930&amp;ref_=tt_pr_ov_vi" target="_blank" rel="noopener noreferrer">Watch the trailer</a><span class="feedback">Vacation (2015), on IMDb. It opens in a new tab.</span></div>
+      <textarea class="write-area" rows="2" placeholder="What happens? Tell your partner first."></textarea>
+    </div>
+  </section>
+
+  <section id="s2" data-n="2">
+    <div class="card" data-n="2">
+      <div class="stage-title">Two sentences <span class="badge">In pairs</span></div>
+      <p class="lead">Look at the following sentences and answer the questions.</p>
+      <div class="text-block marker"><p><b>[a]</b> “As he <b>was traveling</b> on a plane, the door <u>came</u> open and he <u>fell</u> out.”</p><p><b>[b]</b> “His car <u>caught</u> fire, while he <b>was driving</b> along the motorway.”</p></div>
+      <div id="qs"></div>
+    </div>
+  </section>
+
+  <section id="s3" data-n="3">
+    <div class="card" data-n="3">
+      <div class="stage-title">Function/Use, then Form</div>
+      <p class="lead">Complete the rule by choosing the correct word in each pair.</p>
+      <div class="text-block rule" id="rule"></div>
+      <div class="btn-row"><button class="btn primary" type="button" id="ruleCheck">Check the rule</button><span class="feedback" id="ruleSay"></span></div>
+      <p class="lead" style="margin-top:18px">Complete the pattern with the missing words.</p>
+      <div class="formtab" id="form"></div>
+      <div class="btn-row"><button class="btn primary" type="button" id="formCheck">Check the pattern</button><span class="feedback" id="formSay"></span></div>
+    </div>
+  </section>
+
+  <section id="s4" data-n="4">
+    <div class="card" data-n="4">
+      <div class="stage-title">Lesson 2 · Match the responses <span class="badge">You are the students</span></div>
+      <p class="lead">Match each numbered sentence to one of the two responses beside it.</p>
+      <div id="pairs"></div>
+      <div class="btn-row"><button class="btn primary" type="button" id="pairsCheck">Check</button><span class="feedback" id="pairsSay"></span></div>
+    </div>
+  </section>
+
+  <section id="s5" data-n="5">
+    <div class="card" data-n="5">
+      <div class="stage-title">The uses, then try again</div>
+      <p class="lead">Match the different uses of the present continuous to the meaning.</p>
+      <div id="uses"></div>
+      <div class="btn-row"><button class="btn primary" type="button" id="usesCheck">Check</button><span class="feedback" id="usesSay"></span></div>
+      <p class="lead" style="margin-top:18px">Choose the most appropriate tense in the following sentences.</p>
+      <div id="tenses"></div>
+      <div class="btn-row"><button class="btn primary" type="button" id="tensesCheck">Check</button><span class="feedback" id="tensesSay"></span></div>
+    </div>
+  </section>
+
+  <section id="s6" data-n="6">
+    <div class="card" data-n="6">
+      <div class="stage-title">What just happened? <span class="badge">With your partner</span></div>
+      <p class="lead">You experienced two approaches to teaching grammar. The first lesson focused on one use of the past continuous and the other focused on different uses of the present continuous. However, the grammar focus is largely irrelevant as nearly any grammar point could have been chosen for either approach. Bearing this in mind, with your partner discuss the following questions.</p>
+      <div class="dq" id="dq"></div>
+      <div class="tip"><b>Remember!</b> We can only adopt a guided discovery or a TTT approach when we are teaching grammar or possibly lexis. We cannot adopt this approach when teaching writing or speaking etc. They are only for grammar or lexis.</div>
+    </div>
+  </section>
+
+  <section id="s7" data-n="7">
+    <div class="card" data-n="7">
+      <div class="stage-title">The stages of each</div>
+      <p class="lead">Fill in the blanks with one of the words from the box. You can use each word only once and one word is extra.</p>
+      <div class="bank" id="bank"></div>
+      <div class="stagesets" id="stagesets"></div>
+      <div class="btn-row"><button class="btn primary" type="button" id="gapCheck">Check</button><span class="feedback" id="gapSay"></span></div>
+    </div>
+  </section>
+
+  <section id="s8" data-n="8">
+    <div class="card" data-n="8">
+      <div class="stage-title">Take out what does not fit</div>
+      <p class="lead">Look at the following stages of a test-teach-test lesson and take out any stages that aren’t suitable. Tap a stage to take it out.</p>
+      <div id="out"></div>
+      <div class="btn-row"><button class="btn primary" type="button" id="outCheck">Check</button><span class="feedback" id="outSay"></span></div>
+    </div>
+  </section>
+
+  <section id="s9" data-n="9">
+    <div class="card" data-n="9">
+      <div class="stage-title">Which approach said it? <span class="badge">Discuss</span></div>
+      <p class="lead">Discuss each quote with your partner and decide if it’s talking about guided discovery or the TTT approach.</p>
+      <div id="quotes"></div>
+    </div>
+  </section>
+
+  <section id="s10" data-n="10">
+    <div class="card" data-n="10">
+      <div class="stage-title">The lesson shapes</div>
+      <p class="lead">The two shapes these lessons follow, to keep beside your plan.</p>
+      <div id="shapes"></div>
+    </div>
+  </section>
+'''
+
+STYLE = r'''
+  .marker p{margin:4px 0; font-size:1rem;}
+  .qrow{display:flex; gap:10px; align-items:flex-start; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--row-line);}
+  .qrow:first-child{border-top:0;}
+  .qrow .q{flex:1 1 300px; font-size:.92rem; line-height:1.5;}
+  .qrow input{flex:0 1 220px;}
+  .qrow .ans{font-size:.86rem; color:var(--teal); font-weight:600; flex-basis:100%; display:none;}
+  .qrow.show .ans{display:block;}
+  .rule{line-height:2.1;}
+  .pick{display:inline-flex; gap:4px; margin:0 3px;}
+  .pick button{font:600 .86rem 'Karla',sans-serif; padding:3px 10px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .pick button.on{background:var(--teal); border-color:var(--teal); color:var(--paper);}
+  .pick button.right{box-shadow:0 0 0 2px var(--teal);} .pick button.wrong{box-shadow:0 0 0 2px var(--a-red);}
+  .formtab{display:grid; grid-template-columns:auto 1fr; gap:8px 12px; align-items:center; margin:8px 0 0;}
+  .formtab .lb{font-weight:700; font-size:.86rem;}
+  .formtab .cells{display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+  .formtab .fixed{font-weight:600; padding:4px 10px; border-radius:var(--r-control); background:var(--box);}
+  @media(max-width:600px){ .formtab{grid-template-columns:1fr;} }
+  .pair{border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:10px 14px; margin:0 0 10px; background:var(--paper);}
+  .pair .resp{font-size:.86rem; color:var(--grey); margin:0 0 6px;}
+  .pair .resp b{color:var(--ink);}
+  .prow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:5px 0;}
+  .prow .s{flex:1 1 260px; font-size:.92rem;}
+  .mark{font-weight:700; font-size:.82rem;} .mark.ok{color:var(--teal);} .mark.no{color:var(--a-red);}
+  .urow{display:grid; grid-template-columns:1fr 1.2fr; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--row-line);}
+  .urow:first-child{border-top:0;}
+  @media(max-width:640px){ .urow{grid-template-columns:1fr;} }
+  .urow select{width:100%;}
+  .trow{padding:8px 0; border-top:1px solid var(--row-line); font-size:.94rem; line-height:2;}
+  .trow:first-child{border-top:0;}
+  .dq .q{font-weight:600; font-size:.92rem; margin:12px 0 4px;}
+  .bank{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 14px;}
+  .bank span{font-size:.84rem; font-weight:600; padding:4px 10px; border-radius:999px; border:1px dashed var(--sand-line); background:var(--paper);}
+  .bank span.used{opacity:.4; text-decoration:line-through;}
+  .stagesets h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; margin:16px 0 4px;}
+  .stagesets .st{font-size:.92rem; line-height:2; margin:0 0 10px;}
+  .stagesets .st b{margin-right:6px;}
+  .outset h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:14px 0 6px;}
+  .outset button{display:block; width:100%; text-align:left; font:400 .9rem/1.45 'Karla',sans-serif; padding:8px 12px; margin:0 0 6px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink); cursor:pointer;}
+  .outset button.gone{text-decoration:line-through; color:var(--grey); background:var(--box);}
+  .outset button.right{border-color:var(--teal);} .outset button.wrong{border-color:var(--a-red);}
+  .quote{border:1.5px solid var(--sand-line); border-radius:var(--r-strip); padding:10px 14px; margin:0 0 8px; background:var(--paper); display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .quote p{flex:1 1 300px; margin:0; font-style:italic; font-size:.92rem; line-height:1.5;}
+  .shape{margin:0 0 18px;}
+  .shape h3{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem; margin:8px 0 4px;}
+  .shape p{font-size:.9rem; line-height:1.55; margin:0 0 8px;}
+  .shape table{width:100%; border-collapse:collapse; font-size:.88rem;}
+  .shape td{border:1px solid var(--sand-line); padding:7px 10px; vertical-align:top; background:var(--paper);}
+  .shape td:first-child{font-weight:700; width:34%;}
+  @media(max-width:600px){ .shape table, .shape tr, .shape td{display:block; width:auto;} .shape td:first-child{border-bottom:0;} }
+  @media print{ .qrow .ans, .mark{display:none !important;} }
+'''
+
+def script():
+    d = json.dumps
+    return '''
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const QS = ''' + d(QS) + ''', PAIRS = ''' + d(PAIRS) + ''', USES = ''' + d(USES) + ''', TENSES = ''' + d(TENSES) + ''';
+const BANK = ''' + d(BANK) + ''', GD = ''' + d(GD_STAGES) + ''', TTT = ''' + d(TTT_STAGES) + ''', OUT = ''' + d(OUT) + ''', QUOTES = ''' + d(QUOTES) + ''', SHAPES = ''' + d(SHAPES) + ''';
+
+// ---- 2. the questions: write, then show the answer ----
+$('qs').innerHTML = QS.map((q, i) => '<div class="qrow" id="q' + i + '"><span class="q">' + (i + 1) + '. ' + esc(q[0]) + '</span><input class="blank" type="text" aria-label="Your answer"><button class="btn" type="button" data-show="' + i + '">Show the answer</button><span class="ans">' + esc(q[1]) + '</span></div>').join('');
+$('qs').addEventListener('click', e => { const b = e.target.closest('[data-show]'); if (!b) return; const r = $('q' + b.dataset.show); r.classList.toggle('show'); b.textContent = r.classList.contains('show') ? 'Hide the answer' : 'Show the answer'; });
+
+// ---- 3. the rule (pick one of two) and the form (choose the word for each place) ----
+const RULE = [['one', 'two', 1], ['different times', 'the same time', 1], ['past continuous', 'past simple', 0], ['past continuous', 'past simple', 1]];
+const pick = (k, i) => '<span class="pick" data-k="' + k + '"><button type="button" data-v="0">' + esc(RULE[i][0]) + '</button><button type="button" data-v="1">' + esc(RULE[i][1]) + '</button></span>';
+$('rule').innerHTML = '“We use the past continuous when there are ' + pick('r0', 0) + ' past actions, which happen at ' + pick('r1', 1) + '. For the long action, the action that started first, we use the ' + pick('r2', 2) + ', and for the short action we use the ' + pick('r3', 3) + '.”';
+document.addEventListener('click', e => { const b = e.target.closest('.pick button'); if (!b) return; b.parentNode.querySelectorAll('button').forEach(x => x.classList.remove('on', 'right', 'wrong')); b.classList.add('on'); });
+$('ruleCheck').onclick = () => { let ok = 0, n = 0; document.querySelectorAll('#rule .pick').forEach((p, i) => { const on = p.querySelector('.on'); if (on) n++; if (on && +on.dataset.v === RULE[i][2]) { ok++; on.classList.add('right'); } else if (on) on.classList.add('wrong'); }); $('ruleSay').textContent = n < 4 ? 'Choose one word in each pair first.' : ok === 4 ? '✓ Correct: two actions, at the same time; past continuous for the long one, past simple for the short one.' : ok + ' of 4 correct. Look at the marker sentences again.'; };
+const WORDS = ['subject', 'was/were', 'not', 'verb-ing', 'question word'];
+const FORM = [['positive', ['subject', '*was/were', 'verb-ing']], ['negative', ['subject', 'was/were', 'not', '*verb-ing']], ['yes/no questions', ['was/were', '*subject', 'verb-ing']], ['wh- questions', ['question word', 'was/were', 'subject', 'verb-ing']]];
+$('form').innerHTML = FORM.map((r, i) => '<span class="lb">[' + r[0] + ']</span><span class="cells">' + r[1].map((w, j) => w[0] === '*' ? '<span class="fixed">' + esc(w.slice(1)) + '</span>' : '<select class="blank" data-f="' + i + '-' + j + '" aria-label="Missing word"><option value="">choose</option>' + WORDS.map(x => '<option>' + esc(x) + '</option>').join('') + '</select>').join(' + ') + '</span>').join('');
+$('formCheck').onclick = () => { let ok = 0, n = 0, all = 0; document.querySelectorAll('#form select').forEach(s => { all++; const [i, j] = s.dataset.f.split('-').map(Number); if (s.value) n++; const good = s.value === FORM[i][1][j]; if (good) ok++; s.style.borderColor = s.value ? (good ? 'var(--teal)' : 'var(--a-red)') : ''; }); $('formSay').textContent = n < all ? 'Fill every place first.' : ok === all ? '✓ Correct.' : ok + ' of ' + all + ' correct.'; };
+
+// ---- 4. lesson 2: each sentence to response a or b ----
+$('pairs').innerHTML = PAIRS.map((p, i) => '<div class="pair"><p class="resp"><b>a.</b> ' + esc(p[2]) + '<br><b>b.</b> ' + esc(p[3]) + '</p>'
+  + [0, 1].map(k => '<div class="prow"><span class="s">' + (i * 2 + k + 1) + '. ' + esc(p[k]) + '</span><span class="pick" data-p="' + i + '-' + k + '"><button type="button" data-v="a">a</button><button type="button" data-v="b">b</button></span><span class="mark" id="pm' + i + '-' + k + '"></span></div>').join('') + '</div>').join('');
+$('pairsCheck').onclick = () => { let ok = 0, n = 0; document.querySelectorAll('#pairs .pick').forEach(p => { const [i, k] = p.dataset.p.split('-').map(Number), on = p.querySelector('.on'), m = $('pm' + i + '-' + k); if (!on) { m.textContent = ''; return; } n++; const good = on.dataset.v === PAIRS[i][4 + k]; if (good) ok++; m.textContent = good ? '✓ Right' : '✗ Not this one'; m.className = 'mark ' + (good ? 'ok' : 'no'); }); $('pairsSay').textContent = n < 20 ? n + ' of 20 answered. Answer them all, then check.' : ok + ' of 20 correct.'; };
+
+// ---- 5. the uses, then the second test ----
+const MEANINGS = USES.map(u => u[1]).slice().sort();
+$('uses').innerHTML = USES.map((u, i) => '<div class="urow"><span>' + esc(u[0]) + '</span><select class="blank" data-u="' + i + '" aria-label="Its use"><option value="">choose the use</option>' + MEANINGS.map(m => '<option>' + esc(m) + '</option>').join('') + '</select></div>').join('');
+$('usesCheck').onclick = () => { let ok = 0, n = 0; document.querySelectorAll('#uses select').forEach(s => { if (s.value) n++; const good = s.value === USES[+s.dataset.u][1]; if (good) ok++; s.style.borderColor = s.value ? (good ? 'var(--teal)' : 'var(--a-red)') : ''; }); $('usesSay').textContent = n < 5 ? 'Choose a use for each sentence first.' : ok === 5 ? '✓ All five correct.' : ok + ' of 5 correct.'; };
+$('tenses').innerHTML = TENSES.map((t, i) => '<div class="trow">' + (i + 1) + '. ' + esc(t[0]) + ' <span class="pick" data-t="' + i + '"><button type="button" data-v="0">' + esc(t[1]) + '</button><button type="button" data-v="1">' + esc(t[2]) + '</button></span> ' + esc(t[3]) + ' <span class="mark" id="tm' + i + '"></span></div>').join('');
+$('tensesCheck').onclick = () => { let ok = 0, n = 0; document.querySelectorAll('#tenses .pick').forEach(p => { const i = +p.dataset.t, on = p.querySelector('.on'), m = $('tm' + i); if (!on) { m.textContent = ''; return; } n++; const good = +on.dataset.v === TENSES[i][4]; if (good) ok++; m.textContent = good ? '✓' : '✗'; m.className = 'mark ' + (good ? 'ok' : 'no'); }); $('tensesSay').textContent = n < 10 ? n + ' of 10 answered.' : ok + ' of 10 correct.'; };
+
+// ---- 6. the debrief questions ----
+const DQ = ['Which grammar point do you think was used in a guided discovery approach?', 'Which grammar point do you think was used in a TTT (test teach test) approach?', 'Which approach did you prefer? Why?', 'In which approach do you think it was easier to understand the grammar? Why?', 'Which approach was used within a text-based lesson? Why do you think it has to be used within a text-based lesson?'];
+$('dq').innerHTML = DQ.map(q => '<p class="q">' + esc(q) + '</p><textarea class="write-area" rows="2"></textarea>').join('');
+
+// ---- 7. the stages: a word from the box in each gap ----
+let gapN = 0;
+const gaps = t => esc(t).replace(/\\[\\[([^\\]]+)\\]\\]/g, (m, w) => '<select class="blank" data-gap="' + (gapN++) + '" data-a="' + esc(w) + '" aria-label="Missing word"><option value="">______</option>' + BANK.map(b => '<option>' + esc(b) + '</option>').join('') + '</select>');
+$('bank').innerHTML = BANK.map(b => '<span data-b="' + esc(b) + '">' + esc(b) + '</span>').join('');
+$('stagesets').innerHTML = '<h3>Guided discovery</h3>' + GD.map((t, i) => '<p class="st"><b>Stage ' + (i + 1) + '</b>' + gaps(t) + '</p>').join('') + '<h3>Test-teach-test</h3>' + TTT.map((t, i) => '<p class="st"><b>Stage ' + (i + 1) + '</b>' + gaps(t) + '</p>').join('');
+const usedNow = () => { const u = new Set([...document.querySelectorAll('#stagesets select')].map(s => s.value).filter(Boolean)); document.querySelectorAll('#bank span').forEach(s => s.classList.toggle('used', u.has(s.dataset.b))); };
+$('stagesets').addEventListener('change', usedNow);
+$('gapCheck').onclick = () => { let ok = 0, n = 0, all = 0; document.querySelectorAll('#stagesets select').forEach(s => { all++; if (s.value) n++; const good = s.value.toLowerCase() === s.dataset.a.toLowerCase(); if (good) ok++; s.style.borderColor = s.value ? (good ? 'var(--teal)' : 'var(--a-red)') : ''; }); $('gapSay').textContent = n < all ? n + ' of ' + all + ' filled.' : ok === all ? '✓ All ' + all + ' correct; “explain” was the extra word.' : ok + ' of ' + all + ' correct.'; };
+
+// ---- 8. take out the stages that do not fit ----
+$('out').innerHTML = OUT.map((g, gi) => '<div class="outset"><h3>' + esc(g[0]) + '</h3>' + g[1].map((s, si) => '<button type="button" data-o="' + gi + '-' + si + '">' + esc(s[0]) + '</button>').join('') + '</div>').join('');
+$('out').addEventListener('click', e => { const b = e.target.closest('[data-o]'); if (!b) return; b.classList.toggle('gone'); b.classList.remove('right', 'wrong'); });
+$('outCheck').onclick = () => { let ok = 0, all = 0; document.querySelectorAll('#out [data-o]').forEach(b => { const [gi, si] = b.dataset.o.split('-').map(Number), out = OUT[gi][1][si][1] === 1, gone = b.classList.contains('gone'); all++; if (out === gone) ok++; b.classList.toggle('right', out && gone); b.classList.toggle('wrong', out !== gone); }); $('outSay').textContent = ok === all ? '✓ Right: four stages do not belong.' : 'Not yet: the ones outlined in red are wrong. Four stages do not belong.'; };
+
+// ---- 9. the quotes: decide and discuss (not marked) ----
+$('quotes').innerHTML = QUOTES.map((q, i) => '<div class="quote"><p>' + (i + 1) + '. ' + esc(q) + '</p><span class="pick"><button type="button">Guided discovery</button><button type="button">TTT</button></span></div>').join('');
+
+// ---- 10. the lesson shapes ----
+$('shapes').innerHTML = SHAPES.map(s => '<div class="shape"><h3>' + esc(s[0]) + '</h3><p>' + s[1] + '</p><table>' + s[2].map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</table><p><i>' + esc(s[3]) + '</i></p></div>').join('');
+'''
+
+def build():
+    head, chrome, foot, tail = _short.parts()
+    head = re.sub(r'<!--.*?-->', '<!--\n  Connect Lite — input session: Guided discovery versus TTT\n  © 2026 Ramy Sakr. All rights reserved.\n\n  Ramy\'s own session, from his handout and answer key. Built by _gdttt.py; edit it there, not this file.\n-->', head, count=1, flags=re.S)
+    head = re.sub(r'<title>.*?</title>', '<title>' + TITLE + ' — Connect Lite</title>', head, count=1)
+    nav = '\n'.join('    <a href="#%s">%s</a>' % (a, t) for a, t in NAV)
+    page = (head + '<style>\n' + _short.SHARED_STYLE + STYLE + '\n</style>\n</head>\n' + chrome
+            + '<header class="header">\n    <p class="eyebrow">Input session · CELTA</p>\n    <h1>' + TITLE + '</h1>\n'
+            + '    <p class="sub">Two short grammar lessons, and you are the students in both: a guided discovery of the past continuous, then a test-teach-test lesson on the present continuous. Then you take them apart: what happened, the stages of each, and what each approach is good for.</p>\n  </header>\n\n'
+            + '  <nav class="sticky-nav" id="stickyNav">\n' + nav + '\n    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>\n'
+            + '    <button class="print-btn" onclick="window.print()">Print the handout</button>\n  </nav>\n\n'
+            + body().strip('\n') + '\n\n'
+            + '  <section id="trainer" class="trainer-notes" data-slug="' + SLUG + '" hidden>\n    <div class="card">\n'
+            + '      <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>\n'
+            + '      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>\n    </div>\n  </section>\n\n'
+            + '  <p class="sources"><b>Sources.</b> The marker sentences, the questions, the rule and the form, the matching sentences and responses, the uses, the second test, the discussion questions, the stage descriptions, the stages to take out and the ten quotes are the tutor\'s own handout. The context is the trailer for <i>Vacation</i> (2015), on IMDb. The two lesson shapes are the center\'s own.</p>\n\n'
+            + '  ' + foot + '\n</div>\n\n<script>\n' + script().strip('\n') + '\n</script>\n' + tail)
+    for bad in ('practise', 'behaviour', 'colour', 'travelling', 'learnt', '▾', '→'):
+        assert bad not in page, bad
+    out = os.path.join(_short.HERE, SLUG); os.makedirs(out, exist_ok=True)
+    open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(page)
+    f = os.path.join(_short.HERE, '..', 'store', 'gas', 'TrainerNotes.js')
+    src = open(f, encoding='utf-8').read(); m = re.search(r'var TRAINER_NOTES_ = (\{.*\});', src, re.S)
+    held = json.loads(m.group(1)); held[SLUG] = NOTES
+    open(f, 'w', encoding='utf-8').write(src[:src.index('var TRAINER_NOTES_')] + 'var TRAINER_NOTES_ = ' + json.dumps(held, ensure_ascii=False, indent=0) + ';\n')
+    print('built', SLUG, len(page), 'bytes; trainer notes held:', len(held))
+
+if __name__ == '__main__':
+    build()
