@@ -412,7 +412,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -460,7 +460,7 @@ function settleVersions_(op) {
    demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
 /* What the trainee view (Maya, v224) may call: reads a trainee's pages make, and nothing that writes, mails or uploads. */
 var TEMPLATE_READS_ = { boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
-  passInfo: 1, peerSheets: 1, questions: 1, bookings: 1, rehearsalNotes: 1 };
+  passInfo: 1, peerSheets: 1, questions: 1, bookings: 1, rehearsalNotes: 1, ivClaims: 1 };
 var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt',
   /* the emergency demo's book pages, English File Upper-intermediate 3rd edn, File 5A (12 Nov 2026): shown to course links only */
   '1DUl-xuKBH510QWd1gtT-i4e20NSD41VD', '1UA4nvhOa5CqcQbmTRl_JQKSNBe9JoEo0', '1D7HvcGLvJlv6GDAVidoDhIt6H-qI9KeX', '1CXseksocfa-0Vquuu88YAA3ZyQY8Npfi', '15i6klfDzf4EhsOJeZRZfNHugDYHspacT', '1zugnIES0HPB78LGxI10WxM0cRv_oD_QJ', '1EpSnAPJIXiny-YoAbpUQOIDpxGdmJXrm',
@@ -1729,7 +1729,7 @@ case 'inbox': {
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
+      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: courseRead_(course.id, 'shared'), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id, me) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
       if (tutor) boot.course.courseFeedback = courseFeedbackFor_(course.id);
       /* v205: the versions of the three records a page writes whole, so its next write can say which one it started from */
       if (tutor) boot.course.revs = courseRead_(course.id, 'revs') || {};
@@ -2207,6 +2207,51 @@ case 'inbox': {
         about: rnAll.filter(function (m) { return m.it.to === me.token; }).map(function (m) { return { date: m.it.date, tp: m.it.tp, by: m.it.by, rows: m.it.rows, at: m.it.at }; }),
         sent: (rnPool[me.token] || []).map(function (it) { return { date: it.date, tp: it.tp, to: standIn_(course.id, it.to), rows: it.rows, at: it.at }; })
       };
+    }
+    /* WHO INTERVIEWS WHOM (v240, 15 Nov 2026; Ramy: "they pick someone, and then the others can no longer pick the same
+       person ... And if we have fewer students, they can share"). One student per trainee, from the students that trainee can
+       see (volunteerNamesFor_). A student someone has taken can be joined only once every student they can see has been
+       taken, and then only one of those with the fewest. A trainee lets go of their student until they have written any of
+       the interview; then their tutor can. Pool kind ivclaims: { "<student name, lower case>": [token, ...] }. */
+    case 'ivClaims': {
+      if (!course) throw new Error('This link is not on a course');
+      if (assessor) throw new Error('Not for the assessor');
+      var icPool = courseRead_(course.id, 'ivclaims') || {};
+      if (tutor) { var icNames = {}; roster_(course.id).forEach(function (t) { icNames[t.token] = t.name; });
+        var icOut = {}; Object.keys(icPool).forEach(function (k) { icOut[k] = (icPool[k] || []).map(function (t) { return icNames[t] || ''; }); }); return { claims: icOut }; }
+      if (!me) throw new Error('Trainees only');
+      var icSeen = {}; volunteerNamesFor_(course.id, me).forEach(function (x) { icSeen[String(x.name).trim().toLowerCase()] = 1; });
+      var icMine = '', icTaken = {};
+      Object.keys(icPool).forEach(function (k) { var list = icPool[k] || []; if (list.indexOf(me.token) >= 0) icMine = k; if (icSeen[k]) icTaken[k] = list.map(function (t) { return t === me.token ? t : standIn_(course.id, t); }); });
+      return { mine: icMine, taken: icTaken };
+    }
+    case 'claimStudent': {
+      if (!me || tutor || assessor) throw new Error('Trainees only');
+      if (!course) throw new Error('This link is not on a course');
+      var csWant = String(req.student || '').trim().toLowerCase(), csOn = req.on !== false;
+      var csSeen = volunteerNamesFor_(course.id, me).map(function (x) { return String(x.name).trim().toLowerCase(); });
+      if (csOn && csSeen.indexOf(csWant) < 0) throw new Error('That student is not in the class you teach');
+      var csRec = read_(course.id, me.token, 'interview') || {}, csStarted = function (key) {
+        var st = null; Object.keys(csRec.students || {}).forEach(function (n) { if (String(n).trim().toLowerCase() === key) st = csRec.students[n]; });
+        return !!(st && ((st.heard || []).length || Object.keys(st.answers || {}).some(function (q) { return String(st.answers[q] || '').trim(); })));
+      };
+      var csOut = null;
+      courseUpdateObj_(course.id, 'ivclaims', function (pool) {
+        var held = ''; Object.keys(pool).forEach(function (k) { if ((pool[k] || []).indexOf(me.token) >= 0) held = k; });
+        if (!csOn) {
+          if (held && held === csWant) { if (csStarted(held)) throw new Error('You have started this interview, so it stays yours. Ask your tutor to change it.'); pool[held] = pool[held].filter(function (t) { return t !== me.token; }); if (!pool[held].length) delete pool[held]; }
+          csOut = { mine: '' }; return pool;
+        }
+        if (held === csWant) { csOut = { mine: held }; return pool; }
+        if (held && csStarted(held)) throw new Error('You have started interviewing someone else. Ask your tutor to change it.');
+        var count = function (k) { return (pool[k] || []).filter(function (t) { return t !== me.token; }).length; };
+        var counts = csSeen.map(count), least = Math.min.apply(null, counts.length ? counts : [0]);
+        if (count(csWant) > least) throw new Error(least === 0 ? 'Someone has chosen that student. Choose one nobody has yet.' : 'Choose one of the students with fewer interviewers.');
+        if (held) { pool[held] = pool[held].filter(function (t) { return t !== me.token; }); if (!pool[held].length) delete pool[held]; }
+        pool[csWant] = (pool[csWant] || []).concat([me.token]);
+        csOut = { mine: csWant }; return pool;
+      });
+      return csOut;
     }
     case 'peerSheets': {
       if (!me || tutor || assessor) throw new Error('Trainees only');
@@ -4349,9 +4394,32 @@ function interviewFileFor_(course, id, tutor, me, own) {
 }
 // The register as a trainee may see it: names and levels, and whether each
 // student has agreed to be recorded. No tokens, no addresses, no notes.
-function volunteerNamesFor_(courseId) {
+/* the class a group is with on a day (Course admin > Classes), or null: the page's hubClassOn, kept the same here */
+function classOn_(set, group, date, tt) {
+  var blocks = classBlocks_(set, group); if (!blocks) return null;
+  var c = set.classes, planned = !!(c.plan && Array.isArray(c.plan[String(group || '')])), saved = String(c.change || '').slice(0, 10), k = blocks[0].k;
+  for (var n = 1; n < blocks.length; n++) {
+    var day = classStart_(tt, blocks[n].from);
+    var start = planned ? (day || (n === 1 ? saved : '')) : (n === 1 && saved ? saved : day);
+    if (start && date && date >= start) k = blocks[n].k;
+  }
+  return k || null;
+}
+/* THE REGISTER A TRAINEE SEES (Ramy, 15 Nov 2026: "upper int will only see upper int and vice versa ... They can see them
+   when they swap levels. So that's the rule. They only see the register for the students that they are teaching at that
+   stage of the course"). A trainee gets the students at the level of the class their group teaches today; a student the
+   register has no level for yet is shown to nobody until it has one (Ramy: "it shouldn't show at all"). A course with no
+   classes shows everyone, as before. */
+function volunteerNamesFor_(courseId, me) {
   var reg = courseRead_(courseId, 'volunteers') || {};
-  return (reg.students || []).filter(function (x) { return x && x.name; }).map(function (x) { return { name: String(x.name), level: x.level || '', agreed: !!x.agreed }; });
+  var all = (reg.students || []).filter(function (x) { return x && x.name; });
+  if (me && me.group) {
+    var set = courseRead_(courseId, 'settings') || {}, tt = courseRead_(courseId, 'timetable') || {};
+    var today = courseDay_(set) || Utilities.formatDate(new Date(), set.timeZone || 'Europe/London', 'yyyy-MM-dd');
+    var k = classOn_(set, me.group, today, tt), lv = k ? levelName_(k.level) : '';
+    if (lv) all = all.filter(function (x) { return x.level && levelName_(x.level) === lv; });
+  }
+  return all.map(function (x) { return { name: String(x.name), level: x.level || '', agreed: !!x.agreed }; });
 }
 // The Focus on the Learner pool, flattened. Tutors see who heard each note;
 // a trainee sees the notes alone.
