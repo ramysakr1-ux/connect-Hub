@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611151755">
+<link rel="stylesheet" href="hub-tokens.css?v=202611151803">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -550,7 +550,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611151755">
+<link rel="stylesheet" href="hub-house.css?v=202611151803">
 </head>
 <body>
 <div class="board">
@@ -747,14 +747,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611151755"></script>
-<script src="hub-shared.js?v=202611151755"></script>
-<script src="hub-store.js?v=202611151755"></script>
-<script src="hub-say.js?v=202611151755"></script>
-<script src="hub-crit-learn.js?v=202611151755"></script>
-<script src="hub-crit-vocab.js?v=202611151755"></script>
-<script src="hub-sync.js?v=202611151755"></script>
-<script src="hub-notebook.js?v=202611151755"></script>
+<script src="hub-exchange.js?v=202611151803"></script>
+<script src="hub-shared.js?v=202611151803"></script>
+<script src="hub-store.js?v=202611151803"></script>
+<script src="hub-say.js?v=202611151803"></script>
+<script src="hub-crit-learn.js?v=202611151803"></script>
+<script src="hub-crit-vocab.js?v=202611151803"></script>
+<script src="hub-sync.js?v=202611151803"></script>
+<script src="hub-notebook.js?v=202611151803"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1357,11 +1357,18 @@ function fillAims(){
     const ps=new URLSearchParams(location.search).get('trainee')||'';
     const r=JSON.parse(localStorage.getItem('connect_roster_v1')||'{}')||{}, t=(r.trainees||{})[ps]||Object.values(r.trainees||{}).find(x=>x&&(x.token===ps||x.id===ps)); if(!t) return;
     const P=JSON.parse(localStorage.getItem('connect_tp_points_v1')||'{}')||{}, tok=t.token||t.id||ps;
-    const cell=(((P.groups||{})[String(t.group||'')]||{})[tok]||{})['tp'+n]; if(!cell) return;
+    const cell=(((P.groups||{})[String(t.group||'')]||{})[tok]||{})['tp'+n]||{};
+    /* where the TP point says nothing: the trainee's own lesson plan, then the syllabus planning grid (Ramy, 15 Nov 2026:
+       "they can always come from TP points, if not lesson plan, if not syllabus planning") */
+    const pl=(typeof DOC==='object' && DOC && DOC.plan) || {};
+    const G=JSON.parse(localStorage.getItem('connect_tp_grid_v1')||'{}')||{}, gp=(((G.rows||{})[tok]||{})['tp'+n])||{};
+    const GW={GRAMMAR:'Grammar',VOCAB:'Vocabulary',VOCABULARY:'Vocabulary',FUNCTIONAL:'Functional language',READING:'Reading',LISTENING:'Listening',SPEAKING:'Speaking',WRITING:'Writing'};
+    const gw=v=>GW[String(v||'').toUpperCase()]||String(v||'');
     const WORDS=[[/speak|fluency|role.?play|discuss/i,'Speaking'],[/listen/i,'Listening'],[/read/i,'Reading'],[/writ/i,'Writing'],[/vocab|lexis/i,'Vocabulary'],[/function/i,'Functional language'],[/gramma/i,'Grammar'],[/pronunc|phonolog/i,'Pronunciation']];
     const word=v=>{ v=String(v||'').trim(); if(!v||/^you decide$/i.test(v)) return ''; if(v.split(/\s+/).length<=2) return v; const w=WORDS.find(x=>x[0].test(v)); return w?w[1]:''; };
-    if(!$('fMain').value && word(cell.aim)) $('fMain').value=word(cell.aim);
-    if(!$('fSub').value && word(cell.sub)) $('fSub').value=word(cell.sub);
+    const main=word(cell.aim)||word(pl.main)||word(gw(gp.main)), sub=word(cell.sub)||word(pl.sub)||word(gw(gp.sub));
+    if(!$('fMain').value && main) $('fMain').value=main;
+    if(!$('fSub').value && sub) $('fSub').value=sub;
   } catch(e) {}
 }
 document.addEventListener('change', e=>{ if(e.target && e.target.id==='fTP') fillAims(); });
