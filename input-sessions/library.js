@@ -19,8 +19,8 @@ window.InputLib = (function(){
     [/error correction|oral error|monitoring/, 'error-correction'],
     [/concept check|ccq|elicit/, 'eliciting-and-ccqs'],
     /* the second one (15 Nov 2026): a tile called Classroom management 2, or instruction practice, opens the 45-minute practice session, not the first again */
-    [/classroom management\s*(2|two|ii)\b|instruction practice/, 'instruction-practice-short'],
-    [/classroom management(?!\s*(2|two|ii)\b)|instructions and grouping/, 'classroom-management'],
+    [/classroom management\s*(2|two|ii)\b|classroom management: instructions|instruction practice/, 'instruction-practice-short'],
+    [/classroom management(?!\s*(2|two|ii)\b|: instructions)|instructions and grouping/, 'classroom-management'],
     [/functional/, 'functional-language'],
     [/framework|lesson shape/, 'lesson-framework'],
     [/guided discovery.*(ttt|test.?teach)|(ttt|test.?teach).*guided discovery/, 'guided-discovery-vs-ttt'],   /* 15 Nov 2026, before the PPP one */
@@ -85,7 +85,7 @@ window.InputLib = (function(){
     ['phonology-sounds-short', 'Phonology: sounds', 60, 'phonology-sounds', 'Phonology, spoken aloud', 'Sounds against letters, where consonants are made, voicing, the whole chart spoken aloud.'],
     ['stress-and-intonation-short', 'Stress and intonation', 45, 'word-and-sentence-stress', 'Phonology, spoken aloud', 'Word stress and sentence tune, both spoken aloud.'],
     ['connected-speech-short', 'Connected speech', 50, 'connected-speech', 'Phonology, spoken aloud', 'Five features, one example each: weak forms, linking, intrusion, assimilation, elision.'],
-    ['instruction-practice-short', 'Classroom management: instruction practice', 45, 'classroom-management', 'Classroom skills', 'A quick look at classroom management, then instructions and ICQs practiced in threes. On its own, or the day after the long one.'],
+    ['instruction-practice-short', 'Classroom management: instructions', 45, 'classroom-management', 'Classroom skills', 'A quick look at classroom management, then instructions and ICQs practiced in threes. On its own, or the day after the long one.'],
     ['classroom-management-short', 'Classroom management', 60, 'classroom-management', 'Classroom skills', 'Decisions in real time: a monitoring simulation, an instruction check, your internal clock.'],
     ['error-correction-short', 'Error correction', 45, 'error-correction', 'Classroom skills', 'Not whether to correct, but how to get the learner, or the person next to them, to do it.'],
     ['giving-feedback-on-tasks-short', 'Giving feedback on tasks', 45, '', 'Classroom skills', 'Feedback on the task itself: did they finish it, did they get it right, and in what order to ask.'],

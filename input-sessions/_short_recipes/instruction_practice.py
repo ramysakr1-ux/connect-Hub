@@ -3,7 +3,7 @@
 # on its own ... a quick reference to Classroom management ... 20 or 25 minutes of instruction practice". It stands alone,
 # and it follows the 75-minute Classroom management well: a tutor can stop that one before its instructions part and run
 # this one the next day. Groups of three practice on each other; each part's answers come at its end, not as they go.
-TITLE = 'Classroom management: instruction practice'
+TITLE = 'Classroom management: instructions'
 LONG = 'classroom-management'
 SUB = ('A quick look at what a teacher manages in a classroom, then the part that goes wrong most in a first TP: giving instructions '
        'and checking them. Most of the time you practice on each other, in threes. The answers come at the end of each part.')
