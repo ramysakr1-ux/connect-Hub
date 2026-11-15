@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611151417">
+<link rel="stylesheet" href="hub-tokens.css?v=202611151430">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -854,27 +854,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611151417">
+<link rel="stylesheet" href="hub-house.css?v=202611151430">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611151417"></script>
-<script src="hub-tracker.js?v=202611151417"></script>
-<script src="hub-rotation.js?v=202611151417"></script>
-<script src="hub-xlsx.js?v=202611151417"></script>
-<script src="hub-docx.js?v=202611151417"></script>
-<script src="hub-timetable-parse.js?v=202611151417"></script>
-<script src="assignment-defaults.js?v=202611151417"></script>
-<script src="hub-shared.js?v=202611151417"></script>
+<script src="hub-due.js?v=202611151430"></script>
+<script src="hub-tracker.js?v=202611151430"></script>
+<script src="hub-rotation.js?v=202611151430"></script>
+<script src="hub-xlsx.js?v=202611151430"></script>
+<script src="hub-docx.js?v=202611151430"></script>
+<script src="hub-timetable-parse.js?v=202611151430"></script>
+<script src="assignment-defaults.js?v=202611151430"></script>
+<script src="hub-shared.js?v=202611151430"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611151417"></script>
-<script src="hub-say.js?v=202611151417"></script>
-<script src="hub-sync.js?v=202611151417"></script>
-<script src="hub-notebook.js?v=202611151417"></script>
+<script src="hub-store.js?v=202611151430"></script>
+<script src="hub-say.js?v=202611151430"></script>
+<script src="hub-sync.js?v=202611151430"></script>
+<script src="hub-notebook.js?v=202611151430"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1253,6 +1253,18 @@ let TUTORS = window.hubTutorNames ? hubTutorNames(SETTINGS) : String(SETTINGS.tu
    tutor, because we're both going to be"). A tile's tutor is one tutor's place in the list, or 'all': every tutor on the
    course. byList says which, as places in the list; a tile nobody is named on gives none. */
 const byList = x => !x ? [] : x.by === 'all' ? TUTORS.map((_, i) => i) : (x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by]) ? [+x.by] : [];
+/* A TUTORIAL FOR BOTH TUTORS, SEEN BY GROUP (Ramy, 15 Nov 2026: "if I click on group one, for example, it should show my
+   initials for tutorials. And if I click on group two, it should show Belma's"). On the tile, a both-tutors tutorial shows
+   the tutor that group books with (hubTutorForTile: for Stage 2, the first class's tutor): a trainee sees their own, a tutor
+   the group in view. With no group to go by it shows both. */
+const tileBy = (x, day) => {
+  const all = byList(x);
+  if (all.length < 2 || !/tutorial/i.test(String((x && x.t) || '')) || !window.hubTutorForTile) return all;
+  const g = IS_TRAINEE ? String((rec('hub:me') || {}).group || '') : (GROUPS.length > 1 ? GVIEW : '');
+  if (!g) return all;
+  const n = String(hubTutorForTile(SETTINGS, g, day && day.date, x.t) || '').toLowerCase(), i = TUTORS.findIndex(t => String(t).toLowerCase() === n);
+  return i >= 0 ? [i] : all;
+};
 const allLabel = () => TUTORS.length === 2 ? 'Both tutors' : 'All tutors';
 /* Each tutor's color, chosen in Course admin or the next free one (hub-shared.js). */
 /* Tutors are told apart by their initials on the tile, not by color (Ramy, 27 Oct 2026: "drop the color and keep the initials"). */
@@ -1422,7 +1434,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
     title = '<span class="tl">' + esc(x.t || '') + '</span>';
     /* the tutor's initials on their input tile, with the color (Ramy, 27 Oct 2026: "the trainer's initials instead of their names: color and initials") */
     /* ... and on any session a tutor runs: an assignment set-up, a tutorial, consultations (Ramy, 7 Nov 2026: "I don't see it") */
-    if (['tp', 'break', 'lunch'].indexOf(x.k) === -1) title += byList(x).map(i => `<span class="who tut" title="${esc(TUTORS[i])}">${esc(window.hubInitials ? hubInitials(TUTORS[i]) : String(TUTORS[i]).split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase())}</span>`).join('');
+    if (['tp', 'break', 'lunch'].indexOf(x.k) === -1) title += tileBy(x, day).map(i => `<span class="who tut" title="${esc(TUTORS[i])}">${esc(window.hubInitials ? hubInitials(TUTORS[i]) : String(TUTORS[i]).split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase())}</span>`).join('');
     /* An unnamed input is a slot nobody has named yet. The tutor sees it as a
        slot to fill; the course sees "Input", because a morning with nothing
        on it reads as a free morning (Ramy, 9 Oct 2026: "show them as Input"). */
@@ -1437,7 +1449,7 @@ function tileHTML(day, x, B, tpIdx, teachers, place){
   const room = joinFor(x, (rec('hub:me') || {}).group, day.date);
   if (room) cls.push('online');
   const joinHTML = room ? `<span class="rm">${esc(room.label)}</span><a class="join" href="${esc(room.url)}" target="_blank" rel="noopener noreferrer">Join</a>` : '';
-  const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k !== 'tp' && byList(x).length ? ' · ' + byList(x).map(i => TUTORS[i]).join(' and ') : '');
+  const tip = (x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '')) + ' · ' + hubClockRange(x.s, x.e) + (x.k !== 'tp' && tileBy(x, day).length ? ' · ' + tileBy(x, day).map(i => TUTORS[i]).join(' and ') : '');
   /* THE READER'S OWN TIME, in green (29 Sep 2026; lost when the grid became
      tiles on 9 Oct, while the line above the grid still promised it -- put
      back 10 Oct). Only when the reader is somewhere that makes it a
@@ -4450,7 +4462,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611151417'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611151430'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);
