@@ -68,7 +68,20 @@
           if (parts.length) out.push({ name: ((d.querySelector('h3') || {}).textContent || '').trim(), parts: parts, level: lv ? lv[1] : '', levelName: sec.querySelector('h2').textContent.trim() });
         });
       });
-      LIB = out; then();
+      /* THE INPUT SESSIONS TOO (Ramy, 15 Nov 2026: "all the input sessions will have a share with option"): every session on the
+         library's shelf, and the short ones from library.js's own list, each as one part, for the trainees only: to share one
+         early, or one the timetable does not have. */
+      return fetch('input-sessions/', { credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (h2) {
+        var d2 = new DOMParser().parseFromString(h2, 'text/html'), base = location.origin + '/input-sessions/';
+        d2.querySelectorAll('#connectCard a.s[href]').forEach(function (a) {
+          var href = a.getAttribute('href'); if (/demo-lessons/.test(href)) return;
+          out.push({ name: ((a.querySelector('h3') || {}).textContent || '').trim(), session: true, level: '', levelName: 'Input session', parts: [{ label: 'The session', url: new URL(href, base).href, page: true, noStudents: true }] });
+        });
+        return fetch('input-sessions/library.js', { credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (js) {
+          var m = js.match(/var SHORTS = (\[[\s\S]*?\n  \]);/), list = []; try { list = m ? (new Function('return ' + m[1]))() : []; } catch (e) {}
+          list.forEach(function (x) { out.push({ name: x[1], session: true, level: '', levelName: 'Input session \u00b7 ' + x[2] + ' minutes', parts: [{ label: 'The session', url: base + x[0] + '/', page: true, noStudents: true }] }); });
+        });
+      }).then(function () { LIB = out; then(); }, function () { LIB = out; then(); });
     }, function () { LIB = []; then(); });
   };
   var write = function (list) { try { localStorage.setItem(KEY, JSON.stringify(list || [])); } catch (e) {} };
@@ -113,15 +126,18 @@
               + '<form class="shelf-form" data-kind="' + ADD + '" data-mode="' + mode + '">'
               + (mode === 'lib'
                   ? (LIB === null ? '<span class="shelf-hint">Opening the library\u2026</span>' : LIB.length
-                      ? '<select name="lib" required><option value="">Choose a demo lesson</option>' + LIB.map(function (x, i) { return '<option value="' + i + '"' + (String(i) === libSel ? ' selected' : '') + '>' + esc(x.name) + ' \u00b7 ' + esc(x.levelName) + '</option>'; }).join('') + '</select>'
+                      ? '<select name="lib" required><option value="">Choose a demo lesson or an input session</option>' + [['Demo lessons', false], ['Input sessions', true]].map(function (g) {
+                          return '<optgroup label="' + g[0] + '">' + LIB.map(function (x, i) { return !!x.session !== g[1] ? '' : '<option value="' + i + '"' + (String(i) === libSel ? ' selected' : '') + '>' + esc(x.name) + (g[1] ? (/minutes/.test(x.levelName) ? ' \u00b7 ' + esc(x.levelName.replace(/^Input session \u00b7 /, '')) : '') : ' \u00b7 ' + esc(x.levelName)) + '</option>'; }).join('') + '</optgroup>'; }).join('') + '</select>'
                         + (libSel === '' ? '' :
-                        '<div class="shelf-parts"><span class="hd"></span><span class="hd">Students</span><span class="hd">Trainees</span>'
+                        '<div class="shelf-parts"><span class="hd"></span><span class="hd">Students</span><span class="hd">Trainees</span><span class="hd"></span>'
                         + ((LIB[+libSel] || {}).parts || []).map(function (w, i) {
                             /* the handout starts ticked for both; the answer key and the rest start empty */
                             var on = !w.page && !w.key && !((LIB[+libSel].parts || []).slice(0, i).some(function (y) { return !y.page && !y.key; }));
-                            return '<span class="nm">' + esc(w.label) + '</span><label><input type="checkbox" name="s_' + i + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(w.label) + ' for the students"></label><label><input type="checkbox" name="t_' + i + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(w.label) + ' for the trainees"></label>'; }).join('')
-                        + (((LIB[+libSel] || {}).parts || []).some(function (w) { return w.page; }) ? '<span class="nm"></span><span></span><label class="nt"><input type="checkbox" name="t_notes"> with the teaching notes</label>' : '') + '</div>')
-                        + '<button class="btn small" type="submit">Share</button><span class="shelf-hint">' + (LIB[+libSel] ? 'Students: only the ' + esc(LIB[+libSel].levelName.replace(/\s*\(.*\)$/, '').toLowerCase()) + ' students see it. ' : '') + 'Trainees: every trainee sees it. Only trainees can get the teaching notes.</span>'
+                            return '<span class="nm">' + esc(w.label) + '</span>' + (w.noStudents ? '<span class="na">not for students</span>' : '<label><input type="checkbox" name="s_' + i + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(w.label) + ' for the students"></label>')
+                              + '<label><input type="checkbox" name="t_' + i + '"' + (on || w.noStudents ? ' checked' : '') + ' aria-label="' + esc(w.label) + ' for the trainees"></label>'
+                              + '<button type="button" class="shelf-copy" data-copy="' + esc(w.url) + '">Copy the link</button>'; }).join('')
+                        + (((LIB[+libSel] || {}).parts || []).some(function (w) { return w.page; }) ? '<span class="nm"></span><span></span><label class="nt"><input type="checkbox" name="t_notes"> with the teaching notes</label><span></span>' : '') + '</div>')
+                        + '<button class="btn small" type="submit">Share</button><span class="shelf-hint">' + (LIB[+libSel] && !LIB[+libSel].session ? 'Students: only the ' + esc(LIB[+libSel].levelName.replace(/\s*\(.*\)$/, '').toLowerCase()) + ' students see it. ' : '') + 'Trainees: every trainee sees it' + (LIB[+libSel] && LIB[+libSel].session ? ' now, whatever day the timetable gives it' : '') + '. Only trainees can get the teaching notes. Copy the link to send it to someone outside the course.</span>'
                       : '<span class="shelf-hint">The library could not be opened. Use A link instead.</span>')
                   : mode === 'link'
                   ? '<input type="text" name="name" placeholder="What to call it, e.g. Demo lesson \u2014 A2 Speaking" required maxlength="120">'
@@ -140,6 +156,11 @@
             }).join('') : (may && !open ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
         + '</div>';
       host.querySelectorAll('[data-open]').forEach(function (b) { b.addEventListener('click', function () { open = open ? null : b.dataset.open; note = ''; draw(); if (open && role === 'tutor') loadLib(draw); var f = host.querySelector('.shelf-form input, .shelf-form select, .shelf-form textarea'); if (f) f.focus(); }); });
+      host.querySelectorAll('[data-copy]').forEach(function (b) { b.addEventListener('click', function () {
+        var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy the link'; }, 1800); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(b.dataset.copy).then(done, function () { window.prompt('Copy this link', b.dataset.copy); });
+        else window.prompt('Copy this link', b.dataset.copy);
+      }); });
       var ls = host.querySelector('select[name=lib]'); if (ls) ls.addEventListener('change', function () { libSel = ls.value; draw(); });   /* the rows follow the lesson picked */
       host.querySelectorAll('[data-mode]').forEach(function (b) { if (!b.classList.contains('shelf-mode')) return; b.addEventListener('click', function () { mode = b.dataset.mode; note = ''; draw(); }); });
       host.querySelectorAll('.shelf-form').forEach(function (f) { f.addEventListener('submit', function (ev) { ev.preventDefault(); add(f); }); });
