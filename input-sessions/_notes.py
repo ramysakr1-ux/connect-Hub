@@ -561,8 +561,8 @@ NOTES['course-introduction'] = '''
 <tr><td>15</td><td>Round 1</td><td>Six questions, all answerable from their own home, timetable and TP points. Teams work on one laptop. Reveal is read from the course, so it is right for this course and only this course. Expect the lesson plan and language analysis TP numbers to surprise them.</td></tr>
 <tr><td>13</td><td>Round 2</td><td>Ten questions on the rules. Each answer quotes the Handbook by section and page, or names where Lite does it. The failed-assignment pair (one, then two) is the one they get wrong; let the room argue before anyone clicks.</td></tr>
 <tr><td>15</td><td>Round 3</td><td>Eight parts of the CELTA 5, who fills each in. After each click the team opens that part on one person’s own CELTA 5 page. Stage 2 is the one to dwell on: they rate themselves on every criterion before the tutorial.</td></tr>
-<tr><td>10</td><td>The hunt</td><td>Six screens. The first team with one open calls it. The notebook and Take it back are the two most people have not seen.</td></tr>
-<tr><td>5</td><td>Scores</td><td>Type the points on your own screen (the board saves nothing). Then one written question each; answer them now, or on the noticeboard by the end of the day.</td></tr></table>
+<tr><td>10</td><td>The hunt</td><td>Six screens, found in teams. The notebook and Take it back are the two most people have not seen.</td></tr>
+<tr><td>5</td><td>Questions</td><td>Each trainee sends one question with Ask on this page, while the session is on. Open the question wall and answer them before they leave. Nobody keeps score.</td></tr></table>
 <h4>If a course has no timetable yet</h4>
 <p>Round 1 then says so and gives the general answer for each question. Everything else works without a course, so the session can be run in the library too.</p>
 '''

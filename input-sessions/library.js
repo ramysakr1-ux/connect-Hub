@@ -334,6 +334,7 @@ window.InputLib = (function(){
     [/Spin, then discuss:/g, 'Discuss each area:'],
     [/\s*·?\s*Quick quiz: tap a card to turn it/g, ' · Quick quiz'],
     /* sentences that only make sense on screen go altogether */
+    [/, then tap to see the reason\./g, '.'],
     [/\s*Click a rung to see what a learner at that level can actually do\.?/g, ''],
     [/\s*Click any card to open it:[^.]*\.(\s*Come back to any you like\.)?/g, ''],
     [/\s*Click whichever role interests you\.?/g, ''],
