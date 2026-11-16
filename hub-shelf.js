@@ -112,12 +112,26 @@
     var kinds = {}; (opts.kinds || Object.keys(KINDS)).forEach(function (k) { kinds[k] = 1; });
     if (role === 'tutor') kinds.note = 1;   /* the notes are the tutors' to see and take back; trainees never get them */
     var mine = function (x) { return role === 'tutor' || (opts.by && x.by === opts.by()); };
+    /* A HIDE BUTTON FOR THE TUTORS, AND ONLY TODAY'S AND YESTERDAY'S SHOWING (Ramy, C/21 day one, 16 Nov 2026: "Can I just have
+       a hide button? And then it will also show like whatever, like today and yesterday ... we'll just share it, show it, and
+       then hide it"; "add hide option to trainer view of shared material with the students"). Hide folds the box to its title
+       bar, remembered in this browser; Show brings it back, and so does the hero's Share your demo lesson. Open, the list
+       is what was shared today and yesterday; anything older sits behind one line, still there to stop sharing. Nothing is
+       unshared by either: the students and the trainees see what they saw. */
+    var FOLD = 'chub:shelfFolded', folded = false;
+    try { folded = role === 'tutor' && localStorage.getItem(FOLD) === '1'; } catch (e) {}
+    var setFold = function (v) { folded = !!v; try { if (folded) localStorage.setItem(FOLD, '1'); else localStorage.removeItem(FOLD); } catch (e) {} };
+    var dayOf = function (t) { var d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+    var recent = function (x) { var t = Date.parse(x.at || ''), now = window.hubNow ? window.hubNow() : Date.now(); return isNaN(t) || Math.round((dayOf(now) - dayOf(t)) / 86400000) <= 1; };
     function draw() {
       var list = read().filter(function (x) { return kinds[x.kind || 'course']; }).slice().reverse();
       var may = !!(canAdd && canAdd.length);
       var any = list.length || may;
       host.hidden = !any; if (!any) return;
-      host.innerHTML = '<div class="shead"><h2>' + esc(opts.title || 'Shared with the students') + '</h2><span class="new">' + esc(note) + '</span></div>'
+      var foldBtn = role === 'tutor' ? '<button class="more" type="button" data-fold>' + (folded ? 'Show' : 'Hide') + '</button>' : '';
+      if (folded) { host.innerHTML = '<div class="shead"><h2>' + esc(opts.title || 'Shared with the students') + '</h2><span class="new">' + esc(note) + '</span>' + foldBtn + '</div>';
+        host.querySelector('[data-fold]').addEventListener('click', function () { setFold(false); draw(); }); return; }
+      host.innerHTML = '<div class="shead"><h2>' + esc(opts.title || 'Shared with the students') + '</h2><span class="new">' + esc(note) + '</span>' + foldBtn + '</div>'
         + '<div class="shelf-group">'
           + (opts.lede ? '<p class="shelf-note" style="margin:0 0 8px">' + esc(opts.lede) + '</p>' : '')
           + '<div class="shelf-head">' + (may ? '<span class="shelf-note">' + NOTE + '</span>' : '')
@@ -148,14 +162,16 @@
                   : '<textarea name="text" rows="2" maxlength="400" required placeholder="A short note for the students, e.g. Please bring a photo of your room tomorrow."></textarea>'
                     + classPick() + '<button class="btn small" type="submit">Post the note</button><span class="shelf-hint">It shows at the top of the students\u2019 own page. It is not an email.</span>')
             + '</form>' : '')
-          + (list.length ? list.map(function (x) {
+          + (list.length ? (function (rowOf) { if (role !== 'tutor') return list.map(rowOf).join(''); var now = list.filter(recent), old = list.filter(function (x) { return !recent(x); });
+              return now.map(rowOf).join('') + (old.length ? '<details class="shelf-earlier" style="margin-top:10px"><summary style="cursor:pointer; font-size:.8rem; font-weight:700; color:var(--grey)">Shared earlier \u00b7 ' + old.length + '</summary>' + old.map(rowOf).join('') + '</details>' : (now.length ? '' : '')); })(function (x) {
               if (x.kind === 'note') return '<div class="shelf-row"><span class="shelf-text">Note: ' + esc(x.text) + '</span><span class="shelf-meta">' + (x.level ? esc(window.hubLevelName ? hubLevelName(x.level) : x.level) + ' \u00b7 ' : 'Every class \u00b7 ') + esc(x.by || '') + (x.at ? ' \u00b7 ' + esc(when(x.at)) : '') + '</span><button class="rm" type="button" data-rm="' + esc(x.id) + '">Take it down</button></div>';
               return '<div class="shelf-row"><a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.name) + '</a>'
                 + '<span class="shelf-meta">' + (x.kind !== 'materials' ? (x.to === 'students' ? 'Students \u00b7 ' : x.to === 'trainees' ? 'Trainees' + (x.notes ? ', with the teaching notes' : '') + ' \u00b7 ' : 'Students and trainees \u00b7 ') : '') + (x.level && x.kind !== 'materials' ? esc(window.hubLevelName ? hubLevelName(x.level) : x.level) + ' \u00b7 ' : '') + esc(x.by || '') + (x.tp ? ' · ' + esc(x.tp) : '') + (x.at ? ' · ' + esc(when(x.at)) : '') + (host_(x.url) ? ' · ' + esc(host_(x.url)) : '') + '</span>'
                 + (mine(x) ? '<button class="rm" type="button" data-rm="' + esc(x.id) + '">Stop sharing</button>' : '')
                 + '</div>';
-            }).join('') : (may && !open ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
+            }) : (may && !open ? '<p class="shelf-empty">Nothing here yet.</p>' : ''))
         + '</div>';
+      var fb = host.querySelector('[data-fold]'); if (fb) fb.addEventListener('click', function () { open = null; setFold(true); draw(); });
       host.querySelectorAll('[data-open]').forEach(function (b) { b.addEventListener('click', function () { open = open ? null : b.dataset.open; note = ''; draw(); if (open && role === 'tutor') loadLib(draw); var f = host.querySelector('.shelf-form input, .shelf-form select, .shelf-form textarea'); if (f) f.focus(); }); });
       host.querySelectorAll('[data-copy]').forEach(function (b) { b.addEventListener('click', function () {
         var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy the link'; }, 1800); };
@@ -220,7 +236,7 @@
        "how does Lite know which demo to share?"); a title that names none leaves the choice to the tutor */
     var norm = function (t) { return String(t || '').toLowerCase().replace(/[\u2018\u2019']/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); };
     var openLib = function (title, slug) {
-      if (!(canAdd && canAdd.length)) return; open = ADD; mode = 'lib'; note = ''; libSel = ''; draw();
+      if (!(canAdd && canAdd.length)) return; setFold(false); open = ADD; mode = 'lib'; note = ''; libSel = ''; draw();
       loadLib(function () { var t = ' ' + norm(title) + ' '; (LIB || []).some(function (x, i) { var n = norm(x.name); if (slug && !x.session && (x.parts || []).some(function (w) { return w.page && w.url.indexOf('/' + slug + '/') !== -1; })) { libSel = String(i); return true; } if (n && !x.session && t.indexOf(' ' + n + ' ') !== -1) { libSel = String(i); return true; } return false; }); draw(); });
       host.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
