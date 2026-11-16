@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611161914">
+<link rel="stylesheet" href="hub-tokens.css?v=202611161929">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -159,21 +159,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611161914">
+<link rel="stylesheet" href="hub-house.css?v=202611161929">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611161914"></script>
-<script src="hub-shared.js?v=202611161914"></script>
-<script src="hub-timetable-parse.js?v=202611161914"></script>
-<script src="hub-xlsx.js?v=202611161914"></script>
-<script src="hub-attendance.js?v=202611161914"></script>
-<script src="hub-store.js?v=202611161914"></script>
-<script src="hub-say.js?v=202611161914"></script>
-<script src="hub-sync.js?v=202611161914"></script>
+<script src="hub-due.js?v=202611161929"></script>
+<script src="hub-shared.js?v=202611161929"></script>
+<script src="hub-timetable-parse.js?v=202611161929"></script>
+<script src="hub-xlsx.js?v=202611161929"></script>
+<script src="hub-attendance.js?v=202611161929"></script>
+<script src="hub-store.js?v=202611161929"></script>
+<script src="hub-say.js?v=202611161929"></script>
+<script src="hub-sync.js?v=202611161929"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -223,6 +223,23 @@ function teachingDays(){
 const students = () => (REG && Array.isArray(REG.students)) ? REG.students : [];
 let LVTAB = null;   /* the level tab showing (16 Nov 2026) */
 let JOINED = null;   /* who had joined when the page or the tab opened */
+/* the level tabs, in the course's class order, then any other level on the register, then "No level yet" */
+function levelTabs(){
+  const list = students();
+  const classes = (() => { try { return (((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).classes || {}).list || []).filter(c => c && c.level); } catch (e) { return []; } })();
+  const levels = []; classes.forEach(c => { if (!levels.includes(c.level) && list.some(st => st.level === c.level)) levels.push(c.level); });
+  list.forEach(st => { const l = st.level || ''; if (l && !levels.includes(l)) levels.push(l); });
+  if (list.some(st => !st.level)) levels.push('');
+  return { classes, levels };
+}
+/* THE CLASS A NEW STUDENT JOINS (Ramy, 16 Nov 2026: "yes, build it"): somebody added while a class's tab is showing takes
+   that class's level, unless the file or the paste gave them one. Typed in by hand they had no level, landed in "No level
+   yet", and needed a second step to reach their class. */
+function tabLevel(){
+  const t = levelTabs(); if (t.levels.length < 2) return '';
+  let v = LVTAB; if (v === null) { try { v = localStorage.getItem('chub:regLevel'); } catch (e) {} }
+  return (v !== null && t.levels.includes(v)) ? v : t.levels[0];
+}
 const A = window.hubAttendance;
 const LEVELS = ['A1','A2','A2+','B1','B2','C1','C2'];
 /* Shown as the platform's level names (Ramy, 30 Oct 2026); the code stays on the record, because the hours and the homework count on it. */
@@ -383,10 +400,7 @@ function render(){
      the last one chosen remembered in this browser; inside it, for a tutor, Joined first (agreed to the joining note, or
      marked in the room on any day) and Not joined yet below, each by name. A row keeps its place in the stored list (i),
      which every button on it writes to. */
-  const classes = (() => { try { return (((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).classes || {}).list || []).filter(c => c && c.level); } catch (e) { return []; } })();
-  const levels = []; classes.forEach(c => { if (!levels.includes(c.level) && list.some(st => st.level === c.level)) levels.push(c.level); });
-  list.forEach(st => { const l = st.level || ''; if (l && !levels.includes(l)) levels.push(l); });
-  if (list.some(st => !st.level)) levels.push('');
+  const { classes, levels } = levelTabs();
   const tabbed = levels.length > 1;
   if (tabbed) { if (LVTAB === null) { try { LVTAB = localStorage.getItem('chub:regLevel'); } catch (e) {} } if (LVTAB === null || !levels.includes(LVTAB)) LVTAB = levels[0]; }
   const tabName = l => { if (!l) return 'No level yet'; const k = classes.findIndex(c => c.level === l); return (k > -1 ? 'Class ' + (k + 1) + ' \u00b7 ' : '') + LV(l); };
@@ -434,7 +448,7 @@ function addHTML(){
   const n = Math.max(MANY_ROWS, PREFILL.length);
   return `<div class="panel"><div class="phead"><h3>Add students</h3><label class="btn filebtn">Choose an Excel or CSV file<input type="file" id="addFile" accept=".xlsx,.csv,.tsv,.txt"></label></div>
     ${LAST_SENT ? `<p class="sentnote">${esc(LAST_SENT)}</p>` : ''}
-    <p class="muted addhint">Type each person, choose a file, or paste a list into a name box.</p>
+    <p class="muted addhint">Type each person, choose a file, or paste a list into a name box.${tabLevel() ? ' They join <b>' + esc(LV(tabLevel())) + '</b>, the tab you are on, unless the list gives a level.' : ''}</p>
     ${Array.from({ length: n }, (_, k) => { const pp = PREFILL[k] || {};
       return `<div class="row one mrow" data-level="${esc(pp.level || '')}" data-note="${esc(pp.note || '')}"><input type="text" class="mName" placeholder="Name" autocomplete="off" value="${esc(pp.name || '')}"><input type="email" class="mEmail" placeholder="Their email" autocomplete="off" value="${esc(pp.email || '')}">${pp.level ? `<span class="mlv">${esc(LV(pp.level))}</span>` : ''}</div>`; }).join('')}
     <p style="margin:6px 0 10px !important"><a href="#" id="moreRows" class="morerows">Add another row</a></p>
@@ -578,7 +592,7 @@ function wire(){
      their invitation, one after another. */
   if ($('addSendAll')) $('addSendAll').addEventListener('click', async () => {
     const isMail = x => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);
-    const people = boxRows().filter(p => p.name);
+    const TL = tabLevel(); const people = boxRows().filter(p => p.name).map(p => p.level ? p : Object.assign(p, { level: TL }));   /* the tab's class, when the list gave no level */
     const rows = people.map(p => [p.name, p.email]);
     if (!rows.length) { note = 'Type at least one name.'; render(); return; }
     const bad = rows.filter(r => r[1] && !isMail(r[1]));
