@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611161751">
+<link rel="stylesheet" href="hub-tokens.css?v=202611161754">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -476,7 +476,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611161751">
+<link rel="stylesheet" href="hub-house.css?v=202611161754">
 </head>
 <body>
 <div class="board">
@@ -712,13 +712,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611161751"></script>
-<script src="hub-shared.js?v=202611161751"></script>
-<script src="hub-rotation.js?v=202611161751"></script>
-<script src="hub-store.js?v=202611161751"></script>
-<script src="hub-say.js?v=202611161751"></script>
-<script src="hub-sync.js?v=202611161751"></script>
-<script src="hub-notebook.js?v=202611161751"></script>
+<script src="hub-due.js?v=202611161754"></script>
+<script src="hub-shared.js?v=202611161754"></script>
+<script src="hub-rotation.js?v=202611161754"></script>
+<script src="hub-store.js?v=202611161754"></script>
+<script src="hub-say.js?v=202611161754"></script>
+<script src="hub-sync.js?v=202611161754"></script>
+<script src="hub-notebook.js?v=202611161754"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -2292,14 +2292,32 @@ async function takeBack(){
      next practice, 10 Oct 2026): a blank plan takes that number, and with it
      its date and the "Start from your TP point" button. A plan that already
      names a practice, or is turned in, is left as it is. */
-  (function(){
-    const n = parseInt(new URLSearchParams(location.search).get('tp'), 10);
+  /* THE NUMBER FILLS ITSELF FROM ANY DOOR (Ramy, C/21 day one, 16 Nov 2026: "it keeps disappearing ... No one actually wrote
+     TP1 ... Let's just make sure it's out there"). Only the hero's link carried ?tp=; the home's own Lesson plan card, the one
+     most trainees press, opened the plan with an empty box, and Start from your TP point hides without a number. A blank
+     plan now takes the trainee's next teaching practice by itself: the one after the last filed away, or the first after it
+     that has a TP point. Again when the course has loaded, since the TP points can arrive after the page. */
+  function tpNumberFill(){
     const f = $('fTP');
-    if (!n || !f || f.disabled || String(f.value || '').trim()) return;
+    if (!f || f.disabled || String(f.value || '').trim()) return;
+    let n = parseInt(new URLSearchParams(location.search).get('tp'), 10) || 0;
+    if (!n) { try {
+      const me = JSON.parse(localStorage.getItem('hub:me') || 'null'), P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null');
+      const mine = (me && P && P.points && P.points[me.token]) || null;
+      if (mine) {
+        const h = JSON.parse(localStorage.getItem('chub:tpHistory') || '{}') || {};
+        const filed = Math.max(0, ...Object.keys(h).map(Number).filter(x => x > 0));
+        const has = k => { const c = mine['tp' + k]; return !!(c && ((c.stages || []).some(x => x && (x.name || x.todo)) || String(c.point || '').trim() || String(c.sub || '').trim() || String(c.context || '').trim())); };
+        const nums = Object.keys(mine).map(k => +String(k).replace(/^tp/, '')).filter(k => k > filed && has(k)).sort((x, y) => x - y);
+        n = nums[0] || 0;
+      } } catch (e) {} }
+    if (!n) return;
     f.value = 'TP' + n;
     f.dispatchEvent(new Event('input', { bubbles: true }));
     f.dispatchEvent(new Event('change', { bubbles: true }));
-  })();
+  }
+  tpNumberFill();
+  document.addEventListener('hub:ready', tpNumberFill);
   matMode(); renderTurnStatus();
 })();
 
