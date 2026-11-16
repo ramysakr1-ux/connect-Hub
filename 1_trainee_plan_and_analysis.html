@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611161300">
+<link rel="stylesheet" href="hub-tokens.css?v=202611161346">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -476,7 +476,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611161300">
+<link rel="stylesheet" href="hub-house.css?v=202611161346">
 </head>
 <body>
 <div class="board">
@@ -712,13 +712,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611161300"></script>
-<script src="hub-shared.js?v=202611161300"></script>
-<script src="hub-rotation.js?v=202611161300"></script>
-<script src="hub-store.js?v=202611161300"></script>
-<script src="hub-say.js?v=202611161300"></script>
-<script src="hub-sync.js?v=202611161300"></script>
-<script src="hub-notebook.js?v=202611161300"></script>
+<script src="hub-due.js?v=202611161346"></script>
+<script src="hub-shared.js?v=202611161346"></script>
+<script src="hub-rotation.js?v=202611161346"></script>
+<script src="hub-store.js?v=202611161346"></script>
+<script src="hub-say.js?v=202611161346"></script>
+<script src="hub-sync.js?v=202611161346"></script>
+<script src="hub-notebook.js?v=202611161346"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1174,6 +1174,13 @@ function tpStartRender(){
   if(!btn) return;
   const got=tpPointStages();
   btn.hidden=!got; hint.hidden=!got;
+  /* NO TP NUMBER YET (Ramy, 16 Nov 2026, C/21's first lesson planning: "can't see it"). The plan opened from the home's card,
+     or a bookmark, has an empty TP number box, and the button stayed hidden with nothing to say why. A trainee whose TP points
+     are out is told where the button is and what brings it. */
+  if(!got && !String(($('fTP')||{}).value||'').trim() && !($('fTP')||{}).disabled){
+    let has=false; try{ const me=JSON.parse(localStorage.getItem('hub:me')||'null'), P=JSON.parse(localStorage.getItem('connect_tp_points_v1')||'null'); has=!!(me&&P&&P.points&&P.points[me.token]&&Object.keys(P.points[me.token]).length); }catch(e){}
+    if(has){ hint.hidden=false; hint.textContent='Type your TP number in the box at the top, for example TP1. Start from your TP point then appears here, and brings in what your tutor set for that lesson.'; }
+  }
   if(got){
     btn.textContent='Start from your TP point'+(got.stages.length?' ('+got.stages.length+' stage'+(got.stages.length===1?'':'s')+')':'');
     hint.textContent='Everything your tutor set for TP '+got.n+' comes into your plan: '+(got.stages.length?'the aims, the stages with their timings and interaction, and the procedure':'the aims and the context')+'. Anything you have already written stays.';
@@ -1229,7 +1236,8 @@ async function tpStartApply(){
   paintAll(); setStatus(!got.stages.length ? 'Your TP point is in your plan. The stages are yours to write.' : got.stages.every(x=>String(x.aim||'').trim()) ? 'Your TP point is in your plan.' : 'Your TP point is in your plan. Write the aim of each stage.'); dirty=true;
 }
 if($('tpStart')) $('tpStart').addEventListener('click',tpStartApply);
-if($('fTP')) $('fTP').addEventListener('change',tpStartRender);
+if($('fTP')){ $('fTP').addEventListener('change',tpStartRender); $('fTP').addEventListener('input',tpStartRender); }   /* as it is typed, not only on leaving the box (16 Nov 2026) */
+document.addEventListener('hub:ready',tpStartRender);   /* the TP points can arrive after the page: look again when the course has loaded */
 tpStartRender();
 
 function fwOpen(){ fwMenu.hidden=false; fwBtn.setAttribute('aria-expanded','true'); }
