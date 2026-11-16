@@ -578,6 +578,11 @@
     var pSetN = Storage.prototype.setItem;
     Storage.prototype.setItem = function(k, v){ pSetN.call(this, k, v); if (this === localStorage && (k === 'chub:tutorName' || k === 'chub:tutorSigKept')) keepName(); };
   }
+  /* MAYA ARRIVES SIGNED (Ramy, 16 Nov 2026, day one of C/21: "make sure that she's signing the agreement as a default ... I keep
+     signing this every time"). The trainee view's tab starts empty each time, so her home was held at the agreement like a new
+     trainee's. Her tab now holds a signed agreement from the start; it is this tab's own storage, and nothing is sent. */
+  var mayaSigned = function(){ try { if (mode !== 'trainee' || String(S.token() || '').indexOf('maya.') !== 0) return; var a = null; try { a = JSON.parse(localStorage.getItem('chub:agreement') || 'null'); } catch (e) {} if (a && a.at) return; localStorage.setItem('chub:agreement', JSON.stringify({ name: 'Maya Ramsey', at: new Date().toISOString(), print: '' })); } catch (e) {} };
+  mayaSigned();
   var cached = false; try { cached = localStorage.getItem('hub:booted') === identity; } catch (e) {}
   if (DEMO && !demoSession()) cached = false;   /* a new visit: wait for the clean course, not last visit's copy */
   var dirty = {}, started = false;
@@ -1028,6 +1033,7 @@
     var settledQuietly = function(){
       markVer();
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
+      mayaSigned();
       afterBoot();
       status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
     };
@@ -1068,6 +1074,7 @@
         rebuildSnapshot();
       }
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
+      mayaSigned();
       afterBoot();
       status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
     }, function(err){
