@@ -2635,6 +2635,8 @@ window.hubHeadHTML = function (text, heads) {
   }
   function bar(scope){
     if (!OK || BAR) return;
+    /* tutors only (16 Nov 2026): a trainee or a student gets no dictation, as they get no spell check */
+    try { if (window.HubStore && (HubStore.isTrainee() || HubStore.isVolunteer())) return; } catch (e) {}
     SCOPE = scope || 'textarea';
     BAR = document.createElement('div'); BAR.className = 'dictbar';
     BAR.innerHTML = '<span class="dict-hint" hidden>Click into a box first</span>' +
