@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611161610">
+<link rel="stylesheet" href="hub-tokens.css?v=202611161620">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -469,7 +469,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611161610">
+<link rel="stylesheet" href="hub-house.css?v=202611161620">
 </head>
 <body>
 <div class="board">
@@ -525,13 +525,15 @@
     <p class="tiny" id="heroTiny"></p>
   </section>
 
+  <!-- What the tutors shared for the trainees, newest three, ABOVE the noticeboard (C/21 day one, 16 Nov 2026):
+       under it, the strip sat a full screen down and nobody found it. -->
+  <section class="stream shelf" id="shelf" hidden></section>
   <!-- The course stream: short posts from the tutors to the whole course or
        to a TP group (Ramy, 28 Sep 2026: "the only thing missing now is an
        announcement stream"). Hidden until there is a post. -->
   <section class="stream board" id="stream" hidden></section>
   <!-- From the course (2 Oct 2026): the tutors' demonstration lesson and the
        GTKY activities, by link; a trainee can add a GTKY activity too. -->
-  <section class="stream shelf" id="shelf" hidden></section>
   <!-- "Email your tutor": opens the trainee's own mail app with the tutor's
        address; carries the clock so a message sent at night is sent knowing
        it will be read in the morning (Ramy, 28 Sep 2026). Hidden until
@@ -682,20 +684,20 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202611161610"></script>
-<script src="observation-defaults.js?v=202611161610"></script>
-<script src="hub-shared.js?v=202611161610"></script>
-<script src="hub-hand.js?v=202611161610"></script>
-<script src="hub-ink.js?v=202611161610"></script>
+<script src="hub-due.js?v=202611161620"></script>
+<script src="observation-defaults.js?v=202611161620"></script>
+<script src="hub-shared.js?v=202611161620"></script>
+<script src="hub-hand.js?v=202611161620"></script>
+<script src="hub-ink.js?v=202611161620"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202611161610"></script>
-<script src="hub-say.js?v=202611161610"></script>
-<script src="hub-shelf.js?v=202611161610"></script>
-<script src="hub-front.js?v=202611161610"></script>
-<script src="hub-sync.js?v=202611161610"></script>
-<script src="hub-notebook.js?v=202611161610"></script>
-<script src="hub-feedback.js?v=202611161610"></script>
-<script src="hub-about.js?v=202611161610"></script>
+<script src="hub-store.js?v=202611161620"></script>
+<script src="hub-say.js?v=202611161620"></script>
+<script src="hub-shelf.js?v=202611161620"></script>
+<script src="hub-front.js?v=202611161620"></script>
+<script src="hub-sync.js?v=202611161620"></script>
+<script src="hub-notebook.js?v=202611161620"></script>
+<script src="hub-feedback.js?v=202611161620"></script>
+<script src="hub-about.js?v=202611161620"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1251,6 +1253,19 @@ if (fbBack){
     const list = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name && x.to !== 'students');
     card.hidden = !list.length; const b = document.getElementById('badgeShared');
     if (b) b.textContent = list.length ? list.length + ' shared' : '';
+  })();
+  /* SHARED BY YOUR TUTORS, AT THE TOP (C/21 day one, 16 Nov 2026). Ramy shared the demo lesson and "the students can see the
+     material, but the trainees can't": the students get it at the top of their page, the trainees had it in a card at the
+     bottom of the home, four screens down on a phone. The newest three links now sit under the noticeboard, above the
+     trainee's own work; the card below still opens everything, the classmates' handouts too. Only what the tutors put on
+     the course for the trainees: never what is for the students only, never a classmate's handout. */
+  (function(){ const host = document.getElementById('shelf'); if (!host) return;
+    const list = (rec('connect_shared_v1') || []).filter(x => x && x.url && x.name && x.to !== 'students' && (!x.kind || x.kind === 'course' || x.kind === 'demo'))
+      .slice().sort((x, y) => String(y.at || '').localeCompare(String(x.at || '')));
+    host.hidden = !list.length; if (!list.length) return;
+    const day = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
+    host.innerHTML = '<div class="shead"><h2>Shared by your tutors</h2>' + (list.length > 3 ? '<a class="more" href="36_shared_materials.html" style="text-decoration:none">See all ' + list.length + '</a>' : '') + '</div>'
+      + '<div class="shelf-group">' + list.slice(0, 3).map(x => '<div class="shelf-row"><a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.name) + '</a><span class="shelf-meta">' + esc([x.by, x.at ? day(x.at) : ''].filter(Boolean).join(' \u00b7 ')) + '</span></div>').join('') + '</div>';
   })();
   /* the row's label only when one of its cards shows */
   setTimeout(() => { const fc = document.getElementById('fromCourse'); if (fc) fc.hidden = !fc.querySelector('.room:not([hidden])'); }, 0);
