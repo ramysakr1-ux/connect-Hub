@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611162005">
+<link rel="stylesheet" href="hub-tokens.css?v=202611162017">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -110,20 +110,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611162005">
+<link rel="stylesheet" href="hub-house.css?v=202611162017">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611162005"></script>
-<script src="hub-store.js?v=202611162005"></script>
-<script src="hub-say.js?v=202611162005"></script>
-<script src="hub-sync.js?v=202611162005"></script>
-<script src="hub-notebook.js?v=202611162005"></script>
-<script src="gtky-bank.js?v=202611162005"></script>
-<script src="fol-interview.js?v=202611162005"></script>
+<script src="hub-shared.js?v=202611162017"></script>
+<script src="hub-store.js?v=202611162017"></script>
+<script src="hub-say.js?v=202611162017"></script>
+<script src="hub-sync.js?v=202611162017"></script>
+<script src="hub-notebook.js?v=202611162017"></script>
+<script src="gtky-bank.js?v=202611162017"></script>
+<script src="fol-interview.js?v=202611162017"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -298,6 +298,9 @@ function regNames(){ return regList().map(s => String(s.name || '').trim()).filt
 function volInfo(name){ const n = String(name || '').trim().toLowerCase(); return regList().find(s => String(s.name || '').trim().toLowerCase() === n) || null; }
 function recordingOn(){ return settings().interviewRecording !== false; }   /* on unless the center turned it off (29 Oct 2026) */
 let ivSel = '', ivTimer = null;
+/* SAY WHERE THE NOTE WENT (Ramy, 16 Nov 2026: "something that tells them that the note is now in the pool, so they don't think
+   it just disappeared"). The box empties when a note is added; this line says it is above, and in the group's pool below. */
+let heardMsg = '';
 function ivStudents(){ const d = ivData(); const names = regNames(); Object.keys(d.students).forEach(k => { if (!names.includes(d.students[k].name)) names.push(d.students[k].name); }); return names; }
 function ivEnsure(d, name){ if (!d.students[name]) d.students[name] = { name, answers: {}, heard: [], at: new Date().toISOString() }; return d.students[name]; }
 /* WHO INTERVIEWS WHOM (Ramy, 15 Nov 2026: "they pick someone, and then the others can no longer pick the same person ...
@@ -368,7 +371,7 @@ function renderInterview(){
       ${(s.heard || []).length ? (s.heard || []).map(h => `<div class="item"><div><b>${h.type === 'pronunciation' ? 'Pronunciation' : 'Grammar'}</b>${esc(h.note)}</div><button class="btn ghost" type="button" data-unheard="${esc(h.id)}">Remove</button></div>`).join('') : '<p class="note">Nothing added yet.</p>'}
       <div class="iv-types"><label class="chip${ivType === 'grammar' ? ' on' : ''}"><input type="radio" name="ivType" value="grammar" ${ivType === 'grammar' ? 'checked' : ''} style="display:none">Grammar</label><label class="chip${ivType === 'pronunciation' ? ' on' : ''}"><input type="radio" name="ivType" value="pronunciation" ${ivType === 'pronunciation' ? 'checked' : ''} style="display:none">Pronunciation</label></div>
       <textarea id="ivHeard" rows="2" placeholder="What ${esc(ivSel)} said, in their words"></textarea>
-      <div style="margin-top:8px"><button class="btn" type="button" id="ivHeardAdd">Add what you heard</button></div></div>`;
+      <div style="margin-top:8px"><button class="btn" type="button" id="ivHeardAdd">Add what you heard</button></div>${heardMsg ? '<p class="iv-msg" role="status" style="margin:10px 0 0">' + esc(heardMsg) + '</p>' : ''}</div>`;
   }
   const pool = `<div class="iv-box"><h2>The pool &mdash; <span id="ivPoolN">${poolList().length}</span> heard so far</h2><p class="note">What everyone in your TP group has heard in their interviews: the problem and the student's words. Name a specific structure or sound that something here backs.</p><div id="ivPool">${FOL.poolHtml(poolList())}</div></div>`;
   const group = `<div class="iv-box"><h2>Your TP group&rsquo;s interviews</h2><p class="note">The students the others in your group interviewed: their answers, recordings and transcripts. Together with yours, this is the group for Part A.</p><div id="ivGroup">${FOL.groupHtml(groupList(), { others: true })}</div></div>`;
@@ -494,7 +497,9 @@ function wireInterview(){
     /* save any typed answers first, so the notes and the interview stay together */
     app.querySelectorAll('textarea[data-q]').forEach(x => { s.answers[x.dataset.q] = x.value; });
     s.heard.push({ id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type: ivType, note: v });
+    heardMsg = 'Added. It is in your list above, and in your TP group\u2019s pool at the foot of this page.';
     ivSave(d); pushPool(); renderInterview();
+    setTimeout(() => { heardMsg = ''; }, 0);   /* shown once: the next redraw clears it */
   });
   app.querySelectorAll('[data-unheard]').forEach(b => b.addEventListener('click', () => { const d = ivData(); const s = d.students[ivSel]; if (!s) return; s.heard = (s.heard || []).filter(h => h.id !== b.dataset.unheard); ivSave(d); pushPool(); renderInterview(); }));
 }
