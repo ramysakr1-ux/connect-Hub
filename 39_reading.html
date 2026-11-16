@@ -15,7 +15,7 @@
 <title>Reading</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611162017">
+<link rel="stylesheet" href="hub-tokens.css?v=202611162044">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 90px; display:flex; justify-content:center;}
@@ -61,19 +61,31 @@
   @media (max-width:560px){ .famhead{padding:14px 52px 12px 18px;} .card.fam dl.terms{padding:4px 18px 10px;} .card.fam dl.terms div:nth-child(even){margin:0 -18px; padding-left:18px; padding-right:18px;} }
   @media (max-width:560px){ dl.terms div{grid-template-columns:1fr;} .card{padding:18px 18px;} h1{font-size:1.75rem;} }
   @media print{ body{background:#fff; padding:0;} .back,.others,.find{display:none;} .card{box-shadow:none; border:1px solid #ddd;} }
+  /* a reading set as a book page (16 Nov 2026) */
+  .bookpage{max-width:720px; margin:8px auto 40px; background:var(--paper); padding:44px 56px 36px; border-radius:4px; box-shadow:var(--nb-shadow); font-family:'Newsreader',Georgia,serif; color:var(--ink);}
+  .bookpage .runhead{display:flex; justify-content:space-between; gap:12px; margin:0 0 26px; padding-bottom:8px; border-bottom:1px solid var(--sand-line); font-family:'Karla',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--grey);}
+  .bookpage h1{font-family:'Newsreader',Georgia,serif; font-size:2rem; font-weight:600; margin:0 0 10px;}
+  .bookpage .lede{font-size:1.05rem; font-style:italic; line-height:1.6; color:var(--grey); margin:0 0 22px;}
+  .bookpage h2{font-family:'Newsreader',Georgia,serif; font-size:1.25rem; font-weight:600; margin:26px 0 8px; color:var(--a-forest, var(--teal));}
+  .bookpage p{font-size:1.05rem; line-height:1.7; margin:0 0 10px;}
+  .bookpage dl.pts{margin:4px 0 0;} .bookpage dl.pts > div{display:grid; grid-template-columns:170px 1fr; gap:4px 18px; padding:8px 0; border-top:1px solid var(--row-line);}
+  .bookpage dt{font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:700;} .bookpage dd{margin:0; font-size:1.05rem; line-height:1.6;}
+  .bookpage .src{margin-top:30px; padding-top:12px; border-top:1px solid var(--sand-line); font-family:'Karla',sans-serif; font-size:0.84rem; line-height:1.6; color:var(--grey);} .bookpage .src b{color:var(--ink); margin-right:4px;}
+  @media (max-width:640px){ .bookpage{padding:26px 20px 24px; margin:0 0 30px;} .bookpage h1{font-size:1.6rem;} .bookpage dl.pts > div{grid-template-columns:1fr;} }
+  @media print{ .bookpage{box-shadow:none; padding:0;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611162017">
+<link rel="stylesheet" href="hub-house.css?v=202611162044">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611162017"></script>
-<script src="hub-store.js?v=202611162017"></script>
-<script src="hub-say.js?v=202611162017"></script>
-<script src="hub-sync.js?v=202611162017"></script>
-<script src="readings.js?v=202611162017"></script>
+<script src="hub-shared.js?v=202611162044"></script>
+<script src="hub-store.js?v=202611162044"></script>
+<script src="hub-say.js?v=202611162044"></script>
+<script src="hub-sync.js?v=202611162044"></script>
+<script src="readings.js?v=202611162044"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -110,6 +122,16 @@ if (D.terms) {
     + (s.steps ? '<ol class="steps">' + s.steps.map(st => '<li><b>' + esc(st[0]) + '</b><span>' + esc(st[1]) + '</span></li>').join('') + '</ol>' : '')
     + '</section>').join('');
 }
+/* A BOOK PAGE (16 Nov 2026): a reading marked `book` is set like a page from a book, one sheet, with a running head and its
+   source at the foot. The other readings keep their cards. */
+if (D.book) {
+  document.body.classList.add('bookmode');
+  $('app').innerHTML = '<article class="bookpage"><p class="runhead"><span>' + esc(D.kicker || 'Something to read') + '</span><span>Connect Lite</span></p>'
+    + '<h1>' + esc(D.title) + '</h1><p class="lede">' + esc(D.lede) + '</p>'
+    + (D.sections || []).map(s => '<section><h2>' + esc(s.h) + '</h2>' + (s.p || []).map(x => '<p>' + esc(x) + '</p>').join('')
+        + (s.steps ? '<dl class="pts">' + s.steps.map(st => '<div><dt>' + esc(st[0]) + '</dt><dd>' + esc(st[1]) + '</dd></div>').join('') + '</dl>' : '') + '</section>').join('')
+    + (D.source ? '<footer class="src"><b>Source</b> ' + esc(D.source) + '</footer>' : '') + '</article>';
+} else
 $('app').innerHTML = '<p class="eyebrow">Something to read</p><h1>' + esc(D.title) + '</h1><p class="lede">' + esc(D.lede) + '</p>'
   + (others ? '<nav class="others" aria-label="More to read">' + others + '</nav>' : '') + body;
 const f = $('find');
