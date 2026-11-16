@@ -2481,8 +2481,8 @@ case 'inbox': {
        "transcribe". The consent is the one a volunteer already gives on their
        own page, in six languages: "I agree to being recorded, in sound or on
        video, during this sign-up and in lessons". So a recording is only ever
-       accepted for a student on the register whose row carries `agreed`, on a
-       course whose Course admin has switched recording on.
+       accepted for a student on the register (v247: whether or not their row carries
+       `agreed`), on a course whose Course admin has switched recording on.
        The file goes to a PRIVATE folder under the course's materials, owned by
        the account the script runs as -- never "anyone with the link", unlike
        a trainee's worksheet. It is played back through this store: the trainee
@@ -2496,7 +2496,9 @@ case 'inbox': {
       var iaReg = courseRead_(course.id, 'volunteers') || {};
       var iaStudent = (iaReg.students || []).filter(function (x) { return x && String(x.name || '').trim().toLowerCase() === iaName.toLowerCase(); })[0];
       if (!iaStudent) throw new Error('That student is not on the register');
-      if (!iaStudent.agreed) throw new Error('That student has not agreed to be recorded');
+      /* v247 (16 Nov 2026): no longer waits for the student's own Agree press. Ramy, C/21 day one: "All the volunteer
+         students agree. They can't join the course, basically, if they don't agree. If there's someone who doesn't
+         agree, like their name will just not be there." Being on the center's register is the agreement. */
       var iaBytes = Utilities.base64Decode(String(req.bytes || ''));
       if (!iaBytes.length) throw new Error('Nothing was recorded');
       if (iaBytes.length > 8 * 1024 * 1024) throw new Error('That recording is over 8MB. Keep an interview under ten minutes.');

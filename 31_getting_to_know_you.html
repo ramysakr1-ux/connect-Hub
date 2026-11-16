@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611161950">
+<link rel="stylesheet" href="hub-tokens.css?v=202611162001">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -110,20 +110,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611161950">
+<link rel="stylesheet" href="hub-house.css?v=202611162001">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611161950"></script>
-<script src="hub-store.js?v=202611161950"></script>
-<script src="hub-say.js?v=202611161950"></script>
-<script src="hub-sync.js?v=202611161950"></script>
-<script src="hub-notebook.js?v=202611161950"></script>
-<script src="gtky-bank.js?v=202611161950"></script>
-<script src="fol-interview.js?v=202611161950"></script>
+<script src="hub-shared.js?v=202611162001"></script>
+<script src="hub-store.js?v=202611162001"></script>
+<script src="hub-say.js?v=202611162001"></script>
+<script src="hub-sync.js?v=202611162001"></script>
+<script src="hub-notebook.js?v=202611162001"></script>
+<script src="gtky-bank.js?v=202611162001"></script>
+<script src="fol-interview.js?v=202611162001"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -377,8 +377,8 @@ function renderInterview(){
 let ivType = 'grammar';
 
 /* ---- recording the interview (15 Oct 2026) --------------------------------
-   Only for a student on the register who has agreed to be recorded (the
-   consent they already give on their own page, in six languages), on a course
+   For any student on the register (16 Nov 2026: the center takes their agreement
+   when they join; before that the page waited for their own Agree press), on a course
    where Course admin has switched recording on. The audio goes to a private
    folder through the store; the trainee can play it back, make a transcript
    (a helper: it tends to tidy mistakes, so they correct it against the
@@ -390,19 +390,24 @@ function clock(n){ n = Math.max(0, Math.round(n)); return Math.floor(n / 60) + '
 function recBox(){
   if (!ivSel || !recordingOn()) return '';
   const v = volInfo(ivSel);
-  if (!v) return `<div class="iv-box"><h2>Recording</h2><p class="note">${esc(ivSel)} is not on the register, so this interview cannot be recorded. Recording is only for students who have agreed.</p></div>`;
-  if (!v.agreed) return `<div class="iv-box"><h2>Recording</h2><p class="note">${esc(ivSel)} has not agreed to be recorded yet, so there is no recording button. They agree on their own page; ask them to open it.</p></div>`;
+  if (!v) return `<div class="iv-box"><h2>Recording</h2><p class="note">${esc(ivSel)} is not on the register, so this interview cannot be recorded. Ask your tutor to add them to the register.</p></div>`;
+  /* THE RECORD BUTTON IS ALWAYS THERE FOR A STUDENT ON THE REGISTER (Ramy, C/21 day one, 16 Nov 2026: "They all agreed. So why
+     the hell couldn't they see the recording? ... All the volunteer students agree. They can't join the course, basically,
+     if they don't agree. If there's someone who doesn't agree, like their name will just not be there ... the recording
+     button will always be there"). It used to wait for the student to press Agree on their own Lite page, and on day one
+     most had not opened it: 7 of 12 in one class, 2 of 10 in the other, so most trainees had no button. Being on the
+     center's register is the agreement; the store's putInterviewAudio follows the same rule. */
   const d = ivData(); const s = d.students[ivSel] || {}; const list = s.audio || [];
   let ctl;
   if (rs.mr && rs.mr.state === 'recording') ctl = `<p class="note" style="margin:0 0 8px"><b id="recClock">${clock((Date.now() - rs.t0) / 1000)}</b> &middot; recording. Keep it under ten minutes.</p><button class="btn" type="button" id="recStop">Stop</button>`;
   else if (rs.blob) ctl = `<audio controls src="${esc(rs.url)}" style="display:block;width:100%;margin:0 0 8px"></audio><div class="row" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="recSave">Save the recording</button><button class="btn ghost" type="button" id="recDiscard">Discard</button><span class="note">${clock(rs.secs)}</span></div>`;
-  else ctl = `<p class="note" style="margin:0 0 8px">Before you start, ask ${esc(ivSel)} if you can record your chat. They have already agreed on their page; ask anyway.</p><button class="btn" type="button" id="recStart">Record</button>`;
+  else ctl = `<p class="note" style="margin:0 0 8px">Before you start, ask ${esc(ivSel)} if you can record your chat.</p><button class="btn" type="button" id="recStart">Record</button>`;
   const saved = list.map((a, i) => `<div class="iv-rec" data-rec="${esc(a.id)}" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--row-line,#e6e0d4)">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn ghost" type="button" data-play="${esc(a.id)}">Listen</button><span class="note">Recording ${i + 1} &middot; ${clock(a.seconds || 0)}</span>
         <button class="btn ghost" type="button" data-tx="${esc(a.id)}">${a.transcript ? 'Make the transcript again' : 'Make a transcript'}</button><button class="btn ghost" type="button" data-delrec="${esc(a.id)}">Delete</button></div>
       <span class="fol-audio"></span>
       ${a.transcript != null ? `<p class="note" style="margin:8px 0 4px">The transcript is a computer's first try and may tidy mistakes. Listen, and correct it so it says exactly what ${esc(ivSel)} said.${/^(Student|Trainee): /m.test(a.transcript) ? ' It marks who is speaking. If the two are the wrong way round, <button class="btn ghost" type="button" data-swap="' + esc(a.id) + '" style="padding:2px 10px;min-height:0">swap them</button>.' : ''}</p><textarea data-txt="${esc(a.id)}" rows="5" style="width:100%;font:inherit;font-size:.9rem;padding:8px 10px;border:1.5px solid var(--sand-line);border-radius:8px;background:var(--field);color:var(--ink)">${esc(a.transcript)}</textarea>` : ''}</div>`).join('');
-  return `<div class="iv-box" id="recBox"><h2>Recording <span class="iv-saved">&middot; ${esc(ivSel)} has agreed</span></h2>${ctl}<p class="note" id="recMsg" style="margin:8px 0 0">${esc(rs.msg)}</p>${saved}</div>`;
+  return `<div class="iv-box" id="recBox"><h2>Recording</h2>${ctl}<p class="note" id="recMsg" style="margin:8px 0 0">${esc(rs.msg)}</p>${saved}</div>`;
 }
 function recDone(){ clearInterval(rs.timer); if (rs.stream) rs.stream.getTracks().forEach(t => t.stop()); rs.stream = null; }
 function recReset(){ recDone(); if (rs.url) URL.revokeObjectURL(rs.url); rs.mr = null; rs.chunks = []; rs.blob = null; rs.url = ''; rs.secs = 0; rs.msg = ''; }
