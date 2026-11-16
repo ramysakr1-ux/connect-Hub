@@ -350,3 +350,29 @@ window.HubStore = (function(){
     }
   };
 })();
+
+/* NO SPELL CHECK OR AUTOCORRECTION FOR A TRAINEE OR A STUDENT (Ramy, C/21 day one, 16 Nov 2026: "The trainees are getting
+   autocorrection as they type. They shouldn't. Should only be for the trainers."). What they write is their own English, and
+   on a plan or an assignment it is assessed. The browser's spell check and autocorrection, and Grammarly's, are switched
+   off on every field they type in, on every page, whatever the page itself asked for; a tutor keeps them. */
+(function(){
+  var H = window.HubStore; if (!H || !window.MutationObserver) return;
+  var learner = function(){ try { return !!(H.isTrainee() || H.isVolunteer()); } catch (e) { return false; } };
+  var SEL = 'textarea, input:not([type]), input[type=text], input[type=search], [contenteditable]';
+  var off = function(el){
+    if (el.getAttribute('spellcheck') !== 'false') el.setAttribute('spellcheck', 'false');
+    if (el.getAttribute('autocorrect') !== 'off') el.setAttribute('autocorrect', 'off');
+    if (el.getAttribute('data-gramm') !== 'false') { el.setAttribute('data-gramm', 'false'); el.setAttribute('data-gramm_editor', 'false'); el.setAttribute('data-enable-grammarly', 'false'); }
+  };
+  var sweep = function(root){ if (!learner() || !root) return; if (root.matches && root.matches(SEL)) off(root); if (root.querySelectorAll) [].forEach.call(root.querySelectorAll(SEL), off); };
+  var start = function(){
+    sweep(document);
+    new MutationObserver(function(ms){ if (!learner()) return;
+      ms.forEach(function(m){
+        if (m.type === 'attributes') { if (m.target.matches && m.target.matches(SEL) && m.target.getAttribute('spellcheck') !== 'false') off(m.target); return; }
+        [].forEach.call(m.addedNodes, function(n){ if (n.nodeType === 1) sweep(n); }); });
+    }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['spellcheck', 'contenteditable'] });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+  document.addEventListener('hub:ready', function(){ sweep(document); });
+})();
