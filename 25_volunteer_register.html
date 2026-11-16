@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611161819">
+<link rel="stylesheet" href="hub-tokens.css?v=202611161914">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -68,6 +68,15 @@
   /* the file chooser is a house button; the browser's own control is hidden inside it */
   .filebtn{position:relative; overflow:hidden; cursor:pointer;} .filebtn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer; font-size:0;}
   .reg{background:var(--surface); border:1px solid var(--sand-line); border-left:5px solid var(--teal); border-radius:10px; padding:4px 0 6px;}
+  /* the level tabs and the two groups inside one (16 Nov 2026) */
+  .lvtabs{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px;}
+  .lvtabs button{font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:700; min-height:44px; padding:8px 16px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .lvtabs button small{margin-left:8px; font-size:0.78rem; font-weight:700; color:var(--grey);}
+  .lvtabs button.on{background:var(--a-forest, var(--teal)); border-color:var(--a-forest, var(--teal)); color:var(--paper);}
+  .lvtabs button.on small{color:var(--paper); opacity:.8;}
+  .reg .grp{padding:14px 16px 8px; font-size:0.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--grey);}
+  .reg .grp small{margin-left:8px; font-size:0.72rem; letter-spacing:0; color:var(--grey);}
+  .reg .grp + .who{border-top:0;}
   .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line);}
   .mailrow{margin:6px 0 2px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px;} .mailrow small.invited{flex-basis:100%; color:var(--ink-soft, #55524c);} .mailrow .email{font:0.82rem 'Karla',sans-serif; width:min(100%, 280px); padding:5px 8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink);} .mailrow small{margin-left:8px; color:var(--grey); font-size:0.74rem;}
   .legend.coming{font-weight:500; color:var(--ink);}
@@ -150,21 +159,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611161819">
+<link rel="stylesheet" href="hub-house.css?v=202611161914">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611161819"></script>
-<script src="hub-shared.js?v=202611161819"></script>
-<script src="hub-timetable-parse.js?v=202611161819"></script>
-<script src="hub-xlsx.js?v=202611161819"></script>
-<script src="hub-attendance.js?v=202611161819"></script>
-<script src="hub-store.js?v=202611161819"></script>
-<script src="hub-say.js?v=202611161819"></script>
-<script src="hub-sync.js?v=202611161819"></script>
+<script src="hub-due.js?v=202611161914"></script>
+<script src="hub-shared.js?v=202611161914"></script>
+<script src="hub-timetable-parse.js?v=202611161914"></script>
+<script src="hub-xlsx.js?v=202611161914"></script>
+<script src="hub-attendance.js?v=202611161914"></script>
+<script src="hub-store.js?v=202611161914"></script>
+<script src="hub-say.js?v=202611161914"></script>
+<script src="hub-sync.js?v=202611161914"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -212,6 +221,8 @@ function teachingDays(){
 }
 
 const students = () => (REG && Array.isArray(REG.students)) ? REG.students : [];
+let LVTAB = null;   /* the level tab showing (16 Nov 2026) */
+let JOINED = null;   /* who had joined when the page or the tab opened */
 const A = window.hubAttendance;
 const LEVELS = ['A1','A2','A2+','B1','B2','C1','C2'];
 /* Shown as the platform's level names (Ramy, 30 Oct 2026); the code stays on the record, because the hours and the homework count on it. */
@@ -329,7 +340,7 @@ function render(){
     return;
   }
 
-  app.innerHTML = head + bar + consent + `<div class="reg">${list.map((st, i) => {
+  const rowOf = (st, i) => {
     const r = recordOf(st, days, lessons, lessonMinutes, perDay);
     return `<div class="who">
       <div>
@@ -364,7 +375,34 @@ function render(){
             ? `<button type="button" class="btn sm" data-copy="${i}">Copy their link</button><a class="btn quiet sm" href="27_volunteer_certificate.html?who=${encodeURIComponent(st.token)}">Certificate</a>`
             : `<span class="nolink" title="The course id has not arrived from the store yet">No link yet</span>`}<button type="button" class="btn quiet sm" data-rm="${i}">Remove</button></div>` : ''}</div>
     </div>`;
-  }).join('')}</div>
+  };
+  /* A TAB FOR EACH LEVEL, AND THE ONES WHO HAVE JOINED ON TOP (Ramy, C/21 day one, 16 Nov 2026: "this is chaos ... people who
+     signed up and joined live with people who didn't. I think it needs to be in order. The ones who joined will be on top.
+     The ones who haven't joined yet will be at the bottom ... very clear two tabs on top for the levels"). The register was
+     one list in the order people were added, both classes together. Now: one tab per level, in the course's class order,
+     the last one chosen remembered in this browser; inside it, for a tutor, Joined first (agreed to the joining note, or
+     marked in the room on any day) and Not joined yet below, each by name. A row keeps its place in the stored list (i),
+     which every button on it writes to. */
+  const classes = (() => { try { return (((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).classes || {}).list || []).filter(c => c && c.level); } catch (e) { return []; } })();
+  const levels = []; classes.forEach(c => { if (!levels.includes(c.level) && list.some(st => st.level === c.level)) levels.push(c.level); });
+  list.forEach(st => { const l = st.level || ''; if (l && !levels.includes(l)) levels.push(l); });
+  if (list.some(st => !st.level)) levels.push('');
+  const tabbed = levels.length > 1;
+  if (tabbed) { if (LVTAB === null) { try { LVTAB = localStorage.getItem('chub:regLevel'); } catch (e) {} } if (LVTAB === null || !levels.includes(LVTAB)) LVTAB = levels[0]; }
+  const tabName = l => { if (!l) return 'No level yet'; const k = classes.findIndex(c => c.level === l); return (k > -1 ? 'Class ' + (k + 1) + ' \u00b7 ' : '') + LV(l); };
+  const tabs = !tabbed ? '' : `<div class="lvtabs" role="tablist" aria-label="Level">${levels.map(l => `<button type="button" role="tab" aria-selected="${l === LVTAB}" class="${l === LVTAB ? 'on' : ''}" data-lvtab="${esc(l)}">${esc(tabName(l))}<small>${list.filter(st => (st.level || '') === l).length}</small></button>`).join('')}</div>`;
+  const shown = list.map((st, i) => ({ st, i })).filter(x => !tabbed || (x.st.level || '') === LVTAB);
+  /* who is in which group is settled when the page or a tab opens, and holds while the register is taken: marking
+     somebody in the room must not make their row jump up the list under the tutor's finger */
+  const joinedNow = st => !!st.agreed || Object.keys(st.marks || {}).length > 0;
+  if (!JOINED) { JOINED = {}; list.forEach(st => { JOINED[st.token || st.name] = joinedNow(st); }); }
+  const joined = st => { const k = st.token || st.name; return k in JOINED ? JOINED[k] : joinedNow(st); };
+  const byName = (a, b) => String(a.st.name || '').localeCompare(String(b.st.name || ''));
+  const rowsHTML = !IS_TUTOR ? shown.map(x => rowOf(x.st, x.i)).join('') : (() => {
+    const inn = shown.filter(x => joined(x.st)).sort(byName), out = shown.filter(x => !joined(x.st)).sort(byName);
+    return (inn.length ? `<div class="grp">Joined<small>${inn.length}</small></div>` + inn.map(x => rowOf(x.st, x.i)).join('') : '')
+      + (out.length ? `<div class="grp">Not joined yet<small>${out.length}</small></div>` + out.map(x => rowOf(x.st, x.i)).join('') : ''); })();
+  app.innerHTML = head + bar + consent + tabs + `<div class="reg">${rowsHTML}</div>
   ${COMING ? `<div class="vr9-coming"><div class="lead"><span class="k">Next class</span><b>${esc(dm(COMING.day))}</b><small>${COMING.tp ? 'TP ' + esc(COMING.tp) : esc(COMING.label || 'Class')} at ${esc(hubClock(COMING.from))}</small></div><div class="num"><b>${COMING.yes + COMING.noAnswer}</b><small>likely</small></div><div class="split"><span class="bar" aria-hidden="true"><i class="y" style="flex:${COMING.yes}"></i><i class="q" style="flex:${COMING.noAnswer}"></i><i class="n" style="flex:${COMING.no}"></i></span><span class="keys"><span><i class="y"></i>${COMING.yes} said yes</span><span><i class="q"></i>${COMING.noAnswer} no reply yet</span><span><i class="n"></i>${COMING.no} said no</span></span></div></div>` : ''}
   <p class="legend">
     <span><span class="seg here"></span>in the room</span>
@@ -688,6 +726,7 @@ render();
   const app = document.getElementById('app'); if (!app) return;
   let last = null;
   app.addEventListener('click', e => { const b = e.target.closest('.seg[data-i][data-d]'); if (b) last = b.dataset.i + '|' + b.dataset.d; }, true);
+  app.addEventListener('click', e => { const t = e.target.closest('[data-lvtab]'); if (!t) return; LVTAB = t.dataset.lvtab; JOINED = null; try { localStorage.setItem('chub:regLevel', LVTAB); } catch (err) {} render(); });
   function apply(){
     if (typeof TODAY === 'undefined') return;
     const today = [...app.querySelectorAll('.seg[data-d="' + TODAY + '"], .seg[title^="' + (typeof dm === 'function' ? dm(TODAY) : '\u0000') + ' \u2014"]')];
