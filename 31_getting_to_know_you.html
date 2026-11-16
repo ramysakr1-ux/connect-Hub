@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611162001">
+<link rel="stylesheet" href="hub-tokens.css?v=202611162005">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -110,20 +110,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611162001">
+<link rel="stylesheet" href="hub-house.css?v=202611162005">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611162001"></script>
-<script src="hub-store.js?v=202611162001"></script>
-<script src="hub-say.js?v=202611162001"></script>
-<script src="hub-sync.js?v=202611162001"></script>
-<script src="hub-notebook.js?v=202611162001"></script>
-<script src="gtky-bank.js?v=202611162001"></script>
-<script src="fol-interview.js?v=202611162001"></script>
+<script src="hub-shared.js?v=202611162005"></script>
+<script src="hub-store.js?v=202611162005"></script>
+<script src="hub-say.js?v=202611162005"></script>
+<script src="hub-sync.js?v=202611162005"></script>
+<script src="hub-notebook.js?v=202611162005"></script>
+<script src="gtky-bank.js?v=202611162005"></script>
+<script src="fol-interview.js?v=202611162005"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -354,8 +354,10 @@ function renderInterview(){
       const state = c.mine ? (started ? (heard ? 'Yours, ' + heard + ' heard' : 'Yours') : 'Yours') : c.others ? (c.open ? 'Join ' + c.by : 'Chosen by ' + c.by) : 'Free';
       return `<button class="chip${c.mine ? ' on' : ''}${!c.mine && c.others && !c.open ? ' taken' : ''}" type="button" data-stu="${esc(n)}"${!c.mine && c.others && !c.open ? ' disabled' : ''}>${esc(n)} &middot; ${esc(state)}</button>`; }).join('')}
       ${CLAIMS && CLAIMS.mine ? '<button class="btn ghost" type="button" id="ivLetGo">Let go of my student</button>' : ''}
-      <input type="text" id="ivNew" placeholder="Another student's first name" maxlength="60"><button class="btn ghost" type="button" id="ivAdd">Add</button></div>
-      ${names.length ? '' : '<p class="note" style="margin-top:8px">No students are on the register yet. Add the first name of the student you interviewed.</p>'}</div>`;
+      </div>
+      <!-- NO TYPED NAMES (Ramy, 16 Nov 2026: "take the Add box away"). The list is the register: a typed name could not be
+           recorded and left a student interviewed but never on the center's books. A name typed before stays, with its notes. -->
+      <p class="note" style="margin-top:8px">${names.length ? 'Your student is not on the list? Ask your tutor to add them to the register.' : 'No students are on the register yet. Ask your tutor to add them.'}</p></div>`;
   let body = '';
   if (ivSel && claimState(ivSel).mine === false && CLAIMS && regNames().some(x => keyOf(x) === keyOf(ivSel))) ivSel = '';
   if (ivSel) {
@@ -481,8 +483,6 @@ function wireInterview(){
     HubStore.call({ op: 'claimStudent', token: HubStore.token(), student: k, on: false }).then(() => { CLAIMS.mine = ''; ivSel = ''; renderInterview(); claimsLoad(); },
       e => { claimMsg = (e && e.message) || 'That did not go. Try again.'; renderInterview(); });
   });
-  const add = () => { const v = String($('ivNew').value || '').trim(); if (!v) return; const d = ivData(); ivEnsure(d, v); ivSave(d); ivSel = v; renderInterview(); };
-  if ($('ivAdd')) { $('ivAdd').addEventListener('click', add); $('ivNew').addEventListener('keydown', e => { if (e.key === 'Enter') add(); }); }
   app.querySelectorAll('textarea[data-q]').forEach(t => t.addEventListener('input', () => {
     clearTimeout(ivTimer); const sv = $('ivSaved'); if (sv) sv.textContent = '';
     ivTimer = setTimeout(() => { const d = ivData(); const s = ivEnsure(d, ivSel); app.querySelectorAll('textarea[data-q]').forEach(x => { s.answers[x.dataset.q] = x.value; }); ivSave(d); const sv2 = $('ivSaved'); if (sv2) sv2.textContent = ' \u00b7 Saved'; }, 700);
