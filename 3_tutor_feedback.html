@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611172020">
+<link rel="stylesheet" href="hub-tokens.css?v=202611172049">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -158,6 +158,7 @@
   .whotr{display:flex; align-items:baseline; gap:10px; margin:8px 0 2px; color:var(--a-forest); font:700 1.05rem/1.2 'Karla',sans-serif;}
   .whotr span{font-weight:600; font-size:.86rem; color:var(--grey);}
   @media print{ .whotr{display:none !important;} }
+  .pastenote{margin:4px 0 0; font-size:.78rem; font-weight:600; color:color-mix(in oklch, var(--a-mustard) 72%, var(--ink));}
   .gchip{display:none;}
   /* A QUIETER BAR (Ramy, 17 Nov 2026: "the bottom line, still busy ... Return to blah blah, it's too big ... just blocking the
      view"). Return and the counts on the left, smaller; Dictate, its language and Print together on the right. The grade
@@ -575,7 +576,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611172020">
+<link rel="stylesheet" href="hub-house.css?v=202611172049">
 </head>
 <body>
 <div class="board">
@@ -773,14 +774,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611172020"></script>
-<script src="hub-shared.js?v=202611172020"></script>
-<script src="hub-store.js?v=202611172020"></script>
-<script src="hub-say.js?v=202611172020"></script>
-<script src="hub-crit-learn.js?v=202611172020"></script>
-<script src="hub-crit-vocab.js?v=202611172020"></script>
-<script src="hub-sync.js?v=202611172020"></script>
-<script src="hub-notebook.js?v=202611172020"></script>
+<script src="hub-exchange.js?v=202611172049"></script>
+<script src="hub-shared.js?v=202611172049"></script>
+<script src="hub-store.js?v=202611172049"></script>
+<script src="hub-say.js?v=202611172049"></script>
+<script src="hub-crit-learn.js?v=202611172049"></script>
+<script src="hub-crit-vocab.js?v=202611172049"></script>
+<script src="hub-sync.js?v=202611172049"></script>
+<script src="hub-notebook.js?v=202611172049"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -868,6 +869,35 @@ function critPanelHTML(scope){
     });
   });
   return html;
+}
+/* the paste cleaner's reading of pasted lines: [{ text, codes }], the codes it left out, and whether it changed anything */
+function pasteClean(raw, scope){
+  const CODE='[1-9][a-zA-Z]', LIST='(?:'+CODE+')(?:\\s*(?:\\/|,|&|and|\\+)\\s*'+CODE+')*';
+  const lead=new RegExp('^(?:criteri(?:on|a)\\s*)?\\(?\\[?\\s*('+LIST+')\\s*\\]?\\)?\\s*[:.\\-\u2013\u2014]?\\s*','i');
+  const tail=new RegExp('\\s*[\\(\\[]\\s*(?:criteri(?:on|a)\\s*)?('+LIST+')\\s*[\\)\\]]\\s*\\.?$','i');
+  let cleaned=false; const items=[], dropped=[];
+  String(raw||'').replace(/\r/g,'').split('\n').forEach(line=>{
+    let t=line;
+    const t0=t;
+    t=t.replace(/^\s*(?:#{1,6}\s+|>\s*)/,'').replace(/^\s*(?:[-*+\u2022\u2023\u25E6\u2043]|\d{1,2}[.)])\s+/,'');
+    t=t.replace(/\*\*|__/g,'').replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g,'$1$2').replace(/`/g,'').replace(/\*+\s*$/,'').replace(/^\s*\*+/,'');
+    t=t.replace(/[\s\u00A0]+/g,' ').trim();
+    let codes=[];
+    const take=list=>String(list).split(/\s*(?:\/|,|&|and|\+)\s*/i).map(c=>c.trim().toLowerCase()).filter(Boolean);
+    let m=t.match(lead); if(m && m[0].length<t.length){ codes=codes.concat(take(m[1])); t=t.slice(m[0].length).trim(); }
+    m=t.match(tail); if(m){ codes=codes.concat(take(m[1])); t=t.slice(0, m.index).trim(); }
+    t=t.replace(/^[:\-\u2013\u2014.]\s*/,'').trim();
+    if(t!==t0.trim()) cleaned=true;
+    if(!t) return;
+    if(!codes.length && /:$/.test(t) && t.length<70){ cleaned=true; return; }   /* a heading on its own line */
+    const keep=[];
+    codes.forEach(c=>{ if(keep.indexOf(c)>=0) return;
+      if(!VALID_CODES.has(c)) dropped.push({ code:c, why:'unknown' });
+      else if((scope==='planning') !== (c.charAt(0)==='4')) dropped.push({ code:c, why:'kind' });
+      else keep.push(c); });
+    items.push({ text:t, codes:keep });
+  });
+  return { items, dropped, cleaned };
 }
 function tagHTML(code){
   return `<span class="tag" contenteditable="false" data-c="${code}" title="${esc(CRIT_TEXT[code]||'')}">${code}</span>&nbsp;`;
@@ -1151,10 +1181,36 @@ function addPoint(listId, html, _unused){
     suggestTimer=setTimeout(renderSuggestions,500);
     if(e.data===' ') tryAutoTag(box);
   });
-  box.addEventListener('paste',e=>{           /* keep pasted text plain */
+  /* THE PASTE CLEANER (Ramy, 17 Nov 2026, after pasting feedback written elsewhere: the criteria "are not the same style ...
+     those two stars next to the criteria"). Pasted text stays plain, as before, and is also cleaned: Markdown marks (**bold**,
+     *, #, list dashes and numbers) come off; a code written at the start or the end of a line ("4a / 4b:", "(5f)") becomes
+     Lite's own criterion tag, with its wording; a heading line on its own ("Strengths in planning:") is dropped; and several
+     lines become several points, in order, under this one. A code that is not one of the 41, or belongs to the other kind
+     of point (a 4 code on a teaching point), is left out and the line under the box says so. Whether a code fits what the
+     point says stays the tutor's to judge: the cleaner reads the number, not the meaning. */
+  box.addEventListener('paste',e=>{
     e.preventDefault();
-    const t=(e.clipboardData||window.clipboardData).getData('text/plain');
-    document.execCommand('insertText',false,t);
+    const raw=(e.clipboardData||window.clipboardData).getData('text/plain')||'';
+    const got=pasteClean(raw, scope);
+    const say=(t)=>{ let n=row.querySelector('.pastenote'); if(!n){ n=document.createElement('p'); n.className='pastenote'; row.appendChild(n); } n.textContent=t; n.hidden=!t; };
+    if(!got.items.length){ say(''); return; }
+    const plainOnly=got.items.length===1 && !got.items[0].codes.length && !got.cleaned;
+    if(plainOnly){ document.execCommand('insertText',false,got.items[0].text); say(''); return; }
+    const one=it=>it.codes.map(tagHTML).join('')+esc(it.text);
+    if(isBlankPoint(box)){ box.innerHTML=POINT_BULLET+one(got.items[0]); caretToEnd(); }
+    else document.execCommand('insertHTML',false,'&nbsp;'+one(got.items[0]));
+    let after=row;
+    got.items.slice(1).forEach(it=>{
+      const nr=addPoint(listId, POINT_BULLET+one(it));
+      host.insertBefore(nr, after.nextSibling); after=nr;
+      nr.querySelector('.pt-text').dispatchEvent(new Event('ai-suggest'));
+    });
+    renderSuggestions(); dirty=true;
+    const bits=[];
+    if(got.items.length>1) bits.push(got.items.length+' points pasted.');
+    if(got.dropped.length) bits.push('Not added: '+got.dropped.map(d=>d.code+(d.why==='kind'?(scope==='planning'?' (a teaching criterion)':' (a planning criterion)'):' (not one of the 41)')).join(', ')+'.');
+    say(bits.length ? bits.join(' ')+' Check each code fits what the point says.' : 'Check each code fits what the point says.');
+    try{ host.dispatchEvent(new Event('input',{bubbles:true})); }catch(err){}
   });
 
   /* Bullets, exactly as the plan's Procedure column does them: the box starts
