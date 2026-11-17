@@ -500,6 +500,8 @@ function handle_(req) {
      of Connect Lite? ... only volunteer students. So that's the one." A link of its own (register.html?r=<key>) that
      reads the volunteer register and nothing else of the course. See registerView_. */
   if (op === 'registerView') return registerView_(req);
+  /* ...and the center may add a student and move a student's level from it (v250, 17 Nov 2026). See registerEdit_. */
+  if (op === 'registerEdit') return registerEdit_(req);
   /* THE CV PRESENT AS A THANK-YOU (v184, 31 Oct 2026; Ramy: "people who kind of maybe helped me out along the way ...
      people with experience ... a DELTA, a master's degree"). A gift link (cv/?g=<code>) made by the owner opens
      "Shape it for a job" for someone who was never a trainee: their own typed lines are the only facts. */
@@ -5216,11 +5218,20 @@ function assessorExpiry_(courseId) {
    hours carried in, with the teaching days the marks are counted against. Never an address, a personal link, a note,
    a reply, or anything else of the course. Read-only by shape: this is the only op the key opens. It stops when the
    course ends, as the assessor's link does. */
-function registerView_(req) {
+function registerCourse_(req) {
   var course = courseByKey_('register', req.r);
   if (!course) throw new Error('This register link is not valid. Ask the course tutor for the current one.');
   var exp = assessorExpiry_(course.id);
   if (exp && new Date() > exp) throw new Error('This register link stopped working when the course ended.');
+  return course;
+}
+/* A student's handle on the center's page: never their token, which is their own private link. */
+function regId_(st) {
+  var b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, String((st && (st.token || ('n:' + st.name))) || ''));
+  return b.slice(0, 6).map(function (x) { return ('0' + (x & 255).toString(16)).slice(-2); }).join('');
+}
+function registerView_(req) { return registerShow_(registerCourse_(req)); }
+function registerShow_(course) {
   var s = courseRead_(course.id, 'settings') || {};
   var reg = courseRead_(course.id, 'volunteers') || {};
   var tt = courseRead_(course.id, 'timetable') || {};
@@ -5228,7 +5239,7 @@ function registerView_(req) {
   var students = (reg.students || []).filter(function (st) { return st && st.name; }).map(function (st) {
     var marks = {}; Object.keys(st.marks || {}).forEach(function (d) { marks[d] = st.marks[d]; });
     if (!st.marks) (st.here || []).forEach(function (d) { marks[d] = 'present'; });
-    return { name: String(st.name), level: st.level || '', marks: marks, added: day(st.added), invited: day(st.invited),
+    return { id: regId_(st), name: String(st.name), level: st.level || '', marks: marks, added: day(st.added), invited: day(st.invited),
              carried: st.carried != null ? st.carried : null, carriedFrom: (st.carriedBy && st.carriedBy.from) || '' };
   });
   var slots = (tt.slots || []).filter(function (x) { return x && x.kind === 'tp'; }).map(function (x) { return { kind: 'tp', from: x.from, to: x.to }; });
@@ -5237,7 +5248,61 @@ function registerView_(req) {
       .map(function (x) { return { k: x.k, room: x.room, s: x.s, e: x.e }; }) };
   });
   return { course: { name: s.courseName || course.name || '', centre: s.centreName || '', today: s.demoToday || '' },
+           /* v250: the center may add a student and move a level; a pinned demo saves nothing, so it offers neither */
+           canEdit: !s.demoToday,
            students: students, timetable: { slots: slots, days: days } };
+}
+/* THE CENTER ADDS A STUDENT AND MOVES A LEVEL (v250, 17 Nov 2026). Ramy, C/21's first TP day: "can the center add or
+   change Ss' level? if not, they should". The center's link read the register and nothing else; whoever looks after
+   the volunteer students had to ask a tutor for both. Two changes, and only these two, by the link's own key:
+   - act 'add': a name, a level, an email if there is one. The student gets a link of their own, minted here as the
+     tutors' page mints it, and the day they were added, so the days before it are not days they missed.
+   - act 'level': the same move the tutors' register makes -- the hours at the old level stay in the student's
+     history, the count at the new level starts today. A first level is not a move.
+   Attendance, invitations, removing somebody and hours carried in stay the tutors'. Both go through the register's
+   own lock and version (courseUpdateObj_), so a tutor's page open since before is told to take the newer copy rather
+   than write its old one over this. Answers the register as registerView does, for the page to draw again. */
+function registerEdit_(req) {
+  var course = registerCourse_(req);
+  var s = courseRead_(course.id, 'settings') || {};
+  if (s.demoToday) throw new Error('This is a demo course. Nothing is saved from it.');
+  var today = courseDay_(s) || Utilities.formatDate(new Date(), s.timeZone || 'Europe/London', 'yyyy-MM-dd');
+  var act = String(req.act || ''), level = String(req.level || '').trim().toUpperCase();
+  if (level && !/^(A1|A2|B1|B2|C1|C2)\+?$/.test(level)) throw new Error('That is not a level');
+  var at = new Date().toISOString();
+  if (act === 'add') {
+    var name = String(req.name || '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (name.length < 2) throw new Error('Type the student’s name');
+    var email = String(req.email || '').trim().slice(0, 120);
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('That email does not look right');
+    courseUpdateObj_(course.id, 'volunteers', function (reg) {
+      if (!Array.isArray(reg.students)) reg.students = [];
+      if (reg.students.length >= 400) throw new Error('The register is full');
+      if (reg.students.some(function (x) { return x && String(x.name || '').trim().toLowerCase() === name.toLowerCase(); })) throw new Error(name + ' is already on the register');
+      reg.students.push({ name: name, note: '', email: email, marks: {}, level: level, token: course.id + '-' + newKey_().slice(0, 20), added: today, addedBy: { who: 'the center', at: at } });
+      reg.students.sort(function (a, b) { return String((a && a.name) || '').localeCompare(String((b && b.name) || '')); });
+      return reg;
+    });
+  } else if (act === 'level') {
+    if (!level) throw new Error('Choose a level');
+    var id = String(req.id || '');
+    courseUpdateObj_(course.id, 'volunteers', function (reg) {
+      var st = (reg.students || []).filter(function (x) { return x && x.name && regId_(x) === id; })[0];
+      if (!st) throw new Error('That student is not on the register any more. Open the page again.');
+      var was = String(st.level || '');
+      if (was === level) return reg;
+      if (was) {
+        st.levels = (st.levels || []).concat([{ level: was, until: today, carried: st.carried || 0 }]);
+        st.levelFrom = today;
+        delete st.carried;
+      }
+      st.level = level;
+      st.levelBy = { who: 'the center', at: at };
+      return reg;
+    });
+  } else throw new Error('Not something this page can change');
+  COURSE_MEMO_ = null; BLOCK_MEMO_ = {};   // read what was just written, not this request's earlier copy
+  return registerShow_(course);
 }
 function assertAssessorInDate_(course) {
   var exp = assessorExpiry_(course.id);
