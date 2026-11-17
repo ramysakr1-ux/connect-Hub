@@ -126,7 +126,9 @@
   function hoursForLevel(level, settings) {
     var own = settings && Number(settings.volunteerCertificateHours);
     if (own > 0) return own;
-    return LEVEL_HOURS[String(level || '').trim().toUpperCase()] || 200;
+    /* A2+ is A2's hours (17 Nov 2026): the plus never matched a key, so an A2+ student was told 200 hours, a B1 count. */
+    var m = String(level || '').toUpperCase().match(/\b([ABC][12])/);
+    return LEVEL_HOURS[m ? m[1] : ''] || 200;
   }
 
   /* PER LEVEL (Ramy, 8 Oct 2026). The certificate of attendance is 160 hours
