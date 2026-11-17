@@ -19,7 +19,9 @@
  *    lesson" and banking nothing.
  *
  * 3. THERE IS A MIDDLE TIER. 45 to 89 minutes -- one lesson of three -- is
- *    recorded as its own mark and credits no hours. Connect keeps it because
+ *    recorded as its own mark. In Connect it credits no hours; in Lite it has
+ *    credited HALF the day since 1 Oct 2026 (Ramy: "make partial half a
+ *    tick", see dayCredit below), so the last line of this note is Connect's. Connect keeps it because
  *    "a tutor seeing someone who repeatedly arrives for one lesson has a
  *    different problem from someone who never comes, and the register should
  *    show the difference." Nothing part-credits.
