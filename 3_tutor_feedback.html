@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611172107">
+<link rel="stylesheet" href="hub-tokens.css?v=202611172126">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -576,7 +576,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611172107">
+<link rel="stylesheet" href="hub-house.css?v=202611172126">
 </head>
 <body>
 <div class="board">
@@ -774,14 +774,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611172107"></script>
-<script src="hub-shared.js?v=202611172107"></script>
-<script src="hub-store.js?v=202611172107"></script>
-<script src="hub-say.js?v=202611172107"></script>
-<script src="hub-crit-learn.js?v=202611172107"></script>
-<script src="hub-crit-vocab.js?v=202611172107"></script>
-<script src="hub-sync.js?v=202611172107"></script>
-<script src="hub-notebook.js?v=202611172107"></script>
+<script src="hub-exchange.js?v=202611172126"></script>
+<script src="hub-shared.js?v=202611172126"></script>
+<script src="hub-store.js?v=202611172126"></script>
+<script src="hub-say.js?v=202611172126"></script>
+<script src="hub-crit-learn.js?v=202611172126"></script>
+<script src="hub-crit-vocab.js?v=202611172126"></script>
+<script src="hub-sync.js?v=202611172126"></script>
+<script src="hub-notebook.js?v=202611172126"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2471,9 +2471,12 @@ if (window.hubIPA) hubIPA.bar('#tNotes, #tOverall, #tSelf, #tLA, .pt-text, texta
     var anyList = false, anyField = false, anyTc = false;
     ids.forEach(function(id){
       var v = r.found[id];
-      if (DRAFT_LISTS.indexOf(id) >= 0) { st.lists[id] = v.map(function(x){ return { html: esc(x.text), star: !!x.star }; }); anyList = true; }
-      else if (DRAFT_FIELDS.indexOf(id) >= 0) { st.f[id] = v; anyField = true; }
-      else { st.tcomm[id] = v; anyTc = true; }
+      /* the same cleaning as a paste into a point (17 Nov 2026): Markdown off, a written code becomes Lite's criterion tag */
+      if (DRAFT_LISTS.indexOf(id) >= 0) { st.lists[id] = v.map(function(x){
+          var g = pasteClean(String(x.text || ''), (id === 'lSP' || id === 'lAP') ? 'planning' : 'teaching'), it = g.items[0] || { text: '', codes: [] };
+          return { html: POINT_BULLET + it.codes.map(tagHTML).join('') + esc(g.items.map(function(y){ return y.text; }).join(' ')), star: !!x.star }; }).filter(function(x){ return x.html.replace(/<[^>]+>|&nbsp;|\u2022|\s/g, '') !== ''; }); anyList = true; }
+      else if (DRAFT_FIELDS.indexOf(id) >= 0) { st.f[id] = typeof v === 'string' ? v.replace(/\*\*|__/g, '') : v; anyField = true; }
+      else { st.tcomm[id] = typeof v === 'string' ? v.replace(/\*\*|__/g, '') : v; anyTc = true; }
     });
     if (anyList) DRAFT_LISTS.forEach(function(id){ if (!st.lists[id]) st.lists[id] = BEFORE.lists[id]; }); else delete st.lists;
     if (!anyField) delete st.f;
