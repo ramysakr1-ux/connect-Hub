@@ -727,6 +727,36 @@
       return window.HubSync.refresh().then(function(){ markVer(); location.reload(); });
     }).catch(function(){});
   });
+  /* ...AND WITHOUT LEAVING THE TAB (Ramy, 17 Nov 2026, the evening of C/21's first TP: "the refresh needs to happen a bit
+     more often. Hero cards need to realize that TP1 is finished and now they're moving to TP2"). Coming back to a tab was
+     the only moment a page looked; a trainee's home left in front all afternoon, or a tutor's dashboard, never did. The
+     two pages people leave open to glance at -- the home and the tutors' dashboard -- now look every two minutes while
+     they are in front, and take the course when it has moved. And the home, whose card also follows the clock (a lesson
+     that has ended, a session that has begun), is drawn afresh every ten minutes even when nothing was written. Never
+     while somebody is typing, has a dialog open or has scrolled down the page, never with work waiting to be sent, never
+     in a demo; the forms people write in are left alone, as before. */
+  var GLANCE = /(?:^|\/)(?:index\.html|5_tutor_dashboard\.html)?$/.test(location.pathname), OPENED = Date.now();
+  function idle(){
+    var a = document.activeElement, tag = a && a.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (a && a.isContentEditable)) return false;
+    if (document.querySelector('.confirm-overlay, dialog[open], [aria-modal="true"]:not([hidden])')) return false;
+    return (window.scrollY || 0) < 400;
+  }
+  if (GLANCE) setInterval(function(){
+    if (document.visibilityState !== 'visible' || DEMO || !started || !PAGE_VER || !S.version || !quiet() || !idle()) return;
+    if (Date.now() - LAST_LOOK < 110000) return;
+    LAST_LOOK = Date.now();
+    S.version().then(function(r){
+      if (!quiet() || !idle()) return;
+      if (r && r.ver && r.ver !== PAGE_VER) {
+        status('The course has moved on \u2014 refreshing', 'busy');
+        dirty = {};
+        return window.HubSync.refresh().then(function(){ markVer(); location.reload(); });
+      }
+      /* nothing written, but the clock has moved: the home's card is drawn again, from this browser's copy */
+      if (/(?:^|\/)(?:index\.html)?$/.test(location.pathname) && Date.now() - OPENED > 600000) location.reload();
+    }).catch(function(){});
+  }, 30000);
   var MERGE_NAMES = { timetable: 'the timetable', wording: 'the assignment dates', settings: 'the course settings', tppoints: 'the TP points', volunteers: 'the volunteer register' };
   function mergedReload(){
     var what = MERGED.filter(function(k, i){ return MERGED.indexOf(k) === i; }).map(function(k){ return MERGE_NAMES[k] || k; }).join(' and ');
