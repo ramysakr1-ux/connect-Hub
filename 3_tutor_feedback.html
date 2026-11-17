@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171935">
+<link rel="stylesheet" href="hub-tokens.css?v=202611172014">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -151,7 +151,23 @@
   .sv2 .ready span.g-to{color:var(--teal-deep);} .sv2 .ready span.g-to:before{background:var(--teal); border-color:var(--teal);}
   .sv2 .ready span.g-not{color:var(--brick);} .sv2 .ready span.g-not:before{background:var(--brick); border-color:var(--brick);}
   .sv2 .ready span b{font-family:'Newsreader',Georgia,serif; font-size:0.95rem;}
+  /* WHOSE FEEDBACK THIS IS (Ramy, 17 Nov 2026: "I keep looking for it, like who's the trainee ... under the title"). Their
+     whole name and the TP, in a forest pill under the title, where the eye lands first. Never on paper: the printed record
+     carries its own header. */
+  .whotr{display:inline-flex; align-items:center; gap:10px; margin:10px 0 2px; padding:7px 16px; border-radius:999px; background:var(--a-forest); color:var(--paper); font:700 1.05rem/1.2 'Karla',sans-serif;}
+  .whotr span{font-weight:600; font-size:.86rem; opacity:.85;}
+  @media print{ .whotr{display:none !important;} }
   .gchip{display:none;}
+  /* A QUIETER BAR (Ramy, 17 Nov 2026: "the bottom line, still busy ... Return to blah blah, it's too big ... just blocking the
+     view"). Return and the counts on the left, smaller; Dictate, its language and Print together on the right. The grade
+     and "Overall comment" marks and the "Last saved by" line are gone from the bar: the grade sits on its tiles above,
+     and the saving pill still says when it saved. */
+  .fbbar{justify-content:space-between !important; padding:8px 18px !important;}
+  .fbbar .lhs{display:flex; align-items:center; gap:16px; flex-wrap:wrap; min-width:0;}
+  .fbbar .rhs{display:flex; align-items:center; gap:10px; margin-left:auto;}
+  .fbbar .btn-submit{font-size:.88rem; padding:9px 20px; border-radius:999px;}
+  .fbbar .draftby{display:none !important;}
+  .fbbar .dictbar.docked{position:static !important; bottom:auto !important; right:auto !important; z-index:auto;}
   @media(max-width:600px){
     .actionbar .lhs{flex-wrap:nowrap;}
     /* On a phone the save note is the bar's own first line, above Return (11 Nov 2026). It used to float above the
@@ -558,7 +574,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171935">
+<link rel="stylesheet" href="hub-house.css?v=202611172014">
 </head>
 <body>
 <div class="board">
@@ -569,6 +585,7 @@
       <input id="fCentreName" class="hub-centre-name" type="text" placeholder="Center name" style="font-family:'Newsreader',Georgia,serif;font-size:18px;color:var(--teal);border:none;border-bottom:1px solid var(--sand-line);background:transparent;padding:2px 4px;text-align:center;min-width:220px;">
     </div>
     <h1>Teaching Practice Feedback</h1>
+    <p class="whotr" id="whoTrainee" hidden></p>
     <p class="sub">Their plan, language analysis and self-evaluation come in below as they turn each one in.
     Write one point per line in the boxes, with its criterion from the list beside them.<span id="introAsk"> During the lesson,
     you can jot your own notes in While you watch and let Ask Connect sort them into the boxes.</span> It saves as you go.</p>
@@ -659,7 +676,7 @@
     <p class="ask-disclose"><b>What leaves this browser.</b> When you press Ask Connect, these lines and the lesson number go through Lite to OpenAI, which writes the answer. Lite adds no name and keeps no copy, so leave names out of your lines. What comes back is a suggestion in the boxes below: you read it, change it and decide. Nothing goes to the trainee and no grade is given until you return the feedback.</p>
     <div class="notes-acts">
       <button type="button" class="btn btn-sand ask" id="askBtn"><svg class="ask-mark" viewBox="8 28 104 64" width="22" height="14" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="currentColor" stroke-width="13" stroke-linecap="round"></path></svg><span id="askLabel">Ask Connect</span></button>
-      <button type="button" class="example-btn" id="askUndo" hidden>Undo</button><span class="guide" id="askMsg" role="status"></span></div>
+      <button type="button" class="example-btn" id="askUndo" hidden>Undo</button><button type="button" class="example-btn" id="askRedraft" hidden>Redraft the comment in this voice</button><span class="guide" id="askMsg" role="status"></span></div>
   </div>
 
   <div class="card grade" style="text-align:center;">
@@ -743,26 +760,26 @@
   </div><!-- /fb-grid -->
 </div>
 
-<div class="actionbar">
+<div class="actionbar fbbar">
   <div class="lhs">
     <button class="btn-submit" id="returnBtn">Return to trainee</button>
     <span class="gchip" id="barGrade" hidden></span>
+    <div class="sv2" id="sv2" aria-live="polite"></div>
   </div>
   <div class="rhs">
-    <div class="sv2" id="sv2" aria-live="polite"></div>
     <span class="status" id="status"></span>
     <button class="btn-print" type="button" id="pdfBtn">Print<span class="pdf-more"> / Save as PDF</span></button>
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611171935"></script>
-<script src="hub-shared.js?v=202611171935"></script>
-<script src="hub-store.js?v=202611171935"></script>
-<script src="hub-say.js?v=202611171935"></script>
-<script src="hub-crit-learn.js?v=202611171935"></script>
-<script src="hub-crit-vocab.js?v=202611171935"></script>
-<script src="hub-sync.js?v=202611171935"></script>
-<script src="hub-notebook.js?v=202611171935"></script>
+<script src="hub-exchange.js?v=202611172014"></script>
+<script src="hub-shared.js?v=202611172014"></script>
+<script src="hub-store.js?v=202611172014"></script>
+<script src="hub-say.js?v=202611172014"></script>
+<script src="hub-crit-learn.js?v=202611172014"></script>
+<script src="hub-crit-vocab.js?v=202611172014"></script>
+<script src="hub-sync.js?v=202611172014"></script>
+<script src="hub-notebook.js?v=202611172014"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1080,6 +1097,20 @@ function addPoint(listId, html, _unused){
   const box=row.querySelector('.pt-text');
   const suggestRow=row.querySelector('.suggest-row');
   if(html) box.innerHTML=html;
+  /* THE BULLET KEEPS THE BOX (Ramy, 17 Nov 2026: "once you delete what's in the box, they stay"; then "if you remove the
+     bullet point, remove the whole box. If you keep the bullet point, then the box stays"). Deleting a point's words leaves
+     its bullet and its box; deleting the bullet as well takes the box away, and the cursor goes to the end of the point
+     above. A box's last point stays, empty, to write in. */
+  box.addEventListener('input', ()=>{
+    if(box.textContent.replace(/[\s\u00A0]/g,'')!=='') return;
+    const others=[...host.querySelectorAll('.pt')].filter(x=>x!==row);
+    if(!others.length) return;
+    const prev=row.previousElementSibling && row.previousElementSibling.querySelector('.pt-text');
+    row.remove(); if(typeof dirty!=='undefined') dirty=true;
+    const to=prev || others[0].querySelector('.pt-text');
+    if(to){ to.focus(); try{ const r=document.createRange(); r.selectNodeContents(to); r.collapse(false); const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }catch(e){} }
+    try{ host.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
+  });
 
   let suggestTimer=null;
   function renderSuggestions(){
@@ -1296,7 +1327,7 @@ $('fGrade').addEventListener('change', e=>{
       + '<span class="n star" title="Starred: carried into the next plan"><b>' + stars + '</b>\u2605</span>'
       + '<span class="topics" title="' + Object.keys(per).map(k => 'Topic ' + k + ': ' + per[k]).join(' \u00b7 ') + '">'
       + Object.keys(per).map(k => '<i class="' + (per[k] ? 'on' : '') + '" style="height:' + (per[k] ? 6 + Math.round(16 * per[k] / max) : 4) + 'px"></i>').join('') + '</span>'
-      + '<span class="ready">' + gradeMark() + '<span class="' + (overall ? 'ok' : '') + '">Overall comment</span></span>';
+      + '';
     const btn = $('returnBtn');
     if (btn) { if (ready && !wasReady) { btn.classList.remove('fv2-ready'); void btn.offsetWidth; btn.classList.add('fv2-ready'); } if (!ready) btn.classList.remove('fv2-ready'); }
     wasReady = ready;
@@ -1908,8 +1939,12 @@ function traineeLabel(fallback){
 }
 function applyTraineeNames(){
   /* on a phone the button keeps the first name only (.rest is hidden at 560px and under) */
-  const btn=$('returnBtn'); if(btn){ const nm=String(traineeLabel('trainee')).trim(), sp=nm.indexOf(' ');
-    btn.innerHTML='Return to '+esc(sp>0?nm.slice(0,sp):nm)+(sp>0?'<span class="rest">'+esc(nm.slice(sp))+'</span>':''); }
+  /* the first name, as tutors say it; the whole name only when another trainee on the course has the same first name (17 Nov 2026) */
+  const btn=$('returnBtn'); if(btn){ const nm=String(traineeLabel('trainee')).trim(), first=nm.split(/\s+/)[0]||nm;
+    let twin=false; try{ const all=loadRoster().trainees||{}; twin=Object.keys(all).some(k=>k!==TRAINEE_ID && all[k] && !all[k].withdrawn && String(all[k].name||'').trim().split(/\s+/)[0].toLowerCase()===first.toLowerCase()); }catch(e){}
+    btn.textContent='Return to '+(twin?nm:first); btn.title='Return the feedback to '+nm; }
+  const who=$('whoTrainee'); if(who && TRAINEE_ID){ const nm=String(traineeLabel('')).trim(); const tp=String(((typeof DOC!=='undefined'&&DOC&&DOC.meta)||{}).tp||($('fTP')||{}).value||'').trim();
+    if(nm){ who.innerHTML=esc(nm)+(tp?'<span>'+esc(tp.replace(/^TP\s*/i,'TP '))+'</span>':''); who.hidden=false; } }
 }
 const CAN_STORE=(function(){
   try{ localStorage.setItem('__probe','1'); localStorage.removeItem('__probe'); return true; }
@@ -2078,7 +2113,17 @@ function paintDraftBy(){
     $('loadedInfo').textContent='Nothing turned in yet — you can still write feedback on its own.';
   }
   const rec=loadFeedbackRecord();
-  if(rec&&rec.state){ try{ draftApply(rec.state); }catch(e){} }
+  /* THE TRAINEE'S OWN PAGES ARE THE FRESH ONES (Ramy, 17 Nov 2026: the dashboard said a trainee's self-evaluation was in,
+     the form said "no self-evaluation yet", and the self-evaluation was there to read). A saved draft carries the copy of
+     the plan it was started on, and laying it over the form put that older copy back, the line above it included, over
+     what had just been pulled in. Until the feedback is returned, what was just pulled in stands, and the draft brings the
+     tutor's own writing; returned feedback keeps the copy it was returned with, as its record. */
+  setTimeout(()=>{ try{ applyTraineeNames(); }catch(e){} }, 0);
+  if(rec&&rec.state){ try{
+    const st=Object.assign({}, rec.state);
+    if(planRec&&planRec.state&&rec.status!=='returned') delete st.doc;
+    draftApply(st);
+  }catch(e){} }
   renderTurnStatus();
 })();
 
@@ -2398,6 +2443,16 @@ askSay();
    (overallFromNotes). Both run at once; whichever answers is placed; one Undo
    takes both back. Nothing is saved to the course until the tutor saves or returns. */
 let ASK_ADDED=[], ASK_OVERALL_WAS=null, ASK_DONE=false;
+/* HOW MANY POINTS (Ramy, 17 Nov 2026: "like 5 strengths and 3 action points ... depends on the stage ... or the length of the
+   comments ... a ratio"). By the TP: TP 1 and 2 up to five strengths and three action points, TP 3 and 4 up to five and
+   four, from TP 5 up to six and four. Short notes give fewer: about six strengths and four action points for every ten
+   lines written, and never more points than lines. The tutor adds more by hand. */
+function askLimits(notes){
+  const tp = parseInt(String(notesTP()).replace(/\D+/g, ''), 10) || 1;
+  const lines = String(notes || '').split(/\n+/).map(x => x.trim()).filter(Boolean).length || 1;
+  const capS = tp <= 2 ? 5 : tp <= 4 ? 5 : 6, capA = tp <= 2 ? 3 : 4;
+  return { maxS: Math.max(1, Math.min(capS, Math.ceil(lines * 0.6))), maxA: Math.max(1, Math.min(capA, Math.ceil(lines * 0.4))) };
+}
 function placePoints(r){
   const lists={ sp:'lSP', ap:'lAP', st:'lST', at:'lAT' }; const added=[]; let n=0;
   Object.keys(lists).forEach(k=>{
@@ -2425,7 +2480,7 @@ async function askConnect(){
   const sort=$('optSort').checked, draft=$('optDraft').checked;
   const skip=Promise.resolve(null);
   const [pts, ov] = await Promise.allSettled([
-    sort ? HubStore.call(withTok({ op:'tidyNotes', notes, criteria:CRITERIA.map(c=>[c[0], c[2]]) }), 60000) : skip,
+    sort ? HubStore.call(withTok(Object.assign({ op:'tidyNotes', notes, criteria:CRITERIA.map(c=>[c[0], c[2]]) }, askLimits(notes))), 60000) : skip,
     draft ? HubStore.call(withTok({ op:'overallFromNotes', notes, tone:TONE, tp:notesTP() }), 60000) : skip
   ]);
   const said=[];
@@ -2442,7 +2497,36 @@ async function askConnect(){
   askRemember(text);
   const line=said.join(', and '); msg.textContent=line.charAt(0).toUpperCase()+line.slice(1)+'. Read it through'+(sort?', click a suggested code to tag a point':'')+(draft?', and make the comment yours':'')+'.';
 }
+/* Dictate and its language sit in the bar, beside Print (17 Nov 2026), rather than floating above it */
+(function(){
+  const dock=()=>{ const d=document.querySelector('.dictbar'), r=document.querySelector('.fbbar .rhs'), pr=$('pdfBtn');
+    if(d&&r&&pr&&d.parentNode!==r){ r.insertBefore(d, pr); d.classList.add('docked'); if(window.hubReserveForBar) try{ hubReserveForBar(); }catch(e){} } };
+  dock(); new MutationObserver(dock).observe(document.body, { childList:true });
+})();
 $('askBtn').addEventListener('click',askConnect);
+/* THE VOICE, CHANGED AFTERWARDS (Ramy, 17 Nov 2026: "if I choose my own words and then write something, I cannot change my
+   mind and use direct or supportive"). The comment is drafted once, in the voice chosen at the time. This redrafts the
+   comment alone from the same lines in the voice chosen now; the boxes are not touched, and Undo puts the comment back. */
+function askRedraftShow(){ const b=$('askRedraft'); if(!b) return; b.hidden = !(($('tNotes').value||'').trim() && ($('tOverall').value||'').trim() && $('optDraft').checked); }
+$('askRedraft').addEventListener('click', async ()=>{
+  const notes=($('tNotes').value||'').trim(), out=$('tOverall'), msg=$('askMsg'), b=$('askRedraft');
+  if(!notes) return;
+  b.disabled=true; msg.textContent='Connect is redrafting the comment\u2026';
+  const token=(window.HubStore && HubStore.token && HubStore.token())||'';
+  try{
+    const r=await HubStore.call(Object.assign({ op:'overallFromNotes', notes, tone:TONE, tp:notesTP() }, token?{token}:{}), 60000);
+    const text=String((r && r.text)||'').trim();
+    if(!text){ msg.textContent='Connect could not answer just now. Your comment is as it was.'; return; }
+    if(!ASK_DONE){ ASK_ADDED=[]; }
+    ASK_OVERALL_WAS=out.value; out.value=text; autoGrow(out); out.dispatchEvent(new Event('input',{bubbles:true}));
+    ASK_DONE=true; dirty=true; $('askUndo').hidden=false; askRemember(text);
+    msg.textContent='The comment is redrafted '+(TONE==='own'?'in your own words':TONE==='direct'?'in the direct voice':'in the supportive voice')+'. Undo puts the last one back.';
+  }catch(e){ msg.textContent=/demo/.test(String(e))?'Ask Connect needs a real course.':'Connect could not answer just now. Your comment is as it was.'; }
+  finally{ b.disabled=false; }
+});
+['tNotes','tOverall'].forEach(id=>$(id).addEventListener('input', askRedraftShow));
+$('optDraft').addEventListener('change', askRedraftShow);
+setTimeout(askRedraftShow, 700);
 /* UNDO STILL THERE AFTER THE PAGE IS OPENED AGAIN (Ramy, 17 Nov 2026, after C/21's first TP: "how do I take Ask
    Connect's draft back?"). Undo lived in the page's memory, so a reload left the sorted points and the drafted comment
    in the feedback with no way back but deleting by hand. What Ask Connect placed is now noted in this browser, beside

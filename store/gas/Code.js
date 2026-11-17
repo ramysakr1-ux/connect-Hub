@@ -2606,10 +2606,19 @@ case 'inbox': {
       if (!tnNotes) return { sp: [], ap: [], st: [], at: [] };
       var tnCrit = (Array.isArray(req.criteria) ? req.criteria : []).filter(function(c){ return Array.isArray(c) && /^[1-5][a-n]$/.test(String(c[0])); })
         .map(function(c){ return String(c[0]) + ' ' + String(c[1] || '').slice(0, 200); }).slice(0, 41);
-      var tnSys = 'You help a CELTA tutor file the notes they wrote while watching a trainee teach. '
-        + 'Split the notes into the tutor\'s own points, one per line or sentence as the tutor separated them, and COPY EACH POINT EXACTLY AS WRITTEN: the same words, spelling, shorthand and punctuation. '
-        + 'Do not rewrite, correct, expand, shorten, join, split further or add anything. Drop only a bare bullet mark or dash at the start of a line. '
-        + 'Your whole job is to put each point in the right list and to suggest its criteria. '
+      /* FEWER, FULLER POINTS (v252, 17 Nov 2026). Ramy, after C/21's first TP feedback: Ask Connect "just gives too many ...
+         20 action points and 10 strengths ... especially for TP1"; "maximum ... like 5 strengths and 3 action points ...
+         depends on the stage ... or the length"; and "it needs to be a bit more meaty. It's not telling enough". It used to
+         copy every line of the notes as its own point, word for word (27 Oct). Now related lines become one point, and
+         each point says what happened and why it mattered; an action point ends with what to do next time. The page sends
+         the most it wants of each (by the TP and how much the tutor wrote); the store holds to it. Nothing the notes do
+         not say is added, and the lines stay in While you watch for anything the tutor wants to add by hand. */
+      var tnMaxS = Math.max(1, Math.min(8, parseInt(req.maxS, 10) || 5)), tnMaxA = Math.max(1, Math.min(6, parseInt(req.maxA, 10) || 3));
+      var tnSys = 'You help a CELTA tutor turn the rough notes they wrote while watching a trainee teach into the strengths and action points of the trainee\'s feedback. '
+        + 'Group the tutor\'s lines: lines about the same thing become one point. Give at most ' + tnMaxS + ' strengths and at most ' + tnMaxA + ' action points in all, counting planning and teaching together; fewer when the notes say less. Choose the points that matter most for this lesson; leave out the rest. '
+        + 'Each point is one or two full sentences addressed to the trainee as "you". Say what you did, with the specific detail the notes give (the stage, the activity, the language, what the students did), and, when the notes say or show it, the effect on the students or on the lesson. '
+        + 'An action point names the problem and ends with one concrete thing to do next time, which must follow directly from the notes. '
+        + 'Never add an event, a detail, a strength, a problem or a judgement the notes do not contain, and never give a grade or a standard. Keep the tutor\'s own words and observations where you can; write shorthand out in full, except TTT, STT, CCQs and ICQs. American spelling. No names. No criterion codes in the text. '
         + 'Lists: sp = strength in planning (the written plan and the materials as prepared: aims, staging on paper, language analysis, anticipated problems, timings planned, the look of materials, acknowledging sources); '
         + 'ap = action point in planning; st = strength in teaching (what happened in the room: rapport, instructions, CCQs and ICQs, eliciting, board work, monitoring, feedback to students, error correction, pace, timing on the day); at = action point in teaching. '
         + 'A point that praises or says something went well is a strength; a point that names a problem, a lack or something to change is an action point. Most notes are about teaching. '
@@ -2617,9 +2626,9 @@ case 'inbox': {
         + '"Not referenced", "no refs" or "no sources" about materials means the sources were not acknowledged (4d). '
         + 'Criteria: ' + tnCrit.join('; ') + '. '
         + celtaShorthand_()
-        + 'Example. Notes: "good rapport. instr too long. vocab analysis clear. no sources on handout". '
-        + 'Answer: {"sp":[{"text":"vocab analysis clear","codes":["4i"]}],"ap":[{"text":"no sources on handout","codes":["4d"]}],'
-        + '"st":[{"text":"good rapport","codes":["1d"]}],"at":[{"text":"instr too long","codes":["5f"]}]}. '
+        + 'Example. Notes: "good rapport, Ss laughing in lead-in. instr for ex 2 too long. no demo. vocab analysis clear. no sources on handout". '
+        + 'Answer: {"sp":[{"text":"Your vocabulary analysis was clear.","codes":["4i"]}],"ap":[{"text":"The handout did not say where its material came from. Next time, put the source at the foot of every handout.","codes":["4d"]}],'
+        + '"st":[{"text":"You built good rapport from the start: the students were laughing in the lead-in.","codes":["1d"]}],"at":[{"text":"Your instructions for exercise 2 were too long and you did not demonstrate the task, so the students could not see what to do. Next time, keep the instructions short and show the first item before they start.","codes":["5f"]}]}. '
         + 'Answer as JSON with the four lists sp, ap, st, at.';
       var tnResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + tnKey },
@@ -2628,10 +2637,14 @@ case 'inbox': {
       });
       if (tnResp.getResponseCode() !== 200) throw new Error('The notes could not be tidied (' + tnResp.getResponseCode() + ')');
       var tnOut = JSON.parse(JSON.parse(tnResp.getContentText()).choices[0].message.content || '{}');
-      var tnList = function(a, planning){ return (Array.isArray(a) ? a : []).slice(0, 20).map(function(x){
+      var tnList = function(a, planning){ return (Array.isArray(a) ? a : []).slice(0, 8).map(function(x){
         return { text: String((x && x.text) || '').trim().slice(0, 400), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(function(c){ return String(c).toLowerCase(); })
           .filter(function(c){ return /^[1-5][a-n]$/.test(c) && (planning ? c.charAt(0) === '4' : c.charAt(0) !== '4'); }).slice(0, 2) }; }).filter(function(x){ return x.text; }); };
-      return { sp: tnList(tnOut.sp, true), ap: tnList(tnOut.ap, true), st: tnList(tnOut.st, false), at: tnList(tnOut.at, false) };
+      /* the most of each, planning first: what the model sends over the limit is left out, not squeezed in */
+      var tnSp = tnList(tnOut.sp, true), tnSt = tnList(tnOut.st, false), tnAp = tnList(tnOut.ap, true), tnAt = tnList(tnOut.at, false);
+      var tnCut = function (a, b, max) { var keepA = Math.min(a.length, Math.max(0, max - Math.min(b.length, Math.ceil(max / 2)))); return [a.slice(0, keepA), b.slice(0, max - keepA)]; };
+      var sPair = tnCut(tnSp, tnSt, tnMaxS), aPair = tnCut(tnAp, tnAt, tnMaxA);
+      return { sp: sPair[0], st: sPair[1], ap: aPair[0], at: aPair[1] };
     }
     /* THE OVERALL COMMENT FROM THE TUTOR'S NOTES (Ramy, 27 Oct 2026: "the overall
        comment ... that's the prose ... a running commentary about the lesson or a
