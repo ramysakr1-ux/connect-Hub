@@ -3950,6 +3950,7 @@ function writeInner_(courseId, token, kind, data) {
   try {
     var sh = sheet_(SHEET_RECORDS);
     var last = sh.getLastRow();
+    if (kind === 'feedback') data = slimDoc_(data);
     var json = packRecord_(JSON.stringify(data == null ? null : data), kind);
     if (last >= 2) {
       var keys = sh.getRange(2, 1, last - 1, 3).getValues();
@@ -4735,6 +4736,15 @@ function assertFits_(json, kind) {
    written as "gz:" + base64, in the same one cell: about four times the room. A record that fits is written exactly as
    before, so every record already on the sheet, and every small one from now on, is untouched and still readable by eye.
    Every reader of a record's cell goes through unpackRecord_. One that is too large even packed is still refused, in words. */
+/* ...AND A PICTURE WRITTEN INTO A RETURNED DOCUMENT IS TAKEN OUT HERE (v254, same evening). The page stopped writing the
+   center's logo into the document, but a tutor's tab opened before that, or a page the browser kept, still sent it, and
+   picture data does not pack: 105,000 characters came to 79,000 and were refused again. The store now drops any picture
+   that is written into a feedback document as its own data, whichever page sent it. The center's name stays. */
+function slimDoc_(rec) {
+  if (rec && typeof rec === 'object' && typeof rec.docHTML === 'string' && rec.docHTML.length > 30000 && rec.docHTML.indexOf('src="data:image') >= 0)
+    rec.docHTML = rec.docHTML.replace(/<img\b[^>]*\ssrc="data:image\/[^"]*"[^>]*>/g, '');
+  return rec;
+}
 var PACKED_ = 'gz:';
 function packRecord_(json, kind) {
   if (json.length <= CELL_LIMIT) return json;
@@ -4818,7 +4828,7 @@ function writeHistoryInner_(courseId, token, data) {
     Object.keys(want).forEach(function (k) {
       if (!/^\d+$/.test(k) || !want[k]) return;
       var kind = 'tpHistory:' + k;
-      var json = packRecord_(JSON.stringify(want[k]), kind);
+      var json = packRecord_(JSON.stringify(slimDoc_(want[k])), kind);
       if (rowOf[kind]) sh.getRange(rowOf[kind], 4, 1, 2).setValues([[json, new Date()]]);
       else appends.push([courseId, token, kind, json, new Date()]);
     });
