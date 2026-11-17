@@ -20,7 +20,7 @@
 <title>Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171637">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171711">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; min-height:100vh; background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif;}
@@ -91,9 +91,9 @@
   <div id="app"><p class="lede">Opening the register.</p></div>
   <!-- the credit is hub-shared.js's own line (the logo, then the words, Ramy in gold; never on paper). This page had a second, plain one of its own until 17 Nov 2026. -->
 </div>
-<script src="hub-shared.js?v=202611171637"></script>
-<script src="hub-attendance.js?v=202611171637"></script>
-<script src="hub-store.js?v=202611171637"></script>
+<script src="hub-shared.js?v=202611171711"></script>
+<script src="hub-attendance.js?v=202611171711"></script>
+<script src="hub-store.js?v=202611171711"></script>
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
@@ -113,10 +113,27 @@
   var LEVELS = (window.HUB_LEVELS || [['A1', 'Beginner'], ['A2', 'Elementary'], ['A2+', 'Pre-intermediate'], ['B1', 'Intermediate'], ['B2', 'Upper-intermediate'], ['C1', 'Advanced']]);
   var lvOpts = function(cur, blank){ var have = LEVELS.some(function(x){ return x[0] === cur; });
     return (blank ? '<option value="">' + blank + '</option>' : '') + LEVELS.concat(cur && !have ? [[cur, cur]] : []).map(function(x){ return '<option value="' + esc(x[0]) + '"' + (x[0] === cur ? ' selected' : '') + '>' + esc(x[1] === x[0] ? x[0] : x[1] + ' (' + x[0] + ')') + '</option>'; }).join(''); };
+  /* STRAIGHT TO THE STORE (17 Nov 2026, the day it went live: "center can't edit the register"). Lite's shared call
+     answers a save in the browser, without sending it, when this browser has also opened a demo or the trainee view,
+     and refuses one when another Lite link was opened since; both are right for a course page and wrong here, where
+     the link's own key is the only thing that matters. The page then drew that empty answer as the register. This
+     page's save goes to the store by itself and reads the store's own yes or no. */
+  function direct(body){
+    var go = function(n){
+      return fetch(HubStore.url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) })
+        .then(function(r){ return r.text(); })
+        .then(function(t){ var j = null; try { j = JSON.parse(t); } catch (e) {}
+          if (j && j.ok && j.result && Array.isArray(j.result.students)) return j.result;
+          if (j && j.error) throw new Error(j.error);
+          throw new Error('The store did not answer. Nothing was changed; try again in a moment.'); },
+          function(){ throw new Error('Could not reach the store. Nothing was changed; check the connection and try again.'); });
+    };
+    return go(0);
+  }
   /* one change at a time, sent to the store by the link's own key; the answer is the register again */
   function send(body, done){
     if (BUSY) return; BUSY = true; SAID = 'Saving\u2026'; BAD = false; draw(LAST);
-    HubStore.call(Object.assign({ op: 'registerEdit', r: R }, body)).then(function(d){ BUSY = false; ASK = null; SAID = done; BAD = false; if (body.act === 'add') ADD_OPEN = false; draw(d); },
+    direct(Object.assign({ op: 'registerEdit', r: R }, body)).then(function(d){ BUSY = false; ASK = null; SAID = done; BAD = false; if (body.act === 'add') ADD_OPEN = false; draw(d); },
       function(e){ BUSY = false; SAID = (e && e.message) || 'That did not save. Try again in a moment.'; BAD = true; draw(LAST); });
   }
   function draw(d){
@@ -131,8 +148,15 @@
     var long = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
     var head = '<p class="lede">' + (d.course && d.course.name ? '<b>' + esc(d.course.name) + '.</b> ' : '') + 'The students who came in to be taught, and which teaching days each of them attended.</p>'
       + '<p class="asof">As the tutors have marked it, opened ' + esc(long) + '. ' + (EDIT ? 'You can add a student and move a student to another level here. Attendance is marked by the tutors.' : 'This page only shows the register; nothing can be changed from it.') + '</p>';
-    if (!days.length) { $('app').innerHTML = head + '<div class="empty">The course has not set its teaching days yet, so there is nothing to count attendance against.</div>'; return; }
-    if (!list.length) { $('app').innerHTML = head + '<div class="empty">Nobody on the register yet.</div>'; return; }
+    var addBar = function(){ return (EDIT ? '<div class="bar"><button type="button" class="btn" id="addOpen">' + (ADD_OPEN ? 'Close' : 'Add a student') + '</button></div>' : '')
+      + (SAID ? '<p class="said' + (BAD ? ' bad' : '') + '" role="status">' + esc(SAID) + '</p>' : '') + (EDIT && ADD_OPEN ? addForm() : ''); };
+    var addForm = function(){ return '<form class="addbox" id="addForm"><div><label for="aName">Name</label><input id="aName" autocomplete="off" maxlength="80" required></div>'
+          + '<div><label for="aLevel">Level</label><select id="aLevel">' + lvOpts('', 'Choose') + '</select></div>'
+          + '<div><label for="aEmail">Email, if you have it</label><input id="aEmail" type="email" autocomplete="off" maxlength="120"></div>'
+          + '<div><button type="submit" class="btn go">Add</button></div>'
+          + '<p>They go on the register from today, with a page of their own. The tutors send them its link.</p></form>'; };
+    if (!days.length) { $('app').innerHTML = head + addBar() + '<div class="empty">The course has not set its teaching days yet, so there is nothing to count attendance against.' + (list.length ? ' ' + list.length + (list.length === 1 ? ' student is' : ' students are') + ' on the register.' : '') + '</div>'; wire(); return; }
+    if (!list.length) { $('app').innerHTML = head + addBar() + '<div class="empty">Nobody on the register yet.</div>'; wire(); return; }
     var joined = function(st){
       if (st.added) return String(st.added).slice(0, 10);
       var inv = st.invited ? String(st.invited).slice(0, 10) : '';
@@ -182,16 +206,15 @@
     $('app').innerHTML = head
       + '<div class="bar">' + (EDIT ? '<button type="button" class="btn" id="addOpen">' + (ADD_OPEN ? 'Close' : 'Add a student') + '</button>' : '') + '<button type="button" class="btn" id="print">Print or save as PDF</button></div>'
       + (SAID ? '<p class="said' + (BAD ? ' bad' : '') + '" role="status">' + esc(SAID) + '</p>' : '')
-      + (EDIT && ADD_OPEN ? '<form class="addbox" id="addForm"><div><label for="aName">Name</label><input id="aName" autocomplete="off" maxlength="80" required></div>'
-          + '<div><label for="aLevel">Level</label><select id="aLevel">' + lvOpts('', 'Choose') + '</select></div>'
-          + '<div><label for="aEmail">Email, if you have it</label><input id="aEmail" type="email" autocomplete="off" maxlength="120"></div>'
-          + '<div><button type="submit" class="btn go">Add</button></div>'
-          + '<p>They go on the register from today, with a page of their own. The tutors send them its link.</p></form>' : '')
+      + (EDIT && ADD_OPEN ? addForm() : '')
       + '<div class="key"><b>Each square is a teaching day, with its date</b>' + sample('here', 'In the room') + sample('part', 'Came for part of it') + sample('miss', 'Not marked in') + sample('soon', 'Still to come')
       + (anyBefore ? sample('before', 'Before they joined') : '') + '</div>'
       + sections
       + '<p class="legend">' + lessons + ' lesson' + (lessons === 1 ? '' : 's') + ' of ' + lessonMinutes + ' minutes a day · coming to ' + A.lessonsNeededForPresent(lessons) + ' of them counts as being in the room and credits the whole ' + fmtH(hoursPerDay) + ' hours · coming for part of a day credits half of it, ' + fmtH(hoursPerDay / 2) + ' hours · ' + days.length + ' teaching days, ' + fmtH(days.length * hoursPerDay) + ' h if somebody comes to all of them.</p>';
     $('print').onclick = function(){ window.print(); };
+    wire();
+  }
+  function wire(){
     if ($('addOpen')) $('addOpen').onclick = function(){ ADD_OPEN = !ADD_OPEN; SAID = ''; draw(LAST); if (ADD_OPEN && $('aName')) $('aName').focus(); };
     if ($('addForm')) $('addForm').onsubmit = function(e){ e.preventDefault();
       var name = $('aName').value.replace(/\s+/g, ' ').trim(), level = $('aLevel').value, email = $('aEmail').value.trim();
