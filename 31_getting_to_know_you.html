@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171908">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171935">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -148,20 +148,20 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171908">
+<link rel="stylesheet" href="hub-house.css?v=202611171935">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611171908"></script>
-<script src="hub-store.js?v=202611171908"></script>
-<script src="hub-say.js?v=202611171908"></script>
-<script src="hub-sync.js?v=202611171908"></script>
-<script src="hub-notebook.js?v=202611171908"></script>
-<script src="gtky-bank.js?v=202611171908"></script>
-<script src="fol-interview.js?v=202611171908"></script>
+<script src="hub-shared.js?v=202611171935"></script>
+<script src="hub-store.js?v=202611171935"></script>
+<script src="hub-say.js?v=202611171935"></script>
+<script src="hub-sync.js?v=202611171935"></script>
+<script src="hub-notebook.js?v=202611171935"></script>
+<script src="gtky-bank.js?v=202611171935"></script>
+<script src="fol-interview.js?v=202611171935"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -346,6 +346,13 @@ function ivEnsure(d, name){ if (!d.students[name]) d.students[name] = { name, an
    a taken student can be joined only once every student is taken, and then only one with the fewest. The list is only the
    students of the class the trainee's group teaches now (the store sends no others). Read again every twenty seconds. */
 let CLAIMS = null, claimMsg = '';
+/* MAYA CAN TRY THE INTERVIEW (Ramy, 17 Nov 2026: "I'm trying to use Maya, and it won't let me interview anyone. It just
+   keeps resetting"). The trainee view saves nothing, so her pick was answered in the browser and gone at the next
+   read of the store, twenty seconds later. Her picks are now kept in this tab, by the same rule as a trainee's: one
+   pick until it is started, then another beside it. Nothing of hers reaches the course; real trainees never see it. */
+const IS_MAYA = !!(window.HubStore && HubStore.isTemplate && HubStore.isTemplate());
+let MAYA = []; try { MAYA = JSON.parse(sessionStorage.getItem('chub:ivMaya') || '[]') || []; } catch (e) { MAYA = []; }
+function mayaPut(){ try { sessionStorage.setItem('chub:ivMaya', JSON.stringify(MAYA)); } catch (e) {} if (CLAIMS) { CLAIMS.mineAll = MAYA.slice(); CLAIMS.mine = MAYA[MAYA.length - 1] || ''; } }
 const keyOf = n => String(n || '').trim().toLowerCase();
 function letterOf(tok){
   const P = rec('connect_tp_points_v1') || {}, sets = Array.isArray(P.sets) ? P.sets : [];
@@ -356,6 +363,7 @@ function claimsLoad(){
   if (!IS_TRAINEE || !window.HubStore || !HubStore.call) return;
   HubStore.call({ op: 'ivClaims', token: HubStore.token() }).then(r => {
     const was = JSON.stringify(CLAIMS); CLAIMS = r || { mine: '', taken: {} };
+    if (IS_MAYA) { CLAIMS.mineAll = MAYA.slice(); CLAIMS.mine = MAYA[MAYA.length - 1] || ''; }
     if (CLAIMS.mine && !ivSel) { const n = regNames().find(x => keyOf(x) === CLAIMS.mine); if (n) ivSel = n; }
     if (was !== JSON.stringify(CLAIMS) && curView() === 'interview' && !document.activeElement.matches('textarea, input')) renderInterview();
   }, () => {});
@@ -558,12 +566,14 @@ function wireInterview(){
   app.querySelectorAll('[data-stu]').forEach(b => b.addEventListener('click', () => {
     const n = b.dataset.stu, c = claimState(n); claimMsg = '';
     if (!IS_TRAINEE || !CLAIMS || c.mine || !regNames().some(x => keyOf(x) === keyOf(n))) { ivSel = n; renderInterview(); return; }
+    if (IS_MAYA) { MAYA = MAYA.filter(k => ivStarted(k)); MAYA.push(keyOf(n)); mayaPut(); ivSel = n; renderInterview(); return; }
     b.disabled = true;
     HubStore.call({ op: 'claimStudent', token: HubStore.token(), student: n, on: true, keep: myPicks().filter(ivStarted) }).then(r => { CLAIMS.mine = (r && r.mine) || keyOf(n); CLAIMS.mineAll = (r && Array.isArray(r.mineAll)) ? r.mineAll : [CLAIMS.mine]; ivSel = n; renderInterview(); claimsLoad(); },
       e => { claimMsg = (e && e.message) || 'That did not go. Try again.'; renderInterview(); claimsLoad(); });
   }));
   if ($('ivLetGo')) $('ivLetGo').addEventListener('click', () => {
     const k = $('ivLetGo').dataset.k || (CLAIMS && CLAIMS.mine); if (!k) return; claimMsg = '';
+    if (IS_MAYA) { MAYA = MAYA.filter(x => x !== k); mayaPut(); if (keyOf(ivSel) === k) ivSel = ''; renderInterview(); return; }
     HubStore.call({ op: 'claimStudent', token: HubStore.token(), student: k, on: false }).then(r => { CLAIMS.mine = (r && r.mine) || ''; CLAIMS.mineAll = (r && Array.isArray(r.mineAll)) ? r.mineAll : []; if (CLAIMS.taken && CLAIMS.taken[k]) CLAIMS.taken[k] = CLAIMS.taken[k].filter(t => t !== MY_TOKEN); if (keyOf(ivSel) === k) ivSel = ''; renderInterview(); claimsLoad(); },
       e => { claimMsg = (e && e.message) || 'That did not go. Try again.'; renderInterview(); });
   });

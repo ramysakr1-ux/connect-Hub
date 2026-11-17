@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171908">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171935">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -469,7 +469,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171908">
+<link rel="stylesheet" href="hub-house.css?v=202611171935">
 </head>
 <body>
 <div class="board">
@@ -681,20 +681,20 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202611171908"></script>
-<script src="observation-defaults.js?v=202611171908"></script>
-<script src="hub-shared.js?v=202611171908"></script>
-<script src="hub-hand.js?v=202611171908"></script>
-<script src="hub-ink.js?v=202611171908"></script>
+<script src="hub-due.js?v=202611171935"></script>
+<script src="observation-defaults.js?v=202611171935"></script>
+<script src="hub-shared.js?v=202611171935"></script>
+<script src="hub-hand.js?v=202611171935"></script>
+<script src="hub-ink.js?v=202611171935"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202611171908"></script>
-<script src="hub-say.js?v=202611171908"></script>
-<script src="hub-shelf.js?v=202611171908"></script>
-<script src="hub-front.js?v=202611171908"></script>
-<script src="hub-sync.js?v=202611171908"></script>
-<script src="hub-notebook.js?v=202611171908"></script>
-<script src="hub-feedback.js?v=202611171908"></script>
-<script src="hub-about.js?v=202611171908"></script>
+<script src="hub-store.js?v=202611171935"></script>
+<script src="hub-say.js?v=202611171935"></script>
+<script src="hub-shelf.js?v=202611171935"></script>
+<script src="hub-front.js?v=202611171935"></script>
+<script src="hub-sync.js?v=202611171935"></script>
+<script src="hub-notebook.js?v=202611171935"></script>
+<script src="hub-feedback.js?v=202611171935"></script>
+<script src="hub-about.js?v=202611171935"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1622,8 +1622,23 @@ if (fbBack){
     /* the TP points first: what they teach, with its pages and its audio */
     /* the TP points follow their own release, not the planning slot (Ramy, 4 Nov 2026: "TP points are released ... when the
        lesson is finished"): they are on the card from the moment they are out */
-    if (NEXT === 'plan' && HERO_TP && PTS.released) add((NEW_TP === HERO_TP ? 'New: y' : 'Y') + 'our TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
-    if (planOpen && NEXT === 'plan') add(HERO_TP ? (matOnly(HERO_TP) ? 'Prepare your material for TP ' + HERO_TP + ' and send it to your tutor' : 'Write your lesson plan for TP ' + HERO_TP) : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
+    /* A LESSON ALREADY TAUGHT IS NOT ASKED FOR AGAIN (Ramy, 17 Nov 2026, on Maya's card the evening of TP 1: "Your TP point
+       for TP1 and write your lesson plan for TP1 ... they finished TP1 already. It should disappear before TP2 appears").
+       The card stayed on a TP's points and plan for as long as its plan had not been turned in, even after the lesson's
+       own slot had ended: the made-up trainee never turns one in, and a real one who taught without sending a plan would
+       read the same. Once the lesson is over those two lines go, and what comes after teaching takes their place. */
+    const heroOver = (function(){
+      if (!HERO_TP || !tpDay || IS_MAKEUP) return false;
+      if (tpDay !== TODAY) return tpDay < TODAY;
+      const sl = ((window.hubSlotsFor && heroDay ? hubSlotsFor(TT, heroDay.date) : TT.slots) || []).filter(x => x && x.kind === 'tp' && x.to), last = sl[sl.length - 1];
+      if (!last) return false;
+      const at = window.hubZonedInstant && CS.timeZone ? hubZonedInstant(tpDay, last.to, CS.timeZone) : null;
+      const p = tpDay.split('-'), hm = String(last.to).split(':');
+      return (window.hubNow ? hubNow() : Date.now()) >= (at != null ? at : new Date(+p[0], +p[1] - 1, +p[2], +hm[0], +hm[1] || 0).getTime());
+    })();
+    if (NEXT === 'plan' && heroOver) add('You have taught TP ' + HERO_TP + ' — write your self-evaluation', '2_trainee_self_evaluation.html');
+    if (NEXT === 'plan' && !heroOver && HERO_TP && PTS.released) add((NEW_TP === HERO_TP ? 'New: y' : 'Y') + 'our TP points for TP ' + HERO_TP + ' — what you teach, with the pages and the audio', '24_tp_points.html');
+    if (planOpen && NEXT === 'plan' && !heroOver) add(HERO_TP ? (matOnly(HERO_TP) ? 'Prepare your material for TP ' + HERO_TP + ' and send it to your tutor' : 'Write your lesson plan for TP ' + HERO_TP) : 'Write your lesson plan', '1_trainee_plan_and_analysis.html' + (HERO_TP ? '?tp=' + HERO_TP : ''));
     /* NOT BEFORE THE LESSON (Ramy, 31 Oct 2026, walking the mid-course demo: Dmitri teaches TP4 at 3:00 today and was asked
        for its self-evaluation at lunchtime). On the day of the TP, until it starts, the line is the lesson itself. */
     const lessonAhead = NEXT === 'self' && !fbBack && tpDay === TODAY && (function(){
