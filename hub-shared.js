@@ -1400,11 +1400,16 @@ window.hubCentre = function(){
   var cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
   return { name: cs.centreName || '', number: cs.centreNumber || '', logo: cs.logo || '', course: cs.courseName || '' };
 };
-window.hubLetterheadHTML = function(eyebrow){
-  var c = window.hubCentre(); if (!c.name && !c.logo) return '';
+/* NO LOGO ON A DOCUMENT THAT IS KEPT (17 Nov 2026). C/21's first returned feedback was refused, "Too large to store": the
+   document was 91,000 characters, 62,000 of them the center's logo written into the letterhead as its own picture data,
+   and a record holds 50,000. Ramy: "remove the logo from the TP feedback. We'll still keep the center name ... keep it on
+   the home page." A kept document (keep = true) carries the center's name and number, no picture. Documents returned
+   before this keep the picture they were stored with. */
+window.hubLetterheadHTML = function(eyebrow, keep){
+  var c = window.hubCentre(); if (!c.name && (!c.logo || keep)) return '';
   var esc = function(t){ return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
   return '<div style="display:flex;align-items:center;gap:12px;padding:0 0 12px;margin:0 0 16px;border-bottom:1px solid #e3ddd0;">'
-    + (c.logo ? '<img src="' + c.logo + '" alt="" style="height:44px;width:auto;max-width:160px;object-fit:contain;flex-shrink:0;">' : '')
+    + (c.logo && !keep ? '<img src="' + c.logo + '" alt="" style="height:44px;width:auto;max-width:160px;object-fit:contain;flex-shrink:0;">' : '')
     + '<div><div style="font-family:Newsreader,Georgia,serif;font-size:16pt;font-weight:700;color:#1e4d4a;line-height:1.15;">' + esc(c.name) + '</div>'
     + (c.number || eyebrow ? '<div style="font-family:Karla,Calibri,Arial,sans-serif;font-size:8.5pt;letter-spacing:0.12em;text-transform:uppercase;color:#6b665c;margin-top:3px;">' + esc([c.number ? 'Cambridge center ' + c.number : '', eyebrow].filter(Boolean).join(' \u00b7 ')) + '</div>' : '')
     + '</div></div>';

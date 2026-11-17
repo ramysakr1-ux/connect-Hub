@@ -3681,7 +3681,7 @@ function peopleByCourse_(kinds) {
   if (rl >= 2) rsh.getRange(2, 1, rl - 1, 4).getValues().forEach(function (r) {
     var kind = String(r[2]); if (!kinds[kind]) return;
     var bucket = (out[String(r[0])] || {})[String(r[1])]; if (!bucket) return;
-    try { bucket[kind] = JSON.parse(r[3]); } catch (e) {}
+    try { bucket[kind] = JSON.parse(unpackRecord_(r[3])); } catch (e) {}
   });
   return out;
 }
@@ -3707,7 +3707,7 @@ function read_(courseId, token, kind) {
   if (kind === 'tpHistory') return historyFromRows_(rows, courseId, token);
   for (var i = rows.length - 1; i >= 0; i--) {
     if (String(rows[i][0]) === String(courseId) && String(rows[i][1]) === token && String(rows[i][2]) === kind) {
-      try { return JSON.parse(rows[i][3]); } catch (e) { return null; }
+      try { return JSON.parse(unpackRecord_(rows[i][3])); } catch (e) { return null; }
     }
   }
   return null;
@@ -3737,7 +3737,7 @@ function allSubmissions_() {
   var rows = sh.getRange(2, 1, last - 1, 4).getValues(), out = [];
   rows.forEach(function (r) {
     if (String(r[2]) !== 'assignments') return;
-    var A; try { A = JSON.parse(r[3]); } catch (e) { return; }
+    var A; try { A = JSON.parse(unpackRecord_(r[3])); } catch (e) { return; }
     if (!A || typeof A !== 'object') return;
     Object.keys(A).forEach(function (code) {
       var a = A[code]; if (!a) return;
@@ -3950,8 +3950,7 @@ function writeInner_(courseId, token, kind, data) {
   try {
     var sh = sheet_(SHEET_RECORDS);
     var last = sh.getLastRow();
-    var json = JSON.stringify(data == null ? null : data);
-    assertFits_(json, kind);
+    var json = packRecord_(JSON.stringify(data == null ? null : data), kind);
     if (last >= 2) {
       var keys = sh.getRange(2, 1, last - 1, 3).getValues();
       for (var i = 0; i < keys.length; i++) {
@@ -4729,6 +4728,25 @@ var CELL_LIMIT = 50000;
 function assertFits_(json, kind) {
   if (json.length > CELL_LIMIT) throw new Error('Too large to store: ' + kind + ' is ' + json.length + ' characters and a record holds ' + CELL_LIMIT);
 }
+/* A RECORD OVER THE CELL'S 50,000 IS KEPT PACKED (v253, 17 Nov 2026). C/21's first returned feedback was refused, "Too large
+   to store", with a trainee waiting for it; Ramy: "I have to make sure that this works for everybody. I haven't even
+   commented on the lesson plan yet". A returned TP is the plan, the analysis, the self-evaluation and the feedback as one
+   document, and a long one passes 50,000 characters. A trainee's record that does not fit its cell is now gzipped and
+   written as "gz:" + base64, in the same one cell: about four times the room. A record that fits is written exactly as
+   before, so every record already on the sheet, and every small one from now on, is untouched and still readable by eye.
+   Every reader of a record's cell goes through unpackRecord_. One that is too large even packed is still refused, in words. */
+var PACKED_ = 'gz:';
+function packRecord_(json, kind) {
+  if (json.length <= CELL_LIMIT) return json;
+  var packed = PACKED_ + Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(json, 'application/json', 'r.json')).getBytes());
+  if (packed.length > CELL_LIMIT) throw new Error('Too large to store: ' + kind + ' is ' + json.length + ' characters, and ' + packed.length + ' packed; a record holds ' + CELL_LIMIT);
+  return packed;
+}
+function unpackRecord_(cell) {
+  var s = String(cell == null ? '' : cell);
+  if (s.slice(0, 3) !== PACKED_) return s;
+  return Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(s.slice(3)), 'application/x-gzip', 'r.json.gz')).getDataAsString();
+}
 function tpOf_(kind) { var m = /^tpHistory:(\d+)$/.exec(String(kind)); return m ? m[1] : null; }
 // Fold one records row into a bucket of {kind: data}, assembling the history
 // from its rows. A per-TP row always wins over the legacy whole-map row,
@@ -4754,7 +4772,7 @@ function foldRecord_(bucket, kind, json, kinds) {
   var base = n ? 'tpHistory' : kind;
   if (PRIVATE_KINDS[base] && kinds !== TRAINEE_READS) return;   // the notebook: the trainee's own, never a reader's
   if (!kinds[base] && !TRAINEE_READS[base]) return;
-  var data; try { data = JSON.parse(json); } catch (e) { return; }
+  var data; try { data = JSON.parse(unpackRecord_(json)); } catch (e) { return; }
   if (base === 'tracker' && kinds === TRAINEE_READS) data = traineeTracker_(data);
   if (base !== 'tpHistory') { bucket[kind] = data; return; }
   bucket.tpHistory = bucket.tpHistory || {};
@@ -4793,15 +4811,14 @@ function writeHistoryInner_(courseId, token, data) {
     var rowOf = {};
     rows.forEach(function (r, i) { if (String(r[0]) === String(courseId) && String(r[1]) === token) rowOf[String(r[2])] = i + 2; });
     /* an old whole-history row (before one row per TP) is folded in once, for the TPs that have no row of their own */
-    var legacy = rowOf['tpHistory'] ? String(sh.getRange(rowOf['tpHistory'], 4).getValue() || 'null') : 'null', old = null;
+    var legacy = rowOf['tpHistory'] ? unpackRecord_(sh.getRange(rowOf['tpHistory'], 4).getValue() || 'null') : 'null', old = null;
     if (legacy !== 'null') { try { old = JSON.parse(legacy); } catch (e) { old = null; } }
     if (old && typeof old === 'object') { want = Object.assign({}, want); Object.keys(old).forEach(function (k) { if (!want[k] && !rowOf['tpHistory:' + k] && old[k]) want[k] = old[k]; }); }
     var appends = [];
     Object.keys(want).forEach(function (k) {
       if (!/^\d+$/.test(k) || !want[k]) return;
       var kind = 'tpHistory:' + k;
-      var json = JSON.stringify(want[k]);
-      assertFits_(json, kind);
+      var json = packRecord_(JSON.stringify(want[k]), kind);
       if (rowOf[kind]) sh.getRange(rowOf[kind], 4, 1, 2).setValues([[json, new Date()]]);
       else appends.push([courseId, token, kind, json, new Date()]);
     });
