@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171557">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171637">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -558,7 +558,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171557">
+<link rel="stylesheet" href="hub-house.css?v=202611171637">
 </head>
 <body>
 <div class="board">
@@ -755,14 +755,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611171557"></script>
-<script src="hub-shared.js?v=202611171557"></script>
-<script src="hub-store.js?v=202611171557"></script>
-<script src="hub-say.js?v=202611171557"></script>
-<script src="hub-crit-learn.js?v=202611171557"></script>
-<script src="hub-crit-vocab.js?v=202611171557"></script>
-<script src="hub-sync.js?v=202611171557"></script>
-<script src="hub-notebook.js?v=202611171557"></script>
+<script src="hub-exchange.js?v=202611171637"></script>
+<script src="hub-shared.js?v=202611171637"></script>
+<script src="hub-store.js?v=202611171637"></script>
+<script src="hub-say.js?v=202611171637"></script>
+<script src="hub-crit-learn.js?v=202611171637"></script>
+<script src="hub-crit-vocab.js?v=202611171637"></script>
+<script src="hub-sync.js?v=202611171637"></script>
+<script src="hub-notebook.js?v=202611171637"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2439,10 +2439,59 @@ async function askConnect(){
     return;
   }
   ASK_DONE=true; dirty=true; $('askUndo').hidden=false;
+  askRemember(text);
   const line=said.join(', and '); msg.textContent=line.charAt(0).toUpperCase()+line.slice(1)+'. Read it through'+(sort?', click a suggested code to tag a point':'')+(draft?', and make the comment yours':'')+'.';
 }
 $('askBtn').addEventListener('click',askConnect);
-$('askUndo').addEventListener('click',()=>{
+/* UNDO STILL THERE AFTER THE PAGE IS OPENED AGAIN (Ramy, 17 Nov 2026, after C/21's first TP: "how do I take Ask
+   Connect's draft back?"). Undo lived in the page's memory, so a reload left the sorted points and the drafted comment
+   in the feedback with no way back but deleting by hand. What Ask Connect placed is now noted in this browser, beside
+   the While you watch lines and like them never in the feedback record: each point as it was placed, the comment it
+   drafted, and the comment that was there before. When the form opens again, Undo is back for whatever is still
+   exactly as Ask Connect left it. A point the tutor has reworded since is theirs now and stays; so does a comment
+   they have changed. Returned feedback is not touched. */
+const ASK_KEY='chub:fbAsk:'+(TRAINEE_ID||'x');
+let ASK_BACK=null;   // { rows:[{row, created}], overallWas } found on opening the form again
+function askRemember(overall){
+  try{ localStorage.setItem(ASK_KEY, JSON.stringify({ tp:notesTP(), at:Date.now(),
+    rows:ASK_ADDED.map(({row, created})=>({ list:row.parentElement ? row.parentElement.id : '', html:row.querySelector('.pt-text').innerHTML, created:!!created })),
+    overall:overall||null, overallWas:ASK_OVERALL_WAS })); }catch(e){}
+}
+function askForget(){ try{ localStorage.removeItem(ASK_KEY); }catch(e){} ASK_BACK=null; }
+function askFind(){
+  if(ASK_DONE) return;
+  let m=null; try{ m=JSON.parse(localStorage.getItem(ASK_KEY)||'null'); }catch(e){}
+  const rec=(typeof loadFeedbackRecord==='function') ? loadFeedbackRecord() : null;
+  if(!m || (rec && rec.status==='returned') || (m.tp && notesTP() && m.tp!==notesTP())){ ASK_BACK=null; return; }
+  const taken=new Set(), rows=[];
+  (m.rows||[]).forEach(function(r){ const host=$(r.list); if(!host) return;
+    const row=[...host.querySelectorAll('.pt')].find(x=>!taken.has(x) && x.querySelector('.pt-text').innerHTML===r.html);
+    if(row){ taken.add(row); rows.push({ row, created:r.created }); } });
+  const out=$('tOverall'), comment = m.overall!=null && out && out.value===m.overall;
+  if(!rows.length && !comment){ askForget(); return; }
+  ASK_BACK={ rows, overallWas: comment ? (m.overallWas||'') : null };
+  $('askUndo').hidden=false;
+  const bits=[]; if(rows.length) bits.push(rows.length+(rows.length===1?' point':' points')+' from Ask Connect '+(rows.length===1?'is':'are')+' still as it placed '+(rows.length===1?'it':'them'));
+  if(comment) bits.push((rows.length?'and ':'')+'the overall comment is still its draft');
+  $('askMsg').textContent=bits.join(', ').replace(/^./, c=>c.toUpperCase())+'. Undo takes '+(rows.length+(comment?1:0)===1?'it':'them')+' back out.';
+}
+function askTakeOut(list, overallWas){
+  list.forEach(({row, created})=>{
+    if(created) row.remove();
+    else { row.querySelector('.pt-text').innerHTML=''; delete row.dataset.tidied; delete row.dataset.ai; row.dispatchEvent(new Event('ai-suggest')); }
+  });
+  if(overallWas!==null){ const out=$('tOverall'); out.value=overallWas; autoGrow(out); out.dispatchEvent(new Event('input',{bubbles:true})); }
+}
+$('askUndo').addEventListener('click',async ()=>{
+  if(!ASK_DONE && ASK_BACK){
+    const n=ASK_BACK.rows.length, c=ASK_BACK.overallWas!==null;
+    const what=[n ? 'take out the '+n+(n===1?' point':' points')+' Ask Connect placed' : '', c ? 'put the overall comment back to what it was before' : ''].filter(Boolean).join(' and ');
+    if(window.confirmModal && !(await confirmModal(what.replace(/^./, x=>x.toUpperCase())+'? Anything you have changed since stays as you wrote it.','Undo'))) return;
+    askTakeOut(ASK_BACK.rows, ASK_BACK.overallWas);
+    askForget(); $('askUndo').hidden=true; $('askMsg').textContent='Taken back out. Your lines are still here.'; dirty=true;
+    return;
+  }
+  askForget();
   ASK_ADDED.forEach(({row, created})=>{
     if(created) row.remove();
     else { row.querySelector('.pt-text').innerHTML=''; delete row.dataset.tidied; delete row.dataset.ai; row.dispatchEvent(new Event('ai-suggest')); }
@@ -2450,6 +2499,10 @@ $('askUndo').addEventListener('click',()=>{
   if(ASK_OVERALL_WAS!==null){ const out=$('tOverall'); out.value=ASK_OVERALL_WAS; autoGrow(out); out.dispatchEvent(new Event('input',{bubbles:true})); }
   ASK_ADDED=[]; ASK_OVERALL_WAS=null; ASK_DONE=false; $('askUndo').hidden=true; $('askMsg').textContent='Taken back out. Your lines are still here.'; dirty=true;
 });
+
+/* once the saved feedback is on the form (and again when the course's copy arrives), look for what Ask Connect left */
+setTimeout(askFind, 600);
+window.addEventListener('hub:ready', function(){ setTimeout(askFind, 600); });
 
 </script>
 </body>

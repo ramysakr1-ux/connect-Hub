@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171557">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171637">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -854,27 +854,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171557">
+<link rel="stylesheet" href="hub-house.css?v=202611171637">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611171557"></script>
-<script src="hub-tracker.js?v=202611171557"></script>
-<script src="hub-rotation.js?v=202611171557"></script>
-<script src="hub-xlsx.js?v=202611171557"></script>
-<script src="hub-docx.js?v=202611171557"></script>
-<script src="hub-timetable-parse.js?v=202611171557"></script>
-<script src="assignment-defaults.js?v=202611171557"></script>
-<script src="hub-shared.js?v=202611171557"></script>
+<script src="hub-due.js?v=202611171637"></script>
+<script src="hub-tracker.js?v=202611171637"></script>
+<script src="hub-rotation.js?v=202611171637"></script>
+<script src="hub-xlsx.js?v=202611171637"></script>
+<script src="hub-docx.js?v=202611171637"></script>
+<script src="hub-timetable-parse.js?v=202611171637"></script>
+<script src="assignment-defaults.js?v=202611171637"></script>
+<script src="hub-shared.js?v=202611171637"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611171557"></script>
-<script src="hub-say.js?v=202611171557"></script>
-<script src="hub-sync.js?v=202611171557"></script>
-<script src="hub-notebook.js?v=202611171557"></script>
+<script src="hub-store.js?v=202611171637"></script>
+<script src="hub-say.js?v=202611171637"></script>
+<script src="hub-sync.js?v=202611171637"></script>
+<script src="hub-notebook.js?v=202611171637"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -2928,7 +2928,7 @@ function checksHTML(){
   /* THE REST OF THE COURSE AGAINST THE BOARD (10 Nov 2026, hub-notes.js): a TP day with no feedback after it, an assignment
      with a deadline and no set-up, a deadline on a day the course does not meet, an input session that opens nothing (no page
      by the board's rule or the trainee's home's, and no materials link), and the classes against the board's new class day. Notes, never a block. */
-  try { if (window.hubNotes) hubNotes.now({ timetable: TT, settings: SETTINGS, pageFor: x => !!(x.lib || libPageFor(x.t) || (window.InputLib && InputLib.inputsOf({ days: [{ date: '2000-01-01', sessions: [x] }] }).some(i => i.slug))) }).filter(n => n.area === 'timetable' || n.area === 'classes' || /^assessor/.test(n.id)).forEach(n => lines.push(['note', n.text])); } catch (e) {}
+  try { if (window.hubNotes) hubNotes.now({ timetable: TT, settings: SETTINGS, pageFor: x => !!(x.own || x.lib || libPageFor(x.t) || (window.InputLib && InputLib.inputsOf({ days: [{ date: '2000-01-01', sessions: [x] }] }).some(i => i.slug))) }).filter(n => n.area === 'timetable' || n.area === 'classes' || /^assessor/.test(n.id)).forEach(n => lines.push(['note', n.text])); } catch (e) {}
   const un = Array.isArray(TT.unplaced) ? TT.unplaced : [];
   return `<div class="tchecks"><div class="cl"><span class="dot ${lines.some(l => l[0] === 'bad') || un.length ? 'bad' : 'ok'}"></span>${n} sessions on ${open.length} day${open.length === 1 ? '' : 's'}${un.length ? ` · <b>${un.length === 1 ? '1 day’s' : un.length + ' days’'} sessions don’t fit</b>` : ''}${lines.length ? '' : ' · no clashes'}</div>
     ${lines.map(l => `<div class="cl"><span class="dot ${l[0]}"></span>${esc(l[1])}</div>`).join('')}
@@ -3188,14 +3188,17 @@ function openDetails(date, id){
   const el = pop('ttpop');
   const name = x.k === 'tp' ? 'TP ' + (day.tp || '') : (x.t || KIND_LABEL[x.k] || '');
   const lt = localRange(day.date, x.s, x.e), tut = x.by !== undefined && x.by !== null && x.by !== '' && TUTORS[+x.by] ? TUTORS[+x.by] : '';
-  const page = x.k === 'input' ? (x.lib ? 'input-sessions/' + x.lib + '/' : libPageFor(x.t)) : '';
+  /* a tutor's own session (x.own): Lite's page is not offered to the trainees; a tutor may still open it */
+  const page0 = x.k === 'input' ? (x.lib ? 'input-sessions/' + x.lib + '/' : libPageFor(x.t)) : '';
+  const page = x.own && !IS_TUTOR ? '' : page0;
   const room = joinFor(x, (rec('hub:me') || {}).group, day.date);
   const mat = x.mat && /^https?:\/\//i.test(x.mat) ? x.mat : '';
   el.innerHTML = `<p class="dt1">${esc(dayName(date))} · ${esc(hubClockRange(x.s, x.e))}${lt ? ` · <span class="lt" title="Your time">${esc(lt)}</span>` : ''}</p>
     <span class="kchip k-${esc(x.k)}">${esc(KIND_LABEL[x.k] || x.k)}</span>
     ${tut ? `<p class="dt1">With ${esc(tut)} (${esc(initialsOf(tut))})</p>` : ''}
     ${x.d ? `<div class="prep">${esc(x.d)}</div>` : ''}
-    ${page ? `<a class="res" href="${esc(page)}">Open the session</a>` : ''}
+    ${x.own && IS_TUTOR && page0 ? `<p class="muted">${esc(tut || 'The tutor')}\u2019s own session: trainees do not get Lite\u2019s page for it, only the materials link below.</p>` : ''}
+    ${page ? `<a class="res" href="${esc(page)}">${x.own ? 'Open Lite\u2019s session (tutors only)' : 'Open the session'}</a>` : ''}
     ${/micro.?teach/i.test(String(x.t || '')) && x.k !== 'input' ? `<a class="res" href="43_micro_teaching.html?d=${esc(date)}">Open micro-teaching</a>` : ''}
     ${mat ? `<a class="res" href="${esc(mat)}" target="_blank" rel="noopener noreferrer">Open the materials</a>` : ''}
     ${x.k === 'feedback' && IS_TUTOR ? `<a class="res" href="40_tp_feedback.html?date=${esc(date)}${GVIEW ? '&group=' + encodeURIComponent(GVIEW) : ''}">Open the feedback screen</a>` : ''}
@@ -3251,7 +3254,7 @@ function freeOthers(x){
   const freed = [];
   (TT.days || []).forEach(d => (d.sessions || []).forEach(o => {
     if (o === x || o.id === x.id || sesKey(o) !== key || !sameGroup(o, x)) return;
-    delete o.t; delete o.lib; delete o.d; delete o.url; delete o.mat; o.k = 'input';
+    delete o.t; delete o.lib; delete o.d; delete o.url; delete o.mat; delete o.own; o.k = 'input';
     freed.push(dayName(d.date));
   }));
   return freed;
@@ -3268,7 +3271,7 @@ function freeAfter(day){
   return end;
 }
 function draftCounts(){
-  const ids = days => { const m = new Map(); (days || []).forEach(d => (d.sessions || []).forEach(x => m.set(x.id, JSON.stringify([d.date, x.s, x.e, x.k, x.t || '', x.by == null ? '' : x.by, x.room || '', x.url || '', x.mat || '', x.d || '', d.tp || 0, d.setIndex || 0])))); return m; };
+  const ids = days => { const m = new Map(); (days || []).forEach(d => (d.sessions || []).forEach(x => m.set(x.id, JSON.stringify([d.date, x.s, x.e, x.k, x.t || '', x.by == null ? '' : x.by, x.room || '', x.url || '', x.mat || '', x.d || '', d.tp || 0, d.setIndex || 0, x.own ? 1 : 0])))); return m; };
   const a = ids(LIVE && LIVE.days), b = ids(pickLive(TT).days); let add = 0, ed = 0, rm = 0;
   b.forEach((v, k) => { if (!a.has(k)) add++; else if (a.get(k) !== v) ed++; });
   a.forEach((v, k) => { if (!b.has(k)) rm++; });
@@ -3383,7 +3386,7 @@ function replaceTile(date, id, p){
   const x = (day.sessions || []).find(s => s.id === id); if (!x || x.k === 'tp') return;
   remember(); const was = tileName(x, day);
   if (p.k) { x.k = pieceKind(p.k); x.t = p.k === 'blank' ? '' : pieceLabel(p.k); delete x.lib; if (x.room === 'Input') delete x.room; }
-  else { x.k = 'input'; x.t = p.t; x.room = 'Input'; const sl = p.slug || libSlugOf(p.t); if (sl) x.lib = sl; else delete x.lib; delete x.mat; }   /* another session's materials do not stay under this one */
+  else { x.k = 'input'; x.t = p.t; x.room = 'Input'; const sl = p.slug || libSlugOf(p.t); if (sl) x.lib = sl; else delete x.lib; delete x.mat; delete x.own; }   /* another session's materials do not stay under this one */
   const freed = freeOthers(x);
   save('Changed', { text: '“' + was + '” on ' + dayName(date) + ' is now “' + tileName(x, day) + '”' + (freed.length ? '; its place on ' + freed.join(', ') + ' is empty again' : '') }); render();
 }
@@ -3500,7 +3503,7 @@ function wireBoard(){
     if (overLib(e) && was.x.k === 'input' && was.x.t) {
       UNDO.push(was.before);
       const x = was.day.sessions.find(s => s.id === was.x.id), name = x.t;
-      delete x.t; delete x.lib; delete x.d; delete x.url; delete x.mat; delete x.by;
+      delete x.t; delete x.lib; delete x.d; delete x.url; delete x.mat; delete x.by; delete x.own;
       save('Back in the library', { text: '“' + name + '” taken off ' + dayName(was.day.date) + '; its place is empty' });
       render(); return;
     }
@@ -3762,6 +3765,9 @@ function openTile(date, id, fresh){
     <p class="muted" id="matWhy">Your own slides, handout or folder. Trainees see it as “Open the materials”. Share it so anyone with the link can view.</p>
     <label>Online room link<input name="url" type="url" placeholder="https://" value="${esc(x0.url && x0.url !== 'https://' ? x0.url : '')}" aria-describedby="urlWhy"></label>
     <p class="muted" id="urlWhy">Only if this session meets somewhere other than its usual room. Trainees see it as “Join”.</p>
+    ${CX_TITLE ? `<label class="lock"><input type="checkbox" name="own"${x0.own ? ' checked' : ''}> The tutor runs their own session here</label>
+    <p class="muted">Trainees then do not get Lite\u2019s page for it, on their card or on the timetable. They get the materials link above once it is added.</p>
+    ${TUTORS.length > 1 ? `<label class="lock"><input type="checkbox" name="ownAll"> Do the same for every input session with this tutor</label>` : ''}` : ''}
     ${!isNew && isSheet(x0) && BOOK ? `<div class="sheetin">${sheetHTML(day0, x0)}</div>` : ''}
     <label class="lock"><input type="checkbox" name="locked"${x0.locked ? ' checked' : ''}> Locked, so it can’t be dragged</label>
     <p class="warn" id="tErr"></p>
@@ -3794,6 +3800,7 @@ function openTile(date, id, fresh){
     let mat = v('mat').trim();
     if (mat) { try { const u = new URL(mat); if (!/^https?:$/.test(u.protocol)) throw 0; mat = u.href; } catch (x) { return err('The materials link must start with http:// or https://.'); } }
     const g = v('g'), byN = v('by');
+    if (F.elements.ownAll && F.elements.ownAll.checked && (byN === '' || byN === 'all')) return err('Choose the tutor first, then tick the box for every session with them.');
     /* the design's overlap check: the same tutor, or the same group (the whole course shares with every group) */
     const clash = (to.sessions || []).filter(o => o.id !== x0.id && o.k !== 'break' && o.k !== 'lunch' && k !== 'break' && k !== 'lunch' && toMin(o.s) < e0 && s0 < toMin(o.e)
       && ((byN !== '' && String(o.by) === byN) || !o.g || !g || String(o.g) === g));
@@ -3812,6 +3819,15 @@ function openTile(date, id, fresh){
     const d = v('d').trim(); if (d) x.d = d; else delete x.d;
     if (url) x.url = url; else delete x.url;
     if (mat) x.mat = mat; else delete x.mat;
+    /* THE TUTOR'S OWN SESSION (Ramy, 17 Nov 2026: "Belma is going to do her own input sessions ... I don't want the trainees
+       to see my input session on their card ... we're gonna do that with all her input sessions"). x.own keeps Lite's
+       page from the trainees for this tile (input-sessions/library.js reads it); the second box gives every input
+       session with the same tutor the same answer, on or off, so one press covers all of hers. */
+    if (k === 'input' && F.elements.own && F.elements.own.checked) x.own = true; else delete x.own;
+    if (k === 'input' && F.elements.ownAll && F.elements.ownAll.checked && byN !== '' && byN !== 'all') {
+      (TT.days || []).forEach(dd => (dd.sessions || []).forEach(o => { if (o === x || o.k !== 'input' || String(o.by) !== byN || !(o.lib || libPageFor(o.t))) return;
+        if (x.own) o.own = true; else delete o.own; }));
+    }
     if (k !== 'input') delete x.lib;   /* a session that is no longer input no longer opens a session page */
     if (F.elements.locked.checked) x.locked = true; else delete x.locked;
     if (to !== from || isNew) {
@@ -4462,7 +4478,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611171557'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611171637'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);
