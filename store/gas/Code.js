@@ -2219,7 +2219,12 @@ case 'inbox': {
        person ... And if we have fewer students, they can share"). One student per trainee, from the students that trainee can
        see (volunteerNamesFor_). A student someone has taken can be joined only once every student they can see has been
        taken, and then only one of those with the fewest. A trainee lets go of their student until they have written any of
-       the interview; then their tutor can. Pool kind ivclaims: { "<student name, lower case>": [token, ...] }. */
+       the interview; after that it stays theirs. Pool kind ivclaims: { "<student name, lower case>": [token, ...] }.
+       A SECOND STUDENT (v251, 17 Nov 2026). C/21, day two: a trainee had interviewed one student, wanted another, and
+       was told "Ask your tutor to change it", which no tutor could do. A trainee who has STARTED every interview they
+       hold may now choose one more student and keeps both, each with its own notes and recordings. A pick that has not
+       been started is still the one pick: choosing someone else swaps it. The fewest-first rule is unchanged, so a
+       second pick goes to a student nobody has before it doubles anyone up. */
     case 'ivClaims': {
       if (!course) throw new Error('This link is not on a course');
       if (assessor) throw new Error('Not for the assessor');
@@ -2228,9 +2233,9 @@ case 'inbox': {
         var icOut = {}; Object.keys(icPool).forEach(function (k) { icOut[k] = (icPool[k] || []).map(function (t) { return icNames[t] || ''; }); }); return { claims: icOut }; }
       if (!me) throw new Error('Trainees only');
       var icSeen = {}; volunteerNamesFor_(course.id, me).forEach(function (x) { icSeen[String(x.name).trim().toLowerCase()] = 1; });
-      var icMine = '', icTaken = {};
-      Object.keys(icPool).forEach(function (k) { var list = icPool[k] || []; if (list.indexOf(me.token) >= 0) icMine = k; if (icSeen[k]) icTaken[k] = list.map(function (t) { return t === me.token ? t : standIn_(course.id, t); }); });
-      return { mine: icMine, taken: icTaken };
+      var icMine = '', icTaken = {}, icAll = [];
+      Object.keys(icPool).forEach(function (k) { var list = icPool[k] || []; if (list.indexOf(me.token) >= 0) { icMine = k; icAll.push(k); } if (icSeen[k]) icTaken[k] = list.map(function (t) { return t === me.token ? t : standIn_(course.id, t); }); });
+      return { mine: icMine, mineAll: icAll, taken: icTaken };
     }
     case 'claimStudent': {
       if (!me || tutor || assessor) throw new Error('Trainees only');
@@ -2242,21 +2247,29 @@ case 'inbox': {
         var st = null; Object.keys(csRec.students || {}).forEach(function (n) { if (String(n).trim().toLowerCase() === key) st = csRec.students[n]; });
         return !!(st && ((st.heard || []).length || Object.keys(st.answers || {}).some(function (q) { return String(st.answers[q] || '').trim(); })));
       };
+      /* v251: what the trainee's own page knows is started counts too. Their notes are saved a moment after they are
+         typed, and a second pick made in that moment must not take the first one away from them. */
+      var csKeep = {}; (Array.isArray(req.keep) ? req.keep : []).slice(0, 20).forEach(function (k) { csKeep[String(k).trim().toLowerCase()] = 1; });
+      var csStarted0 = csStarted; csStarted = function (key) { return !!csKeep[key] || csStarted0(key); };
       var csOut = null;
       courseUpdateObj_(course.id, 'ivclaims', function (pool) {
-        var held = ''; Object.keys(pool).forEach(function (k) { if ((pool[k] || []).indexOf(me.token) >= 0) held = k; });
+        var held = []; Object.keys(pool).forEach(function (k) { if ((pool[k] || []).indexOf(me.token) >= 0) held.push(k); });
+        var drop = function (k) { pool[k] = (pool[k] || []).filter(function (t) { return t !== me.token; }); if (!pool[k].length) delete pool[k]; };
+        var rest = function () { return held.filter(function (k) { return (pool[k] || []).indexOf(me.token) >= 0; }); };
         if (!csOn) {
-          if (held && held === csWant) { if (csStarted(held)) throw new Error('You have started this interview, so it stays yours. Ask your tutor to change it.'); pool[held] = pool[held].filter(function (t) { return t !== me.token; }); if (!pool[held].length) delete pool[held]; }
-          csOut = { mine: '' }; return pool;
+          if (held.indexOf(csWant) >= 0) { if (csStarted(csWant)) throw new Error('You have started this interview, so it stays yours.'); drop(csWant); }
+          csOut = { mine: rest().slice(-1)[0] || '', mineAll: rest() }; return pool;
         }
-        if (held === csWant) { csOut = { mine: held }; return pool; }
-        if (held && csStarted(held)) throw new Error('You have started interviewing someone else. Ask your tutor to change it.');
+        if (held.indexOf(csWant) >= 0) { csOut = { mine: csWant, mineAll: held }; return pool;
+        }
         var count = function (k) { return (pool[k] || []).filter(function (t) { return t !== me.token; }).length; };
-        var counts = csSeen.map(count), least = Math.min.apply(null, counts.length ? counts : [0]);
+        /* the fewest among the students this trainee does not already hold: their own student is not a free one */
+        var counts = csSeen.filter(function (k) { return held.indexOf(k) < 0; }).map(count), least = Math.min.apply(null, counts.length ? counts : [0]);
         if (count(csWant) > least) throw new Error(least === 0 ? 'Someone has chosen that student. Choose one nobody has yet.' : 'Choose one of the students with fewer interviewers.');
-        if (held) { pool[held] = pool[held].filter(function (t) { return t !== me.token; }); if (!pool[held].length) delete pool[held]; }
+        /* a pick not yet started is the one being swapped; the ones already started stay beside the new one */
+        held.forEach(function (k) { if (!csStarted(k)) drop(k); });
         pool[csWant] = (pool[csWant] || []).concat([me.token]);
-        csOut = { mine: csWant }; return pool;
+        csOut = { mine: csWant, mineAll: rest().concat([csWant]) }; return pool;
       });
       return csOut;
     }
