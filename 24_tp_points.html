@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171446">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171520">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -735,7 +735,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171446">
+<link rel="stylesheet" href="hub-house.css?v=202611171520">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -899,15 +899,15 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611171446"></script>
-<script src="hub-tracker.js?v=202611171446"></script>
-<script src="hub-rotation.js?v=202611171446"></script>
-<script src="hub-shared.js?v=202611171446"></script>
+<script src="hub-due.js?v=202611171520"></script>
+<script src="hub-tracker.js?v=202611171520"></script>
+<script src="hub-rotation.js?v=202611171520"></script>
+<script src="hub-shared.js?v=202611171520"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611171446"></script>
-<script src="hub-say.js?v=202611171446"></script>
-<script src="hub-sync.js?v=202611171446"></script>
-<script src="hub-notebook.js?v=202611171446"></script>
+<script src="hub-store.js?v=202611171520"></script>
+<script src="hub-say.js?v=202611171520"></script>
+<script src="hub-sync.js?v=202611171520"></script>
+<script src="hub-notebook.js?v=202611171520"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -2496,7 +2496,7 @@ function renderCore(){
       }).join('');
 
       const past = state(tp) === 'past';
-      return `<section class="day${past ? ' past' : ''}">
+      return `<section class="day${past ? ' past' : ''}" id="tpday-${tp}">
         ${past ? '<details><summary>' : ''}
         <p class="dayline">${esc(SETTINGS.courseName || 'CELTA')} · <b>TP ${tp} · ${esc(teaching.map(letterOf).join(''))}</b>${date ? ' · ' + esc(niceDay(date)) : ''} · ${teaching.length} × ${mins(tpSlots[0] || {})} mins${
           (function(){ const c = teaching.map(t => cellOfT(t).context).find(Boolean); return c ? ' · <b>' + esc(c) + '</b>' : ''; })()}</p>
@@ -3206,6 +3206,21 @@ function render(){
   };
 }
 render();
+/* FROM A TRAINEE'S PLAN, STRAIGHT TO THEIR TP POINT (Ramy, 17 Nov 2026: "is there a short cut to the trainee's TP points
+   from the plan, only trainer view"). The feedback form's link carries the trainee and the TP number; the page opens
+   as "See it as" that trainee and stops at that TP. A tutor's link only; nothing is saved, as with the picker. */
+(function(){
+  if (!IS_TUTOR) return;
+  const q = new URLSearchParams(location.search), t = q.get('as'); if (!t) return;
+  let g = null, person = null;
+  try { g = groups().find(x => x.people.some(p => p.token === t)); person = g && g.people.find(p => p.token === t); } catch (e) {}
+  if (!person) return;
+  VIEW_AS = { token: t, name: person.name, group: g.group };
+  render();   /* the tutor's own board was drawn first (it is what says the rotation is dealt); now as the trainee */
+  const n = parseInt(q.get('tp'), 10);
+  if (n) setTimeout(function(){ const el = document.getElementById('tpday-' + n); /* the first TP on the page stays under the "See it as" line, so the tutor reads whose page this is */
+    if (el && el.getBoundingClientRect().top > innerHeight * 0.6) { el.scrollIntoView({ block: 'start' }); window.scrollBy(0, -90); } }, 400);
+})();
 /* an older Pool set, and the cards dealt from it, get the track files they were missing (hub-shared hubPoolMend, 14 Nov 2026) */
 if (IS_TUTOR && P && window.hubPoolMend) setTimeout(function(){ window.hubPoolMend(P).then(function(n){ if (n) persist('Saved'); }); }, 1500);
 
