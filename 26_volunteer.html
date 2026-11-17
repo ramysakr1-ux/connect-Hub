@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611170920">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171125">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -275,17 +275,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611170920">
+<link rel="stylesheet" href="hub-house.css?v=202611171125">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202611170920"></script>
-<script src="hub-attendance.js?v=202611170920"></script>
-<script src="hub-volunteer-i18n.js?v=202611170920"></script>
-<script src="hub-store.js?v=202611170920"></script>
-<script src="hub-say.js?v=202611170920"></script>
-<script src="hub-sync.js?v=202611170920"></script>
+<script src="hub-shared.js?v=202611171125"></script>
+<script src="hub-attendance.js?v=202611171125"></script>
+<script src="hub-volunteer-i18n.js?v=202611171125"></script>
+<script src="hub-store.js?v=202611171125"></script>
+<script src="hub-say.js?v=202611171125"></script>
+<script src="hub-sync.js?v=202611171125"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -376,8 +376,14 @@ const mat = x => {
   const tp = x.aim ? String(x.aim) : (x.tp ? 'TP' + String(x.tp).replace(/^TP\s*/i, '') + (x.set ? String(x.set).toUpperCase() : '') : '');
   /* 'materials' is the store's own word for which shelf this is on, not
      anything a student needs told. */
-  const kind = x.kind && x.kind !== 'materials' ? (SHELF_KINDS[x.kind] || x.kind) : '';
-  const line = [tp, x.by, kind, fileKind(x.url)].filter(Boolean).join(' \u00b7 ');
+  /* 'course' said "from your teachers", which the box's own heading now says (17 Nov 2026) */
+  const kind = x.kind && x.kind !== 'materials' && x.kind !== 'course' ? (SHELF_KINDS[x.kind] || x.kind) : '';
+  /* THE DAY IT WAS SHARED (17 Nov 2026). The box was headed "For your next class" and held the newest three shares,
+     whatever class they came from: Ramy's demo-lesson files sat there the morning after. Each now says its day. */
+  let on = '';
+  try { if (x.at) { const d = new Intl.DateTimeFormat('en-CA', { timeZone: ZONE || undefined, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(x.at));
+    on = d === TODAY ? 'Today' : shortDay(d); } } catch (e) {}
+  const line = [on, tp, x.by, kind, fileKind(x.url)].filter(Boolean).join(' \u00b7 ');
   return `<a class="mat" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer"><div><b>${esc(x.name)}</b>${line ? '<small>' + esc(line) + '</small>' : ''}</div><span class="go">Open</span></a>`;
 };
 const ZONE = SETTINGS.timeZone || '';
@@ -760,10 +766,10 @@ function render(){
          or the material of the day, and the previous stuff lives in the
          background?"). The newest share is what they came for; the rest is
          still here, behind a line. -->
-    <div class="card" data-tone="forest"><h3>For your next class</h3>
-      <p class="note">Anything your teachers share for the lesson appears here. Have a look if you like — you do not have to.</p>
+    <div class="card" data-tone="forest"><h3>From your teachers</h3>
+      <p class="note">What your teachers share, the newest first, with the day they shared it. Have a look if you like — you do not have to.</p>
       ${SHARED.length ? SHARED.slice(0, 3).map(mat).join('') : '<p class="empty">Nothing shared yet.</p>'}
-      ${SHARED.length > 3 ? `<details class="earlier"><summary>Everything else your teachers have shared — ${SHARED.length - 3} more</summary>${SHARED.slice(3).map(mat).join('')}</details>` : ''}</div>
+      ${SHARED.length > 3 ? `<details class="earlier"><summary>Shared earlier — ${SHARED.length - 3} more</summary>${SHARED.slice(3).map(mat).join('')}</details>` : ''}</div>
     ${hwBlock()}${cardsBlock()}${notesBlock()}
     <div class="card" data-tone="navy"><h3>Your attendance</h3>
       <div class="segs">${REC.days.map(x => `<span class="seg ${x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.date < JOINED ? 'before' : x.date < TODAY ? 'miss' : ''}" title="${esc(shortDay(x.date))}"></span>`).join('')}</div>

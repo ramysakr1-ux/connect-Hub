@@ -63,7 +63,7 @@
       howItems: [
         'Your link is your page. Keep it; nobody else needs it. It stops working when the course ends.',
         'Your next class is at the top, with the time in the course’s own clock and in yours. Press Join to go into the online room. You do not need to prepare anything.',
-        'Anything your teachers share for a lesson appears under For your next class. Have a look if you like; you do not have to.',
+        'Anything your teachers share appears under From your teachers, the newest first, with the day they shared it. Have a look if you like; you do not have to.',
         'Your attendance is marked by the tutor, not by you. A class counts when you were there for most of it. Your hours add up on your page.',
         'When your hours reach the center’s number, your certificate appears on your page, already signed by the center. Print it, or save it as a PDF.',
         'Add the page to your phone: Add to Home Screen in Safari, or Install in Chrome. Then it opens like an app.',
@@ -92,7 +92,7 @@
       howItems: [
         'Bağlantınız sizin sayfanızdır. Saklayın; başka kimsenin ihtiyacı yok. Kurs bittiğinde çalışmayı durdurur.',
         'Bir sonraki dersiniz en üsttedir; saati hem kursun saatiyle hem sizin saatinizle yazar. Çevrimiçi odaya girmek için Katıl’a basın. Hazırlık yapmanız gerekmez.',
-        'Öğretmenlerinizin bir ders için paylaştığı her şey “Bir sonraki dersiniz için” başlığı altında görünür. İsterseniz bakın; zorunlu değil.',
+        'Öğretmenlerinizin paylaştığı her şey sayfanızdaki “From your teachers” başlığı altında görünür: en yenisi en üstte, paylaşıldığı günle birlikte. İsterseniz bakın; zorunlu değil.',
         'Devamınızı siz değil, eğitmen işaretler. Dersin çoğunda oradaysanız ders sayılır. Saatleriniz sayfanızda toplanır.',
         'Saatleriniz merkezin belirlediği sayıya ulaşınca sertifikanız, merkez tarafından imzalanmış olarak sayfanızda görünür. Yazdırın ya da PDF olarak kaydedin.',
         'Sayfayı telefonunuza ekleyin: Safari’de Ana Ekrana Ekle, Chrome’da Yükle. Sonra bir uygulama gibi açılır.',
@@ -121,7 +121,7 @@
       howItems: [
         'رابطك هو صفحتك. احتفظ به؛ لا يحتاجه أحد غيرك. يتوقف عن العمل عند انتهاء الدورة.',
         'درسك التالي في الأعلى، مع الوقت بتوقيت الدورة وبتوقيتك. اضغط «انضم» لدخول الغرفة عبر الإنترنت. لا تحتاج إلى أي تحضير.',
-        'كل ما يشاركه معلموك لدرس ما يظهر تحت «لدرسك التالي». ألقِ نظرة إن أحببت؛ ليس واجبًا.',
+        'كل ما يشاركه معلموك يظهر تحت «From your teachers»، الأحدث أولًا، مع اليوم الذي شاركوه فيه. ألقِ نظرة إن أحببت؛ ليس واجبًا.',
         'يسجّل المدرّب حضورك، لا أنت. يُحتسب الدرس إذا حضرت معظمه. تتجمع ساعاتك على صفحتك.',
         'عندما تبلغ ساعاتك العدد الذي حدده المركز، تظهر شهادتك على صفحتك موقّعةً من المركز. اطبعها أو احفظها بصيغة PDF.',
         'أضف الصفحة إلى هاتفك: «إضافة إلى الشاشة الرئيسية» في Safari، أو «تثبيت» في Chrome. بعدها تُفتح كتطبيق.',
@@ -150,7 +150,7 @@
       howItems: [
         'Ваша ссылка — это ваша страница. Сохраните её; больше никому она не нужна. Она перестаёт работать, когда курс заканчивается.',
         'Ваше следующее занятие — вверху, со временем по часам курса и по вашим. Нажмите «Присоединиться», чтобы войти в онлайн-комнату. Готовиться не нужно.',
-        'Всё, чем ваши преподаватели делятся к занятию, появляется в разделе «К вашему следующему занятию». Посмотрите, если хотите; это не обязательно.',
+        'Всё, чем делятся ваши преподаватели, появляется в разделе «From your teachers»: сначала самое новое, с днём, когда им поделились. Посмотрите, если хотите; это не обязательно.',
         'Посещаемость отмечает тьютор, а не вы. Занятие засчитывается, если вы были на большей его части. Ваши часы суммируются на странице.',
         'Когда ваши часы достигнут числа, установленного центром, на странице появится ваш сертификат, уже подписанный центром. Распечатайте его или сохраните в PDF.',
         'Добавьте страницу на телефон: «На экран Домой» в Safari или «Установить» в Chrome. Тогда она открывается как приложение.',
@@ -179,7 +179,7 @@
       howItems: [
         'پیوند شما همان صفحه‌ی شماست. آن را نگه دارید؛ کس دیگری به آن نیاز ندارد. با پایان دوره از کار می‌افتد.',
         'کلاس بعدی شما در بالای صفحه است، با ساعت به وقت دوره و به وقت شما. برای ورود به اتاق آنلاین «پیوستن» را بزنید. نیازی به آمادگی نیست.',
-        'هر چیزی که معلمانتان برای یک درس به اشتراک بگذارند زیر «برای کلاس بعدی شما» نمایش داده می‌شود. اگر خواستید نگاهی بیندازید؛ اجباری نیست.',
+        'هر چیزی که معلمانتان به اشتراک بگذارند زیر «From your teachers» نمایش داده می‌شود، تازه‌ترین در بالا، همراه با روزی که به اشتراک گذاشته شده. اگر خواستید نگاهی بیندازید؛ اجباری نیست.',
         'حضور شما را مربی ثبت می‌کند، نه شما. اگر بیشترِ کلاس را حاضر بوده باشید، آن کلاس حساب می‌شود. ساعت‌هایتان در صفحه‌تان جمع می‌شود.',
         'وقتی ساعت‌هایتان به عددی که مرکز تعیین کرده برسد، گواهی‌تان با امضای مرکز در صفحه‌تان ظاهر می‌شود. آن را چاپ کنید یا به‌صورت PDF ذخیره کنید.',
         'صفحه را به تلفن خود اضافه کنید: «افزودن به صفحه‌ی اصلی» در Safari یا «نصب» در Chrome. سپس مانند یک برنامه باز می‌شود.',
@@ -208,7 +208,7 @@
       howItems: [
         'Ваше посилання — це ваша сторінка. Збережіть його; більше нікому воно не потрібне. Воно перестає працювати, коли курс закінчується.',
         'Ваше наступне заняття — вгорі, з часом за годинником курсу та за вашим. Натисніть «Приєднатися», щоб увійти до онлайн-кімнати. Готуватися не потрібно.',
-        'Усе, чим ваші викладачі діляться до заняття, з’являється в розділі «До вашого наступного заняття». Подивіться, якщо хочете; це не обов’язково.',
+        'Усе, чим діляться ваші викладачі, з’являється в розділі «From your teachers»: спочатку найновіше, з днем, коли ним поділилися. Подивіться, якщо хочете; це не обов’язково.',
         'Відвідуваність відмічає тьютор, а не ви. Заняття зараховується, якщо ви були на більшій його частині. Ваші години підсумовуються на сторінці.',
         'Коли ваші години сягнуть числа, встановленого центром, на сторінці з’явиться ваш сертифікат, уже підписаний центром. Роздрукуйте його або збережіть у PDF.',
         'Додайте сторінку на телефон: «На Початковий екран» у Safari або «Встановити» в Chrome. Тоді вона відкривається як застосунок.',
