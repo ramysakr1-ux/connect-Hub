@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611172049">
+<link rel="stylesheet" href="hub-tokens.css?v=202611172107">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -576,7 +576,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611172049">
+<link rel="stylesheet" href="hub-house.css?v=202611172107">
 </head>
 <body>
 <div class="board">
@@ -774,14 +774,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611172049"></script>
-<script src="hub-shared.js?v=202611172049"></script>
-<script src="hub-store.js?v=202611172049"></script>
-<script src="hub-say.js?v=202611172049"></script>
-<script src="hub-crit-learn.js?v=202611172049"></script>
-<script src="hub-crit-vocab.js?v=202611172049"></script>
-<script src="hub-sync.js?v=202611172049"></script>
-<script src="hub-notebook.js?v=202611172049"></script>
+<script src="hub-exchange.js?v=202611172107"></script>
+<script src="hub-shared.js?v=202611172107"></script>
+<script src="hub-store.js?v=202611172107"></script>
+<script src="hub-say.js?v=202611172107"></script>
+<script src="hub-crit-learn.js?v=202611172107"></script>
+<script src="hub-crit-vocab.js?v=202611172107"></script>
+<script src="hub-sync.js?v=202611172107"></script>
+<script src="hub-notebook.js?v=202611172107"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -898,6 +898,19 @@ function pasteClean(raw, scope){
     items.push({ text:t, codes:keep });
   });
   return { items, dropped, cleaned };
+}
+/* the four headings, wherever they are in the pasted text: { lSP:[lines], ... } or null when fewer than two are there */
+function pasteRoute(raw){
+  const head=/^[\s#>*_-]*(strengths?|action\s*points?)\s*(?:in|for|\u2014|-|:)?\s*(planning|teaching)[\s*_:]*$/i;
+  const other=/^[\s#>*_-]*#{0,6}\s*\S/;
+  const out={}; let at=null, n=0;
+  String(raw||'').replace(/\r/g,'').split('\n').forEach(line=>{
+    const m=line.match(head);
+    if(m){ const kind=/^s/i.test(m[1])?'S':'A', area=/^p/i.test(m[2])?'P':'T'; at={SP:'lSP',AP:'lAP',ST:'lST',AT:'lAT'}[kind+area]; if(!out[at]){ out[at]=[]; n++; } return; }
+    if(/^\s*#{1,6}\s/.test(line)){ at=null; return; }   /* any other heading ends the section */
+    if(at && line.trim()) out[at].push(line);
+  });
+  return n>=2 ? out : null;
 }
 function tagHTML(code){
   return `<span class="tag" contenteditable="false" data-c="${code}" title="${esc(CRIT_TEXT[code]||'')}">${code}</span>&nbsp;`;
@@ -1188,11 +1201,39 @@ function addPoint(listId, html, _unused){
      lines become several points, in order, under this one. A code that is not one of the 41, or belongs to the other kind
      of point (a 4 code on a teaching point), is left out and the line under the box says so. Whether a code fits what the
      point says stays the tutor's to judge: the cleaner reads the number, not the meaning. */
-  box.addEventListener('paste',e=>{
+  box.addEventListener('paste',async e=>{
     e.preventDefault();
     const raw=(e.clipboardData||window.clipboardData).getData('text/plain')||'';
+    /* ONE PASTE, FOUR BOXES (Ramy, 17 Nov 2026: "I need one thing that I can paste back"). Text that carries the headings
+       "Strengths in planning", "Action points in planning", "Strengths in teaching", "Action points in teaching" goes, line
+       by line, to those four boxes, wherever it is pasted; empty points are filled first. Other sections are left out. */
+    const say=(t)=>{ let n=(row.isConnected?row:$('lSP').querySelector('.pt')||row).querySelector('.pastenote'); if(!n){ n=document.createElement('p'); n.className='pastenote'; (row.isConnected?row:$('lSP').querySelector('.pt')||row).appendChild(n); } n.textContent=t; n.hidden=!t; };
+    const routed=pasteRoute(raw);
+    if(routed){
+      const filled=Object.keys(routed).some(id=>[...$(id).querySelectorAll('.pt')].some(r=>!isBlankPoint(r.querySelector('.pt-text'))));
+      if(filled){
+        const rep=window.confirmModal ? await confirmModal('These boxes already have points. Replace them with what you are pasting, or add to them?', 'Replace them', { cancel: 'Add to them' }) : false;
+        if(rep) Object.keys(routed).forEach(id=>{ $(id).innerHTML=''; addPoint(id,''); });
+      }
+      const said=[], lost=[];
+      Object.keys(routed).forEach(id=>{
+        const sc=id==='lSP'||id==='lAP'?'planning':'teaching', got2=pasteClean(routed[id].join('\n'), sc), h2=$(id);
+        got2.dropped.forEach(d=>lost.push(d.code));
+        got2.items.forEach(it=>{
+          const html=POINT_BULLET+it.codes.map(tagHTML).join('')+esc(it.text);
+          const blank=[...h2.querySelectorAll('.pt')].find(r=>isBlankPoint(r.querySelector('.pt-text')));
+          if(blank){ blank.querySelector('.pt-text').innerHTML=html; blank.querySelector('.pt-text').dispatchEvent(new Event('ai-suggest')); }
+          else addPoint(id, html).querySelector('.pt-text').dispatchEvent(new Event('ai-suggest'));
+        });
+        if(got2.items.length) said.push(got2.items.length+' in '+({lSP:'planning strengths',lAP:'planning action points',lST:'teaching strengths',lAT:'teaching action points'})[id]);
+      });
+      if(isBlankPoint(box)) box.innerHTML='';
+      dirty=true;
+      say('Pasted '+said.join(', ')+'.'+(lost.length?' Not added: '+lost.join(', ')+'.':'')+' Check each code fits what the point says.');
+      try{ ['lSP','lAP','lST','lAT'].forEach(id=>$(id).dispatchEvent(new Event('input',{bubbles:true}))); }catch(err){}
+      return;
+    }
     const got=pasteClean(raw, scope);
-    const say=(t)=>{ let n=row.querySelector('.pastenote'); if(!n){ n=document.createElement('p'); n.className='pastenote'; row.appendChild(n); } n.textContent=t; n.hidden=!t; };
     if(!got.items.length){ say(''); return; }
     const plainOnly=got.items.length===1 && !got.items[0].codes.length && !got.cleaned;
     if(plainOnly){ document.execCommand('insertText',false,got.items[0].text); say(''); return; }
