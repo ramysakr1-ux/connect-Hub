@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171711">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171838">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -356,6 +356,7 @@
     text-transform:uppercase; color:var(--teal); background:none; border:1px solid var(--sand-line);
     border-radius:999px; padding:3px 10px; cursor:pointer;}
   .printme:hover{border-color:var(--teal);}
+  .printme.printready{background:var(--a-lemon); color:var(--ink); border-color:var(--a-lemon);}
   /* Printing gives them their own lesson and nothing else: the other two, the
      practices already taught and the chrome come off the page. On screen the
      pages are Drive's viewer; on paper the viewer is hidden and the page's
@@ -735,7 +736,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171711">
+<link rel="stylesheet" href="hub-house.css?v=202611171838">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -899,15 +900,15 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611171711"></script>
-<script src="hub-tracker.js?v=202611171711"></script>
-<script src="hub-rotation.js?v=202611171711"></script>
-<script src="hub-shared.js?v=202611171711"></script>
+<script src="hub-due.js?v=202611171838"></script>
+<script src="hub-tracker.js?v=202611171838"></script>
+<script src="hub-rotation.js?v=202611171838"></script>
+<script src="hub-shared.js?v=202611171838"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611171711"></script>
-<script src="hub-say.js?v=202611171711"></script>
-<script src="hub-sync.js?v=202611171711"></script>
-<script src="hub-notebook.js?v=202611171711"></script>
+<script src="hub-store.js?v=202611171838"></script>
+<script src="hub-say.js?v=202611171838"></script>
+<script src="hub-sync.js?v=202611171838"></script>
+<script src="hub-notebook.js?v=202611171838"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -944,15 +945,34 @@ function pgRetry(img){
 window.pgRetry = pgRetry;
 /* Printing waits for the pages: up to twenty seconds for every page image of
    your own lesson to arrive (or to have given up), the button saying so. */
+/* SAFARI PRINTS FROM A TAP, NOT FROM A TIMER (17 Nov 2026, C/21: a trainee's iPad would not print her TP point, then did).
+   When the page images were still arriving the button said "Getting your pages" and print was called by itself once
+   they were in, up to twenty seconds after the tap. Safari, and every browser on an iPad or an iPhone, lets a page
+   print only as the direct answer to a tap; a print that arrives later is dropped without a word. So there the wait
+   ends with the button saying the pages are ready, and the next press prints. Where the pages are already in, and in
+   the other browsers, one press prints as before. */
+const TAP_TO_PRINT = (() => { const ua = navigator.userAgent || '';
+  const apple = /iPad|iPhone|iPod/.test(ua) || (/Mac/.test(navigator.platform || '') && navigator.maxTouchPoints > 1);
+  return apple || (/Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Android/.test(ua)); })();
 function whenPagesReady(btn, then){
   const imgs = [...document.querySelectorAll('.mine-block img.forprint')];
   const ready = () => imgs.every(i => i.dataset.failed || (i.complete && i.naturalWidth > 0));
+  if (btn && btn.dataset.readyGo) { delete btn.dataset.readyGo; btn.textContent = btn.dataset.label || btn.textContent; btn.classList.remove('printready'); return then(); }
   if (ready()) return then();
   const label = btn ? btn.textContent : '';
   if (btn) { btn.textContent = 'Getting your pages…'; btn.disabled = true; }
   const t0 = Date.now();
   const tick = () => {
-    if (ready() || Date.now() - t0 > 20000) { if (btn) { btn.textContent = label; btn.disabled = false; } then(); }
+    if (ready() || Date.now() - t0 > 20000) {
+      /* Safari carries a tap forward for about a second and no longer; what the browser reports of it is not to be
+         relied on (the test engine said "still tapping" seven seconds on), so the clock decides */
+      if (btn && TAP_TO_PRINT && Date.now() - t0 > 800) {
+        btn.dataset.label = label; btn.dataset.readyGo = '1'; btn.disabled = false; btn.classList.add('printready');
+        btn.textContent = 'Your pages are ready. Press to print';
+        return;
+      }
+      if (btn) { btn.textContent = label; btn.disabled = false; } then();
+    }
     else setTimeout(tick, 300);
   };
   tick();
@@ -987,7 +1007,17 @@ window.printTP = printTP;
 function printPages(btn){
   whenPagesReady(btn, () => {
     document.body.classList.add('printpages');
-    const off = () => { document.body.classList.remove('printpages'); window.removeEventListener('afterprint', off); };
+    const t0 = Date.now();
+    const off = () => { document.body.classList.remove('printpages'); window.removeEventListener('afterprint', late); document.removeEventListener('pointerdown', late, true); document.removeEventListener('visibilitychange', late); };
+    /* On an iPad or iPhone print() comes straight back while the print sheet is still being made, so "only the pages"
+       must not be taken off a second and a half later, nor on an afterprint that fires at once: it comes off when the
+       sheet has gone (a later afterprint, a touch on the page, the page shown again), or after three minutes. */
+    const late = () => { if (Date.now() - t0 > 3000) off(); };
+    if (TAP_TO_PRINT) {
+      window.addEventListener('afterprint', late); document.addEventListener('pointerdown', late, true); document.addEventListener('visibilitychange', late);
+      window.print(); setTimeout(off, 180000);
+      return;
+    }
     window.addEventListener('afterprint', off);
     setTimeout(() => { window.print(); setTimeout(off, 1500); }, 60);
   });
