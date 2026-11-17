@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611172250">
+<link rel="stylesheet" href="hub-tokens.css?v=202611172350">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -158,6 +158,17 @@
   .whotr{display:flex; align-items:baseline; gap:10px; margin:8px 0 2px; color:var(--a-forest); font:700 1.05rem/1.2 'Karla',sans-serif;}
   .whotr span{font-weight:600; font-size:.86rem; color:var(--grey);}
   @media print{ .whotr{display:none !important;} }
+  /* Paste something back: what it found, to tick, before it fills */
+  #xDone .xp-h{display:block; font-weight:700; color:var(--ink); margin:0 0 8px;}
+  #xDone .xp-warn{display:block; margin:0 0 8px; padding:8px 12px; border-radius:8px; border-left:4px solid var(--brick); background:color-mix(in oklch, var(--brick) 8%, var(--paper)); color:var(--brick); font-weight:700;}
+  #xDone .xp-rows{display:block; margin:0 0 10px;}
+  #xDone .xp-row{display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-top:1px solid var(--sand-line); cursor:pointer; color:var(--ink);}
+  #xDone .xp-row:first-child{border-top:0;}
+  #xDone .xp-row input{margin-top:3px; width:17px; height:17px; flex:none; accent-color:var(--teal);}
+  #xDone .xp-row b{font-weight:700;} #xDone .xp-row small{display:block; font-size:.8rem; color:var(--grey); margin-top:1px;}
+  #xDone .xp-row.off{cursor:default; color:var(--grey);}
+  #xDone .xp-acts{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  #xDone .xp-note{display:block; font-size:.8rem; color:var(--grey);}
   .pastenote{margin:4px 0 0; font-size:.78rem; font-weight:600; color:color-mix(in oklch, var(--a-mustard) 72%, var(--ink));}
   .gchip{display:none;}
   /* A QUIETER BAR (Ramy, 17 Nov 2026: "the bottom line, still busy ... Return to blah blah, it's too big ... just blocking the
@@ -576,7 +587,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611172250">
+<link rel="stylesheet" href="hub-house.css?v=202611172350">
 </head>
 <body>
 <div class="board">
@@ -643,7 +654,7 @@
        appears if I paste." So: Copy, and nothing about AI or pasting. The box
        opens from a quiet link, or by itself when something is pasted onto the
        page outside a field; and once text is in it, it reads itself -- there
-       is no "Read it" to press and nothing to confirm: it goes in, and Undo puts it back. -->
+       is no "Read it" to press. Since 17 Nov 2026 it shows what it found, each with a tick, and fills on Fill (see fillNow). -->
   <div class="card xchg" id="xchg" style="display:none;">
     <div class="xchg-acts">
       <button type="button" class="btn btn-gold" id="xCopy">Copy</button>
@@ -651,7 +662,7 @@
       <button type="button" class="example-btn" id="xPasteToggle" style="margin-left:auto;">Paste something back</button>
     </div>
     <div id="xPaste" style="display:none; margin-top:14px;">
-      <textarea id="xText" rows="4" placeholder="Paste here — it goes straight into the boxes."></textarea>
+      <textarea id="xText" rows="4" placeholder="Paste here. You see what it found, and choose what goes into the boxes."></textarea>
     </div>
     <p class="guide" id="xDone" style="display:none; margin:10px 0 0;"></p>
   </div>
@@ -774,14 +785,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611172250"></script>
-<script src="hub-shared.js?v=202611172250"></script>
-<script src="hub-store.js?v=202611172250"></script>
-<script src="hub-say.js?v=202611172250"></script>
-<script src="hub-crit-learn.js?v=202611172250"></script>
-<script src="hub-crit-vocab.js?v=202611172250"></script>
-<script src="hub-sync.js?v=202611172250"></script>
-<script src="hub-notebook.js?v=202611172250"></script>
+<script src="hub-exchange.js?v=202611172350"></script>
+<script src="hub-shared.js?v=202611172350"></script>
+<script src="hub-store.js?v=202611172350"></script>
+<script src="hub-say.js?v=202611172350"></script>
+<script src="hub-crit-learn.js?v=202611172350"></script>
+<script src="hub-crit-vocab.js?v=202611172350"></script>
+<script src="hub-sync.js?v=202611172350"></script>
+<script src="hub-notebook.js?v=202611172350"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2459,7 +2470,28 @@ if (window.hubIPA) hubIPA.bar('#tNotes, #tOverall, #tSelf, #tLA, .pt-text, texta
      the line under the card says what landed. The one thing kept is Undo: the
      form as it was the moment before, one click, because a wrong paste should
      cost nothing. */
-  var BEFORE = null;
+  /* SEE IT, THEN FILL (Ramy, 17 Nov 2026, the night of C/21's first returns: "pays something back is just a nightmare ...
+     Let's do it now"). The card filled every box the moment text was pasted (his own ask of 24 Sep), and that night it put
+     comments beside every stage of a plan he had not commented on, laid one trainee's overall comment into another's
+     form, and took in criteria codes nobody had checked. It now shows what it found, each with a tick, and fills only
+     on Fill:
+     - the comments beside the plan start unticked: they are written only when he asks for them;
+     - a box that already holds something says it will be replaced;
+     - a line in red when the text names another trainee on the course, and when a code was left out (not one of the 41,
+       or a planning code in a teaching box and the other way round);
+     - a grade that is not one of the form's grades is left out, so it cannot clear the grade already chosen.
+     Undo is still there after Fill. */
+  var BEFORE = null, PICK = null;
+  function namesOf(r){ var names = {}; r.manifest.forEach(function(m){ names[m.id] = m.heading; }); return names; }
+  function listFrom(id, v){
+    var lost = [];
+    var rows = v.map(function(x){
+      var g = pasteClean(String(x.text || ''), (id === 'lSP' || id === 'lAP') ? 'planning' : 'teaching'), it = g.items[0] || { text: '', codes: [] };
+      g.dropped.forEach(function(d){ lost.push(d); });
+      return { html: POINT_BULLET + it.codes.map(tagHTML).join('') + esc(g.items.map(function(y){ return y.text; }).join(' ')), star: !!x.star };
+    }).filter(function(x){ return x.html.replace(/<[^>]+>|&nbsp;|•|\s/g, '') !== ''; });
+    return { rows: rows, lost: lost };
+  }
   function readNow(){
     var txt = $('xText').value;
     if (!txt.trim()) return;
@@ -2467,30 +2499,82 @@ if (window.hubIPA) hubIPA.bar('#tNotes, #tOverall, #tSelf, #tLA, .pt-text, texta
     var ids = Object.keys(r.found);
     var done = $('xDone'); done.style.display = '';
     if (!ids.length) {
-      done.innerHTML = 'Nothing in that landed \u2014 the slot headings ("Grade", "Stage 1 \u2014 \u2026", "Strengths in planning") need to be kept.';
+      PICK = null;
+      done.innerHTML = 'Nothing in that landed — the slot headings ("Grade", "Stage 1 — …", "Strengths in planning") need to be kept.';
       return;
     }
+    var names = namesOf(r), rows = [], lost = [], lists = {};
+    var filledIn = function(id){ return [...$(id).querySelectorAll('.pt-text')].filter(function(b){ return !isBlankPoint(b); }).length; };
+    var tcIds = ids.filter(function(id){ return DRAFT_LISTS.indexOf(id) < 0 && DRAFT_FIELDS.indexOf(id) < 0; });
+    if (tcIds.length) rows.push({ key: 'tc', label: 'Comments beside the lesson plan (' + tcIds.length + ')', on: false,
+      note: 'One beside each stage or item. Leave it unticked to keep the plan as it is.' });
+    DRAFT_LISTS.forEach(function(id){
+      if (!r.found[id]) return;
+      var L = listFrom(id, r.found[id]); lists[id] = L.rows; L.lost.forEach(function(d){ lost.push(d); });
+      if (!L.rows.length) return;
+      var now = filledIn(id);
+      rows.push({ key: id, label: (names[id] || id) + ' (' + L.rows.length + (L.rows.length === 1 ? ' point)' : ' points)'), on: true, note: now ? 'Replaces the ' + now + (now === 1 ? ' point' : ' points') + ' there now.' : '' });
+    });
+    DRAFT_FIELDS.forEach(function(id){
+      if (r.found[id] == null) return;
+      var v = String(r.found[id]).replace(/\*\*|__/g, '').trim(), el = $(id), cur = el ? String(el.value || '').trim() : '';
+      if (id === 'fGrade') {
+        var opt = [...el.options].find(function(o){ return o.value && o.value.toLowerCase() === v.toLowerCase(); });
+        if (!opt) { rows.push({ key: '', label: 'Grade', on: false, off: true, note: '“' + v.slice(0, 60) + '” is not one of the grades, so it is left out. Choose the grade on the tiles.' }); return; }
+        rows.push({ key: id, label: 'Grade: ' + opt.value, on: true, note: cur && cur !== opt.value ? 'Replaces ' + cur + '.' : '' }); return;
+      }
+      rows.push({ key: id, label: names[id] || id, on: true, note: cur ? 'Replaces what is there now.' : '' });
+    });
+    /* another trainee's name in the text: this form may not be the one it was written for */
+    var warn = [];
+    try {
+      var all = loadRoster().trainees || {}, me = String((all[TRAINEE_ID] || {}).name || '').trim().split(/\s+/)[0] || '';
+      var others = Object.keys(all).filter(function(k){ return k !== TRAINEE_ID && all[k] && !all[k].withdrawn; }).map(function(k){ return String(all[k].name || '').trim().split(/\s+/)[0]; })
+        .filter(function(n, i, a){ return n && n.length > 2 && n.toLowerCase() !== me.toLowerCase() && a.indexOf(n) === i; });
+      var named = others.filter(function(n){ return new RegExp('(^|[^A-Za-zÀ-ɏ])' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^A-Za-zÀ-ɏ]|$)').test(txt); });
+      if (named.length) warn.push('This text names ' + named.join(' and ') + (me ? ', and this form is ' + me + '’s' : '') + '. Check it is the right feedback before you fill.');
+    } catch (e) {}
+    if (lost.length) { var seen = {}; warn.push('Codes left out: ' + lost.filter(function(d){ var k = d.code + d.why; if (seen[k]) return false; seen[k] = 1; return true; })
+      .map(function(d){ return d.code + (d.why === 'kind' ? ' (in the wrong kind of box)' : ' (not one of the 41)'); }).join(', ') + '.'); }
+    PICK = { r: r, lists: lists, tcIds: tcIds };
+    done.innerHTML = '<span class="xp-h">Found in what you pasted. Untick anything you do not want, then press Fill.</span>'
+      + warn.map(function(w){ return '<span class="xp-warn" role="alert">' + esc(w) + '</span>'; }).join('')
+      + '<span class="xp-rows">' + rows.map(function(x){ return '<label class="xp-row' + (x.off ? ' off' : '') + '"><input type="checkbox" data-pick="' + esc(x.key) + '"' + (x.on ? ' checked' : '') + (x.off ? ' disabled' : '') + '><span><b>' + esc(x.label) + '</b>' + (x.note ? '<small>' + esc(x.note) + '</small>' : '') + '</span></label>'; }).join('') + '</span>'
+      + (r.unplaced.length ? '<span class="xp-note">No place on this form for: ' + r.unplaced.map(esc).join(', ') + '.</span>' : '')
+      + '<span class="xp-acts"><button type="button" class="btn" id="xFill">Fill</button><button type="button" class="example-btn" id="xCancel">Cancel</button><span class="xp-note">Check each code fits what its point says; the card reads the number, not the meaning.</span></span>';
+    $('xFill').addEventListener('click', fillNow);
+    $('xCancel').addEventListener('click', function(){ PICK = null; $('xText').value = ''; done.textContent = 'Nothing was changed.'; });
+  }
+  function fillNow(){
+    if (!PICK) return;
+    var done = $('xDone'), r = PICK.r, names = namesOf(r);
+    var want = {}; done.querySelectorAll('[data-pick]').forEach(function(c){ if (c.checked && c.dataset.pick) want[c.dataset.pick] = 1; });
+    var ids = Object.keys(r.found).filter(function(id){
+      if (DRAFT_LISTS.indexOf(id) >= 0) return !!want[id] && (PICK.lists[id] || []).length;
+      if (DRAFT_FIELDS.indexOf(id) >= 0) return !!want[id];
+      return !!want.tc; });
+    if (!ids.length) { done.textContent = 'Nothing was ticked, so nothing was changed.'; PICK = null; return; }
     BEFORE = draftState(); delete BEFORE.doc;
     var st = { f: {}, lists: {}, tcomm: Object.assign({}, TCOMM) };
     var anyList = false, anyField = false, anyTc = false;
     ids.forEach(function(id){
       var v = r.found[id];
-      /* the same cleaning as a paste into a point (17 Nov 2026): Markdown off, a written code becomes Lite's criterion tag */
-      if (DRAFT_LISTS.indexOf(id) >= 0) { st.lists[id] = v.map(function(x){
-          var g = pasteClean(String(x.text || ''), (id === 'lSP' || id === 'lAP') ? 'planning' : 'teaching'), it = g.items[0] || { text: '', codes: [] };
-          return { html: POINT_BULLET + it.codes.map(tagHTML).join('') + esc(g.items.map(function(y){ return y.text; }).join(' ')), star: !!x.star }; }).filter(function(x){ return x.html.replace(/<[^>]+>|&nbsp;|\u2022|\s/g, '') !== ''; }); anyList = true; }
-      else if (DRAFT_FIELDS.indexOf(id) >= 0) { st.f[id] = typeof v === 'string' ? v.replace(/\*\*|__/g, '') : v; anyField = true; }
+      if (DRAFT_LISTS.indexOf(id) >= 0) { st.lists[id] = PICK.lists[id]; anyList = true; }
+      else if (DRAFT_FIELDS.indexOf(id) >= 0) {
+        var val = typeof v === 'string' ? v.replace(/\*\*|__/g, '') : v;
+        if (id === 'fGrade') { var o = [...$('fGrade').options].find(function(x){ return x.value && x.value.toLowerCase() === String(val).trim().toLowerCase(); }); val = o ? o.value : $('fGrade').value; }
+        st.f[id] = val; anyField = true; }
       else { st.tcomm[id] = typeof v === 'string' ? v.replace(/\*\*|__/g, '') : v; anyTc = true; }
     });
     if (anyList) DRAFT_LISTS.forEach(function(id){ if (!st.lists[id]) st.lists[id] = BEFORE.lists[id]; }); else delete st.lists;
     if (!anyField) delete st.f;
     if (!anyTc) delete st.tcomm; else if (DOC) st.doc = DOC;
     draftApply(st);
-    dirty = true;
+    dirty = true; PICK = null;
     $('xText').value = ''; $('xPaste').style.display = 'none'; $('xPasteToggle').textContent = 'Paste something back';
-    var names = {}; r.manifest.forEach(function(m){ names[m.id] = m.heading; });
-    done.innerHTML = 'Filled ' + ids.length + ' box' + (ids.length === 1 ? '' : 'es') + ': ' + ids.map(function(id){ return esc(names[id] || id); }).join(', ') + '.'
-      + (r.unplaced.length ? ' Not placed: ' + r.unplaced.map(esc).join(', ') + '.' : '')
+    var said = ids.filter(function(id){ return DRAFT_LISTS.indexOf(id) >= 0 || DRAFT_FIELDS.indexOf(id) >= 0; }).map(function(id){ return esc(names[id] || id); });
+    if (anyTc) said.unshift('the comments beside the lesson plan');
+    done.innerHTML = 'Filled: ' + said.join(', ') + '.'
       + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
     $('xUndo').addEventListener('click', function(){
       if (!BEFORE) return;
@@ -2499,7 +2583,7 @@ if (window.hubIPA) hubIPA.bar('#tNotes, #tOverall, #tSelf, #tLA, .pt-text, texta
       draftApply(back); dirty = true;
       done.textContent = 'Put back as it was.';
     });
-    setStatus('Filled from what you pasted \u2014 read it through before you return it.');
+    setStatus('Filled from what you pasted — read it through before you return it.');
   }
 })();
 
