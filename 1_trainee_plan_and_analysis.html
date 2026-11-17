@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611171125">
+<link rel="stylesheet" href="hub-tokens.css?v=202611171442">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -476,7 +476,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611171125">
+<link rel="stylesheet" href="hub-house.css?v=202611171442">
 </head>
 <body>
 <div class="board">
@@ -712,13 +712,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611171125"></script>
-<script src="hub-shared.js?v=202611171125"></script>
-<script src="hub-rotation.js?v=202611171125"></script>
-<script src="hub-store.js?v=202611171125"></script>
-<script src="hub-say.js?v=202611171125"></script>
-<script src="hub-sync.js?v=202611171125"></script>
-<script src="hub-notebook.js?v=202611171125"></script>
+<script src="hub-due.js?v=202611171442"></script>
+<script src="hub-shared.js?v=202611171442"></script>
+<script src="hub-rotation.js?v=202611171442"></script>
+<script src="hub-store.js?v=202611171442"></script>
+<script src="hub-say.js?v=202611171442"></script>
+<script src="hub-sync.js?v=202611171442"></script>
+<script src="hub-notebook.js?v=202611171442"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -769,7 +769,52 @@ function renderMatsPreview(){
     if(btn) btn.textContent='hide the preview';
   });
 }
-$('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); renderShareVol(); dirty=true; autosave(); });
+/* A LINK ONLY THE TRAINEE CAN OPEN IS REFUSED (Ramy, 17 Nov 2026, C/21's first TP: "make the materials link refuse
+   links only they can open"). A trainee's materials link was a page in his own Claude account; his tutor could not
+   open it, and nothing had said so. Two checks, as soon as the link is pasted:
+   - addresses that are private by their nature (an AI chat, an inbox, their own Drive's home, a file on this
+     computer), told here at once;
+   - a Google Drive or Docs link, which the store opens as nobody, signed out (op checkLink): Google answers an
+     unshared file with a sign-in. Their own browser is signed in, so it could never tell them.
+   The link stays in the box, so nothing they typed is lost. Turn in and sharing with the volunteer students wait
+   until it is fixed or cleared. A check that gets no answer refuses nothing. */
+var ONLY_YOU = [
+  [/^https?:\/\/(www\.)?claude\.ai\/(?!share\/|public\/)/i, 'a page in your own Claude account'],
+  [/^https?:\/\/(www\.)?(chatgpt\.com|chat\.openai\.com)\/(?!share\/)/i, 'a page in your own ChatGPT account'],
+  [/^https?:\/\/gemini\.google\.com\/(?!share\/)/i, 'a page in your own Gemini account'],
+  [/^https?:\/\/(mail\.google\.com|outlook\.(live|office|office365)\.com)\//i, 'your own email'],
+  [/^https?:\/\/drive\.google\.com\/drive\/(u\/\d+\/)?(my-drive|home|recent|shared-with-me|starred|trash|computers)\b/i, 'your own Drive, not a file in it'],
+  [/^(file:|content:|blob:|https?:\/\/(localhost|127\.0\.0\.1)\b)/i, 'a file on your own computer']
+];
+var LINK_BAD = '', LINK_SEQ = 0, LINK_TIMER = null, LINK_CHECK = Promise.resolve();
+function linkSay(text, ok){
+  let el = $('matsLinkCheck');
+  if (!el) { el = document.createElement('p'); el.id = 'matsLinkCheck'; el.className = 'hint'; $('fMatsLink').insertAdjacentElement('afterend', el); }
+  el.textContent = text || ''; el.style.display = text ? '' : 'none';
+  el.style.marginTop = '6px'; el.style.fontWeight = '600'; el.style.color = ok ? 'var(--teal)' : 'var(--brick)';
+}
+async function checkMatsLinkNow(){
+  const url = ($('fMatsLink').value || '').trim(), seq = ++LINK_SEQ;
+  const WHO = (window.HubStore && HubStore.isTutor && HubStore.isTutor()) ? 'Only the trainee' : 'Only you';
+  LINK_BAD = '';
+  const done = () => { linkSay(LINK_BAD || ''); renderShareVol(); };
+  if (!url) return done();
+  if (!/^https?:\/\//i.test(url) && !/^(file|content|blob):/i.test(url)) { LINK_BAD = 'That is not a whole link. Copy it again from the Share box or the address bar: it starts with https://'; return done(); }
+  const hit = ONLY_YOU.find(r => r[0].test(url));
+  if (hit) { LINK_BAD = WHO + ' can open this link: it is ' + hit[1].replace(/your own/g, WHO === 'Only you' ? 'your own' : 'their own') + '. Put the materials on Google Drive, set to \u201cAnyone with the link can view\u201d, and paste that link instead, or attach the file below.'; return done(); }
+  if (!/^https:\/\/(drive|docs)\.google\.com\//i.test(url) || !window.HubStore || !HubStore.call) return done();
+  linkSay('Checking that your tutor can open it\u2026', true);
+  let state = 'unknown';
+  try { const r = await HubStore.call({ op: 'checkLink', url: url }); state = (r && r.state) || 'unknown'; } catch (e) {}
+  if (seq !== LINK_SEQ) return;
+  if (state === 'private') LINK_BAD = WHO + ' can open this link: Google asks anyone else to sign in. In Drive, press Share, set General access to \u201cAnyone with the link\u201d, then paste the link here again.';
+  else if (state === 'missing') LINK_BAD = 'Google says this file does not exist. Copy the link again from Drive.';
+  renderShareVol();
+  linkSay(LINK_BAD || (state === 'open' ? 'Checked: your tutor can open this link.' : ''), !LINK_BAD);
+}
+function checkMatsLink(){ LINK_CHECK = checkMatsLinkNow().catch(() => {}); return LINK_CHECK; }
+$('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); renderShareVol(); dirty=true; autosave();
+  clearTimeout(LINK_TIMER); LINK_BAD = ''; linkSay(''); LINK_TIMER = setTimeout(checkMatsLink, 700); });
 /* The switch itself. It calls the store directly rather than going through
    the plan record, because the students' list belongs to the course. */
 /* WHICH CLASS A SHARED HANDOUT IS FOR (Ramy, 12 Nov 2026: "those are connected to the TP number, so Lite would know where
@@ -856,7 +901,7 @@ let MATS_FILE=null;
    write a course record, and the students' list is course-wide. */
 function sharableMaterial(){
   const url = ($('fMatsLink').value || '').trim();
-  if (/^https?:\/\//i.test(url)) return { url: url, name: ($('fMats').value || '').split('\n')[0].trim() || 'Materials for the lesson' };
+  if (/^https?:\/\//i.test(url) && !LINK_BAD) return { url: url, name: ($('fMats').value || '').split('\n')[0].trim() || 'Materials for the lesson' };
   if (MATS_FILE && MATS_FILE.url) return { url: MATS_FILE.url, name: MATS_FILE.name || 'Materials for the lesson' };
   return null;
 }
@@ -1829,7 +1874,7 @@ function restore(d){
   fwSel.value=key||''; fwRender();
   const p=d.plan||{};
   $('fMain').value=procText(p.main||''); $('fSub').value=procText(p.sub||'');
-  $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); MATS_FILE=restoreMatsFile(p.matsFile); renderMatsFile(); $('fProfile').value=p.profile||'';
+  $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); try{ checkMatsLink(); }catch(e){} MATS_FILE=restoreMatsFile(p.matsFile); renderMatsFile(); $('fProfile').value=p.profile||'';
   renderShareVol();
   const pairs=[...document.querySelectorAll('.prob-pair')];
   (p.probs||[]).forEach((x,i)=>{
@@ -2070,6 +2115,12 @@ function setStatus(msg){
 }
 
 $('turnInBtn').addEventListener('click', async()=>{
+  /* a materials link only the trainee can open is refused (17 Nov 2026): wait for its check, then say why */
+  clearTimeout(LINK_TIMER); if (($('fMatsLink').value||'').trim()) await checkMatsLink();
+  if (LINK_BAD && ($('fMatsLink').value||'').trim()) {
+    if (await confirmModal(LINK_BAD + ' Your plan is not turned in yet.', 'Go to the link', { cancel: 'Close' })) { $('fMatsLink').scrollIntoView({ block: 'center' }); $('fMatsLink').focus(); }
+    return;
+  }
   const d=collect();
   const MAT = isMatOnly();
   const missing=[];

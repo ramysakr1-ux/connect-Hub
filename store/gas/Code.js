@@ -412,7 +412,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -459,7 +459,7 @@ function settleVersions_(op) {
 /* Recordings the input library plays through the store (op audio), whatever the course: the speed flat-mating
    demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
 /* What the trainee view (Maya, v224) may call: reads a trainee's pages make, and nothing that writes, mails or uploads. */
-var TEMPLATE_READS_ = { boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
+var TEMPLATE_READS_ = { checkLink: 1, boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
   passInfo: 1, peerSheets: 1, questions: 1, bookings: 1, rehearsalNotes: 1, ivClaims: 1, trainerNotes: 1 };
 var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt',
   /* the emergency demo's book pages, English File Upper-intermediate 3rd edn, File 5A (12 Nov 2026): shown to course links only */
@@ -2939,6 +2939,39 @@ case 'inbox': {
        A trainee's plan is never sent. Out of its language analysis come only the learner's side of it: a word,
        what it means and how it is said; or a lesson's example sentences and what they mean. No CCQs, no
        problems, no procedure, no notes, and the teacher's first name only. */
+    /* IS THIS LINK OPEN TO SOMEONE WHO ISN'T YOU? (v248, 17 Nov 2026). Ramy, on C/21's first TP morning: a trainee's
+       materials link was a page in his own Claude account, and no tutor could open it. A browser cannot ask Google
+       about another site, and a trainee's own browser is signed in, so it always gets in. The store asks as nobody:
+       no cookies, no account. Google answers a signed-out visitor plainly -- a shared file 200, an unshared file 401,
+       an unshared folder a redirect to the sign-in page, a file that does not exist 404 (checked 17 Nov 2026). Only
+       Google's own Drive and Docs addresses are asked about; anything else is the page's to judge. A read: it writes
+       nothing, and a Google that does not answer leaves the link alone ('unknown'), never refused. */
+    case 'checkLink': {
+      if (!course) throw new Error('This link is not on a course');
+      var clUrl = String(req.url || '').trim();
+      if (!/^https:\/\/(drive|docs)\.google\.com\//i.test(clUrl) || clUrl.length > 2000) return { state: 'unknown' };
+      var clCache = CacheService.getScriptCache(), clKey = 'cl:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, clUrl));
+      var clHit = clCache.get(clKey); if (clHit) return { state: clHit };
+      var clState = 'unknown', clAt = clUrl;
+      try {
+        for (var hop = 0; hop < 4; hop++) {
+          var clR = UrlFetchApp.fetch(clAt, { followRedirects: false, muteHttpExceptions: true, method: 'get' });
+          var clCode = clR.getResponseCode();
+          if (clCode === 200) { clState = 'open'; break; }
+          if (clCode === 401 || clCode === 403) { clState = 'private'; break; }
+          if (clCode === 404) { clState = 'missing'; break; }
+          if (clCode >= 300 && clCode < 400) {
+            var clLoc = String((clR.getHeaders() || {}).Location || (clR.getHeaders() || {}).location || '');
+            if (/accounts\.google\.com/i.test(clLoc)) { clState = 'private'; break; }
+            if (!/^https:\/\/(drive|docs)\.google\.com\//i.test(clLoc)) break;
+            clAt = clLoc; continue;
+          }
+          break;
+        }
+      } catch (e) { clState = 'unknown'; }
+      if (clState !== 'unknown') clCache.put(clKey, clState, 120);
+      return { state: clState };
+    }
     case 'volunteerCards': {
       if (!vol) throw new Error('Volunteer students only');
       var vcSet = courseRead_(course.id, 'settings') || {};
