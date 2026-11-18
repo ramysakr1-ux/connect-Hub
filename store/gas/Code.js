@@ -1814,6 +1814,17 @@ case 'inbox': {
       /* the certificate name rides on the agreement record but is set only by confirmName (and a tutor's rename): a page
          saving its copy of the agreement never drops it or changes it (3 Nov 2026) */
       if (k2 === 'agreement') { var agWas = read_(course.id, me.token, 'agreement') || {}; if (agWas.certName) { var agNew = (req.data && typeof req.data === 'object') ? req.data : {}; agNew.certName = agWas.certName; req.data = agNew; } }
+      /* v258 (18 Nov 2026): a recording saved from another device stays listed. The interview record is written whole,
+         and a page that had not seen the recording (the laptop, while the phone recorded) wrote its list over it. */
+      if (k2 === 'interview') {
+        var ivLock = LockService.getScriptLock(), ivHad = ivLock.hasLock();
+        if (!ivHad) ivLock.waitLock(20000);
+        try {   // read, merge and write as one step, so two saves in the same second cannot cross
+          write_(course.id, me.token, k2, interviewKeepAudio_(read_(course.id, me.token, 'interview'), req.data));
+          try { SpreadsheetApp.flush(); } catch (ivFl) {}
+        } finally { if (!ivHad) ivLock.releaseLock(); }
+        return { saved: true };
+      }
       write_(course.id, me.token, k2, req.data);
       return { saved: true };
     }
@@ -2104,6 +2115,27 @@ case 'inbox': {
           }).filter(Boolean);
           if (any || aud.length) prClean.push({ student: nm, answers: ans, audio: aud, by: String(me.name || '').slice(0, 80), at: new Date().toISOString() });
         });
+        /* v258: the group's view follows the stored interview record, as the record itself now does. A page that had not
+           seen a recording does not take it out of the group's view, and one deleted through the store does not come back. */
+        try {
+          var phIv = read_(course.id, me.token, 'interview') || {}, phGone = {}, phBy = {};
+          (Array.isArray(phIv.audioGone) ? phIv.audioGone : []).forEach(function (x) { phGone[String(x)] = 1; });
+          prClean.forEach(function (p) { p.audio = p.audio.filter(function (a) { return !phGone[a.id]; }); phBy[p.student] = p; });
+          Object.keys((phIv.students && typeof phIv.students === 'object') ? phIv.students : {}).forEach(function (n) {
+            var st = phIv.students[n]; if (!st || !Array.isArray(st.audio)) return;
+            var nm = String(st.name || n).trim().slice(0, 60); if (!nm) return;
+            st.audio.forEach(function (a) {
+              if (!a || !a.id || phGone[String(a.id)]) return;
+              var id = String(a.id).slice(0, 80), tr = a.transcript == null ? null : String(a.transcript).slice(0, 12000);
+              var p = phBy[nm];
+              if (!p) { p = phBy[nm] = { student: nm, answers: {}, audio: [], by: String(me.name || '').slice(0, 80), at: new Date().toISOString() }; prClean.push(p); }
+              var mine = p.audio.filter(function (x) { return x.id === id; })[0];
+              if (!mine) p.audio.push({ id: id, seconds: Number(a.seconds) || 0, transcript: tr });
+              else if (mine.transcript == null && tr != null) mine.transcript = tr;
+            });
+          });
+          prClean = prClean.filter(function (p) { return Object.keys(p.answers).length || p.audio.length; });
+        } catch (phErr) { /* the record could not be read: the page's list stands, as before */ }
         phProf = courseUpdateObj_(course.id, 'folprofiles', function (pool) {
           if (prClean.length) pool[phTok] = prClean; else delete pool[phTok];
           return pool;
@@ -2543,8 +2575,34 @@ case 'inbox': {
       return { type: gaBlob.getContentType(), bytes: Utilities.base64Encode(gaBlob.getBytes()) };
     }
     case 'deleteInterviewAudio': {
-      var daFile = interviewFileFor_(course, req.id, tutor, me, true);
-      daFile.setTrashed(true);
+      var daId = String(req.id || ''), daFile = null;
+      try { daFile = interviewFileFor_(course, req.id, tutor, me, true); }
+      catch (daNo) {
+        /* v258: a recording the store cannot reach (its file purged, or left in a folder that lost) is still let go of,
+           but only off the caller's own record, and nothing is trashed */
+        var daMine = me && read_(course.id, me.token, 'interview');
+        var daListed = !!(daMine && daMine.students && Object.keys(daMine.students).some(function (n) { var st = daMine.students[n]; return st && Array.isArray(st.audio) && st.audio.some(function (a) { return a && a.id === daId; }); }));
+        if (!daListed) throw daNo;
+      }
+      if (daFile) daFile.setTrashed(true);
+      /* v258: the record lets go of it too, and remembers that it went, so no page's older copy lists it again */
+      try {
+        var daLock = LockService.getScriptLock(), daHad = daLock.hasLock();
+        if (!daHad) daLock.waitLock(20000);
+        try {
+          var daRec = read_(course.id, me.token, 'interview');
+          if (daRec && typeof daRec === 'object') {
+            Object.keys(daRec.students || {}).forEach(function (n) { var st = daRec.students[n]; if (st && Array.isArray(st.audio)) st.audio = st.audio.filter(function (a) { return a && a.id !== daId; }); });
+            daRec.audioGone = (Array.isArray(daRec.audioGone) ? daRec.audioGone : []).filter(function (x) { return x !== daId; }).concat([daId]).slice(-200);
+            write_(course.id, me.token, 'interview', daRec);
+            try { SpreadsheetApp.flush(); } catch (daFl) {}
+          }
+        } finally { if (!daHad) daLock.releaseLock(); }
+        courseUpdateObj_(course.id, 'folprofiles', function (pl) {   // and the group's view of it
+          (Array.isArray(pl[me.token]) ? pl[me.token] : []).forEach(function (p) { if (p && Array.isArray(p.audio)) p.audio = p.audio.filter(function (a) { return a && a.id !== daId; }); });
+          return pl;
+        });
+      } catch (daErr) { /* the file is gone either way; the page removes it from its own list */ }
       return { deleted: true };
     }
     /* The transcript is the OpenAI speech model's (key held as a script
@@ -3956,8 +4014,8 @@ function courseWriteRaw_(courseId, kind, data) { try { var out = courseWriteRawI
 function writeInner_(courseId, token, kind, data) {
   markChanged_(courseId);
   if (kind === 'tpHistory') return writeHistory_(courseId, token, data);
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  var lock = LockService.getScriptLock(), had = lock.hasLock();   // v258: a caller that reads, changes and writes under the lock keeps it
+  if (!had) lock.waitLock(10000);
   try {
     var sh = sheet_(SHEET_RECORDS);
     var last = sh.getLastRow();
@@ -3973,7 +4031,7 @@ function writeInner_(courseId, token, kind, data) {
       }
     }
     sh.appendRow([courseId, token, kind, json, new Date()]);
-  } finally { lock.releaseLock(); }
+  } finally { if (!had) lock.releaseLock(); }
 }
 /* A Sheets cell holds 50,000 characters. A course record that does not fit is
    written across as many rows as it needs, kind "<kind>#0", "#1", ... -- plain
@@ -4408,14 +4466,7 @@ function peerSheetsFor_(courseId, me) {
   out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
   return out;
 }
-function notebookFolder_(course) {
-  var props = PropertiesService.getScriptProperties(), key = 'NB_FOLDER_' + course.id, id = props.getProperty(key);
-  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* gone: make another */ } }
-  var f = materialsFolder_(course).createFolder('Notebook recordings (private)');
-  f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
-  props.setProperty(key, f.getId());
-  return f;
-}
+function notebookFolder_(course) { return privateFolderOnce_(course, 'NB_FOLDER_' + course.id, 'Notebook recordings (private)'); }
 /* Who may hear a voice note: the one who made it; a tutor, their own and the ones a colleague shared; a
    trainee, their own and the ones shared with their group or the course. `own` asks for the maker alone. */
 function noteFileFor_(course, id, tutor, me, who, own) {
@@ -4451,13 +4502,48 @@ function noteFileFor_(course, id, tutor, me, who, own) {
   if (listed(pool[meta.token], function (it) { return it.scope === 'course' || (it.scope === 'group' && String(it.group || '') === g); })) return f;
   throw new Error('Not yours to hear');
 }
-function interviewFolder_(course) {
-  var props = PropertiesService.getScriptProperties(), key = 'IV_FOLDER_' + course.id, id = props.getProperty(key);
+function interviewFolder_(course) { return privateFolderOnce_(course, 'IV_FOLDER_' + course.id, 'Interview recordings (private)'); }
+/* ONE FOLDER, HOWEVER MANY ARRIVE AT ONCE (v258, 18 Nov 2026). A group stops recording in the same minute; two first
+   saves each found no folder, each made one, and the recordings in the one that lost could never be opened again.
+   The folder is looked for without waiting; only making it takes the lock, and looks again inside it. */
+function privateFolderOnce_(course, key, name) {
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty(key);
   if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* gone: make another */ } }
-  var f = materialsFolder_(course).createFolder('Interview recordings (private)');
-  f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
-  props.setProperty(key, f.getId());
-  return f;
+  var lock = LockService.getScriptLock(), had = lock.hasLock();   // a caller already inside the lock keeps it: it is not taken twice, nor let go here
+  if (!had) lock.waitLock(20000);
+  try {
+    id = props.getProperty(key);
+    if (id) { try { return DriveApp.getFolderById(id); } catch (e2) { /* gone: make another */ } }
+    var f = materialsFolder_(course).createFolder(name);
+    f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+    props.setProperty(key, f.getId());
+    return f;
+  } finally { if (!had) lock.releaseLock(); }
+}
+/* What a page sends as the interview record, with every recording the store already lists kept on it: by student, by
+   the recording's id. A recording deleted through the store (audioGone) is never brought back. A transcript the store
+   holds is kept when the page's copy of that recording has none at all. */
+function interviewKeepAudio_(was, now) {
+  if (!was || typeof was !== 'object' || !now || typeof now !== 'object') return now;
+  var gone = {}; [was.audioGone, now.audioGone].forEach(function (l) { (Array.isArray(l) ? l : []).forEach(function (x) { gone[String(x)] = 1; }); });
+  var ws = (was.students && typeof was.students === 'object') ? was.students : {};
+  if (!now.students || typeof now.students !== 'object') now.students = {};
+  Object.keys(now.students).forEach(function (n) { var st = now.students[n]; if (st && Array.isArray(st.audio)) st.audio = st.audio.filter(function (a) { return a && !gone[String(a.id)]; }); });
+  Object.keys(ws).forEach(function (n) {
+    var old = ws[n]; if (!old || !Array.isArray(old.audio)) return;
+    var kept = old.audio.filter(function (a) { return a && a.id && !gone[String(a.id)]; });
+    if (!kept.length) return;
+    var cur = now.students[n];
+    if (!cur || typeof cur !== 'object') { var copy = JSON.parse(JSON.stringify(old)); copy.audio = kept; now.students[n] = copy; return; }   // a student with recordings is not dropped by an older copy
+    if (!Array.isArray(cur.audio)) cur.audio = [];
+    kept.forEach(function (a) {
+      var mine = cur.audio.filter(function (x) { return x && x.id === a.id; })[0];
+      if (!mine) { cur.audio.push(a); return; }
+      if (mine.transcript == null && a.transcript != null) mine.transcript = a.transcript;
+    });
+  });
+  var all = Object.keys(gone); if (all.length) now.audioGone = all.slice(-200);
+  return now;
 }
 // A recording the caller may use: the tutors of this course, or the trainee who made it.
 function interviewFileFor_(course, id, tutor, me, own) {
