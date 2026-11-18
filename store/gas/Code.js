@@ -2144,10 +2144,9 @@ case 'inbox': {
        until the self-eval is submitted". The observer sends ONE teacher's column (the questions with
        their answers, so the wording is the centre's own whatever it is) to ONE classmate of their own TP
        group, and takes it back the same way. The copy lives in the course's `peerShared` pool, keyed by
-       the observer. The teacher gets it in the boot and in `peerSheets`, and the answers stay out of it
-       until THEIR self-evaluation for that teaching practice is turned in (or its feedback is returned):
-       the store holds that back, not the page. The "after the oral feedback" half is the page's, by the
-       timetable's feedback slot; it guards the observer from sharing early, and the sheet is their own.
+       the observer. The teacher gets it in the boot and in `peerSheets`, answers and all (18 Nov 2026:
+       the self-evaluation hold is gone, see peerSheetsFor_). "After the oral feedback" is the page's, by
+       the timetable's feedback slot; it guards the observer from sharing early, and the sheet is their own.
        Tutors read the observer's own sheet, as before; they never need the pool. */
     case 'shareSheet': {
       if (!me || tutor || assessor) throw new Error('Trainees only');
@@ -4378,20 +4377,11 @@ function peerSheetClean_(req, me, to) {
            title: String(req.title || '').trim().slice(0, 120), rows: rows, to: to, by: String(me.name || '').slice(0, 80),
            group: String(me.group || ''), at: new Date().toISOString() };
 }
-// Has this trainee turned in their self-evaluation for teaching practice `tp`? The live one carries "TP 3 · ..." in its
-// label; once the tutor returns the feedback the live copy moves into the history under the number.
-function selfEvalDone_(recs, tp) {
-  var hist = (recs && recs.tpHistory) || {};
-  if (hist[tp]) return true;
-  var se = recs && recs.selfeval;
-  if (se && se.status === 'turned_in') {
-    var m = String(se.label || '').match(/\d+/);
-    if (m && parseInt(m[0], 10) === tp) return true;
-  }
-  return false;
-}
-// What classmates connected with this trainee. The answers are in it only for a teaching practice the trainee has
-// already written their own self-evaluation for; before that the row says it exists and nothing else.
+// What classmates connected with this trainee, answers and all.
+// 18 Nov 2026 (Ramy): "Let's make it after oral feedback is done instead of after handing in their self-evaluation."
+// Until then the answers were held back here until the trainee's own self-evaluation for that TP was in (his 25 Oct
+// rule). Now the one gate is the observer's: the page opens Connect when the timetable's feedback slot is over, so a
+// sheet that has been connected is one the teacher may read straight away.
 function peerSheetsFor_(courseId, me) {
   var pool = courseRead_(courseId, 'peerShared') || {}, mine = [];
   Object.keys(pool).forEach(function (tok) {
@@ -4399,13 +4389,9 @@ function peerSheetsFor_(courseId, me) {
     (pool[tok] || []).forEach(function (it) { if (it && it.to === me.token) mine.push({ from: tok, it: it }); });
   });
   if (!mine.length) return [];
-  var recs = recordsFor_(courseId, me.token, { selfeval: 1, tpHistory: 1 }), done = {};
   var out = mine.map(function (m) {
     var it = m.it;
-    if (done[it.tp] === undefined) done[it.tp] = selfEvalDone_(recs, it.tp);
-    var row = { id: standIn_(courseId, m.from) + ':' + it.task + '#' + it.sit, task: it.task, sit: it.sit, tp: it.tp, title: it.title, by: it.by, at: it.at };
-    if (done[it.tp]) row.rows = it.rows; else row.locked = true;
-    return row;
+    return { id: standIn_(courseId, m.from) + ':' + it.task + '#' + it.sit, task: it.task, sit: it.sit, tp: it.tp, title: it.title, by: it.by, at: it.at, rows: it.rows };
   });
   out.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
   return out;
