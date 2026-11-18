@@ -164,7 +164,7 @@
      the students are in the room for it. Such a day counts its own slots there, so a 14:00-16:30 session is
      two and a half hours, not a teaching day. A filmed observation is not in that room and does not count. */
   function hm(t) { var m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; }
-  function classDays(tt) {
+  function classDays(tt, settings) {
     tt = tt || {};
     var tp = (tt.slots || []).filter(function (s) { return s && s.kind === 'tp'; });
     var tpMin = tp.reduce(function (n, s) { var a = hm(s.from), b = hm(s.to); return a != null && b != null && b > a ? n + b - a : n; }, 0);
@@ -189,9 +189,46 @@
       var total = inRoom.reduce(function (n, x) { return n + hm(x.e) - hm(x.s); }, 0);
       out.days.push(d.date);
       out.perDay[d.date] = { lessons: inRoom.length, lessonMinutes: Math.round(total / inRoom.length), from: inRoom[0].s, to: inRoom[inRoom.length - 1].e };
+      var lv = demoLevels(inRoom, settings);
+      if (lv) out.perDay[d.date].levels = lv;
     });
     out.days.sort();
     return out;
+  }
+
+  /* A DEMONSTRATION IS FOR ITS TUTOR'S CLASS (Ramy, 18 Nov 2026: "demo upper int only"). C/21's first Monday had the
+     demo lesson twice, 2:00 and 3:00, both taught by Ramy to his own class, upper-int; pre-int had no class that day, yet
+     every pre-int student's register and page showed the day as one they had not come to. A day in the Teaching practice
+     room whose demonstrations all name their tutor (the tile's `by`, an index into Course admin's tutor names) belongs
+     to the levels of that tutor's classes (Course admin > Classes). A demo with no tutor named, or a tutor with no class,
+     is for everyone, as before. Returns the levels in capitals, or null. */
+  function levelKey(l) { return String(l || '').toUpperCase().replace(/\s+/g, ''); }
+  function demoLevels(inRoom, settings) {
+    var demos = inRoom.filter(function (x) { return x.k === 'demo'; });
+    if (!demos.length || !settings) return null;
+    var names = String(settings.tutorNames || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+    var list = (settings.classes && Array.isArray(settings.classes.list)) ? settings.classes.list : [];
+    var levels = {};
+    for (var i = 0; i < demos.length; i++) {
+      var by = demos[i].by;
+      if (by === undefined || by === null || by === '' || !names[+by]) return null;
+      var who = names[+by].toLowerCase(), found = false;
+      list.forEach(function (c) { if (c && c.level && String(c.tutor || '').trim().toLowerCase() === who) { levels[levelKey(c.level)] = 1; found = true; } });
+      if (!found) return null;
+    }
+    var out = Object.keys(levels);
+    return out.length ? out : null;
+  }
+  /* The class days that are this student's: a day for other levels drops out, unless they were marked on it (a tutor's
+     mark stands: they were in the room). No level known: every day, as before. */
+  function daysFor(cd, level, marks) {
+    var k = levelKey(level);
+    return (cd.days || []).filter(function (d) {
+      var p = cd.perDay && cd.perDay[d];
+      if (!p || !p.levels || !k) return true;
+      if (marks && marks[d]) return true;
+      return p.levels.indexOf(k) !== -1;
+    });
   }
 
   /* The next mark when a tutor taps one: nothing, in the room, part of it,
@@ -203,7 +240,7 @@
   var api = { TICK_MINUTES: TICK_MINUTES, PARTIAL_MINUTES: PARTIAL_MINUTES,
               lessonsNeededForPresent: lessonsNeededForPresent, dayCredit: dayCredit,
               record: record, describe: describe, certificate: certificate, nextMark: nextMark,
-              atLevel: atLevel, completedOn: completedOn, hoursForLevel: hoursForLevel, classDays: classDays };
+              atLevel: atLevel, completedOn: completedOn, hoursForLevel: hoursForLevel, classDays: classDays, daysFor: daysFor };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubAttendance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

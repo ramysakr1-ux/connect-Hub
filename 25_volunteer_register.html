@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181111">
+<link rel="stylesheet" href="hub-tokens.css?v=202611181156">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -159,21 +159,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181111">
+<link rel="stylesheet" href="hub-house.css?v=202611181156">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611181111"></script>
-<script src="hub-shared.js?v=202611181111"></script>
-<script src="hub-timetable-parse.js?v=202611181111"></script>
-<script src="hub-xlsx.js?v=202611181111"></script>
-<script src="hub-attendance.js?v=202611181111"></script>
-<script src="hub-store.js?v=202611181111"></script>
-<script src="hub-say.js?v=202611181111"></script>
-<script src="hub-sync.js?v=202611181111"></script>
+<script src="hub-due.js?v=202611181156"></script>
+<script src="hub-shared.js?v=202611181156"></script>
+<script src="hub-timetable-parse.js?v=202611181156"></script>
+<script src="hub-xlsx.js?v=202611181156"></script>
+<script src="hub-attendance.js?v=202611181156"></script>
+<script src="hub-store.js?v=202611181156"></script>
+<script src="hub-say.js?v=202611181156"></script>
+<script src="hub-sync.js?v=202611181156"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -215,8 +215,8 @@ function teachingDays(){
     return d > 0 ? n + d : n;
   }, 0);
   /* teaching practice days, and days with a slot in the Teaching practice room (hub-attendance.js classDays) */
-  const cd = A.classDays(tt);
-  return { days: cd.days, perDay: cd.perDay, hoursPerDay: mins / 60,
+  const cd = A.classDays(tt, SETTINGS);
+  return { cd, days: cd.days, perDay: cd.perDay, hoursPerDay: mins / 60,
            lessons: slots.length, lessonMinutes: slots.length ? Math.round(mins / slots.length) : 0 };
 }
 
@@ -324,7 +324,7 @@ function render(){
   mintMissing();
   migrateMarks();
   const app = $('app');
-  const { days, perDay, hoursPerDay, lessons, lessonMinutes } = teachingDays();
+  const { cd, days, perDay, hoursPerDay, lessons, lessonMinutes } = teachingDays();
   const list = students();
   const head = `<p class="eyebrow">Course</p><h1>Volunteer register</h1>
     <p class="lede">${IS_TUTOR
@@ -358,7 +358,11 @@ function render(){
   }
 
   const rowOf = (st, i) => {
-    const r = recordOf(st, days, lessons, lessonMinutes, perDay);
+    /* their own class days count; a demonstration for another class keeps its square, greyed, so the columns still line
+       up and a tutor can still mark someone who sat in (18 Nov 2026) */
+    const mine = new Set(A.daysFor(cd, st.level, st.marks || {}));
+    const r0 = recordOf(st, days.filter(d => mine.has(d)), lessons, lessonMinutes, perDay);
+    const r = Object.assign({}, r0, { days: days.map(d => r0.days.find(x => x.date === d) || { date: d, tier: 'notours', creditedMinutes: 0 }) });
     return `<div class="who">
       <div>
         <div class="nm">${esc(st.name)}${IS_TUTOR
@@ -374,8 +378,8 @@ function render(){
           const past = x.date < TODAY;
           /* a day before this person joined is not a day they missed (Amin, C/18, 21 Oct 2026) */
           const before = x.tier === 'absent' && x.date < joinedOn(st);
-          const cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : before ? 'before' : past ? 'miss' : 'soon';
-          const what = x.tier === 'absent' && !past ? 'Still to come' : A.describe(x.tier, (perDay[x.date] || {}).lessons || lessons, (perDay[x.date] || {}).lessonMinutes || lessonMinutes);
+          const cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.tier === 'notours' ? 'before' : before ? 'before' : past ? 'miss' : 'soon';
+          const what = x.tier === 'notours' ? 'Not a class for their level' : x.tier === 'absent' && !past ? 'Still to come' : A.describe(x.tier, (perDay[x.date] || {}).lessons || lessons, (perDay[x.date] || {}).lessonMinutes || lessonMinutes);
           return IS_TUTOR
             ? `<button type="button" class="seg ${cls}" data-i="${i}" data-d="${esc(x.date)}" title="${dm(x.date)} — ${esc(what)}"></button>`
             : `<span class="seg ${cls}" title="${dm(x.date)} — ${esc(what)}"></span>`;
@@ -386,8 +390,9 @@ function render(){
            day 10, "7 of 16" read as nine missed. A day counts once it has passed, or
            once this student has a mark on it; the future is not yet a day missed. */
         const j = joinedOn(st), marks = st.marks || {};
-        const n = days.filter(d => (!j || d >= j) && (d < TODAY || marks[d])).length;
-        return r.present + ' of ' + n + ' days' + (j && j > days[0] ? ' since joining' : n < days.length ? ' so far' : ''); })()}${r.partial ? ' · ' + r.partial + ' part' : ''}</small>
+        const own = days.filter(d => mine.has(d)); // their class's days only (18 Nov 2026)
+        const n = own.filter(d => (!j || d >= j) && (d < TODAY || marks[d])).length;
+        return r.present + ' of ' + n + (n === 1 ? ' day' : ' days') + (j && j > own[0] ? ' since joining' : n < own.length ? ' so far' : ''); })()}${r.partial ? ' · ' + r.partial + ' part' : ''}</small>
         ${IS_TUTOR ? `<div class="acts">${st.token
             ? `<button type="button" class="btn sm" data-copy="${i}">Copy their link</button><a class="btn quiet sm" href="27_volunteer_certificate.html?who=${encodeURIComponent(st.token)}">Certificate</a>`
             : `<span class="nolink" title="The course id has not arrived from the store yet">No link yet</span>`}<button type="button" class="btn quiet sm" data-rm="${i}">Remove</button></div>` : ''}</div>
