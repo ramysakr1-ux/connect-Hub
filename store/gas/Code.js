@@ -3396,6 +3396,27 @@ case 'inbox': {
       });
       return { saved: true, stream: paList };
     }
+    /* v262 (18 Nov 2026): the words of a post held back can be changed. Ramy: "the announcements that we planned in
+       advance ... there's no way to edit any of the announcements". Only a post the trainees have not seen yet (not
+       posted, or dated ahead): one already out is theirs as it was read, and is changed by deleting and posting again.
+       Its date, who it is for and who wrote it stay as they are. */
+    case 'postEdit': {
+      requireTutor_(tutor);
+      var peId = String(req.id || ''), peText = String(req.text || '').trim(), peFound = false;
+      if (!peText) throw new Error('Nothing to save');
+      if (peText.length > 2000) throw new Error('A post is at most 2000 characters');
+      var peList = courseUpdate_(course.id, 'stream', function (list) {
+        return list.map(function (p) {
+          if (!p || String(p.id) !== peId) return p;
+          var ahead = p.publishAt && new Date(String(p.publishAt)).getTime() > Date.now();
+          if (!p.draft && !ahead) throw new Error('That post is already out, so its words stay as they were read. Delete it and post it again.');
+          peFound = true; p.text = peText; p.editedAt = new Date().toISOString();
+          return p;
+        });
+      });
+      if (!peFound) throw new Error('That post is no longer there');
+      return { saved: true, stream: peList };
+    }
     case 'unpost': {
       requireTutor_(tutor);
       var pid = String(req.id || '');
