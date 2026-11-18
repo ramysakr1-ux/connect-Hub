@@ -376,3 +376,14 @@ window.HubStore = (function(){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   document.addEventListener('hub:ready', function(){ sweep(document); });
 })();
+
+/* LITE'S OWN AUTOCORRECT FOR TUTORS (Ramy, 18 Nov 2026): hub-autocorrect.js, loaded here so every page a tutor types on has
+   it, at the same ?v= as this file. Trainees and students never load it. */
+(function(){
+  var H = window.HubStore; if (!H) return;
+  try { if (!H.isTutor() || H.isTrainee() || H.isVolunteer()) return; } catch (e) { return; }
+  var v = (document.querySelector('script[src^="hub-store.js"]') || {}).src || '';
+  var sc = document.createElement('script');
+  sc.src = 'hub-autocorrect.js' + (v.indexOf('?v=') !== -1 ? v.slice(v.indexOf('?v=')) : '');
+  (document.head || document.documentElement).appendChild(sc);
+})();

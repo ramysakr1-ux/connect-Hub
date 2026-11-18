@@ -3950,7 +3950,7 @@ function writeInner_(courseId, token, kind, data) {
     var sh = sheet_(SHEET_RECORDS);
     var last = sh.getLastRow();
     if (kind === 'feedback') data = slimDoc_(data);
-    var json = packRecord_(JSON.stringify(data == null ? null : data), kind);
+    var json = packRecord_(JSON.stringify(data == null ? null : data), kind, courseId + '|' + token + '|' + kind);
     if (last >= 2) {
       var keys = sh.getRange(2, 1, last - 1, 3).getValues();
       for (var i = 0; i < keys.length; i++) {
@@ -4732,14 +4732,45 @@ function slimDoc_(rec) {
   return rec;
 }
 var PACKED_ = 'gz:';
-function packRecord_(json, kind) {
+/* NO RECORD IS EVER TOO LARGE AGAIN (v256, 18 Nov 2026). Ramy, after C/21's refused return: "I just want to make sure that
+   there is never a problem again with returning TP feedback or assignments or anything in terms of being a big file."
+   Packing gives a cell about four times the room, but it was still a ceiling: a record that did not fit even packed (a
+   long resubmitted assignment, a document with pictures pasted in) was still refused. Now such a record is written to a
+   file of its own in the store's Drive, private to the store's account, and its cell holds "drv:" and the file's id.
+   The same record keeps the same file (named by a digest of course, token and kind, so no token is in a name) and is
+   overwritten in place. Every reader of a cell goes through unpackRecord_, so every reader follows the pointer. A record
+   that fits, or fits packed, is written exactly as before. */
+var BIG_ = 'drv:';
+var BIG_MEMO_ = {};
+function bigFolder_() {
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty('BIG_RECORDS_FOLDER');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { /* gone: make another */ } }
+  var f = DriveApp.createFolder('Lite store: records too big for a cell');
+  f.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+  props.setProperty('BIG_RECORDS_FOLDER', f.getId());
+  return f;
+}
+function bigName_(where) {
+  return 'record-' + Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, String(where), Utilities.Charset.UTF_8)
+    .map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join('') + '.json';
+}
+function packRecord_(json, kind, where) {
   if (json.length <= CELL_LIMIT) return json;
   var packed = PACKED_ + Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(json, 'application/json', 'r.json')).getBytes());
-  if (packed.length > CELL_LIMIT) throw new Error('Too large to store: ' + kind + ' is ' + json.length + ' characters, and ' + packed.length + ' packed; a record holds ' + CELL_LIMIT);
-  return packed;
+  if (packed.length <= CELL_LIMIT) return packed;
+  var folder = bigFolder_(), name = bigName_(where || kind), it = folder.getFilesByName(name), file;
+  if (it.hasNext()) { file = it.next(); file.setContent(json); }
+  else { file = folder.createFile(name, json, 'application/json'); file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE); }
+  BIG_MEMO_[file.getId()] = json;
+  return BIG_ + file.getId();
 }
 function unpackRecord_(cell) {
   var s = String(cell == null ? '' : cell);
+  if (s.slice(0, 4) === BIG_) {
+    var id = s.slice(4);
+    if (BIG_MEMO_[id] === undefined) BIG_MEMO_[id] = DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8');
+    return BIG_MEMO_[id];
+  }
   if (s.slice(0, 3) !== PACKED_) return s;
   return Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(s.slice(3)), 'application/x-gzip', 'r.json.gz')).getDataAsString();
 }
@@ -4814,7 +4845,7 @@ function writeHistoryInner_(courseId, token, data) {
     Object.keys(want).forEach(function (k) {
       if (!/^\d+$/.test(k) || !want[k]) return;
       var kind = 'tpHistory:' + k;
-      var json = packRecord_(JSON.stringify(slimDoc_(want[k])), kind);
+      var json = packRecord_(JSON.stringify(slimDoc_(want[k])), kind, courseId + '|' + token + '|' + kind);
       if (rowOf[kind]) sh.getRange(rowOf[kind], 4, 1, 2).setValues([[json, new Date()]]);
       else appends.push([courseId, token, kind, json, new Date()]);
     });
