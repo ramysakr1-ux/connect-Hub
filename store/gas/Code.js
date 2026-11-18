@@ -424,7 +424,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1, health: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -765,6 +765,50 @@ function handle_(req) {
 
        Demos, scratch courses and the records-kept-as-courses are left out:
        counting them would put Ramy's own furniture into everybody's numbers. */
+    /* HOW FULL IS IT (v260, 18 Nov 2026). Ramy, in C/21's first week: "let's have regular checks on size limitations ...
+       this is the first course, and a lot of people are using it at the same time, and it's going to get bigger and
+       bigger. I just want to be ahead of any problems". Owner only, and it reads; it writes nothing and returns no
+       names and no record contents: counts and sizes against the limits Google sets.
+         cells     every sheet's grid (rows x columns, used or not) against a spreadsheet's 10,000,000 cells
+         records   the longest record cell against the 50,000 a cell holds, and how many are packed or kept in Drive
+         props     the script's settings store against its 500,000 characters, and the longest value against 9,000
+         big       the Drive folder of records too big for a cell: how many files, how many bytes
+         mail      emails the store may still send today
+         drive     the store account's own Drive: used and limit, where Google says */
+    case 'health': {
+      requireOwner_(owner);
+      var hT0 = Date.now(), hOut = { asOf: new Date().toISOString(), limits: { cells: 10000000, cell: CELL_LIMIT, props: 500000, prop: 9000 } };
+      var hSheets = spreadsheet_().getSheets().map(function (sh) {
+        var r = sh.getMaxRows(), c = sh.getMaxColumns();
+        return { name: sh.getName(), rows: r, cols: c, cells: r * c, used: sh.getLastRow() };
+      });
+      hOut.sheets = hSheets.sort(function (a, b) { return b.cells - a.cells; }).slice(0, 12);
+      hOut.cells = hSheets.reduce(function (n, x) { return n + x.cells; }, 0);
+      var hScan = function (name, col) {
+        var sh = sheet_(name), last = sh.getLastRow(), o = { rows: Math.max(0, last - 1), longest: 0, over40k: 0, packed: 0, inDrive: 0, chars: 0 };
+        if (last < 2) return o;
+        sh.getRange(2, col, last - 1, 1).getValues().forEach(function (r) {
+          var v = String(r[0] == null ? '' : r[0]), n = v.length;
+          o.chars += n; if (n > o.longest) o.longest = n; if (n > 40000) o.over40k++;
+          if (v.slice(0, 3) === 'gz:') o.packed++; else if (v.slice(0, 4) === 'drv:') o.inDrive++;
+        });
+        return o;
+      };
+      hOut.records = hScan(SHEET_RECORDS, HEADERS[SHEET_RECORDS].indexOf('json') + 1);
+      hOut.course = hScan(SHEET_COURSE, HEADERS[SHEET_COURSE].indexOf('json') + 1);
+      var hProps = PropertiesService.getScriptProperties().getProperties(), hKeys = Object.keys(hProps), hTot = 0, hMax = 0, hMaxKind = '';
+      hKeys.forEach(function (k) { var n = k.length + String(hProps[k]).length; hTot += n; if (String(hProps[k]).length > hMax) { hMax = String(hProps[k]).length; hMaxKind = k.replace(/[:_].*$/, ''); } });
+      hOut.props = { count: hKeys.length, chars: hTot, longest: hMax, longestKind: hMaxKind };   // the kind of key only (its first word), never a value
+      try {
+        var hId = PropertiesService.getScriptProperties().getProperty('BIG_RECORDS_FOLDER'), hN = 0, hB = 0;
+        if (hId) { var hIt = DriveApp.getFolderById(hId).getFiles(); while (hIt.hasNext() && hN < 5000) { hB += hIt.next().getSize(); hN++; } }
+        hOut.big = { files: hN, bytes: hB };
+      } catch (hErr1) { hOut.big = { error: String(hErr1).slice(0, 80) }; }
+      try { hOut.mail = { leftToday: MailApp.getRemainingDailyQuota() }; } catch (hErr2) { hOut.mail = { error: String(hErr2).slice(0, 80) }; }
+      try { hOut.drive = { used: DriveApp.getStorageUsed(), limit: DriveApp.getStorageLimit() }; } catch (hErr3) { hOut.drive = { error: String(hErr3).slice(0, 80) }; }
+      hOut.tookMs = Date.now() - hT0;
+      return hOut;
+    }
     case 'stats': {
       requireOwner_(owner);
       var stToday = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
