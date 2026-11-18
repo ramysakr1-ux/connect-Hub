@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181231">
+<link rel="stylesheet" href="hub-tokens.css?v=202611181248">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -588,7 +588,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181231">
+<link rel="stylesheet" href="hub-house.css?v=202611181248">
 </head>
 <body>
 <div class="board">
@@ -720,26 +720,26 @@
 
 </div>
 
-<script src="hub-due.js?v=202611181231"></script>
-<script src="observation-defaults.js?v=202611181231"></script>
-<script src="hub-rotation.js?v=202611181231"></script>
-<script src="hub-shared.js?v=202611181231"></script>
+<script src="hub-due.js?v=202611181248"></script>
+<script src="observation-defaults.js?v=202611181248"></script>
+<script src="hub-rotation.js?v=202611181248"></script>
+<script src="hub-shared.js?v=202611181248"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611181231"></script>
-<script src="hub-say.js?v=202611181231"></script>
-<script src="hub-hand.js?v=202611181231"></script>
-<script src="hub-ink.js?v=202611181231"></script>
-<script src="hub-shelf.js?v=202611181231"></script>
+<script src="hub-store.js?v=202611181248"></script>
+<script src="hub-say.js?v=202611181248"></script>
+<script src="hub-hand.js?v=202611181248"></script>
+<script src="hub-ink.js?v=202611181248"></script>
+<script src="hub-shelf.js?v=202611181248"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611181231"></script>
-<script src="hub-sync.js?v=202611181231"></script>
-<script src="hub-notebook.js?v=202611181231"></script>
-<script src="hub-tracker.js?v=202611181231"></script>
-<script src="hub-feedback.js?v=202611181231"></script>
+<script src="assignment-defaults.js?v=202611181248"></script>
+<script src="hub-sync.js?v=202611181248"></script>
+<script src="hub-notebook.js?v=202611181248"></script>
+<script src="hub-tracker.js?v=202611181248"></script>
+<script src="hub-feedback.js?v=202611181248"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -822,6 +822,21 @@ function waitedFor(iso){
 const stampOf = x => typeof x === 'number' ? x : (x ? Date.parse(x) : NaN);
 const oldestFirst = (a, b) => (stampOf(a) || Infinity) - (stampOf(b) || Infinity);
 
+/* WHAT IS WAITING IS YOUR GROUP'S (Ramy, 18 Nov 2026: "my hero card reads open what is waiting. Then when I click on it,
+   it's actually the other trainer's feedback ... This is not my group"). The count on the hero, its pill and the cards
+   above the rows were the whole course's. Now they are the trainees whose tutor today is this tutor: their class's tutor
+   (Course admin > Classes), else their group's row in Tutor contacts (hubTutorOn). A browser that does not know its
+   tutor's name, or a course where no group is theirs, still counts everyone. */
+function myGroups(){
+  let me = ''; try { me = (localStorage.getItem('chub:tutorName') || '').trim().toLowerCase(); } catch (e) {}
+  if (!me || !window.hubTutorOn) return null;
+  let cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  const day = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+  const gs = [...new Set(Object.values(loadRoster().trainees || {}).map(t => String(t.group || '')).filter(Boolean))];
+  const mine = gs.filter(g => String(hubTutorOn(cs, g, day) || '').trim().toLowerCase() === me);
+  return mine.length && mine.length < gs.length ? mine : null;
+}
+function myPeople(){ const all = people(), g = myGroups(); return g ? all.filter(t => g.includes(String(t.group || ''))) : all; }
 function people(){
   /* A, B, C, D, E, F within each group, not alphabetical (Ramy, 21 Oct 2026) */
   const list = Object.values(loadRoster().trainees||{});
@@ -877,9 +892,9 @@ function assignmentRows(list){
 }
 
 function paintQueue(){
-  const list=people();
-  const tpWaiting=list.filter(t=>tpState(t).act).length;
-  const aRows=assignmentRows(list);
+  const list=people(), mineList=myPeople();
+  const tpWaiting=mineList.filter(t=>tpState(t).act).length;
+  const aRows=assignmentRows(mineList);
   const aWaiting=aRows.filter(r=>r.s.act).length;
   const stuck=aRows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length;
   /* Red is what the tutor has to do (Ramy, 28 Sep 2026): feedback to write
@@ -1420,7 +1435,7 @@ function paintBrief(){
     if (open) chips.push('<span class="dv6-chip due' + (open.st.soon ? ' soon' : '') + '">' + esc(ASSIGN_NAMES[open.k] || open.k) + ' due \u00b7 <b>' + esc(open.st.text) + '</b></span>');
   } catch (e) {}
   /* nothing waiting on the tutor */
-  const list = people();
+  const list = myPeople();
   const waiting = list.filter(t => tpState(t).act).length + assignmentRows(list).filter(r => r.s.act).length;
   if (list.length && !waiting && !stage1DueList().length) chips.push('<span class="dv6-chip clear">\u2713 Nothing waiting on you</span>');
   /* something waiting: a mustard pill, Lite's color for "waiting for the
@@ -1559,6 +1574,14 @@ function paintBrief(){
 
 /* the line and Your sessions follow the day: redrawn at each session's start and end (hub-shared, 9 Nov 2026) */
 if (window.hubAtBoundaries) hubAtBoundaries(() => { if (document.getElementById('dv6Brief') && !document.getElementById('dv6Brief').hidden) paintBrief(); });
+/* "Open what is waiting" and the waiting pill show this tutor's own group's rows (18 Nov 2026) */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href="#queue"]'); if (!a) return;
+  const g = myGroups(); if (!g || g.length !== 1) return;
+  FOCUS = g[0]; try { localStorage.setItem('chub:focusGroup', FOCUS); } catch (er) {}
+  const mine = myPeople(), tpN = mine.filter(t => tpState(t).act).length;
+  TAB = tpN || !assignmentRows(mine).some(r => r.s.act) ? 'tp' : 'assignments'; FILTER = null; paint();
+});
 document.getElementById('queue').addEventListener('click', e=>{
   const b=e.target.closest('[data-tab]'); if(!b) return;
   TAB=b.dataset.tab; FILTER=null; paint();
