@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181928">
+<link rel="stylesheet" href="hub-tokens.css?v=202611182004">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -263,7 +263,7 @@
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
   .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181928">
+<link rel="stylesheet" href="hub-house.css?v=202611182004">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -286,10 +286,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202611181928"></script>
-<script src="hub-store.js?v=202611181928"></script>
-<script src="hub-say.js?v=202611181928"></script>
-<script src="hub-card-mail.js?v=202611181928"></script>
+<script src="hub-shared.js?v=202611182004"></script>
+<script src="hub-store.js?v=202611182004"></script>
+<script src="hub-say.js?v=202611182004"></script>
+<script src="hub-card-mail.js?v=202611182004"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -800,6 +800,7 @@ function render(courses, msg){
         <div class="setting"><label>The rates, in pounds</label><div class="v">${RATE_ROWS.map(([k, n, l]) => `<input type="text" inputmode="numeric" class="rate" data-rate="${k}" aria-label="${esc(l)}" placeholder="${esc(l)}" value="${esc(ratesSaved()[k] || '')}">`).join('')}<span class="note">The total for each package. Only the price card shows them, and it works out the price per course from these. Never in Lite’s code.</span></div></div>
         <div class="setting"><label for="txKey">Transcribing interviews</label><div class="v"><input type="password" id="txKey" class="wide" placeholder="OpenAI key" autocomplete="off" spellcheck="false"><button class="btn small" id="txSave" type="button">Save</button><span id="txState" class="state">checking…</span><span class="note" id="txNote">The key lives in the store, never in a page. Empty and save switches transcripts off.</span></div></div>
         <div class="setting"><label for="wsKey">Web search for the plagiarism check</label><div class="v"><input type="password" id="wsKey" class="wide" placeholder="Brave Search API key" autocomplete="off" spellcheck="false"><button class="btn small" id="wsSave" type="button">Save</button><span id="wsState" class="state">checking…</span><span class="note" id="wsNote">A Brave Search API key (brave.com/search/api). The marking page's check searches six sentences an assignment, about a thousand searches a month within Brave's credit. Empty and save switches it off.</span></div></div>
+        <div class="setting"><label for="dpClient">Choose from my Drive</label><div class="v"><input type="text" id="dpClient" class="wide" placeholder="Client ID (ends .apps.googleusercontent.com)" autocomplete="off" spellcheck="false"><input type="text" id="dpKey" class="wide" placeholder="Browser key (starts AIza)" autocomplete="off" spellcheck="false"><input type="text" id="dpApp" placeholder="Project number" inputmode="numeric" autocomplete="off"><button class="btn small" id="dpSave" type="button">Save</button><span id="dpState" class="state">checking…</span><span class="note" id="dpNote">Lets a trainee pick their material from their own Google Drive on the lesson plan. The three names come from Lite’s project in Google Cloud. The browser key’s website restrictions must list both https://lite.celtaconnect.com/* and https://docs.google.com/*, or the picker opens on “API developer key is invalid”. All three empty and save switches it off.</span></div></div>
         <div class="setting"><label for="aiKey">Paraphrase pass</label><div class="v"><input type="password" id="aiKey" class="wide" placeholder="Claude API key" autocomplete="off" spellcheck="false"><button class="btn small" id="aiSave" type="button">Save</button><span id="aiState" class="state">checking…</span><span class="note" id="aiNote">From the API organization linked to the plan. Reads only the pairs the first pass finds. Empty and save switches it off.</span></div></div>
         <div class="setting"><label>Addresses</label><div class="v"><button class="btn small" id="toggleUrls" type="button">${SHOW_URLS ? 'Hide the raw links' : 'Show the raw links'}</button><span class="note">To find which course a key belongs to.</span></div></div>
         <div class="setting"><label>Feedback</label><div class="v" id="fbline">looking…</div></div>
@@ -816,7 +817,7 @@ function render(courses, msg){
   fillMaterials();
   bindGift();
   drawInbox();
-  txState(); checksState();
+  txState(); checksState(); dpState();
   feedbackLine();
 }
 async function fillDoors(c){
@@ -915,6 +916,10 @@ function checksState(){
   const w = $('wsState'), a = $('aiState'); if (!w && !a) return;
   call({ op: 'checksOn' }).then(r => { if (w) { w.textContent = r && r.web ? 'on' : 'off'; w.className = 'state ' + (r && r.web ? 'running' : ''); } if (a) { a.textContent = r && r.ai ? 'on' : 'off'; a.className = 'state ' + (r && r.ai ? 'running' : ''); } }, () => { if (w) w.textContent = 'could not check'; if (a) a.textContent = 'could not check'; });
 }
+function dpState(){
+  const st = $('dpState'); if (!st) return;
+  call({ op: 'drivePicker' }).then(r => { st.textContent = r && r.on ? 'on' : 'off'; st.className = 'state ' + (r && r.on ? 'running' : ''); }, () => { st.textContent = 'could not check'; });
+}
 function txState(){
   const st = $('txState'); if (!st) return;
   call({ op: 'transcriptionOn' }).then(r => { st.textContent = r && r.on ? 'on' : 'off'; st.className = 'state ' + (r && r.on ? 'running' : ''); }, () => { st.textContent = 'could not check'; });
@@ -999,6 +1004,9 @@ $('app').addEventListener('click', async e => {
   }
   if (T('#txSave')) { const b = T('#txSave'), key = $('txKey'), note = $('txNote'); b.disabled = true; note.textContent = 'Saving…';
     try { const r = await call({ op: 'setOpenAiKey', key: key.value.trim() }); key.value = ''; note.textContent = r && r.on ? 'Saved. Transcripts are on.' : 'Transcripts are off.'; txState(); } catch (err) { note.textContent = err.message || String(err); }
+    b.disabled = false; return; }
+  if (T('#dpSave')) { const b = T('#dpSave'), note = $('dpNote'); b.disabled = true; note.textContent = 'Saving…';
+    try { const r = await call({ op: 'setDrivePicker', clientId: $('dpClient').value.trim(), apiKey: $('dpKey').value.trim(), appId: $('dpApp').value.trim() }); $('dpClient').value = $('dpKey').value = $('dpApp').value = ''; note.textContent = r && r.on ? 'Saved. Trainees can choose from their Drive.' : 'Choosing from Drive is off.'; dpState(); } catch (err) { note.textContent = err.message || String(err); }
     b.disabled = false; return; }
   if (T('#wsSave')) { const b = T('#wsSave'), key = $('wsKey'), note = $('wsNote'); b.disabled = true; note.textContent = 'Saving…';
     try { const r = await call({ op: 'setSearchKey', key: key.value.trim() }); key.value = ''; note.textContent = r && r.on ? 'Saved. The web pass is on.' : 'The web pass is off.'; checksState(); } catch (err) { note.textContent = err.message || String(err); }

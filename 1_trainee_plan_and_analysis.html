@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181928">
+<link rel="stylesheet" href="hub-tokens.css?v=202611182004">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -500,7 +500,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181928">
+<link rel="stylesheet" href="hub-house.css?v=202611182004">
 </head>
 <body>
 <div class="board">
@@ -589,11 +589,13 @@
     <div class="attach" id="matsAttachWrap">
       <button type="button" class="attach-pill" id="matsAttach" aria-expanded="false" aria-controls="matsMenu">Attach material</button>
       <div class="attach-menu" id="matsMenu" hidden>
-        <button type="button" data-att="link"><b>Add a link <span class="attach-best">Best</span></b><small>A file on your own Google Drive, a Doc, Slides, or any web page. Paste its share link. The file stays yours, to keep after the course.</small></button>
+        <button type="button" data-att="drive" id="matsDriveOpt" hidden><b>Choose from my Google Drive <span class="attach-best">Best</span></b><small>Pick a file on your own Drive, or upload one from this device into it. It stays yours, to keep after the course.</small></button>
+        <button type="button" data-att="link"><b>Add a link <span class="attach-best" id="matsLinkBest">Best</span></b><small>A file on your own Google Drive, a Doc, Slides, or any web page. Paste its share link. The file stays yours, to keep after the course.</small></button>
         <button type="button" data-att="file"><b>Upload a file</b><small>From this device, up to 2 MB: a worksheet or a PDF. It is kept with the course only, and is removed some time after the course ends.</small></button>
         <button type="button" data-att="course"><b>From the course</b><small>The pages and audio your tutors put with your TP point. Tick what you are using and it goes on your materials list.</small></button>
       </div>
     </div>
+    <p class="hint" id="matsDriveMsg" role="status" style="margin-top:6px;color:var(--brick);font-weight:600;" hidden></p>
     <div class="attach-course" id="matsCourse" hidden></div>
     <div class="row" id="matsLinkRow" style="margin-top:12px;" hidden>
       <label for="fMatsLink">Link</label>
@@ -742,13 +744,14 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611181928"></script>
-<script src="hub-shared.js?v=202611181928"></script>
-<script src="hub-rotation.js?v=202611181928"></script>
-<script src="hub-store.js?v=202611181928"></script>
-<script src="hub-say.js?v=202611181928"></script>
-<script src="hub-sync.js?v=202611181928"></script>
-<script src="hub-notebook.js?v=202611181928"></script>
+<script src="hub-due.js?v=202611182004"></script>
+<script src="hub-shared.js?v=202611182004"></script>
+<script src="hub-rotation.js?v=202611182004"></script>
+<script src="hub-store.js?v=202611182004"></script>
+<script src="hub-drive-pick.js?v=202611182004"></script>
+<script src="hub-say.js?v=202611182004"></script>
+<script src="hub-sync.js?v=202611182004"></script>
+<script src="hub-notebook.js?v=202611182004"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -817,7 +820,7 @@ var ONLY_YOU = [
   [/^https?:\/\/drive\.google\.com\/drive\/(u\/\d+\/)?(my-drive|home|recent|shared-with-me|starred|trash|computers)\b/i, 'your own Drive, not a file in it'],
   [/^(file:|content:|blob:|https?:\/\/(localhost|127\.0\.0\.1)\b)/i, 'a file on your own computer']
 ];
-var LINK_BAD = '', LINK_SEQ = 0, LINK_TIMER = null, LINK_CHECK = Promise.resolve();
+var LINK_BAD = '', LINK_SEQ = 0, LINK_TIMER = null, LINK_CHECK = Promise.resolve(), LINK_FRESH = '';
 function linkSay(text, ok){
   let el = $('matsLinkCheck');
   if (!el) { el = document.createElement('p'); el.id = 'matsLinkCheck'; el.className = 'hint'; ($('fMatsLink').closest('.attach-line') || $('fMatsLink')).insertAdjacentElement('afterend', el); }
@@ -837,7 +840,8 @@ async function checkMatsLinkNow(){
   linkSay('Checking that your tutor can open it\u2026', true);
   let state = 'unknown';
   try { /* a trainee's own link is not attached by call() the way a tutor's key is: name it, or the store refuses */
-    const r = await HubStore.call({ op: 'checkLink', url: url, token: (HubStore.token && HubStore.token()) || undefined }); state = (r && r.state) || 'unknown'; } catch (e) {}
+    const fresh = LINK_FRESH === url; if (fresh) LINK_FRESH = '';
+    const r = await HubStore.call({ op: 'checkLink', url: url, fresh: fresh || undefined, token: (HubStore.token && HubStore.token()) || undefined }); state = (r && r.state) || 'unknown'; } catch (e) {}
   if (seq !== LINK_SEQ) return;
   if (state === 'private') LINK_BAD = WHO + ' can open this link: Google asks anyone else to sign in. In Drive, press Share, set General access to \u201cAnyone with the link\u201d, then paste the link here again.';
   else if (state === 'missing') LINK_BAD = 'Google says this file does not exist. Copy the link again from Drive.';
@@ -845,7 +849,7 @@ async function checkMatsLinkNow(){
   linkSay(LINK_BAD || (state === 'open' ? 'Checked: your tutor can open this link.' : ''), !LINK_BAD);
 }
 function checkMatsLink(){ LINK_CHECK = checkMatsLinkNow().catch(() => {}); return LINK_CHECK; }
-$('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); renderShareVol(); dirty=true; autosave();
+$('fMatsLink').addEventListener('input', ()=>{ renderMatsPreview(); renderShareVol(); dirty=true; autosave(); try{ matsDriveSay(''); }catch(e){}
   clearTimeout(LINK_TIMER); LINK_BAD = ''; linkSay(''); LINK_TIMER = setTimeout(checkMatsLink, 700); });
 /* The switch itself. It calls the store directly rather than going through
    the plan record, because the students' list belongs to the course. */
@@ -1083,7 +1087,29 @@ function matsRows(want){
   $('matsAttach').textContent = (link || MATS_FILE) ? 'Attach something else' : 'Attach material';
 }
 function matsMenu(open){ $('matsMenu').hidden = !open; $('matsAttach').setAttribute('aria-expanded', open ? 'true' : 'false'); }
-$('matsAttach').addEventListener('click', () => matsMenu($('matsMenu').hidden));
+$('matsAttach').addEventListener('click', () => { matsMenu($('matsMenu').hidden); if (!$('matsDriveOpt').hidden && window.HubDrivePick) HubDrivePick.prepare().catch(() => {}); });
+/* CHOOSE FROM MY DRIVE (hub-drive-pick.js, 18 Nov 2026). The choice shows only on a Lite where it is switched on. Google's
+   scripts are fetched when the menu opens, so its sign-in window can open straight from the press. The file chosen comes
+   back as its link, in the same box a pasted link goes in, and the same check then says whether a tutor can open it. */
+function matsDriveSay(t){ const m = $('matsDriveMsg'); m.textContent = t || ''; m.hidden = !t; }
+if (window.HubDrivePick && window.HubStore && HubStore.isTrainee && HubStore.isTrainee()) HubDrivePick.available().then(on => { if (on) { $('matsDriveOpt').hidden = false; $('matsLinkBest').hidden = true; } }).catch(() => {});
+let matsDriveBusy = false;
+async function matsDrivePick(){
+  if (matsDriveBusy) { matsDriveSay('Google\u2019s window is already open. Finish there, or close it and press the button again.'); return; }
+  matsDriveBusy = true; matsDriveSay('');
+  try {
+    const f = await HubDrivePick.pick();
+    if (!f || locked) return;
+    const had = ($('fMatsLink').value || '').trim();
+    if (had && had !== f.url && !(await confirmModal('Your plan already has a link. Choosing \u201C' + f.name + '\u201D replaces it.', 'Replace the link', { cancel: 'Keep my link' }))) return;
+    const ok = await confirmModal('Let anyone with the link view \u201C' + f.name + '\u201D? Your tutor cannot open it otherwise. You can change this in your Drive at any time.', 'Let them view it', { cancel: 'Not now' });
+    const shared = ok ? await HubDrivePick.share(f.id) : false;
+    if (shared) LINK_FRESH = String(f.url || '').trim();   // the check that follows asks Google again, not the store's memory of a moment ago
+    const i = $('fMatsLink'); i.value = f.url; matsRows('link'); i.dispatchEvent(new Event('input', { bubbles: true }));
+    if (!shared) matsDriveSay(ok ? 'Your Drive did not let Lite change who can view this file. Open it in Drive, choose Share, and set it to anyone with the link.' : 'Your tutor cannot open this file until you share it. In Drive, choose Share, then anyone with the link.');
+  } catch (e) { matsDriveSay(((e && e.message) || 'That did not work') + '.'); }
+  finally { matsDriveBusy = false; }
+}
 document.addEventListener('click', e => { if (!$('matsMenu').hidden && !e.target.closest('#matsAttachWrap')) matsMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('matsMenu').hidden) { matsMenu(false); $('matsAttach').focus(); } });
 $('matsMenu').addEventListener('click', e => {
@@ -1092,6 +1118,7 @@ $('matsMenu').addEventListener('click', e => {
   if (b.dataset.att === 'link') { matsRows('link'); $('fMatsLink').focus(); }
   if (b.dataset.att === 'file') { matsRows('file'); if (!MATS_FILE && $('matsFileInput')) $('matsFileInput').click(); }
   if (b.dataset.att === 'course') matsCourseOpen();
+  if (b.dataset.att === 'drive') matsDrivePick();
 });
 /* FROM THE COURSE (Ramy, 18 Nov 2026: "the picker is important"). What the tutors put with this trainee's TP point: its
    pages, its coursebook reference, its audio. Ticking one writes it on the materials list above as a line of its own;
