@@ -123,8 +123,7 @@
     return r.startContainer.data.slice(Math.max(0, r.startOffset - 40), r.startOffset);
   }
 
-  /* THE NOTE: small, on the field's own bottom edge, gone after five seconds. It sits over the field, never over a
-     button below it. */
+  /* THE NOTE: small, just under the box, gone after five seconds. */
   var note, noteTimer;
   function css(){
     if (document.getElementById('acStyle')) return;
@@ -143,9 +142,16 @@
       x.addEventListener('mousedown', function(e){ e.preventDefault(); }); x.addEventListener('click', function(){ b[1](); }); note.appendChild(x); });
     document.body.appendChild(note);
     var r = field.getBoundingClientRect(), w = note.offsetWidth, h = note.offsetHeight;
-    var left = Math.min(Math.max(16, r.right - w - 6), innerWidth - w - 16), top = r.bottom - h - 6;
-    if (r.bottom > innerHeight) top = Math.min(innerHeight, r.bottom) - h - 6; // the field runs off the screen: keep it in view
-    if (top < r.top + 4) top = r.bottom + 4;
+    /* Under the box (Ramy, 18 Nov 2026: "move it under the box"), so it never covers the words being written. Where the
+       space under it is taken by the page's bottom bar or the screen's edge, it goes above the box instead. */
+    var bar = 0; note.style.visibility = 'hidden';
+    for (var x = document.elementFromPoint(innerWidth / 2, innerHeight - 4); x && x !== document.body; x = x.parentElement) {
+      var ps = getComputedStyle(x).position; if (ps === 'fixed' || ps === 'sticky') { bar = Math.max(0, innerHeight - x.getBoundingClientRect().top); break; } }
+    if (bar > innerHeight / 3) bar = 0;
+    note.style.visibility = '';
+    var left = Math.min(Math.max(16, r.left), innerWidth - w - 16), top = r.bottom + 6;
+    if (top + h > innerHeight - bar - 6) top = r.top - h - 6;
+    if (top < 6) top = Math.min(r.bottom, innerHeight - bar) + 6 > innerHeight - h ? 6 : Math.min(r.bottom, innerHeight - bar) - h - 6; // a box taller than the screen
     note.style.left = (left + scrollX) + 'px'; note.style.top = (top + scrollY) + 'px';
     noteTimer = setTimeout(hideNote, ms || 5000);
   }
