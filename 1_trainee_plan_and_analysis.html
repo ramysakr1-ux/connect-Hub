@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181908">
+<link rel="stylesheet" href="hub-tokens.css?v=202611181928">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -78,6 +78,17 @@
   .attach-menu > *:hover, .attach-menu > *:focus-visible{background:var(--hub-wash, oklch(96% 0.009 82)); outline:none;}
   .attach-menu b{display:block; font-size:0.9rem; color:var(--teal);} .attach-menu small{display:block; font-size:0.8rem; color:var(--grey); line-height:1.45; margin-top:2px;}
   .attach-best{display:inline-block; margin-left:6px; padding:0 8px; border:1.3px solid var(--teal); border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:.03em; vertical-align:1px;}
+  .attach-course{margin-top:10px; border:1.5px solid var(--sand-line); border-radius:10px; background:var(--surface); padding:12px 14px; max-width:560px;}
+  .attach-course h3{margin:0 0 4px; font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:700; color:var(--teal);}
+  .attach-course p{margin:0 0 8px; font-size:0.84rem; color:var(--grey); line-height:1.5;}
+  .attach-course label{display:flex; gap:9px; align-items:flex-start; padding:7px 0; border-top:1px solid var(--sand-line); font-size:0.9rem; line-height:1.4; cursor:pointer;}
+  .attach-course label:first-of-type{border-top:0;}
+  .attach-course label input{margin-top:3px; flex:0 0 auto;}
+  .attach-course label span{flex:1 1 auto; min-width:0; overflow-wrap:anywhere;}
+  .attach-course label small{display:block; color:var(--grey); font-size:0.78rem;}
+  .attach-course label a{flex:0 0 auto; font-size:0.82rem; font-weight:600; color:var(--teal);}
+  .attach-course .acts{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+  @media print{ .attach-course{display:none !important;} }
   .attach-line{display:flex; gap:8px; align-items:center;} .attach-line input{flex:1 1 auto; min-width:0;}
   .attach-x{flex:0 0 auto; border:none; background:none; color:var(--grey); cursor:pointer; font:inherit; font-size:0.84rem; padding:6px 4px;} .attach-x:hover{color:var(--brick);}
   @media print{ .attach{display:none !important;} }
@@ -489,7 +500,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181908">
+<link rel="stylesheet" href="hub-house.css?v=202611181928">
 </head>
 <body>
 <div class="board">
@@ -580,8 +591,10 @@
       <div class="attach-menu" id="matsMenu" hidden>
         <button type="button" data-att="link"><b>Add a link <span class="attach-best">Best</span></b><small>A file on your own Google Drive, a Doc, Slides, or any web page. Paste its share link. The file stays yours, to keep after the course.</small></button>
         <button type="button" data-att="file"><b>Upload a file</b><small>From this device, up to 2 MB: a worksheet or a PDF. It is kept with the course only, and is removed some time after the course ends.</small></button>
+        <button type="button" data-att="course"><b>From the course</b><small>The pages and audio your tutors put with your TP point. Tick what you are using and it goes on your materials list.</small></button>
       </div>
     </div>
+    <div class="attach-course" id="matsCourse" hidden></div>
     <div class="row" id="matsLinkRow" style="margin-top:12px;" hidden>
       <label for="fMatsLink">Link</label>
       <p class="hint">Set it to “anyone with the link can view”, or your tutor cannot open it.</p>
@@ -729,13 +742,13 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611181908"></script>
-<script src="hub-shared.js?v=202611181908"></script>
-<script src="hub-rotation.js?v=202611181908"></script>
-<script src="hub-store.js?v=202611181908"></script>
-<script src="hub-say.js?v=202611181908"></script>
-<script src="hub-sync.js?v=202611181908"></script>
-<script src="hub-notebook.js?v=202611181908"></script>
+<script src="hub-due.js?v=202611181928"></script>
+<script src="hub-shared.js?v=202611181928"></script>
+<script src="hub-rotation.js?v=202611181928"></script>
+<script src="hub-store.js?v=202611181928"></script>
+<script src="hub-say.js?v=202611181928"></script>
+<script src="hub-sync.js?v=202611181928"></script>
+<script src="hub-notebook.js?v=202611181928"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1078,7 +1091,61 @@ $('matsMenu').addEventListener('click', e => {
   matsMenu(false);
   if (b.dataset.att === 'link') { matsRows('link'); $('fMatsLink').focus(); }
   if (b.dataset.att === 'file') { matsRows('file'); if (!MATS_FILE && $('matsFileInput')) $('matsFileInput').click(); }
+  if (b.dataset.att === 'course') matsCourseOpen();
 });
+/* FROM THE COURSE (Ramy, 18 Nov 2026: "the picker is important"). What the tutors put with this trainee's TP point: its
+   pages, its coursebook reference, its audio. Ticking one writes it on the materials list above as a line of its own;
+   nothing is copied or stored anywhere new, the pages stay where the course keeps them. Which point it is comes from the
+   TP number at the top of the plan, the same way Start from your TP point finds it. */
+function matsCourseItems(){
+  let me = null, P = null;
+  try { me = JSON.parse(localStorage.getItem('hub:me') || 'null'); } catch (e) {}
+  try { P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null'); } catch (e) {}
+  const n = tpNumberOf(($('fTP') || {}).value || '');
+  if (!n) return { n: 0, items: [] };
+  let rows = (P && P.points) || null;
+  if (!rows && P && P.groups && me) Object.keys(P.groups).forEach(g => { if (!rows && P.groups[g][me.token]) rows = P.groups[g]; });
+  const c = me && rows && rows[me.token] && rows[me.token]['tp' + n];
+  const items = [];
+  if (c) {
+    (Array.isArray(c.pages) ? c.pages : []).forEach(f => { if (f && f.name) items.push({ text: String(f.name).trim(), url: f.url || '' }); });
+    String((c.book || {}).ref || '').split(/\n+/).map(x => x.trim().replace(/[\s,;]+$/, '')).filter(Boolean).forEach(x => items.push({ text: x, url: (c.book || {}).url || '', kind: 'In the coursebook' }));
+    /* the audio is one line per track, "Track 2.1 | https://..." (24_tp_points.html audioBits). A lesson that names no
+       track has no audio, even though every point carries the set's audio folder; the folder only stands in for a named
+       track that has no file of its own. */
+    const au = c.audio || {}, auFolder = String(au.folder || '').trim();
+    String(au.url || '').split(/\n+/).map(x => x.trim()).filter(Boolean).forEach((line, i) => { const bar = line.indexOf('|');
+      const a = bar > -1 ? { label: line.slice(0, bar).trim(), url: line.slice(bar + 1).trim() } : /^https?:\/\//i.test(line) ? { label: '', url: line } : { label: line, url: '' };
+      if (a.label || a.url) items.push({ text: a.label || 'Audio track ' + (i + 1) + ' for TP' + n, url: a.url || auFolder, kind: 'Audio' }); });
+  }
+  return { n, items };
+}
+function matsOnList(text){ const k = x => String(x || '').replace(/^[\s\u2022\-]+/, '').trim().toLowerCase(); return ($('fMats').value || '').split('\n').some(l => k(l) === k(text)); }
+function matsCourseOpen(){
+  const host = $('matsCourse'), r = matsCourseItems();
+  const close = '<button type="button" class="attach-x" id="matsCourseClose">Close</button>';
+  if (!r.n) host.innerHTML = '<h3>From the course</h3><p>Type your TP number in the box at the top of the plan first, for example TP2. Then this shows what your tutors put with that lesson.</p><div class="acts">' + close + '</div>';
+  else if (!r.items.length) host.innerHTML = '<h3>From the course</h3><p>Your tutors have not put pages or audio with TP' + r.n + ' yet, or the TP points are not out.</p><div class="acts">' + close + '</div>';
+  else host.innerHTML = '<h3>With your TP' + r.n + ' point</h3><p>Tick what you are using. Each one is written on your materials list above.</p>'
+    + r.items.map((it, i) => { const on = matsOnList(it.text);
+        return '<label><input type="checkbox" data-ci="' + i + '"' + (on ? ' checked disabled' : '') + '><span>' + esc(it.text) + (it.kind || on ? '<small>' + esc([it.kind, on ? 'On your list' : ''].filter(Boolean).join(' \u00b7 ')) + '</small>' : '') + '</span>'
+          + (/^https?:\/\//i.test(it.url) ? '<a href="' + esc(it.url).replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Open</a>' : '') + '</label>'; }).join('')
+    + '<div class="acts"><button type="button" class="attach-pill" id="matsCourseAdd">Add to my materials list</button>' + close + '</div>';
+  host.hidden = false;
+  $('matsCourseClose').addEventListener('click', () => { host.hidden = true; host.innerHTML = ''; $('matsAttach').focus(); });
+  const add = $('matsCourseAdd');
+  if (add) add.addEventListener('click', () => {
+    const seen = new Set(), key = x => String(x || '').replace(/^[\s\u2022\-]+/, '').trim().toLowerCase();
+    const picked = [...host.querySelectorAll('input[data-ci]:checked:not(:disabled)')].map(b => r.items[+b.dataset.ci])
+      .filter(it => { const k = it && key(it.text); if (!k || seen.has(k) || matsOnList(it.text)) return false; seen.add(k); return true; });
+    if (!picked.length || locked) { host.hidden = true; host.innerHTML = ''; return; }
+    const box = $('fMats'), have = procText(box.value);
+    box.value = (have ? have + '\n' : '') + picked.map(it => '\u2022 ' + it.text).join('\n');
+    box.dispatchEvent(new Event('input', { bubbles: true }));   // the page's own listeners grow the box, repaint the checklist and save
+    host.hidden = true; host.innerHTML = '';
+    box.scrollIntoView({ block: 'center' });
+  });
+}
 $('matsLinkRemove').addEventListener('click', () => { const i = $('fMatsLink'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); matsRows(MATS_WANT === 'link' ? '' : MATS_WANT); });
 matsRows();
 const matsDrop=$('matsDrop');
@@ -2294,6 +2361,7 @@ function fmtDate(ts){
 }
 function setLock(on){
   locked=on;
+  { const mc = $('matsCourse'); if (mc && !mc.hidden) { mc.hidden = true; mc.innerHTML = ''; } }   // the course picker is never left open on a plan that locks or unlocks
   /* Buttons too. A turned-in document says "your tutor has it now; you can't
      edit it" and then left every button live: Dictate, Bring in last TP's
      action points, + Add stage, + another, and the row-delete crosses. They
