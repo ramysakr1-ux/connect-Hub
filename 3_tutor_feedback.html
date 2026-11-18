@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611180035">
+<link rel="stylesheet" href="hub-tokens.css?v=202611180503">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -587,7 +587,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611180035">
+<link rel="stylesheet" href="hub-house.css?v=202611180503">
 </head>
 <body>
 <div class="board">
@@ -785,14 +785,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611180035"></script>
-<script src="hub-shared.js?v=202611180035"></script>
-<script src="hub-store.js?v=202611180035"></script>
-<script src="hub-say.js?v=202611180035"></script>
-<script src="hub-crit-learn.js?v=202611180035"></script>
-<script src="hub-crit-vocab.js?v=202611180035"></script>
-<script src="hub-sync.js?v=202611180035"></script>
-<script src="hub-notebook.js?v=202611180035"></script>
+<script src="hub-exchange.js?v=202611180503"></script>
+<script src="hub-shared.js?v=202611180503"></script>
+<script src="hub-store.js?v=202611180503"></script>
+<script src="hub-say.js?v=202611180503"></script>
+<script src="hub-crit-learn.js?v=202611180503"></script>
+<script src="hub-crit-vocab.js?v=202611180503"></script>
+<script src="hub-sync.js?v=202611180503"></script>
+<script src="hub-notebook.js?v=202611180503"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -936,6 +936,18 @@ function insertTag(box, code){
     r.selectNodeContents(box); r.collapse(false);
     const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
   }
+  /* A caret sitting in front of the line's bullet would put the code before it.
+     Step over the bullet first, so the code lands where the words start. */
+  try{
+    const sel=window.getSelection(), r0=sel.rangeCount?sel.getRangeAt(0):null, n=r0&&r0.startContainer;
+    if(r0 && r0.collapsed && n && n.nodeType===3 && box.contains(n)){
+      const m=n.data.slice(r0.startOffset).match(/^[\s\u00A0]*\u2022[\s\u00A0]*/);
+      if(m && n.data.slice(0,r0.startOffset).replace(/[\s\u00A0]/g,'')===''){
+        const r=document.createRange(); r.setStart(n, r0.startOffset+m[0].length); r.collapse(true);
+        sel.removeAllRanges(); sel.addRange(r);
+      }
+    }
+  }catch(e){}
   document.execCommand('insertHTML',false,tagHTML(code));
   rememberCaret(box);
   dirty=true;
@@ -1360,15 +1372,14 @@ function cleanPoint(box){
   return {html:deBullet(out, '<br>').trim(), plain:deBullet(plain, '\n').trim(),
           codes, raw:box.innerHTML};
 }
-/* A bullet at the very start, or straight after a line break. \u00A0 is in the
-   character class because a contenteditable writes the space after the bullet
-   as a non-breaking one. */
+/* A bullet at the start of a line. \u00A0 is in the character class because a
+   contenteditable writes the space after the bullet as a non-breaking one.
+   18 Nov 2026: a criterion tagged with the caret in front of the bullet put the
+   code first, and the document read "4c \u2022 Please remember". A bullet that
+   follows nothing but codes is still the line's bullet, so it goes too. */
 function deBullet(s, brk){
-  return String(s||'')
-    .replace(/^[\s\u00A0]*\u2022[\s\u00A0]*/, '')
-    .split(brk).join('\u0000')
-    .replace(/\u0000[\s\u00A0]*\u2022[\s\u00A0]*/g, '\u0000')
-    .split('\u0000').join(brk);
+  const LEAD=/^((?:<strong[^>]*>[^<]*<\/strong>|\[[0-9A-Za-z]+\]|[\s\u00A0])*?)[\s\u00A0]*\u2022[\s\u00A0]*/;
+  return String(s||'').split(brk).map(l=>l.replace(LEAD,(m,lead)=>lead?lead+' ':'')).join(brk);
 }
 function isBlankPoint(box){
   return deBullet(box.textContent.split('\n').join('\n'), '\n')
