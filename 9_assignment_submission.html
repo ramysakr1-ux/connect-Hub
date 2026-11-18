@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181445">
+<link rel="stylesheet" href="hub-tokens.css?v=202611181539">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -123,6 +123,20 @@
   .card.declcard{background:var(--surface); border-left-color:var(--sand-line);}
   .card .refbody strong{font-weight:700;}
   .card.guide-card{padding:12px;}
+  /* the worked example: the lesson plan's own link and gold-edged box (1_trainee_plan_and_analysis.html), inside its section */
+  .wex{margin:2px 0 14px;}
+  .wex-btn{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:7px 16px; border-radius:999px; border:1.5px solid var(--teal); background:var(--surface); color:var(--teal); cursor:pointer; transition:transform .15s, box-shadow .15s;}
+  .wex-btn:hover{transform:translateY(-1px); box-shadow:0 4px 10px -6px rgba(35,34,32,.45);}
+  @media (max-width:560px){ .wex-btn{min-height:44px;} }
+  .example-box{display:none; margin-top:10px; background:var(--gold-wash); border-left:4px solid var(--gold); border-radius:6px; padding:14px 18px; font-size:0.88rem; line-height:1.65; max-width:76ch;}
+  .example-box.open{display:block;}
+  .wex-box p{margin:0 0 8px;} .wex-box ul{margin:0 0 8px; padding-left:20px;} .wex-box li{margin:0 0 4px;} .wex-box > :last-child{margin-bottom:0;}
+  .wex .wex-h{font-weight:700; color:var(--teal); margin:14px 0 2px;}
+  .wex .wex-warn{color:var(--brick); border:1.5px solid var(--brick); border-radius:6px; padding:9px 12px; margin:0 0 10px; font-weight:600;}
+  .wex .wex-warn b{font-weight:800; text-transform:uppercase; letter-spacing:.02em;}
+  .wex .wex-note{border-bottom:1px solid var(--sand-line); padding:0 0 10px; margin:0 0 12px;}
+  .wex .wex-item{font-family:Newsreader,Georgia,serif; font-size:1.15rem; font-weight:600; margin:0 0 4px;}
+  @media print{ .wex{display:none !important;} }
   .guide-box.guide-solo{margin:0; font-size:0.9rem;}
   .guide-box.guide-solo > summary{font-size:0.95rem; padding:11px 16px;}
   .guide-box.guide-solo .gb{padding:6px 18px 14px; max-width:70ch;}
@@ -195,7 +209,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181445">
+<link rel="stylesheet" href="hub-house.css?v=202611181539">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -203,18 +217,19 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611181445"></script>
-<script src="assignment-history.js?v=202611181445"></script>
-<script src="hub-due.js?v=202611181445"></script>
-<script src="hub-shared.js?v=202611181445"></script>
-<script src="hub-store.js?v=202611181445"></script>
-<script src="hub-say.js?v=202611181445"></script>
-<script src="hub-sync.js?v=202611181445"></script>
-<script src="hub-notebook.js?v=202611181445"></script>
-<script src="observation-defaults.js?v=202611181445"></script>
-<script src="hub-rotation.js?v=202611181445"></script>
-<script src="hub-peers.js?v=202611181445"></script>
-<script src="fol-interview.js?v=202611181445"></script>
+<script src="assignment-defaults.js?v=202611181539"></script>
+<script src="assignment-history.js?v=202611181539"></script>
+<script src="assignment-examples.js?v=202611181539"></script>
+<script src="hub-due.js?v=202611181539"></script>
+<script src="hub-shared.js?v=202611181539"></script>
+<script src="hub-store.js?v=202611181539"></script>
+<script src="hub-say.js?v=202611181539"></script>
+<script src="hub-sync.js?v=202611181539"></script>
+<script src="hub-notebook.js?v=202611181539"></script>
+<script src="observation-defaults.js?v=202611181539"></script>
+<script src="hub-rotation.js?v=202611181539"></script>
+<script src="hub-peers.js?v=202611181539"></script>
+<script src="fol-interview.js?v=202611181539"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -348,6 +363,14 @@ function flagsHTML(round){
     ${l.map(f => `<div class="fb-flag"><em>\u201C${esc(f.quote)}\u201D</em><div class="fb-flag-where">${where(f)}</div></div>`).join('')}
     <a class="btn btn-quiet sm" href="11_assignment_record.html?a=${encodeURIComponent(CURRENT)}&me=1" style="margin-top:8px;">Open the marked record</a></div>`;
 }
+/* A worked example inside the section it belongs to (assignment-examples.js, 18 Nov 2026). It stays as the reader left
+   it, open or folded, when the page draws itself again. */
+let WEX_OPEN = false;
+const wex = s => window.hubAsgExample ? hubAsgExample(CURRENT, s, WEX_OPEN) : '';
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.wex-btn'); if (!b) return;
+  WEX_OPEN = b.parentNode.querySelector('.wex-box').classList.toggle('open'); b.setAttribute('aria-expanded', WEX_OPEN ? 'true' : 'false');
+});
 function render(){
   const a = WORDING && WORDING[CURRENT];
   if (!a){ $('app').innerHTML = '<div class="card"><p class="guide">This assignment isn\u2019t set up yet \u2014 check with your center.</p></div>'; return; }
@@ -472,7 +495,7 @@ function render(){
         html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${refHtml}${TW}</div></details>`;
         return;
       }
-      html += `<div class="card"><h2>${esc(s.label)}</h2><p class="guide">${nl2br(s.body)}${TW}</p>`;
+      html += `<div class="card"><h2>${esc(s.label)}</h2><p class="guide">${nl2br(s.body)}${TW}</p>${wex(s)}`;
       {
         if (isLockedNow) {
           html += `<div class="lockedbox"><span class="lockedtag">\u2713 Already met \u2014 carried forward, no changes needed</span><div class="readonly">${nl2br((sub.sub1&&sub.sub1.text&&sub.sub1.text[i])||'')}</div></div>`;
@@ -512,7 +535,7 @@ function render(){
       const items = itemsForFieldsSection(a, i);
       const crit = critsForSection(a,i);
       const isLockedNow = onRound2 && sectionLocked(a,sub,i);
-      html += `<div class="card fill"><h2>${esc(s.label)}</h2>${TW}${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}`;
+      html += `<div class="card fill"><h2>${esc(s.label)}</h2>${TW}${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}${wex(s)}`;
       if (!items.length) {
         html += `<p class="guide">Pick your items above first.</p>`;
       } else if (isLockedNow) {
