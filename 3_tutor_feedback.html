@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181539">
+<link rel="stylesheet" href="hub-tokens.css?v=202611181643">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -587,7 +587,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181539">
+<link rel="stylesheet" href="hub-house.css?v=202611181643">
 </head>
 <body>
 <div class="board">
@@ -785,14 +785,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611181539"></script>
-<script src="hub-shared.js?v=202611181539"></script>
-<script src="hub-store.js?v=202611181539"></script>
-<script src="hub-say.js?v=202611181539"></script>
-<script src="hub-crit-learn.js?v=202611181539"></script>
-<script src="hub-crit-vocab.js?v=202611181539"></script>
-<script src="hub-sync.js?v=202611181539"></script>
-<script src="hub-notebook.js?v=202611181539"></script>
+<script src="hub-exchange.js?v=202611181643"></script>
+<script src="hub-shared.js?v=202611181643"></script>
+<script src="hub-store.js?v=202611181643"></script>
+<script src="hub-say.js?v=202611181643"></script>
+<script src="hub-crit-learn.js?v=202611181643"></script>
+<script src="hub-crit-vocab.js?v=202611181643"></script>
+<script src="hub-sync.js?v=202611181643"></script>
+<script src="hub-notebook.js?v=202611181643"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1063,7 +1063,10 @@ let CRIT_MODEL=null;
     CRIT_MODEL=m;
     try{ localStorage.setItem(LEARN_KEY, JSON.stringify(m)); }catch(e){}
     /* A point already typed keeps its stale suggestions otherwise. */
-    document.querySelectorAll('.pt-text').forEach(b=>b.dispatchEvent(new Event('input',{bubbles:true})));
+    /* asked for directly (18 Nov 2026). This used to fake typing in every point box, and since 17 Nov a box that is
+       truly empty takes "typing" as its bullet being deleted: a few seconds after the form opened, empty boxes vanished
+       and the cursor jumped to another list, under the tutor's hands, and the page saved itself with nobody typing. */
+    document.querySelectorAll('.pt').forEach(r=>r.dispatchEvent(new Event('ai-suggest')));
   };
   HubStore.course().then(c=>{
     if(c && c.critLearn && Number(c.critLearn.n) > 0){ take(c.critLearn); return; }
@@ -1168,7 +1171,8 @@ function addPoint(listId, html, _unused){
      bullet point, remove the whole box. If you keep the bullet point, then the box stays"). Deleting a point's words leaves
      its bullet and its box; deleting the bullet as well takes the box away, and the cursor goes to the end of the point
      above. A box's last point stays, empty, to write in. */
-  box.addEventListener('input', ()=>{
+  box.addEventListener('input', e=>{
+    if(!e.isTrusted) return;   // only a person deleting the bullet takes a box away, never the page's own scripted input
     if(box.textContent.replace(/[\s\u00A0]/g,'')!=='') return;
     const others=[...host.querySelectorAll('.pt')].filter(x=>x!==row);
     if(!others.length) return;
@@ -2189,8 +2193,33 @@ function paintDraftBy(){
   const st=rec.startedBy, sv=rec.savedBy;
   host.textContent=(st&&st.who!==sv.who?'Started by '+st.who+' · ':'')+'Last saved by '+sv.who+(t(sv)?', '+t(sv):'');
 }
+/* WHAT THE TRAINEE SENT AFTER THIS PAGE OPENED (18 Nov 2026). The page no longer reloads itself under a tutor who is
+   writing (hub-sync), so a self-evaluation or a changed plan that arrives later is not on the page. When the newer course
+   comes in, the page looks; if this trainee's plan or self-evaluation is not the one it is showing, it says so beside
+   "Pulled in" and offers it. Taking it saves the draft first, then draws the page again in the same place. */
+let PULLED_SIG=null;
+function pulledSig(){
+  if(!TRAINEE_ID) return null;
+  const tr=loadRoster().trainees[TRAINEE_ID], p=(tr&&tr.tp&&tr.tp.plan)||null, sf=(tr&&tr.tp&&tr.tp.selfeval)||null;
+  return JSON.stringify([p&&p.state||null, p&&p.status||null, sf&&sf.state||null]);
+}
+window.HUB_REDRAW=function(){
+  if(!TRAINEE_ID||PULLED_SIG===null||$('pulledNew')) return;
+  const rec=loadFeedbackRecord(); if(rec&&rec.status==='returned') return;
+  const now=pulledSig(); if(now===PULLED_SIG) return;
+  const hadSelf=JSON.parse(PULLED_SIG)[2]!==null, hasSelf=JSON.parse(now)[2]!==null;
+  const host=$('loadedInfo'); if(!host) return;
+  host.insertAdjacentHTML('afterend','<p class="loaded" id="pulledNew" role="status">'+(!hadSelf&&hasSelf?'Their self-evaluation has come in since you opened this page.':'Their plan or self-evaluation has changed since you opened this page.')+' <button class="btn quiet" type="button" id="pulledNewBtn">Show it</button></p>');
+  $('pulledNewBtn').addEventListener('click', function(){
+    this.disabled=true;
+    try{ clearTimeout(saveTimer); if(CAN_STORE&&!locked) saveFeedbackRecord({ label:draftLabel(), state:draftState() }); }catch(e){}
+    const go=()=>{ try{ sessionStorage.setItem('hub:glanceY:'+location.pathname, String(window.scrollY||0)); }catch(e){} location.reload(); };
+    try{ (window.HubSync&&HubSync.flushNow?HubSync.flushNow(true):Promise.resolve()).then(go, go); }catch(e){ go(); }
+  });
+};
 (function initFromStorage(){
   applyTraineeNames();
+  PULLED_SIG=pulledSig();
   let planRec=null, selfRec=null;
   if (TRAINEE_ID) {
     const tr=loadRoster().trainees[TRAINEE_ID];

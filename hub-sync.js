@@ -657,7 +657,7 @@
     try { origSet(KEY_OF[job.kind], JSON.stringify(merged)); } catch (e) {}
     var next = Object.assign({}, job, { data: merged, page: PAGE_ID }); delete next.base; delete next.baseCopy;
     remember(id, ledgerForm(next));
-    MERGED.push(job.kind);
+    if (JSON.stringify(merged) !== JSON.stringify(job.data)) MERGED.push(job.kind);   // the store's copy was this browser's own write: nothing new to show
     return S.call(wire(next)).then(function(r2){
       if (r2 && r2.stale && (tries || 0) < 2) return onStale(id, next, r2, (tries || 0) + 1);
       confirmed(id); afterPut(next, r2); return r2;
@@ -712,21 +712,38 @@
      it only when nobody else wrote in between). Coming back to the tab asks for the version -- a few bytes -- and when the
      course has moved and nothing here is waiting to be sent, the page takes the course and reloads once. A minute apart
      at most; never in a demo. */
-  var PAGE_VER = null, LAST_LOOK = 0;
+  var PAGE_VER = null, LAST_LOOK = 0, TOUCHED = false;
+  ['input', 'change'].forEach(function(ev){ document.addEventListener(ev, function(e){ if (e.isTrusted !== false) TOUCHED = true; }, true); });
+  /* a grade tile, a star, a tag, an opened section: work done with a press and no typing counts too. A link that leaves
+     the page does not, and neither does a press on nothing in particular. */
+  ['pointerdown', 'keydown'].forEach(function(ev){ document.addEventListener(ev, function(e){
+    var t = e.target; if (!e.isTrusted || !t || !t.closest) return;
+    if (t.closest('button, summary, input, select, textarea, [contenteditable], [role="button"]') && !t.closest('a[href]')) TOUCHED = true;
+  }, true); });
   function markVer(){ try { var V = S.verGet && S.verGet(); if (V && V.v && (!S.cred || V.cred === S.cred())) PAGE_VER = V.v; } catch (e) {} }
   /* HUB_HOLD: a page with work in hand that a reload would lose (the set page while it cuts a book's pages, 10 Nov 2026) */
   function quiet(){ return !Object.keys(queue).length && !Object.keys(ledger()).length && !timer && !window.HUB_HOLD; }
   document.addEventListener('visibilitychange', function(){
     if (document.visibilityState !== 'visible' || DEMO || !started || !PAGE_VER || !S.version) return;
     /* a newer course already taken in the background, and not yet drawn: coming back to the tab draws it */
-    if (OWED && quiet() && idle()) { quietReload(); return; }
+    if (OWED && quiet() && idle() && !TOUCHED) { quietReload(); return; }
     if (Date.now() - LAST_LOOK < 60000 || !quiet()) return;
     LAST_LOOK = Date.now();
     S.version().then(function(r){
       if (!r || !r.ver || r.ver === PAGE_VER || !quiet()) return;
-      status('The course has moved on \u2014 refreshing', 'busy');
       dirty = {};   // everything this page wrote is saved (quiet), so the course's copy of it is the one to take
-      return window.HubSync.refresh().then(function(){ markVer(); location.reload(); });
+      /* A PAGE SOMEBODY IS WORKING ON IS NOT RESET (Ramy, 18 Nov 2026, marking C/21's TPs: "too many resets in the TP
+         feedback page still"). A tutor giving feedback goes to the plan and back all lesson, and each return reloaded the
+         page whenever anybody on the course had saved: place, open sections and cursor gone. Once a person has typed or
+         changed anything on a page, coming back to it takes the newer course in the background and leaves the page as it
+         is. A page nobody has touched is still drawn again, quietly, with the reader kept where they were. */
+      return window.HubSync.refresh().then(function(){
+        markVer();
+        if (typeof window.HUB_REDRAW === 'function') { try { window.HUB_REDRAW(); return; } catch (e) {} }
+        if (TOUCHED) return;
+        if (!idle()) { OWED = true; return; }
+        quietReload();
+      });
     }).catch(function(){});
   });
   /* ...AND WITHOUT LEAVING THE TAB (Ramy, 17 Nov 2026, the evening of C/21's first TP: "the refresh needs to happen a bit
@@ -780,7 +797,7 @@
   function mergedReload(){
     var what = MERGED.filter(function(k, i){ return MERGED.indexOf(k) === i; }).map(function(k){ return MERGE_NAMES[k] || k; }).join(' and ');
     MERGED = [];
-    try { sessionStorage.setItem('hub:merged', what); } catch (e) {}
+    try { sessionStorage.setItem('hub:merged', what); sessionStorage.setItem('hub:glanceY:' + location.pathname, String(window.scrollY || 0)); } catch (e) {}
     setTimeout(function(){ location.reload(); }, 150);
   }
   /* After the reload: say what happened, once, in plain words. */
@@ -1116,7 +1133,15 @@
       var untouched = Object.keys(p).every(function(k){ return !dirty[k]; });
       if (untouched) {
         var changed = apply(p); noteBoot(p);
-        if (changed.length) { status('The course has moved on \u2014 refreshing', 'busy'); flushBeacon(); setTimeout(function(){ location.reload(); }, 150); return; }
+        /* ...AND NOT A FEW SECONDS AFTER IT OPENS EITHER (18 Nov 2026). The page draws at once from this browser's copy and
+           the course arrives four to six seconds later; with a class saving all lesson it had always moved, so every
+           page a tutor opened was drawn twice, the second time under their hands. A page somebody has already started
+           on (typed, pressed a control, or has the cursor in a box) keeps what it shows; the newer course is in this
+           browser for its next save and the next page. A page nobody has started on is still drawn again. */
+        var el0 = document.activeElement, tg0 = el0 && el0.tagName;
+        var atWork = TOUCHED || tg0 === 'INPUT' || tg0 === 'TEXTAREA' || tg0 === 'SELECT' || !!(el0 && el0.isContentEditable) || !!document.querySelector('.confirm-overlay, dialog[open], [aria-modal="true"]:not([hidden])');
+        if (changed.length && !atWork) { status('The course has moved on \u2014 refreshing', 'busy'); flushBeacon(); try { sessionStorage.setItem('hub:glanceY:' + location.pathname, String(window.scrollY || 0)); } catch (e) {} setTimeout(function(){ location.reload(); }, 150); return; }
+        if (changed.length) { rebuildSnapshot(); if (typeof window.HUB_REDRAW === 'function') { try { window.HUB_REDRAW(); } catch (e) {} } }
       } else {
         // The roster goes in merged: this page's own records are already laid over it.
         apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
