@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611182004">
+<link rel="stylesheet" href="hub-tokens.css?v=202611182038">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -117,6 +117,9 @@
   .stu.s-taken{background:var(--box); border-color:var(--sand-line); color:var(--grey); cursor:not-allowed;} .stu.s-taken small{color:var(--grey);}
   .stu:not(:disabled):hover{transform:translateY(-2px); box-shadow:0 0 0 1.5px var(--a-forest), 0 2px 4px rgba(35,34,32,.07), 0 14px 28px -14px rgba(35,34,32,.3);}
   .stu.s-yours.sel:not(:disabled):hover{box-shadow:0 0 0 3px var(--paper), 0 0 0 5px var(--teal);}
+  .iv-sofar{margin-top:12px; padding:10px 14px; border-radius:10px; border:1px solid var(--sand-line); background:var(--surface); font-size:.88rem;}
+  .iv-sofar ul{list-style:none; margin:6px 0 0; padding:0;} .iv-sofar li{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:4px 0;} .iv-sofar li span{color:var(--grey);}
+  .iv-sofar .btn{padding:4px 12px; min-height:0;}
   .iv-now{margin-top:14px; padding:12px 14px; border-radius:10px; background:color-mix(in oklch, var(--teal) 9%, var(--paper)); border-left:4px solid var(--teal); display:flex; gap:8px 14px; flex-wrap:wrap; align-items:center; font-size:.9rem;}
   .iv-now b{font-size:1rem;} .iv-now .sp{flex:1 1 auto;}
   .iv-hint{margin:12px 0 0; font-size:.88rem;}
@@ -148,21 +151,21 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611182004">
+<link rel="stylesheet" href="hub-house.css?v=202611182038">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611182004"></script>
-<script src="hub-store.js?v=202611182004"></script>
-<script src="hub-say.js?v=202611182004"></script>
-<script src="hub-sync.js?v=202611182004"></script>
-<script src="hub-notebook.js?v=202611182004"></script>
-<script src="gtky-bank.js?v=202611182004"></script>
-<script src="fol-interview.js?v=202611182004"></script>
-<script src="hub-audio-fit.js?v=202611182004"></script>
+<script src="hub-shared.js?v=202611182038"></script>
+<script src="hub-store.js?v=202611182038"></script>
+<script src="hub-say.js?v=202611182038"></script>
+<script src="hub-sync.js?v=202611182038"></script>
+<script src="hub-notebook.js?v=202611182038"></script>
+<script src="gtky-bank.js?v=202611182038"></script>
+<script src="fol-interview.js?v=202611182038"></script>
+<script src="hub-audio-fit.js?v=202611182038"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -307,7 +310,15 @@ function wire(){
 /* ---- the interview ------------------------------------------------------- */
 const IKEY = 'connect_fol_interview_v1';
 const FOL = window.CONNECT_HUB_FOL || { questions: [], advice: [], summaryHtml: () => '' };
-function ivData(){ const d = rec(IKEY); return d && d.students ? d : { students: {} }; }
+/* TRY-OUT RECORDINGS (Ramy, 18 Nov 2026, in the trainee view: "there's nothing to tell me that it's been saved. There's no
+   sign that I interviewed this person ... I didn't see a transcribe option"). In the trainee view and on a demo course
+   nothing reaches the store, so a saved recording vanished with one grey line to say why. It is now kept in this browser
+   for the visit and listed like a real one, so the screen a trainee gets can be seen; it is gone on reload, and a
+   transcript, which the store makes, says so. */
+const TRYOUT = {};
+function ivData(){ const d = rec(IKEY); if (!d || !d.students) return { students: {} };
+  Object.keys(d.students).forEach(n => { const st = d.students[n]; if (st && Array.isArray(st.audio)) st.audio = st.audio.filter(a => a && (!a.tryout || TRYOUT[a.id])); });
+  return d; }
 function ivSave(d){ try { localStorage.setItem(IKEY, JSON.stringify(d)); } catch (e) {} if (IS_TRAINEE && typeof pushPool === 'function') pushPool(); }
 /* THE POOL (15 Oct 2026). What the trainee heard goes to the pool of their TP group (28 Oct 2026: the group only, as
    are the answers, recordings and transcripts, below), and the tutors know who heard it. The whole list is sent
@@ -425,7 +436,9 @@ function renderInterview(){
   const strip = `<ol class="iv-steps" aria-label="The interview, step by step">${order.map(k => `<li class="${did[k] ? 'done' : k === nowAt ? 'now' : ''}"><i>${did[k] ? '✓' : N[k]}</i>${word[k]}${did[k] ? '<span class="sr-only"> (done)</span>' : ''}</li>`).join('')}</ol>`;
   /* a student is a pill in one of four states, the word on it: yours, free, to share (once everyone is chosen), taken */
   const stateOf = n => { const c = claimState(n), s2 = d.students[n], heard = s2 ? (s2.heard || []).length : 0;
-    if (c.mine) return { cls: 's-yours', word: heard ? 'Yours · ' + heard + ' heard' : 'Yours', rank: 0 };
+    const recs = s2 ? (s2.audio || []).length : 0;
+    const begun = !!(s2 && (recs || heard || Object.keys(s2.answers || {}).some(q => String(s2.answers[q] || '').trim())));   // an interview begun is yours, whatever the picks say
+    if (c.mine || begun) return { cls: 's-yours', word: 'Yours' + (recs ? ' · ' + (recs === 1 ? 'recorded' : recs + ' recordings') : '') + (heard ? ' · ' + heard + ' heard' : ''), rank: 0 };
     if (!c.others) return { cls: 's-free', word: 'Free', rank: 1 };
     if (c.open) return { cls: 's-join', word: 'Share with ' + c.by, rank: 2 };
     return { cls: 's-taken', word: 'Taken' + (c.by ? ' · ' + c.by : ''), rank: 3, off: true }; };
@@ -437,11 +450,19 @@ function renderInterview(){
     ? `<div class="iv-now" role="status"><span>You are interviewing</span><b>${esc(ivSel)}</b><span class="sp"></span>${myNames.filter(n => n !== ivSel).map(n => `<button class="btn ghost" type="button" data-stu="${esc(n)}">Switch to ${esc(n)}</button>`).join('')}${loose.length ? `<button class="btn ghost" type="button" id="ivLetGo" data-k="${esc(loose[0])}">Let go of ${esc(looseName || 'my student')}</button>` : ''}</div>
        <p class="note" style="margin-top:8px">${ivStarted(ivSel) ? 'This interview is started, so it stays yours. You can choose another student as well: tap a free one.' : 'Nobody else can choose them now. Changed your mind? Let go, or tap another free student.'}</p>`
     : `<p class="iv-hint">${names.length ? 'Tap a student who is free. The pill turns green and says <b>Yours</b>, and everyone else sees them as taken.' : ''}</p>`;
+  /* YOUR INTERVIEWS SO FAR (18 Nov 2026): who, and what is in hand for each, where the students are chosen */
+  const doneWith = names.map(n => { const s3 = d.students[n]; if (!s3) return null;
+    const r3 = (s3.audio || []).length, a3 = Object.keys(s3.answers || {}).filter(q => String(s3.answers[q] || '').trim()).length, h3 = (s3.heard || []).length;
+    if (!r3 && !a3 && !h3) return null;
+    const bits = [r3 ? (r3 === 1 ? '1 recording' : r3 + ' recordings') : 'no recording yet', a3 ? a3 + (a3 === 1 ? ' answer' : ' answers') + ' written' : '', h3 ? h3 + (h3 === 1 ? ' problem' : ' problems') + ' heard' : ''].filter(Boolean);
+    return `<li><button class="btn ghost" type="button" data-stu="${esc(n)}"${n === ivSel ? ' aria-pressed="true"' : ''}>${esc(n)}</button><span>${esc(bits.join(' \u00b7 '))}</span></li>`; }).filter(Boolean);
+  const sofar = doneWith.length ? `<div class="iv-sofar" role="status"><b>You have interviewed ${doneWith.length} ${doneWith.length === 1 ? 'student' : 'students'} so far</b><ul>${doneWith.join('')}</ul></div>` : '';
   const who = `<div class="iv-box"><h2>${num(N.choose)}Choose your student</h2>
       ${claimMsg ? '<p class="iv-msg" role="alert">' + esc(claimMsg) + '</p>' : ''}
       ${names.length ? `<div class="iv-key" aria-hidden="true">${has('s-yours') ? '<span><i class="k-yours"></i>Yours</span>' : ''}<span><i class="k-free"></i>Free</span>${has('s-join') ? '<span><i class="k-join"></i>To share</span>' : ''}${has('s-taken') ? '<span><i class="k-taken"></i>Taken</span>' : ''}</div>` : ''}
       <div class="iv-stus">${pills.map(x => `<button class="stu ${x.st.cls}${x.n === ivSel ? ' sel' : ''}" type="button" data-stu="${esc(x.n)}"${x.st.off ? ' disabled' : ''}${x.n === ivSel ? ' aria-pressed="true"' : ''}><b>${esc(x.n)}</b><small>${esc(x.st.word)}</small></button>`).join('')}</div>
       ${now}
+      ${sofar}
       <!-- NO TYPED NAMES (Ramy, 16 Nov 2026: "take the Add box away"). The list is the register: a typed name could not be
            recorded and left a student interviewed but never on the center's books. A name typed before stays, with its notes. -->
       <p class="note" style="margin-top:10px">${names.length ? 'One student each to begin with; if there are more of you than students, two of you share one. Your student is not here? Ask your tutor to add them to the register.' : 'No students are on the register yet. Ask your tutor to add them.'}</p></div>`;
@@ -524,7 +545,7 @@ function recBox(stepNo){
       <p class="note" style="margin:14px 0 6px"><b>Recorded it on your phone?</b> Open this page on the phone, or send the file to this computer, and add it here. If it is longer than ten minutes, the first ten are kept. On an iPhone: in Voice Memos, press the recording, choose Share, then Save to Files, and choose it here.</p>
       <button class="btn ghost" type="button" id="recPick">Add a recording from a file</button><input type="file" id="recFile" accept="audio/*,video/mp4,.m4a,.mp3,.wav,.aac,.ogg,.oga,.opus,.webm,.mp4,.3gp" hidden>`;
   const saved = list.map((a, i) => `<div class="iv-rec" data-rec="${esc(a.id)}" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--row-line,#e6e0d4)">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn ghost" type="button" data-play="${esc(a.id)}">Listen</button><span class="note">Recording ${i + 1} &middot; ${clock(a.seconds || 0)}</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn ghost" type="button" ${a.tryout ? 'data-tryplay' : 'data-play'}="${esc(a.id)}">Listen</button><span class="note">Recording ${i + 1} &middot; ${clock(a.seconds || 0)}</span>
         <button class="btn ghost" type="button" data-tx="${esc(a.id)}">${a.transcript ? 'Make the transcript again' : 'Make a transcript'}</button><button class="btn ghost" type="button" data-delrec="${esc(a.id)}">Delete</button></div>
       <span class="fol-audio"></span>
       ${a.transcript != null ? `<p class="note" style="margin:8px 0 4px">The transcript is a computer's first try and may tidy mistakes. Listen, and correct it so it says exactly what ${esc(ivSel)} said.${/^(Student|Trainee): /m.test(a.transcript) ? ' It marks who is speaking. If the two are the wrong way round, <button class="btn ghost" type="button" data-swap="' + esc(a.id) + '" style="padding:2px 10px;min-height:0">swap them</button>.' : ''}</p><textarea data-txt="${esc(a.id)}" rows="5" style="width:100%;font:inherit;font-size:.9rem;padding:8px 10px;border:1.5px solid var(--sand-line);border-radius:8px;background:var(--field);color:var(--ink)">${esc(a.transcript)}</textarea>` : ''}</div>`).join('');
@@ -584,12 +605,22 @@ function wireRecording(){
     $('recSave').disabled = true; recErr('Saving\u2026 On a slow connection this can take a few minutes. Keep this page open.');
     try {
       const r = await ivCall({ op: 'putInterviewAudio', student: ivSel, bytes: await b64(rs.blob), type: rs.blob.type, seconds: rs.secs }, 180000);
-      if (r && r.demo) { recReset(); rs.msg = (window.HubStore && HubStore.isTemplate && HubStore.isTemplate()) ? 'This is the trainee view, so the recording is not saved.' : 'This is a demo course, so the recording is not saved.'; renderInterview(); return; }
+      if (r && r.demo) {
+        const tid = 'try-' + Date.now(); TRYOUT[tid] = rs.url; rs.url = '';   // the sound stays in this browser, for this visit
+        const d0 = ivData(), s0 = ivEnsure(d0, ivSel); s0.audio = s0.audio || []; s0.audio.push({ id: tid, at: new Date().toISOString(), seconds: rs.secs, size: rs.blob.size, tryout: true });
+        ivSave(d0); recReset();
+        rs.msg = ((window.HubStore && HubStore.isTemplate && HubStore.isTemplate()) ? 'Saved for this visit only: this is the trainee view, so nothing goes to the course.' : 'Saved for this visit only: this is a demo course, so nothing goes to the course.') + ' On a real course it stays, and Make a transcript works.';
+        renderInterview(); return; }
       const d = ivData(); const s = ivEnsure(d, ivSel); s.audio = s.audio || []; s.audio.push({ id: r.id, at: new Date().toISOString(), seconds: rs.secs, size: r.size });
       ivSave(d); recReset(); rs.msg = 'Saved. Listen to it below, and make a transcript if you want one.'; renderInterview();
     } catch (e) { $('recSave').disabled = false; recErr('Not saved \u2014 ' + ((e && e.message) || e) + '. The recording is still here: press Save to try again.'); }
   });
+  app.querySelectorAll('[data-tryplay]').forEach(b => b.addEventListener('click', () => {
+    const slot = b.closest('.iv-rec').querySelector('.fol-audio'), u = TRYOUT[b.dataset.tryplay]; if (!slot || !u) return;
+    slot.innerHTML = ''; const a = document.createElement('audio'); a.controls = true; a.src = u; a.style.cssText = 'display:block;width:100%;margin-top:6px'; slot.appendChild(a); a.play().catch(() => {});
+  }));
   app.querySelectorAll('[data-tx]').forEach(b => b.addEventListener('click', async () => {
+    if (TRYOUT[b.dataset.tx]) { recErr('A transcript is made by the course itself, so there is none in this view. On a real course this button makes one in a minute or two.'); return; }
     b.disabled = true; recErr('Making the transcript. A short chat takes about a minute; a long one a few minutes. Keep this page open.');
     try {
       const r = await ivCall({ op: 'transcribeInterview', id: b.dataset.tx }, 330000);
@@ -607,6 +638,7 @@ function wireRecording(){
   }));
   app.querySelectorAll('[data-delrec]').forEach(b => b.addEventListener('click', async () => {
     if (!(await confirmModal('Delete this recording? It is removed from the course for good, with its transcript.', 'Delete'))) return;
+    if (TRYOUT[b.dataset.delrec]) { const d1 = ivData(), s1 = d1.students[ivSel]; if (s1) s1.audio = (s1.audio || []).filter(x => x.id !== b.dataset.delrec); try { URL.revokeObjectURL(TRYOUT[b.dataset.delrec]); } catch (e) {} delete TRYOUT[b.dataset.delrec]; ivSave(d1); rs.msg = 'Deleted.'; renderInterview(); return; }
     b.disabled = true;
     try {
       await ivCall({ op: 'deleteInterviewAudio', id: b.dataset.delrec }, 60000);
