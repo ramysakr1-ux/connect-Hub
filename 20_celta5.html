@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611182107">
+<link rel="stylesheet" href="hub-tokens.css?v=202611182230">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -213,7 +213,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611182107">
+<link rel="stylesheet" href="hub-house.css?v=202611182230">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -226,20 +226,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611182107"></script>
-<script src="hub-hand.js?v=202611182107"></script>
-<script src="hub-ink.js?v=202611182107"></script>
-<script src="assignment-defaults.js?v=202611182107"></script>
-<script src="celta5-text.js?v=202611182107"></script>
-<script src="celta5-appendix.js?v=202611182107"></script>
-<script src="celta5-criteria.js?v=202611182107"></script>
-<script src="hub-tracker.js?v=202611182107"></script>
-<script src="observation-defaults.js?v=202611182107"></script>
-<script src="hub-shared.js?v=202611182107"></script>
-<script src="hub-store.js?v=202611182107"></script>
-<script src="hub-say.js?v=202611182107"></script>
-<script src="hub-sync.js?v=202611182107"></script>
-<script src="hub-notebook.js?v=202611182107"></script>
+<script src="celta5-pdf.js?v=202611182230"></script>
+<script src="hub-hand.js?v=202611182230"></script>
+<script src="hub-ink.js?v=202611182230"></script>
+<script src="assignment-defaults.js?v=202611182230"></script>
+<script src="celta5-text.js?v=202611182230"></script>
+<script src="celta5-appendix.js?v=202611182230"></script>
+<script src="celta5-criteria.js?v=202611182230"></script>
+<script src="hub-tracker.js?v=202611182230"></script>
+<script src="observation-defaults.js?v=202611182230"></script>
+<script src="hub-shared.js?v=202611182230"></script>
+<script src="hub-store.js?v=202611182230"></script>
+<script src="hub-say.js?v=202611182230"></script>
+<script src="hub-sync.js?v=202611182230"></script>
+<script src="hub-notebook.js?v=202611182230"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -392,8 +392,8 @@ async function s1Reword(){
 function s1AidNote(){
   const ev = s1Evidence(); if (!ev) return '';
   const from = ev.tps.map(n => 'TP' + n).join(' and ');
-  const say = !ev.ready ? 'Strengths and the action plan fill in from the feedback once TP' + ev.end + '’s feedback is returned.'
-    : S1_WORDS === 'done' ? 'The points come from the feedback for ' + from + ', put into new words by OpenAI through Lite: only the points went, with no name, and Lite kept no copy. Add to the paragraph, change anything, and join or cut points as you see fit.'
+  if (!ev.ready) return '';   // nothing to say before the feedback is back (Ramy, 18 Nov 2026: "we don't need that part ... remove that")
+  const say = S1_WORDS === 'done' ? 'The points come from the feedback for ' + from + ', put into new words by OpenAI through Lite: only the points went, with no name, and Lite kept no copy. Add to the paragraph, change anything, and join or cut points as you see fit.'
     : S1_WORDS === 'failed' ? 'These are the points as the feedback for ' + from + ' wrote them. Put them in your own words before you return it.'
     : 'The points come from the feedback for ' + from + '.';
   return `<p class="tut-hint" id="s1Note">${say}</p>`;
@@ -642,7 +642,11 @@ function render(){
      assessor's own link goes to the pack. */
   const cameFrom = (() => { try { const r = new URL(document.referrer); return r.origin === location.origin && r.pathname !== location.pathname ? r.pathname.replace(/^\//, '') + r.search : ''; } catch (e) { return ''; } })();
   $('back').href = IS_TRAINEE ? 'index.html' + (KEYQ ? '?' + KEYQ : '') : IS_TUTOR ? (cameFrom || '5_tutor_dashboard.html') : '12_assessor_pack.html?' + KEYQ;
-  const s1 = TT.stage1 || {}, s2c = C.stage2 || {}, s2t = TT.stage2 || {}, s3 = TT.stage3 || {}, att = TT.attendance || {}, fin = C.final || {}, fint = TT.final || {}, conf = C.confirms || {};
+  /* A STAGE IS THE TRAINEE'S TO READ ONCE IT IS RETURNED (Ramy, 18 Nov 2026: "how do we know that the trainees will not look at
+     stage 1 while the tutor is writing it?"). They could: the tutors' half reached the trainee whole, draft and all. The
+     store now holds an unreturned stage back (traineeCelta5t_), and this page shows a trainee nothing of one either. */
+  const ret = x => (IS_TRAINEE && !(x && x.returnedAt)) ? {} : (x || {});
+  const s1 = ret(TT.stage1), s2c = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (IS_TRAINEE && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
   const my = IS_TRAINEE, tut = IS_TUTOR;
   const dates = (SETTINGS.start && SETTINGS.end) ? when(SETTINGS.start) + ' – ' + when(SETTINGS.end) : '';
   const st1 = stageState(false, s1.returnedAt, s1.signedBy && s1.signedBy.at && (C.stage1 || {}).signed && C.stage1.signed.at);
@@ -842,7 +846,11 @@ const RATE = { above: 'above_standard', to: 'to_standard', not: 'not_to_standard
 const sigName = s => (s && s.at) ? s.name : null, sigAt = s => (s && s.at) ? s.at : null, sigInk = s => (s && s.at && s.ink) ? s.ink : null;
 const shortDate = iso => iso ? (window.hubDateOf ? hubDateOf(iso) : new Date(iso)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 function bookletInput(){
-  const s1 = TT.stage1 || {}, s2c = C.stage2 || {}, s2t = TT.stage2 || {}, s3 = TT.stage3 || {}, att = TT.attendance || {}, fin = C.final || {}, fint = TT.final || {}, conf = C.confirms || {};
+  /* A STAGE IS THE TRAINEE'S TO READ ONCE IT IS RETURNED (Ramy, 18 Nov 2026: "how do we know that the trainees will not look at
+     stage 1 while the tutor is writing it?"). They could: the tutors' half reached the trainee whole, draft and all. The
+     store now holds an unreturned stage back (traineeCelta5t_), and this page shows a trainee nothing of one either. */
+  const ret = x => (IS_TRAINEE && !(x && x.returnedAt)) ? {} : (x || {});
+  const s1 = ret(TT.stage1), s2c = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (IS_TRAINEE && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
   const hist = T.tpHistory(who.tr), flat = T.recordFor(who.tr);
   const assessedTp = Object.keys(hist).sort((a, b) => a - b).map(n => { const f = (hist[n].state && hist[n].state.f) || {};
     /* 9.1.2: "The type of lesson must be recorded in the CELTA 5." The tutor's
