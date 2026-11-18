@@ -201,8 +201,22 @@
      every pre-int student's register and page showed the day as one they had not come to. A day in the Teaching practice
      room whose demonstrations all name their tutor (the tile's `by`, an index into Course admin's tutor names) belongs
      to the levels of that tutor's classes (Course admin > Classes). A demo with no tutor named, or a tutor with no class,
-     is for everyone, as before. Returns the levels in capitals, or null. */
-  function levelKey(l) { return String(l || '').toUpperCase().replace(/\s+/g, ''); }
+     is for everyone, as before. Returns the levels (levelKey), or null. */
+  /* the same names as the store's levelName_, so "A2+" and "Pre-intermediate" are one level */
+  function levelKey(v) {
+    var s = String(v == null ? '' : v).trim(), low = s.toLowerCase(); if (!s) return '';
+    if (/pre[- ]?int/.test(low)) return 'PRE-INTERMEDIATE';
+    if (/upper[- ]?int/.test(low)) return 'UPPER-INTERMEDIATE';
+    if (/\bintermediate/.test(low)) return 'INTERMEDIATE';
+    if (/elementary/.test(low)) return 'ELEMENTARY';
+    if (/beginner|starter/.test(low)) return 'BEGINNER';
+    if (/advanced|proficien/.test(low)) return 'ADVANCED';
+    var codes = s.toUpperCase().match(/[ABC][12]\+?/g); if (!codes) return s.toUpperCase();
+    if (codes.length === 2 && /^A2\+?$/.test(codes[0]) && codes[1] === 'B1') return 'PRE-INTERMEDIATE';
+    var map = { 'A1': 'BEGINNER', 'A2': 'ELEMENTARY', 'A2+': 'PRE-INTERMEDIATE', 'B1': 'INTERMEDIATE', 'B1+': 'INTERMEDIATE', 'B2': 'UPPER-INTERMEDIATE', 'B2+': 'UPPER-INTERMEDIATE', 'C1': 'ADVANCED', 'C2': 'ADVANCED' };
+    var out = []; codes.forEach(function (c) { var n = map[c]; if (n && out.indexOf(n) === -1) out.push(n); });
+    return out.join('/') || s.toUpperCase();
+  }
   function demoLevels(inRoom, settings) {
     var demos = inRoom.filter(function (x) { return x.k === 'demo'; });
     if (!demos.length || !settings) return null;

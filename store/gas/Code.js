@@ -181,7 +181,19 @@ function volunteerClasses_(courseId, set, vol) {
     } else {
       var inRoom = (d.sessions || []).filter(function (x) { return ok(x) && /teaching practice/i.test(String(x.room || '')); }).sort(function (a, b) { return hm(a.s) - hm(b.s); });
       if (!inRoom.length) return;
-      var demo = inRoom.filter(function (x) { return x.k === 'demo'; })[0] || null;
+      /* A DEMONSTRATION IS FOR ITS TUTOR'S CLASS (v257, 18 Nov 2026; Ramy: "demo upper int only"): when every demo of
+         the day names its tutor and that tutor has classes, the day is those classes' only (hub-attendance.js demoLevels). */
+      var demos = inRoom.filter(function (x) { return x.k === 'demo'; });
+      if (demos.length && k) {
+        var forLv = {}, all = false;
+        demos.forEach(function (x) {
+          var t = (x.by !== undefined && x.by !== null && x.by !== '' && tutors[+x.by]) ? tutors[+x.by].toLowerCase() : '', hit = false;
+          if (t) list.forEach(function (c) { if (c && c.level && String(c.tutor || '').trim().toLowerCase() === t) { forLv[levelName_(c.level)] = 1; hit = true; } });
+          if (!hit) all = true;
+        });
+        if (!all && !forLv[lvl]) return;
+      }
+      var demo = demos[0] || null;
       var by = demo && demo.by !== undefined && demo.by !== null && demo.by !== '' && tutors[+demo.by] ? tutors[+demo.by] : '';
       row = { day: d.date, tp: 0, from: inRoom[0].s, to: inRoom[inRoom.length - 1].e, lessons: inRoom.length,
               minutes: inRoom.reduce(function (n, x) { return n + hm(x.e) - hm(x.s); }, 0),
@@ -5315,12 +5327,18 @@ function registerShow_(course) {
   var slots = (tt.slots || []).filter(function (x) { return x && x.kind === 'tp'; }).map(function (x) { return { kind: 'tp', from: x.from, to: x.to }; });
   var days = (tt.days || []).filter(function (d) { return d && d.date; }).map(function (d) {
     return { date: d.date, tp: d.tp ? 1 : 0, sessions: (d.sessions || []).filter(function (x) { return x && /teaching practice/i.test(String(x.room || '')); })
-      .map(function (x) { return { k: x.k, room: x.room, s: x.s, e: x.e }; }) };
+      .map(function (x) { return { k: x.k, room: x.room, s: x.s, e: x.e, by: x.by }; }) };
   });
+  /* which class a demonstration was for (v257, 18 Nov 2026): the tutors by number only, never by name */
+  var tn = String(s.tutorNames || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+  var rules = { tutorNames: tn.map(function (x, i) { return 't' + i; }).join(','),
+                classes: { list: ((s.classes && Array.isArray(s.classes.list)) ? s.classes.list : []).map(function (c) {
+                  var i = tn.map(function (x) { return x.toLowerCase(); }).indexOf(String((c && c.tutor) || '').trim().toLowerCase());
+                  return { level: (c && c.level) || '', tutor: i >= 0 ? 't' + i : '' }; }) } };
   return { course: { name: s.courseName || course.name || '', centre: s.centreName || '', today: s.demoToday || '' },
            /* v250: the center may add a student and move a level; a pinned demo saves nothing, so it offers neither */
            canEdit: !s.demoToday,
-           students: students, timetable: { slots: slots, days: days } };
+           students: students, timetable: { slots: slots, days: days }, rules: rules };
 }
 /* THE CENTER ADDS A STUDENT AND MOVES A LEVEL (v250, 17 Nov 2026). Ramy, C/21's first TP day: "can the center add or
    change Ss' level? if not, they should". The center's link read the register and nothing else; whoever looks after

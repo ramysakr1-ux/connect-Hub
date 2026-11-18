@@ -20,7 +20,7 @@
 <title>Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600;6..72,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181156">
+<link rel="stylesheet" href="hub-tokens.css?v=202611181231">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; min-height:100vh; background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif;}
@@ -91,9 +91,9 @@
   <div id="app"><p class="lede">Opening the register.</p></div>
   <!-- the credit is hub-shared.js's own line (the logo, then the words, Ramy in gold; never on paper). This page had a second, plain one of its own until 17 Nov 2026. -->
 </div>
-<script src="hub-shared.js?v=202611181156"></script>
-<script src="hub-attendance.js?v=202611181156"></script>
-<script src="hub-store.js?v=202611181156"></script>
+<script src="hub-shared.js?v=202611181231"></script>
+<script src="hub-attendance.js?v=202611181231"></script>
+<script src="hub-store.js?v=202611181231"></script>
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
@@ -139,7 +139,7 @@
   function draw(d){
     LAST = d; var EDIT = !!d.canEdit;
     var TODAY = (d.course && d.course.today) || ymd(new Date());
-    var tt = d.timetable || {}, cd = A.classDays(tt), days = cd.days, perDay = cd.perDay, lessons = cd.lessons, lessonMinutes = cd.lessonMinutes;
+    var tt = d.timetable || {}, cd = A.classDays(tt, d.rules), days = cd.days, perDay = cd.perDay, lessons = cd.lessons, lessonMinutes = cd.lessonMinutes;
     var hm = function(t){ var m = String(t || '').match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
     var hoursPerDay = (tt.slots || []).reduce(function(n, sl){ var a = hm(sl.from), b = hm(sl.to); return a != null && b != null && b > a ? n + b - a : n; }, 0) / 60;
     var list = (d.students || []).map(function(st){ if (!st.marks) { st.marks = {}; (st.here || []).forEach(function(x){ st.marks[x] = 'present'; }); } return st; });
@@ -166,9 +166,13 @@
     var anyBefore = false;
     var monday = function(iso){ var x = parse(iso); if (!x) return ''; x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return ymd(x); };
     var rowOf = function(st){
-      var r = A.record(st.marks || {}, days, lessons, lessonMinutes, perDay), j = joined(st);
+      /* their class's days count; a demonstration for another class keeps its square, greyed (18 Nov 2026) */
+      var own = A.daysFor ? A.daysFor(cd, st.level, st.marks || {}) : days;
+      var r0 = A.record(st.marks || {}, own, lessons, lessonMinutes, perDay), j = joined(st);
+      var r = { hours: r0.hours, present: r0.present, partial: r0.partial, absent: r0.absent,
+                days: days.map(function(x){ return r0.days.filter(function(y){ return y.date === x; })[0] || { date: x, tier: 'notours', creditedMinutes: 0 }; }) };
       if (j && j > days[0]) anyBefore = true;
-      var n = days.filter(function(x){ return (!j || x >= j) && (x < TODAY || (st.marks || {})[x]); }).length;
+      var n = own.filter(function(x){ return (!j || x >= j) && (x < TODAY || (st.marks || {})[x]); }).length;
       var ask = ASK && ASK.id === st.id ? '<div class="ask">' + (st.level
             ? 'Move <b>' + esc(st.name) + '</b> from ' + esc(LV(st.level)) + ' to <b>' + esc(LV(ASK.level)) + '</b>? Their hours at ' + esc(LV(ASK.level)) + ' start today; the hours at ' + esc(LV(st.level)) + ' stay on their record.'
             : 'Put <b>' + esc(st.name) + '</b> in ' + esc(LV(ASK.level)) + '?')
@@ -178,12 +182,12 @@
         + (st.carried ? '<small>' + esc(st.carried) + ' h at this level before this course' + (st.carriedFrom ? ', at ' + esc(st.carriedFrom) : '') + '</small>' : '') + '</div>'
         + '<div class="segs">' + r.days.map(function(x, i){
             var past = x.date < TODAY, before = x.tier === 'absent' && x.date < j;
-            var cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : before ? 'before' : past ? 'miss' : 'soon';
-            var what = before ? 'Before they joined' : x.tier === 'absent' && !past ? 'Still to come' : x.tier === 'absent' ? 'Not marked in the room' : A.describe(x.tier, (perDay[x.date] || {}).lessons || lessons, (perDay[x.date] || {}).lessonMinutes || lessonMinutes);
+            var cls = x.tier === 'present' ? 'here' : x.tier === 'partial' ? 'part' : x.tier === 'notours' || before ? 'before' : past ? 'miss' : 'soon';
+            var what = x.tier === 'notours' ? 'Not a class for their level' : before ? 'Before they joined' : x.tier === 'absent' && !past ? 'Still to come' : x.tier === 'absent' ? 'Not marked in the room' : A.describe(x.tier, (perDay[x.date] || {}).lessons || lessons, (perDay[x.date] || {}).lessonMinutes || lessonMinutes);
             var wk = i > 0 && monday(x.date) !== monday(r.days[i - 1].date);
             var pd = parse(x.date);
             return '<span class="seg ' + cls + (wk ? ' wk' : '') + '" title="' + esc(dm(x.date)) + ': ' + esc(what) + '" aria-label="' + esc(dm(x.date)) + ': ' + esc(what) + '">' + (pd ? pd.getDate() : '') + '</span>'; }).join('') + '</div>' + ask + '</div>'
-        + '<div class="hrs"><b>' + fmtH(r.hours) + ' h</b><small>' + r.present + ' of ' + n + (n === 1 ? ' day' : ' days') + (j && j > days[0] ? ' since joining' : n < days.length ? ' so far' : '') + (r.partial ? ' · ' + r.partial + ' in part, half credit each' : '') + '</small></div></div>';
+        + '<div class="hrs"><b>' + fmtH(r.hours) + ' h</b><small>' + r.present + ' of ' + n + (n === 1 ? ' day' : ' days') + (j && j > own[0] ? ' since joining' : n < own.length ? ' so far' : '') + (r.partial ? ' · ' + r.partial + ' in part, half credit each' : '') + '</small></div></div>';
     };
     /* BY LEVEL, AND THE ONES WHO HAVE COME ON TOP (Ramy, 17 Nov 2026: "organize the sharable register link as well based
        on level"). The tutors' own register has had a tab a level since 16 Nov; the center's page is one printed sheet, so
