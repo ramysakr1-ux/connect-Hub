@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611190022">
+<link rel="stylesheet" href="hub-tokens.css?v=202611190102">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -213,21 +213,21 @@
   .aud{font-size:.74rem; color:var(--grey); margin-left:8px;}
   .aud.now{font-size:.84rem; color:inherit; font-weight:600; flex:1 1 220px; line-height:1.45;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611190022">
+<link rel="stylesheet" href="hub-house.css?v=202611190102">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202611190022"></script>
-<script src="hub-shared.js?v=202611190022"></script>
-<script src="hub-store.js?v=202611190022"></script>
-<script src="hub-say.js?v=202611190022"></script>
-<script src="hub-rotation.js?v=202611190022"></script>
-<script src="hub-peers.js?v=202611190022"></script>
-<script src="hub-sync.js?v=202611190022"></script>
-<script src="hub-notebook.js?v=202611190022"></script>
+<script src="observation-defaults.js?v=202611190102"></script>
+<script src="hub-shared.js?v=202611190102"></script>
+<script src="hub-store.js?v=202611190102"></script>
+<script src="hub-say.js?v=202611190102"></script>
+<script src="hub-rotation.js?v=202611190102"></script>
+<script src="hub-peers.js?v=202611190102"></script>
+<script src="hub-sync.js?v=202611190102"></script>
+<script src="hub-notebook.js?v=202611190102"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -300,6 +300,22 @@ const VIEWER = (function(){
     return { token: String(id), group: String(tr.group || '') };
   } catch (e) { return { token: '', group: '' }; }
 })();
+/* THE COLUMNS FOLLOW THE COURSE (Ramy, 19 Nov 2026: "we don't need to have a third teacher ... teacher 3 is just dead
+   weight ... we only have 2 teachers a day, and obviously if you're teaching, then you're only writing for one other
+   person"). The sheet had three columns whatever the course. Lite knows who teaches in a sitting (hub-peers.js: the
+   set, from the roster or the TP points), so the sheet shows a column for each of them and none for anybody else:
+   two on a course whose sets are two, three where they are three, and not the trainee's own, since nobody observes
+   their own lesson. An answer stays under the number it was written under (r0c1 is still the second teacher), so a
+   column somebody has already written in is always shown, whoever it was for. Before the course has its sets, the
+   three numbered columns stand as they did. */
+function teacherCols(t, sit, k){
+  const tch = (t.tp && sit && window.hubPeerTeachers) ? hubPeerTeachers(VIEWER.group, t.tp, sit) : null;
+  if (!tch || !tch.length) return [0, 1, 2];
+  const A = (WORK[k] || {}).a || {};
+  const written = c => t.shape === 'grid' ? (t.rows || []).some((q, i) => String(A['r' + i + 'c' + c] || '').trim()) : !!String(A['f' + c] || '').trim();
+  const cols = [0, 1, 2].filter(c => (tch[c] && tch[c].token !== VIEWER.token) || written(c));
+  return cols.length ? cols : [0, 1, 2].filter(c => tch[c]);
+}
 function teacherLabels(t, sit){
   const tch = (t.tp && sit && window.hubPeerTeachers) ? hubPeerTeachers(VIEWER.group, t.tp, sit) : null;
   return TEACHERS.map((n, c) => { const p = tch && tch[c]; if (!p) return n; if (!READONLY && p.token === VIEWER.token) return 'You'; return p.name || ('Trainee ' + (p.letter || c + 1)); });
@@ -309,9 +325,9 @@ function teacherLabels(t, sit){
 /* everything the sheet can be written in: the focus rows, the after-watching questions, and the header fields a
    turned-in sheet carries (it read "17 of 10 answered", counting boxes the expected number left out; 28 Oct 2026) */
 const HEADER_FIELDS = t => /^(notes|parts|questions)$/.test(t.shape) ? 6 + (t.id.startsWith('live') ? 1 : 0) : 0;
-const expectedOf = t =>
-  t.shape === 'grid'  ? t.rows.length * 3 :
-  t.shape === 'focus' ? TEACHERS.length :
+const expectedOf = (t, sit, k) =>
+  t.shape === 'grid'  ? t.rows.length * teacherCols(t, sit, k).length :
+  t.shape === 'focus' ? teacherCols(t, sit, k).length :
   t.shape === 'parts' ? (t.parts||[]).length :
   (t.rows||[]).length + (t.after||[]).length + HEADER_FIELDS(t);
 
@@ -327,10 +343,10 @@ function row(t, sit){
   const k = recKey(t.id, sit);
   const label = sit ? `TP${t.tp}${sit}` : (t.tp ? 'TP'+t.tp : (posOf(t) ? (t.id.startsWith('filmed') ? 'Film ' : 'Live ') + posOf(t) : ''));
   const q = `?task=${encodeURIComponent(t.id)}${sit ? '&sit=' + sit : ''}${KEYQ ? '&' + KEYQ : ''}`;
-  return `<a class="task" href="${q}" data-n="${answered(k)}" data-exp="${expectedOf(t)}" data-in="${turnsIn(t) && (WORK[k] || {}).turnedInAt ? 1 : 0}">
+  return `<a class="task" href="${q}" data-n="${answered(k)}" data-exp="${expectedOf(t, sit, k)}" data-in="${turnsIn(t) && (WORK[k] || {}).turnedInAt ? 1 : 0}">
     <span class="tp">${esc(label)}</span>
     <span class="nm">${esc(t.title)}${subOf(t) ? `<small>${esc(subOf(t))}</small>` : ''}</span>
-    ${statusOf(k, expectedOf(t), turnsIn(t))}
+    ${statusOf(k, expectedOf(t, sit, k), turnsIn(t))}
   </a>`;
 }
 const tallyOf = keys => `<span class="tally">${keys.filter(k => (WORK[k]||{}).turnedInAt).length} of ${keys.length} turned in</span>`;
@@ -573,12 +589,12 @@ function sheet(t, sit){
   const turned = WORK[k].turnedInAt;
 
   let body = '';
-  const TL = teacherLabels(t, sit);
+  const TL = teacherLabels(t, sit), COLS = teacherCols(t, sit, k);
   if (t.shape === 'grid') {
     body = `<table class="obs stack"><thead><tr><th class="n"></th><th class="q">Observation focus</th>
-      ${TL.map(n => `<th>${esc(n)}</th>`).join('')}</tr></thead><tbody>
+      ${COLS.map(c => `<th>${esc(TL[c])}</th>`).join('')}</tr></thead><tbody>
       ${t.rows.map((q,i) => `<tr><td class="n">${i+1}</td><td class="q">${esc(q)}</td>
-        ${TEACHERS.map((n,c) => `<td data-t="${esc(TL[c])}">${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
+        ${COLS.map(c => `<td data-t="${esc(TL[c])}">${box(k, 'r'+i+'c'+c)}</td>`).join('')}</tr>`).join('')}
       </tbody></table>`;
   } else if (t.shape === 'single' || t.shape === 'notes') {
     const head = t.shape === 'notes' ? 'Your notes' : 'Notes (all teachers)';
@@ -590,7 +606,7 @@ function sheet(t, sit){
     if ((t.after || []).length) body += `<div class="after"><h4>After watching</h4>
       ${t.after.map((q,i) => `<div class="part"><p class="lines">${esc(q)}</p>${box(k, 'a'+i)}</div>`).join('')}</div>`;
   } else if (t.shape === 'focus') {
-    body = TEACHERS.map((n,c) => `<div class="part"><h4>${esc(TL[c])}</h4>
+    body = COLS.map(c => `<div class="part"><h4>${esc(TL[c])}</h4>
       <p class="lines">Focus area — what they asked you to watch for, and what you saw.</p>${box(k, 'f'+c)}</div>`).join('');
   } else if (t.shape === 'questions') {
     body = t.rows.map((q,i) => `<div class="part"><h4>${i+1}. ${esc(q)}</h4>${box(k, 'q'+i)}</div>`).join('');
@@ -708,7 +724,7 @@ else list();
   function meter(){
     const P = new URLSearchParams(location.search), id = P.get('task'); if (!id) return;
     const t = allTasks().find(x => x.id === id); if (!t) return;
-    const k = recKey(t.id, P.get('sit') || ''), e = expectedOf(t), n = answered(k), full = !!e && n >= e;
+    const k = recKey(t.id, P.get('sit') || ''), e = expectedOf(t, P.get('sit') || '', k), n = answered(k), full = !!e && n >= e;
     const bar = app.querySelector('.bar'); if (!bar) return;
     let m = bar.querySelector('.ob-meter');
     if (!m) { m = document.createElement('span'); m.className = 'ob-meter'; m.setAttribute('aria-live', 'polite'); bar.appendChild(m); }

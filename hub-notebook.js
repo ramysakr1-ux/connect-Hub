@@ -252,6 +252,8 @@
      action points, carried forward, with the one question that matters. */
   function stripTags(h){ var d = document.createElement('div'); d.innerHTML = String(h || ''); d.querySelectorAll('.tag').forEach(function(t){ t.remove(); }); return d.textContent.replace(/\s+/g, ' ').trim(); }
   function actionPoints(n){
+    var held = window.hubHeldTp ? window.hubHeldTp() : 0;
+    if (held && (held < 0 || String(held) === String(parseInt(n, 10)))) return null;   // that TP's feedback is not theirs to read yet (19 Nov 2026)
     var h = rd('chub:tpHistory') || {}, live = rd('chub:feedback');
     var e = h[n] || ((live && tpOf((live.state && live.state.f && live.state.f.fTP) || live.label) === String(n)) ? live : null);
     var l = e && e.state && e.state.lists && e.state.lists.lAP; if (!l || !l.length) return null;

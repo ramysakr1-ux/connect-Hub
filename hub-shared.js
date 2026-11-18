@@ -902,6 +902,26 @@ window.hubBriefKey = function(b){
   for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
   return ('0000000' + h.toString(16)).slice(-8);
 };
+/* REFLECT BEFORE READING, ONE RULE FOR EVERY PAGE (Ramy, 19 Nov 2026: "Just want to make sure that he can't open his
+   feedback"). The feedback page waited for the self-evaluation; the CELTA 5, "Bring in last TP's action points" on the
+   self-evaluation and on the next plan, and the Lessons from the Classroom desk did not, and each showed a part of it.
+   The store holds the document back now (v263); these two say the same thing to a page that still has an older copy.
+     hubHeldTp()           the TP whose returned feedback this trainee may not read yet (0: none; -1: held, number unknown)
+     hubReadableHistory()  their returned TPs without that one
+   In a tutor's or the assessor's browser there is no trainee's own record, so nothing is held. */
+window.hubHeldTp = function(){
+  var rd = function(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  var fb = rd('chub:feedback'), se = rd('chub:selfeval');
+  if (!fb || fb.status !== 'returned' || (se && se.status === 'turned_in')) return 0;
+  var m = String((fb.state && fb.state.f && fb.state.f.fTP) || fb.label || '').match(/\d+/);
+  return m ? parseInt(m[0], 10) : -1;
+};
+window.hubReadableHistory = function(h){
+  if (!h) { try { h = JSON.parse(localStorage.getItem('chub:tpHistory') || '{}') || {}; } catch (e) { h = {}; } }
+  var n = window.hubHeldTp(), out = {};
+  Object.keys(h || {}).forEach(function(k){ var r = h[k]; if (!r || r.held) return; if (n > 0 && parseInt(k, 10) === n) return; out[k] = r; });
+  return out;
+};
 window.a5InPlay = function(subs){
   var s = subs && subs.a5;
   return !!(s && (s.assigned || (s.stage && s.stage !== 'draft')));

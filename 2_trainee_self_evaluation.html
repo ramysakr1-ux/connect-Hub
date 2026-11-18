@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611190022">
+<link rel="stylesheet" href="hub-tokens.css?v=202611190102">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -209,7 +209,7 @@
   @media(max-width:640px){ .sv5{display:none;} }
   @media print{ .sv5, .sv5-env{display:none !important;} .ap-row.sv5-carried, .ap-row.sv5-answered{background:none; box-shadow:none; padding:0;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611190022">
+<link rel="stylesheet" href="hub-house.css?v=202611190102">
 </head>
 <body>
 <div class="board">
@@ -287,12 +287,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611190022"></script>
-<script src="hub-shared.js?v=202611190022"></script>
-<script src="hub-store.js?v=202611190022"></script>
-<script src="hub-say.js?v=202611190022"></script>
-<script src="hub-sync.js?v=202611190022"></script>
-<script src="hub-notebook.js?v=202611190022"></script>
+<script src="hub-due.js?v=202611190102"></script>
+<script src="hub-shared.js?v=202611190102"></script>
+<script src="hub-store.js?v=202611190102"></script>
+<script src="hub-say.js?v=202611190102"></script>
+<script src="hub-sync.js?v=202611190102"></script>
+<script src="hub-notebook.js?v=202611190102"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -372,8 +372,10 @@ $('addAP').addEventListener('click',()=>{ addAP('',''); dirty=true; });
    the TP itself now, so there is no file (Ramy, 21 Sep 2026). Empty rows are
    cleared out first. */
 function lastReturnedTP(){
+  /* never the TP this self-evaluation is about: its feedback is not the trainee's to read until this is turned in
+     (19 Nov 2026; it used to take the newest returned TP, which is this one once the tutor has returned it) */
   let hist = {};
-  try { hist = JSON.parse(localStorage.getItem('chub:tpHistory')) || {}; } catch(e) {}
+  try { hist = window.hubReadableHistory ? hubReadableHistory() : (JSON.parse(localStorage.getItem('chub:tpHistory')) || {}); } catch(e) {}
   const ns = Object.keys(hist).map(Number).filter(n => n >= 1 && n <= HUB_MAX_TP && hist[n]).sort((a,b) => a-b);
   if (!ns.length) return null;
   const n = ns[ns.length-1];
@@ -854,7 +856,7 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
     const fb = rec('chub:feedback'), me = rec('chub:selfeval');
     const env = document.getElementById('sv5Env');
     if (env) {
-      const waiting = !!(fb && fb.status === 'returned' && fb.docHTML && !(me && me.status === 'turned_in'));
+      const waiting = !!(fb && fb.status === 'returned' && (fb.docHTML || fb.held) && !(me && me.status === 'turned_in'));
       const tutor = String((fb && fb.state && fb.state.f && fb.state.f.fTutor) || '').trim().split(/\s+/)[0];
       env.hidden = !waiting;
       if (waiting) env.innerHTML = '<b aria-hidden="true"></b>' + (tutor ? tutor + '\u2019s' : 'Your tutor\u2019s') + ' feedback is waiting \u2014 turning this in opens it';

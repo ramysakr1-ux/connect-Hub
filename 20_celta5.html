@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611190022">
+<link rel="stylesheet" href="hub-tokens.css?v=202611190102">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:980px; margin:0 auto; padding:26px 20px 80px;}
@@ -213,7 +213,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611190022">
+<link rel="stylesheet" href="hub-house.css?v=202611190102">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -226,20 +226,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611190022"></script>
-<script src="hub-hand.js?v=202611190022"></script>
-<script src="hub-ink.js?v=202611190022"></script>
-<script src="assignment-defaults.js?v=202611190022"></script>
-<script src="celta5-text.js?v=202611190022"></script>
-<script src="celta5-appendix.js?v=202611190022"></script>
-<script src="celta5-criteria.js?v=202611190022"></script>
-<script src="hub-tracker.js?v=202611190022"></script>
-<script src="observation-defaults.js?v=202611190022"></script>
-<script src="hub-shared.js?v=202611190022"></script>
-<script src="hub-store.js?v=202611190022"></script>
-<script src="hub-say.js?v=202611190022"></script>
-<script src="hub-sync.js?v=202611190022"></script>
-<script src="hub-notebook.js?v=202611190022"></script>
+<script src="celta5-pdf.js?v=202611190102"></script>
+<script src="hub-hand.js?v=202611190102"></script>
+<script src="hub-ink.js?v=202611190102"></script>
+<script src="assignment-defaults.js?v=202611190102"></script>
+<script src="celta5-text.js?v=202611190102"></script>
+<script src="celta5-appendix.js?v=202611190102"></script>
+<script src="celta5-criteria.js?v=202611190102"></script>
+<script src="hub-tracker.js?v=202611190102"></script>
+<script src="observation-defaults.js?v=202611190102"></script>
+<script src="hub-shared.js?v=202611190102"></script>
+<script src="hub-store.js?v=202611190102"></script>
+<script src="hub-say.js?v=202611190102"></script>
+<script src="hub-sync.js?v=202611190102"></script>
+<script src="hub-notebook.js?v=202611190102"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -270,7 +270,10 @@ if (IS_TRAINEE) {
   who = { name: me.name || '', token: me.token || '' };
   C = rec('chub:celta5') || {}; TT = rec('chub:celta5t') || {};
   /* The tables read the same shapes the tracker reads, from the candidate's own keys. */
-  who.tr = { id: me.token, name: me.name, tp: { plan: rec('chub:plan'), selfeval: rec('chub:selfeval'), feedback: rec('chub:feedback'), history: rec('chub:tpHistory') || {} },
+  /* REFLECT BEFORE READING (19 Nov 2026): a TP whose feedback is waiting on the trainee's self-evaluation is not on their
+     copy of the booklet yet -- its row carried the grade. The tutor's and the assessor's copy read the roster, below. */
+  const heldFb = window.hubHeldTp ? !!hubHeldTp() : false;
+  who.tr = { id: me.token, name: me.name, tp: { plan: rec('chub:plan'), selfeval: rec('chub:selfeval'), feedback: heldFb ? null : rec('chub:feedback'), history: window.hubReadableHistory ? hubReadableHistory() : (rec('chub:tpHistory') || {}) },
              assignments: rec('connect_assignment_submissions_v1') || {}, tracker: rec('chub:tracker') || {}, observations: rec('connect_observations_v1') || {} };
 } else {
   const roster = rec('connect_roster_v1') || {};

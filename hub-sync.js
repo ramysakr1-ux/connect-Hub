@@ -1115,6 +1115,15 @@
        say which copy it started from, and could undo a change made elsewhere. One full boot learns them; after that they
        are kept in this browser. */
     if (sameCopy && mode === 'tutor' && typeof REV.timetable !== 'number') sameCopy = false;
+    /* ...nor a trainee's copy that holds only the note of their feedback although their self-evaluation is in (store
+       v263, 19 Nov 2026): the store keeps a returned TP back until the self-evaluation is in, so the page after
+       turning it in has to ask again, whatever the version says. One boot brings the document. */
+    if (sameCopy && mode === 'trainee') { try { var fb9 = parse(current('chub:feedback')), se9 = parse(current('chub:selfeval'));
+      if (fb9 && fb9.held && fb9.status === 'returned' && se9 && se9.status === 'turned_in') {
+        /* once a minute at most: if the self-evaluation has not reached the store (no connection), asking on every page would not help */
+        var ask9 = +(sessionStorage.getItem('hub:heldAsk') || 0);
+        if (Date.now() - ask9 > 60000) { sessionStorage.setItem('hub:heldAsk', String(Date.now())); sameCopy = false; }
+      } } catch (e) {} }
     if (sameCopy && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
     status('Checking the course\u2026', 'busy');
     (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(){ return false; /* any trouble, an older store included: boot as before, and the boot says if the link is dead */ }) : Promise.resolve(false)).then(function(fresh){
