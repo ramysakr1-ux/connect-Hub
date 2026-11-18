@@ -112,7 +112,7 @@ const ARGS = {
 const DANGER = new Set(['deleteCourse', 'purgeCourse', 'undeleteCourse', 'restoreFromBackup', 'rotateKey', 'rotateAssessorKey', 'rotateRegisterKey', 'rotateOwnerKey', 'setOpenAiKey', 'setTutorPin', 'setMyPin',
   'installReminders', 'mailCourseFeedback', 'sendCard', 'volunteerInvite', 'volunteerNotify', 'transcribeInterview', 'transcriptionOn', 'putInterviewAudio', 'deleteInterviewAudio', 'getInterviewAudio',
   'putAsset', 'putMaterial', 'purgeMaterials', 'purgeTrainee', 'removeTrainee', 'reissueTrainee', 'renameTrainee', 'renameCourse', 'cloneCourse', 'createCourse', 'addTrainee', 'addTrainees',
-  'centresSeed', 'putDefaultGuidance', 'inboxRow', 'postAt', 'contribute', 'poolHeard', 'feedback', 'report', 'webCheck', 'aiCheck', 'setSearchKey', 'setClaudeKey']);
+  'centresSeed', 'putDefaultGuidance', 'inboxRow', 'postAt', 'contribute', 'poolHeard', 'feedback', 'report', 'webCheck', 'aiCheck', 'setSearchKey', 'setClaudeKey', 'setDrivePicker']);   // setDrivePicker: called empty as owner it switched Choose from my Drive off (18 Nov 2026)
 const MAY = { tutor: 1, owner: 1 };   // the roles a DANGER op is never exercised as
 /* presentMail as the trainee is the one call that would really send an email (to the test trainee's address), so it is
    never exercised; every other role is still asked, and must be refused (26 Oct 2026). */
