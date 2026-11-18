@@ -155,7 +155,9 @@ window.HubStore = (function(){
     /* A delete or a restore is never sent twice (24 Oct 2026): a request that
        timed out may still be running on the store, and a second one alongside
        it is how deleting c7 took other courses' records. */
-    var onlyOnce = /^(deleteCourse|undeleteCourse|purgeCourse|restoreFromBackup)$/.test(payload.op);
+    /* a recording is megabytes and a transcript is minutes: sent once. A retry nobody asked for was nine minutes of "Saving",
+       copies left in Drive, and the paid transcript run three times (18 Nov 2026). The person's own second press is the retry. */
+    var onlyOnce = /^(deleteCourse|undeleteCourse|purgeCourse|restoreFromBackup|putInterviewAudio|transcribeInterview)$/.test(payload.op);
     for (;;) {
       try { out = await once(payload, timeoutMs); }
       catch (e) { if (!e.transient || onlyOnce || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }

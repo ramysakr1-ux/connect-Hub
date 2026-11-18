@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611181643">
+<link rel="stylesheet" href="hub-tokens.css?v=202611181810">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -148,20 +148,21 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611181643">
+<link rel="stylesheet" href="hub-house.css?v=202611181810">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611181643"></script>
-<script src="hub-store.js?v=202611181643"></script>
-<script src="hub-say.js?v=202611181643"></script>
-<script src="hub-sync.js?v=202611181643"></script>
-<script src="hub-notebook.js?v=202611181643"></script>
-<script src="gtky-bank.js?v=202611181643"></script>
-<script src="fol-interview.js?v=202611181643"></script>
+<script src="hub-shared.js?v=202611181810"></script>
+<script src="hub-store.js?v=202611181810"></script>
+<script src="hub-say.js?v=202611181810"></script>
+<script src="hub-sync.js?v=202611181810"></script>
+<script src="hub-notebook.js?v=202611181810"></script>
+<script src="gtky-bank.js?v=202611181810"></script>
+<script src="fol-interview.js?v=202611181810"></script>
+<script src="hub-audio-fit.js?v=202611181810"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -477,7 +478,27 @@ let ivType = 'grammar';
    (a helper: it tends to tidy mistakes, so they correct it against the
    recording), and delete it. */
 const REC_MAX = 600; // ten minutes
-const rs = { mr: null, chunks: [], stream: null, t0: 0, timer: null, blob: null, url: '', secs: 0, mime: '', msg: '' };
+const REC_SAVE_MAX = 7.5 * 1024 * 1024, REC_FIT_OVER = 3 * 1024 * 1024, REC_FILE_MAX = 80 * 1024 * 1024;
+const rs = { mr: null, chunks: [], stream: null, t0: 0, timer: null, blob: null, url: '', secs: 0, mime: '', msg: '', busy: '', hitMax: false };
+/* A RECORDING THAT ALWAYS FITS (18 Nov 2026, hub-audio-fit.js). A heavy recording, or a file from a phone, is written again
+   in this browser as a small voice file of ten minutes at most, then waits to be listened to and saved like any other.
+   If that cannot be done here (an old browser, a file it cannot read), a recording that is small enough is kept as it is. */
+async function recFit(blob, msg){
+  rs.busy = 'Getting the recording ready…'; rs.msg = ''; window.HUB_HOLD = true; renderInterview();
+  try {
+    if (!window.HubAudioFit) throw new Error('the audio tool did not load');
+    const r = await HubAudioFit.fit(blob, { maxSeconds: REC_MAX, onProgress: f => { const b = $('recBusy'); if (b) b.textContent = 'Getting the recording ready… ' + Math.round(f * 100) + '%'; } });
+    if (rs.url) URL.revokeObjectURL(rs.url);
+    rs.blob = r.blob; rs.secs = r.seconds; rs.url = URL.createObjectURL(r.blob);
+    rs.msg = r.cut ? 'This recording was longer than ten minutes. The first ten minutes are kept.' : (msg || '');
+  } catch (e) {
+    const why = (e && e.message) || e;
+    /* a recording made on this page is never thrown away: it stays to listen to, to try again, or to keep as a file */
+    if (rs.blob === blob) rs.msg = blob.size <= REC_SAVE_MAX ? (msg || '') : 'The recording is here, but it could not be made small enough to save: ' + why + '.';
+    else { if (rs.url) URL.revokeObjectURL(rs.url); rs.blob = null; rs.url = ''; rs.secs = 0; window.HUB_HOLD = false; rs.msg = 'That file could not be used: ' + why + '.'; }
+  }
+  rs.busy = ''; if (curView() === 'interview') renderInterview();
+}
 function recMime(){ const c = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg;codecs=opus']; return (window.MediaRecorder && c.find(t => MediaRecorder.isTypeSupported(t))) || ''; }
 function clock(n){ n = Math.max(0, Math.round(n)); return Math.floor(n / 60) + ':' + ('0' + (n % 60)).slice(-2); }
 function recBox(stepNo){
@@ -493,9 +514,15 @@ function recBox(stepNo){
      center's register is the agreement; the store's putInterviewAudio follows the same rule. */
   const d = ivData(); const s = d.students[ivSel] || {}; const list = s.audio || [];
   let ctl;
-  if (rs.mr && rs.mr.state === 'recording') ctl = `<div class="rec-live" role="status"><span class="pulse"></span><b id="recClock">${clock((Date.now() - rs.t0) / 1000)}</b><span>Recording now. Keep it under ten minutes.</span></div><button class="recbig live" type="button" id="recStop"><span class="dot"></span>Stop recording</button>`;
-  else if (rs.blob) ctl = `<p class="note" style="margin:0 0 8px"><b>Not saved yet.</b> Listen if you like, then save it.</p><audio controls src="${esc(rs.url)}" style="display:block;width:100%;margin:0 0 10px"></audio><div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="recbig" type="button" id="recSave">Save the recording</button><button class="btn ghost" type="button" id="recDiscard">Discard</button><span class="note">${clock(rs.secs)}</span></div>`;
-  else ctl = `${list.length ? `<span class="rec-done">\u2713 ${list.length === 1 ? 'Recording saved' : list.length + ' recordings saved'}</span>` : ''}<p class="note" style="margin:0 0 10px">Ask ${esc(ivSel)} if you can record your chat. Put the phone or laptop between you, then press the button.</p><button class="recbig" type="button" id="recStart"><span class="dot"></span>${list.length ? 'Record again' : 'Record'}</button>`;
+  if (rs.mr && rs.mr.state === 'recording') ctl = `<div class="rec-live" role="status"><span class="pulse"></span><b id="recClock">${clock((Date.now() - rs.t0) / 1000)}</b><span>of ${clock(REC_MAX)}</span><span id="recLeft">Recording now. It stops by itself at ten minutes.</span></div><button class="recbig live" type="button" id="recStop"><span class="dot"></span>Stop recording</button>`;
+  else if (rs.busy) ctl = `<div class="rec-live" role="status"><span class="pulse"></span><span id="recBusy">${esc(rs.busy)}</span></div>`;
+  else if (rs.blob) ctl = `<p class="note" style="margin:0 0 8px"><b>Not saved yet.</b> Listen if you like, then save it.</p><audio controls src="${esc(rs.url)}" style="display:block;width:100%;margin:0 0 10px"></audio><div class="row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">${rs.blob.size > REC_SAVE_MAX
+      ? `<button class="recbig" type="button" id="recRefit">Try again</button><a class="btn ghost" id="recKeep" href="${esc(rs.url)}" download="interview.${/mp4/.test(rs.blob.type) ? 'm4a' : /mpeg/.test(rs.blob.type) ? 'mp3' : 'webm'}" style="text-decoration:none">Keep it as a file</a>`
+      : `<button class="recbig" type="button" id="recSave">Save the recording</button>`}<button class="btn ghost" type="button" id="recDiscard">Discard</button><span class="note">${clock(rs.secs)}</span></div>`;
+  else ctl = `${list.length ? `<span class="rec-done">\u2713 ${list.length === 1 ? 'Recording saved' : list.length + ' recordings saved'}</span>` : ''}<p class="note" style="margin:0 0 10px">Ask ${esc(ivSel)} if you can record your chat. Put the phone or laptop between you, then press the button.</p><button class="recbig" type="button" id="recStart"><span class="dot"></span>${list.length ? 'Record again' : 'Record'}</button>
+      <p class="note" style="margin:8px 0 0">Ten minutes at most. The clock shows how long you have, and the recording stops by itself at ten.</p>
+      <p class="note" style="margin:14px 0 6px"><b>Recorded it on your phone?</b> Open this page on the phone, or send the file to this computer, and add it here. If it is longer than ten minutes, the first ten are kept. On an iPhone: in Voice Memos, press the recording, choose Share, then Save to Files, and choose it here.</p>
+      <button class="btn ghost" type="button" id="recPick">Add a recording from a file</button><input type="file" id="recFile" accept="audio/*,video/mp4,.m4a,.mp3,.wav,.aac,.ogg,.oga,.opus,.webm,.mp4,.3gp" hidden>`;
   const saved = list.map((a, i) => `<div class="iv-rec" data-rec="${esc(a.id)}" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--row-line,#e6e0d4)">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn ghost" type="button" data-play="${esc(a.id)}">Listen</button><span class="note">Recording ${i + 1} &middot; ${clock(a.seconds || 0)}</span>
         <button class="btn ghost" type="button" data-tx="${esc(a.id)}">${a.transcript ? 'Make the transcript again' : 'Make a transcript'}</button><button class="btn ghost" type="button" data-delrec="${esc(a.id)}">Delete</button></div>
@@ -503,8 +530,10 @@ function recBox(stepNo){
       ${a.transcript != null ? `<p class="note" style="margin:8px 0 4px">The transcript is a computer's first try and may tidy mistakes. Listen, and correct it so it says exactly what ${esc(ivSel)} said.${/^(Student|Trainee): /m.test(a.transcript) ? ' It marks who is speaking. If the two are the wrong way round, <button class="btn ghost" type="button" data-swap="' + esc(a.id) + '" style="padding:2px 10px;min-height:0">swap them</button>.' : ''}</p><textarea data-txt="${esc(a.id)}" rows="5" style="width:100%;font:inherit;font-size:.9rem;padding:8px 10px;border:1.5px solid var(--sand-line);border-radius:8px;background:var(--field);color:var(--ink)">${esc(a.transcript)}</textarea>` : ''}</div>`).join('');
   return `<div class="iv-box" id="recBox"><h2>${numH}Record your chat with ${esc(ivSel)}</h2>${ctl}<p class="note" id="recMsg" style="margin:8px 0 0">${esc(rs.msg)}</p>${saved}</div>`;
 }
-function recDone(){ clearInterval(rs.timer); if (rs.stream) rs.stream.getTracks().forEach(t => t.stop()); rs.stream = null; }
-function recReset(){ recDone(); if (rs.url) URL.revokeObjectURL(rs.url); rs.mr = null; rs.chunks = []; rs.blob = null; rs.url = ''; rs.secs = 0; rs.msg = ''; }
+function recWake(){ try { if (navigator.wakeLock && navigator.wakeLock.request) navigator.wakeLock.request('screen').then(w => { rs.wake = w; }, () => {}); } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && rs.mr && rs.mr.state === 'recording') recWake(); });
+function recDone(){ clearInterval(rs.timer); try { if (rs.wake) rs.wake.release(); } catch (e) {} rs.wake = null; if (rs.stream) rs.stream.getTracks().forEach(t => t.stop()); rs.stream = null; }
+function recReset(){ recDone(); if (rs.url) URL.revokeObjectURL(rs.url); rs.mr = null; rs.chunks = []; rs.blob = null; rs.url = ''; rs.secs = 0; rs.msg = ''; rs.busy = ''; rs.hitMax = false; rs.lost = false; window.HUB_HOLD = false; }
 function recErr(msg){ rs.msg = msg; const m = $('recMsg'); if (m) m.textContent = msg; }
 function b64(blob){ return new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(',')[1] || ''); f.onerror = rej; f.readAsDataURL(blob); }); }
 function ivCall(body, ms){ if (HubStore.token && HubStore.token()) body.token = HubStore.token(); return HubStore.call(body, ms); }
@@ -517,23 +546,48 @@ function wireRecording(){
       recReset(); rs.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       rs.mime = recMime(); rs.mr = rs.mime ? new MediaRecorder(rs.stream, { mimeType: rs.mime, audioBitsPerSecond: 24000 }) : new MediaRecorder(rs.stream);
       rs.chunks = []; rs.mr.ondataavailable = e => { if (e.data && e.data.size) rs.chunks.push(e.data); };
-      rs.mr.onstop = () => { recDone(); rs.secs = Math.round((Date.now() - rs.t0) / 1000); rs.blob = new Blob(rs.chunks, { type: rs.mr.mimeType || rs.mime || 'audio/webm' }); rs.url = URL.createObjectURL(rs.blob); if (rs.blob.size > 7.5 * 1024 * 1024) rs.msg = 'That recording is too long to save. Keep an interview under ten minutes.'; renderInterview(); };
-      rs.t0 = Date.now(); rs.mr.start(1000);
-      rs.timer = setInterval(() => { const c = $('recClock'); if (c) c.textContent = clock((Date.now() - rs.t0) / 1000); if ((Date.now() - rs.t0) / 1000 >= REC_MAX && rs.mr && rs.mr.state === 'recording') rs.mr.stop(); }, 500);
+      rs.mr.onstop = () => { recDone(); rs.secs = Math.round((Date.now() - rs.t0) / 1000); rs.blob = new Blob(rs.chunks, { type: rs.mr.mimeType || rs.mime || 'audio/webm' }); rs.url = URL.createObjectURL(rs.blob);
+        if (rs.lost) rs.msg = 'The microphone stopped: the screen locked, or a call or another app took it. What was recorded until then is here.';
+        else if (rs.hitMax) rs.msg = 'Stopped at ten minutes, the most a recording can be. Those ten minutes are here to save.';
+        /* some browsers ignore the small size asked for (Safari): anything heavy is written again as a small voice file */
+        if (rs.blob.size > REC_FIT_OVER || !/webm|ogg/i.test(rs.blob.type || '')) { recFit(rs.blob, rs.msg); return; }
+        renderInterview(); };
+      /* A PHONE LEFT ON THE TABLE (18 Nov 2026): the screen is asked to stay on, since a locked phone stops listening; and if
+         the microphone does stop (a call, another app, the lock), the recording ends there and says so, with what it has. */
+      recWake();
+      rs.stream.getAudioTracks().forEach(t => t.addEventListener('ended', () => { if (rs.mr && rs.mr.state === 'recording') { rs.lost = true; rs.mr.stop(); } }));
+      if (window.HubAudioFit && HubAudioFit.ready) HubAudioFit.ready();   // the tool that makes a heavy recording small: fetched now, not at the end
+      rs.t0 = Date.now(); rs.mr.start(1000); window.HUB_HOLD = true;   // hub-sync: no refresh of this page while a recording is being made or waits to be saved
+      rs.timer = setInterval(() => { const c = $('recClock'); if (c) c.textContent = clock((Date.now() - rs.t0) / 1000); const left = REC_MAX - (Date.now() - rs.t0) / 1000, lf = $('recLeft'); if (lf && left <= 60) { lf.textContent = left > 1 ? 'Less than a minute left. It stops by itself at ten minutes.' : 'Stopping.'; lf.style.color = 'var(--brick)'; lf.style.fontWeight = '700'; }
+        if ((Date.now() - rs.t0) / 1000 >= REC_MAX && rs.mr && rs.mr.state === 'recording') { rs.hitMax = true; } if ((Date.now() - rs.t0) / 1000 >= REC_MAX && rs.mr && rs.mr.state === 'recording') rs.mr.stop(); }, 500);
       renderInterview();
     } catch (e) { recReset(); recErr('The microphone is not available. Allow it in the browser, then try again.'); }
   });
+  if ($('recPick')) $('recPick').addEventListener('click', () => $('recFile').click());
+  if ($('recFile')) $('recFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    if (f.size > REC_FILE_MAX) { recErr('That file is ' + Math.round(f.size / 1048576) + ' MB, which is too big to read here. Cut it to the ten minutes you want first.'); e.target.value = ''; return; }
+    e.target.value = '';
+    /* a whole session left recording would be read into memory whole before its first ten minutes are cut: ask its length first */
+    const a = new Audio(), u = URL.createObjectURL(f); let done = false;
+    const go = () => { if (done) return; done = true; URL.revokeObjectURL(u);
+      if (isFinite(a.duration) && a.duration > 1800) { recErr('That recording is about ' + Math.round(a.duration / 60) + ' minutes long, which is too long to read here. Cut it to the ten minutes you want first, then add it.'); return; }
+      recReset(); recFit(f, ''); };
+    a.preload = 'metadata'; a.addEventListener('loadedmetadata', go); a.addEventListener('error', go); setTimeout(go, 4000); a.src = u;
+  });
   if ($('recStop')) $('recStop').addEventListener('click', () => { if (rs.mr && rs.mr.state === 'recording') rs.mr.stop(); });
   if ($('recDiscard')) $('recDiscard').addEventListener('click', () => { recReset(); renderInterview(); });
+  if ($('recRefit')) $('recRefit').addEventListener('click', () => { if (rs.blob) recFit(rs.blob, ''); });
   if ($('recSave')) $('recSave').addEventListener('click', async () => {
-    if (!rs.blob || rs.blob.size > 7.5 * 1024 * 1024) { recErr('That recording is too long to save.'); return; }
-    $('recSave').disabled = true; recErr('Saving\u2026');
+    if (!rs.blob) return;
+    if (rs.blob.size > REC_SAVE_MAX) { recErr('This recording is ' + (rs.blob.size / 1048576).toFixed(1) + ' MB, and the most that can be saved is 7.5 MB. Record it again, a little shorter.'); return; }
+    $('recSave').disabled = true; recErr('Saving\u2026 On a slow connection this can take a few minutes. Keep this page open.');
     try {
       const r = await ivCall({ op: 'putInterviewAudio', student: ivSel, bytes: await b64(rs.blob), type: rs.blob.type, seconds: rs.secs }, 180000);
       if (r && r.demo) { recReset(); rs.msg = (window.HubStore && HubStore.isTemplate && HubStore.isTemplate()) ? 'This is the trainee view, so the recording is not saved.' : 'This is a demo course, so the recording is not saved.'; renderInterview(); return; }
       const d = ivData(); const s = ivEnsure(d, ivSel); s.audio = s.audio || []; s.audio.push({ id: r.id, at: new Date().toISOString(), seconds: rs.secs, size: r.size });
       ivSave(d); recReset(); rs.msg = 'Saved. Listen to it below, and make a transcript if you want one.'; renderInterview();
-    } catch (e) { $('recSave').disabled = false; recErr('Not saved \u2014 ' + ((e && e.message) || e)); }
+    } catch (e) { $('recSave').disabled = false; recErr('Not saved \u2014 ' + ((e && e.message) || e) + '. The recording is still here: press Save to try again.'); }
   });
   app.querySelectorAll('[data-tx]').forEach(b => b.addEventListener('click', async () => {
     b.disabled = true; recErr('Making the transcript. A short chat takes about a minute; a long one a few minutes. Keep this page open.');
@@ -565,6 +619,7 @@ function wireInterview(){
   const app = $('app');
   app.querySelectorAll('[data-stu]').forEach(b => b.addEventListener('click', () => {
     const n = b.dataset.stu, c = claimState(n); claimMsg = '';
+    if (n !== ivSel && ((rs.mr && rs.mr.state === 'recording') || rs.busy || rs.blob)) { recErr('Save or discard this recording with ' + ivSel + ' first.'); const rb = $('recBox'); if (rb) rb.scrollIntoView({ block: 'center' }); return; }
     if (!IS_TRAINEE || !CLAIMS || c.mine || !regNames().some(x => keyOf(x) === keyOf(n))) { ivSel = n; renderInterview(); return; }
     if (IS_MAYA) { MAYA = MAYA.filter(k => ivStarted(k)); MAYA.push(keyOf(n)); mayaPut(); ivSel = n; renderInterview(); return; }
     b.disabled = true;
