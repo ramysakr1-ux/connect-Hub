@@ -245,6 +245,15 @@
     });
   }
 
+  /* Every hour a class's days hold, each day counted by its own lessons (a day with a third session counts it). The
+     register's footnote reads this, so it matches the hours on the rows. No level: every day. */
+  function fullHours(cd, level) {
+    return daysFor(cd, level, null).reduce(function (n, d) {
+      var p = cd.perDay && cd.perDay[d];
+      return n + (p ? p.lessons * p.lessonMinutes : cd.lessons * cd.lessonMinutes) / 60;
+    }, 0);
+  }
+
   /* The next mark when a tutor taps one: nothing, in the room, part of it,
      and back. Three taps to get where you started, so nothing is trapped. */
   function nextMark(mark) {
@@ -254,7 +263,7 @@
   var api = { TICK_MINUTES: TICK_MINUTES, PARTIAL_MINUTES: PARTIAL_MINUTES,
               lessonsNeededForPresent: lessonsNeededForPresent, dayCredit: dayCredit,
               record: record, describe: describe, certificate: certificate, nextMark: nextMark,
-              atLevel: atLevel, completedOn: completedOn, hoursForLevel: hoursForLevel, classDays: classDays, daysFor: daysFor };
+              atLevel: atLevel, completedOn: completedOn, hoursForLevel: hoursForLevel, classDays: classDays, daysFor: daysFor, fullHours: fullHours };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.hubAttendance = api;
 })(typeof window !== 'undefined' ? window : globalThis);

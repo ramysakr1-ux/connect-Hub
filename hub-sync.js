@@ -718,6 +718,8 @@
   function quiet(){ return !Object.keys(queue).length && !Object.keys(ledger()).length && !timer && !window.HUB_HOLD; }
   document.addEventListener('visibilitychange', function(){
     if (document.visibilityState !== 'visible' || DEMO || !started || !PAGE_VER || !S.version) return;
+    /* a newer course already taken in the background, and not yet drawn: coming back to the tab draws it */
+    if (OWED && quiet() && idle()) { quietReload(); return; }
     if (Date.now() - LAST_LOOK < 60000 || !quiet()) return;
     LAST_LOOK = Date.now();
     S.version().then(function(r){
@@ -740,21 +742,38 @@
     var a = document.activeElement, tag = a && a.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (a && a.isContentEditable)) return false;
     if (document.querySelector('.confirm-overlay, dialog[open], [aria-modal="true"]:not([hidden])')) return false;
-    return (window.scrollY || 0) < 400;
+    /* words written and not sent yet (a notice typed on the dashboard, left for a moment) are never thrown away */
+    if ([].some.call(document.querySelectorAll('textarea'), function(t){ return t.value && t.value !== t.defaultValue; })) return false;
+    return true;
   }
+  /* QUIETER (Ramy, 18 Nov 2026, C/21's TP week: "is there any way we make the screen stop resetting every time someone
+     saves something. It happens too often ... make it stop or make it less visible"). With trainees and the other tutor
+     saving all afternoon, the page reloaded nearly every two minutes. Now the look takes the newer course in the
+     background, silently, and the page is drawn again with it at most once every ten minutes, with no pill, and the
+     reader kept where they were on the page. Coming back to the tab, or opening another page, still shows the newest. */
+  var KEEP_Y = 'hub:glanceY:' + location.pathname, OWED = false;
+  try { var y0 = sessionStorage.getItem(KEEP_Y); if (y0 != null) { sessionStorage.removeItem(KEEP_Y); var back = function(){ setTimeout(function(){ window.scrollTo(0, +y0 || 0); }, 60); }; if (document.readyState === 'complete') back(); else window.addEventListener('load', back); } } catch (e) {}
+  function quietReload(){ try { sessionStorage.setItem(KEEP_Y, String(window.scrollY || 0)); } catch (e) {} location.reload(); }
   if (GLANCE) setInterval(function(){
     if (document.visibilityState !== 'visible' || DEMO || !started || !PAGE_VER || !S.version || !quiet() || !idle()) return;
+    /* the owed redraw takes the course once more first, so the page that opens is not sent round a second time */
+    if (OWED && Date.now() - OPENED > 600000) { OWED = false; LAST_LOOK = Date.now(); dirty = {}; window.HubSync.refresh().then(function(){ markVer(); OWED = true; if (quiet() && idle()) quietReload(); }).catch(function(){ OWED = true; }); return; }
     if (Date.now() - LAST_LOOK < 110000) return;
     LAST_LOOK = Date.now();
     S.version().then(function(r){
       if (!quiet() || !idle()) return;
       if (r && r.ver && r.ver !== PAGE_VER) {
-        status('The course has moved on \u2014 refreshing', 'busy');
         dirty = {};
-        return window.HubSync.refresh().then(function(){ markVer(); location.reload(); });
+        return window.HubSync.refresh().then(function(){
+          markVer();
+          /* a page that can draw itself again from the new course (the tutors' dashboard: HUB_REDRAW) does so in place,
+             with no reload at all; the others are owed one */
+          if (typeof window.HUB_REDRAW === 'function') { try { window.HUB_REDRAW(); return; } catch (e) {} }
+          OWED = true; if (Date.now() - OPENED > 600000 && quiet() && idle()) quietReload();
+        });
       }
       /* nothing written, but the clock has moved: the home's card is drawn again, from this browser's copy */
-      if (/(?:^|\/)(?:index\.html)?$/.test(location.pathname) && Date.now() - OPENED > 600000) location.reload();
+      if (/(?:^|\/)(?:index\.html)?$/.test(location.pathname) && Date.now() - OPENED > 600000) quietReload();
     }).catch(function(){});
   }, 30000);
   var MERGE_NAMES = { timetable: 'the timetable', wording: 'the assignment dates', settings: 'the course settings', tppoints: 'the TP points', volunteers: 'the volunteer register' };
