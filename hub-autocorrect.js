@@ -6,8 +6,8 @@
      with no list to choose from. No grammar, no capitals, no style, and never British to American spelling or the other
      way: the tutor's English is theirs.
    - Backspace straight after puts the word back, and that word is left alone on this page from then on.
-   - a small note on the field says what changed, with Undo and Turn off.
-   - on or off per device, from the note or the dashboard's Course menu (localStorage 'hub:autocorrect').
+   - no note when a word changes (Ramy: "distracting").
+   - on or off per device, from the pill in the page's bottom bar or the dashboard's Course menu (localStorage 'hub:autocorrect').
    Tutors only: trainees and students get no correction at all (hub-store.js, 16 Nov 2026). A field marked
    autocorrect="off" is left alone. Loaded by hub-store.js. */
 (function(){
@@ -123,54 +123,14 @@
     return r.startContainer.data.slice(Math.max(0, r.startOffset - 40), r.startOffset);
   }
 
-  /* THE NOTE: small, just under the box, gone after five seconds. */
-  var note, noteTimer;
-  function css(){
-    if (document.getElementById('acStyle')) return;
-    var s = document.createElement('style'); s.id = 'acStyle';
-    s.textContent = '.ac-note{position:absolute; z-index:60; display:flex; align-items:center; gap:10px; flex-wrap:wrap; max-width:calc(100vw - 32px); padding:6px 10px; background:var(--paper,#fffdf8); border:1px solid var(--sand-line,#e2d6bf); border-top:3px solid var(--teal,#1e6b63); border-radius:8px; box-shadow:0 6px 18px -8px rgba(40,30,15,.3); font:500 0.8rem/1.3 Karla,sans-serif; color:var(--ink,#2a2418);}' +
-      '.ac-note b{font-weight:700;} .ac-note button{font:700 0.78rem Karla,sans-serif; color:var(--teal,#1e6b63); background:none; border:0; padding:4px 2px; cursor:pointer; text-decoration:underline; text-underline-offset:2px;}' +
-      '.ac-note button:hover{color:var(--ink,#2a2418);}';
-    document.head.appendChild(s);
-  }
-  function hideNote(){ clearTimeout(noteTimer); if (note) { note.remove(); note = null; } }
-  function say(field, html, buttons, ms){
-    css(); hideNote();
-    note = document.createElement('div'); note.className = 'ac-note'; note.setAttribute('role', 'status');
-    note.innerHTML = '<span>' + html + '</span>';
-    (buttons || []).forEach(function(b){ var x = document.createElement('button'); x.type = 'button'; x.textContent = b[0];
-      x.addEventListener('mousedown', function(e){ e.preventDefault(); }); x.addEventListener('click', function(){ b[1](); }); note.appendChild(x); });
-    document.body.appendChild(note);
-    var r = field.getBoundingClientRect(), w = note.offsetWidth, h = note.offsetHeight;
-    /* Under the box (Ramy, 18 Nov 2026: "move it under the box"), so it never covers the words being written. Where the
-       space under it is taken by the page's bottom bar or the screen's edge, it goes above the box instead. */
-    var bar = 0; note.style.visibility = 'hidden';
-    for (var x = document.elementFromPoint(innerWidth / 2, innerHeight - 4); x && x !== document.body; x = x.parentElement) {
-      var ps = getComputedStyle(x).position; if (ps === 'fixed' || ps === 'sticky') { bar = Math.max(0, innerHeight - x.getBoundingClientRect().top); break; } }
-    if (bar > innerHeight / 3) bar = 0;
-    note.style.visibility = '';
-    var left = Math.min(Math.max(16, r.left), innerWidth - w - 16), top = r.bottom + 6;
-    if (top + h > innerHeight - bar - 6) top = r.top - h - 6;
-    if (top < 6) top = Math.min(r.bottom, innerHeight - bar) + 6 > innerHeight - h ? 6 : Math.min(r.bottom, innerHeight - bar) - h - 6; // a box taller than the screen
-    note.style.left = (left + scrollX) + 'px'; note.style.top = (top + scrollY) + 'px';
-    noteTimer = setTimeout(hideNote, ms || 5000);
-  }
-  var esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-
   function undo(){
-    var c = last; last = null; hideNote(); if (!c) return;
+    var c = last; last = null; if (!c) return;
     kept[c.was.toLowerCase()] = 1;
     c.field.focus();
     var before = textBefore(c.field);
     var tail = c.fix + c.end;
     if (before != null && before.slice(-tail.length) === tail) replaceBefore(c.field, tail.length, c.was + c.end);
   }
-  function turnOff(field){
-    setOn(false); last = null;
-    say(field, 'Autocorrect is off on this device. Turn it back on from the Course menu on your dashboard.', [], 6000);
-    syncMenu();
-  }
-
   document.addEventListener('input', function(e){
     if (e.inputType !== 'insertText' || e.isComposing || !isOn() || !tutor()) return;
     var field = editable(e.target); if (!field) return;
@@ -182,30 +142,59 @@
     if (!fix) { last = null; return; }
     replaceBefore(field, m[2].length + endCh.length, fix + endCh);
     last = { field: field, was: m[2], fix: fix, end: endCh };
-    say(field, 'Changed <b>' + esc(m[2]) + '</b> to <b>' + esc(fix) + '</b>.', [['Undo', undo], ['Turn off', function(){ turnOff(field); }]]);
   }, true);
 
   document.addEventListener('keydown', function(e){
     if (!last) return;
     if (e.key === 'Backspace' && !e.metaKey && !e.ctrlKey && !e.altKey && editable(e.target) === last.field) { e.preventDefault(); undo(); return; }
-    if (e.key === 'Escape') { hideNote(); return; }
-    if (e.key.length === 1 || e.key === 'Enter') last = null; // they kept typing: the note stays, Backspace is theirs again
+    if (e.key.length === 1 || e.key === 'Enter') last = null; // they kept typing: Backspace is theirs again
   }, true);
-  document.addEventListener('mousedown', function(e){ if (note && !note.contains(e.target)) { last = null; } }, true);
-  addEventListener('scroll', function(){ if (note) hideNote(); }, { passive: true });
+  document.addEventListener('mousedown', function(){ last = null; }, true);
 
-  /* The dashboard's switch: <a id="menuAutocorrect"> in the Course menu. */
+  /* THE SWITCH (Ramy, 18 Nov 2026: "we can do without the comments at the bottom. It's distracting. Let's just have like a
+     general on and off pill"). No note when a word changes. One setting for every page on this device, shown as a pill in
+     the page's bottom bar (the feedback form, beside Dictate; on a phone, under the form's opening lines) and as a line in the dashboard's Course menu. */
+  function pillCss(){
+    if (document.getElementById('acStyle')) return;
+    var s = document.createElement('style'); s.id = 'acStyle';
+    s.textContent = '.ac-pill{display:inline-flex; align-items:center; gap:7px; white-space:nowrap; background:var(--field,#fbf7ee); color:var(--teal,#1e6b63); border:2px solid var(--teal,#1e6b63); padding:9px 14px; border-radius:20px; font:700 0.86rem Karla,sans-serif; cursor:pointer;}' +
+      '.ac-pill .sw{width:26px; height:14px; border-radius:8px; background:var(--teal,#1e6b63); position:relative; flex:none; transition:background .15s;}' +
+      '.ac-pill .sw::after{content:""; position:absolute; top:2px; left:14px; width:10px; height:10px; border-radius:50%; background:var(--paper,#fffdf8); transition:left .15s;}' +
+      '.ac-pill.off{color:var(--grey,#6b6458); border-color:var(--sand-line,#d9cdb5);} .ac-pill.off .sw{background:var(--sand-line,#d9cdb5);} .ac-pill.off .sw::after{left:2px;}' +
+      '.ac-pill:hover{background:var(--sand-deep,#f1e8d6);}' +
+      '.ac-row{display:flex; justify-content:center; margin:4px 0 12px;}';
+    document.head.appendChild(s);
+  }
+  function placePill(){
+    if (!tutor() || document.getElementById('acPill')) return;
+    var slot = document.querySelector('.actionbar .rhs'); if (!slot) return;
+    pillCss();
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'acPill'; b.className = 'ac-pill';
+    /* A phone's bottom bar is full (Return, Dictate, Print): there the pill sits under the form's opening lines instead. */
+    var head = document.querySelector('.header .sub');
+    if (innerWidth < 560 && head) { var row = document.createElement('div'); row.className = 'ac-row'; row.appendChild(b); head.parentNode.insertBefore(row, head.nextSibling); }
+    else { var before = slot.querySelector('.dictbar') || document.getElementById('pdfBtn');
+      if (before && before.parentNode === slot) slot.insertBefore(b, before); else slot.appendChild(b); }
+    syncMenu();
+  }
   function syncMenu(){
-    var a = document.getElementById('menuAutocorrect'); if (!a) return;
-    a.hidden = !tutor();
-    a.innerHTML = 'Autocorrect <small>' + (isOn() ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>';
+    var on = isOn();
+    var a = document.getElementById('menuAutocorrect');
+    if (a) { a.hidden = !tutor(); a.innerHTML = 'Autocorrect <small>' + (on ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
+    var b = document.getElementById('acPill');
+    if (b) { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.title = on ? 'Autocorrect fixes misspelled words as you type. Press to turn it off.' : 'Autocorrect is off. Press to turn it on.';
+      b.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Autocorrect ' + (on ? 'on' : 'off') + '</span>'; }
   }
   document.addEventListener('click', function(e){
-    var a = e.target.closest && e.target.closest('#menuAutocorrect'); if (!a) return;
-    e.preventDefault(); setOn(!isOn()); syncMenu();
+    var a = e.target.closest && e.target.closest('#menuAutocorrect, #acPill'); if (!a) return;
+    e.preventDefault(); setOn(!isOn()); last = null; syncMenu();
   });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', syncMenu); else syncMenu();
-  document.addEventListener('hub:ready', syncMenu);
+  addEventListener('storage', function(e){ if (e.key === KEY) syncMenu(); });
+  var boot = function(){ placePill(); syncMenu(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  document.addEventListener('hub:ready', boot);
+  setTimeout(boot, 1500);
 
   window.hubAutocorrect = { on: isOn, set: function(v){ setOn(v); syncMenu(); }, fixFor: fixFor };
 })();
