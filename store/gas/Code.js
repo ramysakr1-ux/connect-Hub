@@ -1840,6 +1840,7 @@ case 'inbox': {
       if (!me) throw new Error('No token');
       if (!TRAINEE_READS[kind]) throw new Error('Not yours to read: ' + kind);
       if (kind === 'tracker') return { data: traineeTracker_(read_(course.id, me.token, kind)) };
+      if (kind === 'celta5t') return { data: traineeCelta5t_(read_(course.id, me.token, kind)) };
       return { data: read_(course.id, me.token, kind) };
     }
     case 'put': {
@@ -4962,6 +4963,19 @@ function traineeTracker_(t) {
   });
   return out;
 }
+/* THE TUTORS' HALF OF THE CELTA 5, AS A TRAINEE MAY READ IT (v261, 18 Nov 2026). Ramy: "how do we know that the trainees
+   will not look at stage 1 while the tutor is writing it?" They could: a tutor's draft is saved as it is typed, and the
+   whole of the tutors' half went to the trainee's browser. A stage reaches the trainee once it is returned, and the final
+   part once the tutor has signed it; until then that part is sent empty. Everything else (the cover, attendance) is as
+   before. The record itself is not changed; this is only what a trainee is handed. */
+function traineeCelta5t_(t) {
+  if (!t || typeof t !== 'object') return t;
+  var out = {};
+  Object.keys(t).forEach(function (k) { out[k] = t[k]; });
+  ['stage1', 'stage2', 'stage3'].forEach(function (k) { if (out[k] && !out[k].returnedAt) out[k] = {}; });
+  if (out.final && !(out.final.signed && out.final.signed.at)) out.final = {};
+  return out;
+}
 function foldRecord_(bucket, kind, json, kinds) {
   var n = tpOf_(kind);
   var base = n ? 'tpHistory' : kind;
@@ -4969,6 +4983,7 @@ function foldRecord_(bucket, kind, json, kinds) {
   if (!kinds[base] && !TRAINEE_READS[base]) return;
   var data; try { data = JSON.parse(unpackRecord_(json)); } catch (e) { return; }
   if (base === 'tracker' && kinds === TRAINEE_READS) data = traineeTracker_(data);
+  if (base === 'celta5t' && kinds === TRAINEE_READS) data = traineeCelta5t_(data);
   if (base !== 'tpHistory') { bucket[kind] = data; return; }
   bucket.tpHistory = bucket.tpHistory || {};
   bucket._tpRows = bucket._tpRows || {};
