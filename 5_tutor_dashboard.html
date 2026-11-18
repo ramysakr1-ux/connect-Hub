@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611182310">
+<link rel="stylesheet" href="hub-tokens.css?v=202611190022">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -414,80 +414,138 @@
 
   /* ---- rows ------------------------------------------------------------ */
   .rows{padding-top:26px;}
-  .grid{display:grid; gap:16px; align-items:center;}
-  .ghead{padding:0 4px 9px; border-bottom:1px solid var(--sand-line);
-    font-family:'Instrument Sans',sans-serif; font-size:10px; font-weight:600; letter-spacing:0.1em;
-    text-transform:uppercase; color:var(--grey);}
-  .grow{padding:13px 4px; border-bottom:1px solid var(--row-line);}
-  /* the assignment sections */
-  .asec{border:1px solid var(--sand-line); border-radius:10px; background:var(--paper); margin:12px 0 0; overflow:hidden;}
-  .asec.open{border-color:var(--sand-line-deep, oklch(78% 0.02 80));}
-  .ahead{display:flex; align-items:baseline; gap:12px; width:100%; text-align:left; padding:14px 16px; background:var(--card); border:0; cursor:pointer; font-family:'Karla',sans-serif; color:var(--ink);}
-  .ahead:hover{background:var(--sand-deep);}
-  .ahead .code{font-family:'Instrument Sans','Karla',sans-serif; font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--teal);}
-  .ahead .full{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600;}
-  .ahead .bits{margin-left:auto; font-size:0.8rem; color:var(--grey); text-align:right;}
-  .ahead .bits b.brick{color:var(--tone-stuck); font-weight:700;}
-  .ahead .caret{color:var(--grey); font-size:0.9rem;}
-  .abody{padding:0 16px 10px;}
-  .abody .grouphead{padding-top:14px;}
-  .st.faint{color:var(--faint); font-style:italic;}
-  @media (max-width:640px){ .ahead{flex-wrap:wrap;} .ahead .bits{margin-left:0; flex-basis:100%; text-align:left;} }
-  .grouphead{display:flex; align-items:baseline; gap:10px; padding:18px 4px 6px; border-bottom:1px solid var(--sand-line);}
-  .grouphead b{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600; color:var(--ink);}
-  .grouphead span{font-size:0.78rem; color:var(--grey);}
-  .grow .nm{font-size:0.92rem; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center;}
-  .grow .mid{font-size:0.88rem; color:var(--grey); min-width:0;}
-  .grow .st{font-size:0.88rem; min-width:0; text-wrap:pretty; color:var(--grey);}
-  .grow .st.ok{color:var(--teal); font-weight:600;}   /* every sheet in and six hours reached */
-  .grow .st.amber{color:var(--gold-deep);}
-  .grow .st.brick{color:var(--tone-stuck);}
-  .grow .act{text-align:right;}
-  /* One width for every row action, whatever the label. */
-  .act .rowbtn.pair{width:auto; padding:0 14px;} .act .rowbtn.pair + .rowbtn.pair{margin-left:6px;}
-  .rowbtn{display:inline-flex; align-items:center; justify-content:center; width:148px; height:32px;
-    font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:600; border-radius:6px;
-    border:1.5px solid var(--sand-line); background:var(--box); color:var(--ink);
-    text-decoration:none; white-space:nowrap; cursor:pointer;}
-  .rowbtn.go{border-color:var(--teal); background:var(--teal); color:var(--paper); font-weight:700;}
-  .rowbtn.go:hover{background:var(--teal-lifted); border-color:var(--teal-lifted);}
-  .empty{padding:26px 4px; font-size:0.9rem; color:var(--grey);}
-
-
-  /* the Trainees tab: one row a trainee, each cell labelled (16 Nov 2026) */
-  .trc{display:grid; grid-template-columns:minmax(150px,1.2fr) 1fr 1fr 1.1fr auto; gap:14px; align-items:start; padding:14px 4px; border-bottom:1px solid var(--row-line);}
-  .trc-who{display:flex; align-items:center; font-size:0.95rem; font-weight:600; min-width:0;}
-  .trc-who span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .trc-c{display:flex; flex-direction:column; gap:2px; min-width:0;}
-  .trc-l{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
-  .trc-v{font-size:0.9rem; font-weight:700; color:var(--ink);}
+  /* ---- THE LIST, REDESIGNED (Ramy, 18 Nov 2026: "I like that we have the different groups now ... Redesign it").
+     The rows lay on the page's own ground with a heading line between the groups, every cell repeated its label and
+     every row ended in a wide empty box. Now a group is a card: its name, how many, what is waiting on you and its one
+     door; the column headings once, over columns that cannot move (the heading row and the rows share one grid, which
+     is what the header row of 16 Nov lacked); then a row a trainee. A status carries a mark as well as its word -- a
+     tick for done, a half for under way, a ring for not there yet, and the ring with a red light in it when most of
+     the group have the thing and this trainee does not -- and only what
+     waits on the tutor is a pill. A row that waits on you has a mustard edge and the forest button; every other
+     button is quiet.
+     Under 820px the heading row goes and each status carries its own label: beside it, a line a status, or (teaching
+     practice, on a phone 390px wide or more) over it, in three columns. ---- */
+  /* ONE SIZE FOR THE TWO PILLS (Ramy, 18 Nov 2026: "Make the mustard pills the same size as the green pills, and then put
+     the waiting time inside. This way they can all be aligned and the same size"). What waits on you (mustard) and the
+     button that does it (forest) share a width and a height, and how long it has waited is inside the mustard one, so
+     no row is taller than the next. */
+  #rows{--pill-w:148px; --pill-h:40px;}
+  .gcard, .asec{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); overflow:hidden;}
+  /* CENTRED AND SYMMETRICAL (Ramy, 18 Nov 2026: "aligned with each other and with what's underneath them ... they're all
+     centered and symmetrical"). The name takes what room is left; every status column and the button's column are the
+     pill's width, and a heading, the status under it, the pill and the button are all centred on the same line. */
+  .gcard{margin:0 0 16px; --cols:minmax(180px,1fr) repeat(4, minmax(0,var(--pill-w)));}
+  .gcard.g-tr{--cols:minmax(180px,1fr) repeat(3, minmax(0,168px)) 176px;}   /* longer statuses, and two doors a row */
+  .asec{margin:0 0 12px; --cols:minmax(180px,1fr) minmax(0,220px) minmax(0,var(--pill-w));}   /* room for the longest status on one line */
+  .grouphead{display:flex; align-items:center; flex-wrap:wrap; gap:2px 10px; padding:16px 22px 0; min-height:32px;}
+  .gcard > .grouphead{display:grid; grid-template-columns:var(--cols); column-gap:16px;}
+  .gh-t{grid-column:1 / -2; display:flex; align-items:center; flex-wrap:wrap; gap:2px 10px; min-width:0;}
+  .grouphead b{font-family:'Newsreader',Georgia,serif; font-size:1.22rem; font-weight:600; color:var(--ink);}
+  .grouphead span{font-size:0.82rem; color:var(--grey);}
+  .grouphead .gwait{font-weight:700; color:var(--tone-stuck);}   /* what is due is the pen, as the number on the card above is */
+  .grouphead .gwait::before{content:'\00b7\00a0\00a0'; font-weight:400; color:var(--grey);}
+  /* the door stands over the column of buttons and is their width, so its edges are theirs (Ramy, 18 Nov 2026: "make sure
+     the headings align with the pills") */
+  .gdoor{grid-column:-2 / -1; margin-left:auto; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:100%; max-width:var(--pill-w); height:32px; padding:0; border-radius:999px;
+    border:1.5px solid var(--teal); color:var(--teal); font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:700; text-decoration:none; white-space:nowrap;}
+  .gcols{display:grid; grid-template-columns:var(--cols); column-gap:16px; padding:10px 22px 8px; border-bottom:1px solid var(--row-line); white-space:nowrap; text-align:center;}
+  .gcols, .trc-l{font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+  .trc{display:grid; grid-template-columns:var(--cols); column-gap:16px; align-items:center; padding:11px 22px; border-bottom:1px solid var(--row-line);}
+  .trc:last-child{border-bottom:0;}
+  .trc.need{box-shadow:inset 3px 0 0 var(--a-mustard);}
+  .trc-who{display:flex; align-items:center; min-width:0; font-size:0.95rem; font-weight:600; color:var(--ink);}
+  .trc-who .nm{min-width:0; overflow-wrap:anywhere;}   /* a long name takes a second line; it is never cut */
+  .trc-who .tpn{flex:none; margin-left:9px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--grey);}
+  .trc-cells{display:contents;}
+  .trc-c{display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; text-align:center;}
+  /* on a wide screen the label is the column's heading; each cell keeps its own for a screen reader */
+  .trc-l{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;}
+  .trc-v{max-width:100%; font-size:0.9rem; line-height:1.3; font-weight:600; color:var(--ink); text-wrap:balance;}
+  .trc-v::before{content:''; display:inline-block; width:9px; height:9px; margin:-2px 7px 0 0; border-radius:50%; box-sizing:border-box; vertical-align:middle;}
+  /* THE RED LIGHT MEANS BEHIND THE REST, NOT EMPTY (Ramy, 19 Nov 2026: "the red light is for something that is like late
+     ... an outstanding thing, not just random light ... observation 0 of 6 turned in should not be red, but if everyone
+     turned in except one person, then it should be red"). A plain ring is something not there yet. The ring takes its
+     red light when more than half of that trainee's group already have the thing and this trainee does not (markBehind).
+     It went through two earlier shapes the same evening: on a plan not in only, then on every ring. */
   .trc-v.faint{font-weight:500; color:var(--grey);}
+  .trc-v.faint::before{border:1.5px solid color-mix(in oklch, var(--grey) 50%, transparent);}
+  .trc-v.late{color:var(--ink);}
+  .trc-v.late::before{width:10px; height:10px; border:1.5px solid color-mix(in oklch, var(--tone-stuck) 60%, transparent); background:radial-gradient(circle, var(--tone-stuck) 0 2.5px, transparent 3px);}
   .trc-v.in{color:var(--teal);}
-  .trc-v.ok{color:var(--teal);} .trc-v.ok::before{content:'\2713\00a0';}   /* the escape eats one space; a no-break space keeps the gap */
-  .trc-v.amber{color:color-mix(in oklch, var(--a-mustard) 70%, var(--ink));}   /* waiting on you: Lite's --gold-deep is forest, so the mustard, darkened to read */
+  .trc-v.in::before{border:1.5px solid var(--teal); background:linear-gradient(90deg, var(--teal) 50%, transparent 50%);}
+  .trc-v.ok{color:var(--teal);}
+  .trc-v.ok::before{content:'\2713'; width:auto; height:auto; margin:0 6px 0 0; border-radius:0; font-weight:800; vertical-align:baseline;}
   .trc-v.brick{color:var(--tone-stuck);}
+  .trc-v.brick::before{background:var(--tone-stuck);}
+  .trc-v.plain{font-weight:500; color:var(--grey);}
+  .trc-v.plain::before{content:none;}
+  /* waiting on you: the one status in a box (the house rule: no box unless it needs you), the size of the row's button */
+  .trc-v.amber{display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box;
+    width:var(--pill-w); max-width:100%; min-height:var(--pill-h); padding:4px 8px; border-radius:var(--r-control); background:var(--a-mustard); color:var(--ink); text-align:center;
+    font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; line-height:1.25;}
+  .trc-v.amber::before{content:none;}
+  .trc-v.amber .trc-w{font-family:'Karla',sans-serif; font-size:11px; font-weight:500; letter-spacing:0; text-transform:none;}
   .trc-n{font-size:0.78rem; color:var(--grey);}
-  .trc-act{text-align:right; white-space:nowrap; align-self:center;}
-  .trc-act .rowbtn{width:auto; padding:0 14px;} .trc-act .rowbtn + .rowbtn{margin-left:6px;}
-  .trc.trc-tp{grid-template-columns:minmax(150px,1.2fr) 1fr 1fr 1.1fr 160px;}
-  .trc.trc-a{grid-template-columns:minmax(150px,1.2fr) 2fr 160px;}
-  .trc-tp .trc-act .rowbtn, .trc-a .trc-act .rowbtn{width:148px;}
-  .trc-who{align-self:center;}
+  .trc-act{display:flex; justify-content:flex-end; gap:6px; white-space:nowrap;}
+  .rowbtn{display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; height:var(--pill-h); padding:0 14px;
+    font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:700; border-radius:var(--r-control); border:0;
+    background:var(--box); color:var(--ink); text-decoration:none; white-space:nowrap; cursor:pointer;}
+  .rowbtn.go{background:var(--teal); color:var(--paper);}
+  .trc-tp .rowbtn, .trc-a .rowbtn{width:100%; padding:0;}   /* the column is the pill's width: one size down it, whatever the label */
+  .empty{padding:26px 4px; font-size:0.9rem; color:var(--grey);}
+  #rows > .empty{padding:22px; background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow);}
+  /* the assignment sections: a card each, the groups as bands inside the open one */
+  .ahead{display:flex; align-items:center; gap:12px; width:100%; box-sizing:border-box; text-align:left; padding:16px 22px; background:none; border:0; cursor:pointer; font-family:'Karla',sans-serif; color:var(--ink);}
+  button.ahead:hover{background:color-mix(in oklch, var(--a-forest) 6%, var(--paper)); box-shadow:none !important;}
+  .ahead .code{min-width:2.8em; font-family:'Instrument Sans','Karla',sans-serif; font-size:11px; font-weight:700; letter-spacing:.1em; color:var(--teal);}
+  .ahead .full{font-family:'Newsreader',Georgia,serif; font-size:1.15rem; font-weight:600;}
+  .ahead .bits{margin-left:auto; font-size:0.82rem; color:var(--grey); text-align:right;}
+  .ahead .bits b.brick{color:var(--tone-stuck); font-weight:700;}
+  .ahead .caret{flex:none; width:7px; height:7px; margin:0 4px 0 2px; border-right:2px solid var(--grey); border-bottom:2px solid var(--grey); transform:rotate(-45deg); transition:transform .16s ease;}
+  .asec.open .ahead .caret{transform:rotate(45deg) translate(-2px,-2px);}
+  .asec.open .ahead{border-bottom:1px solid var(--row-line);}
+  .abody .grouphead{padding:7px 22px; min-height:0; background:var(--box);}
+  .abody .grouphead b{font-size:1rem;}
   @media (max-width:820px){
-    .trc{grid-template-columns:1fr 1fr 1fr; gap:10px 12px; padding:14px 4px;}
-    .trc-who{grid-column:1 / -1;}
-    .trc-act{grid-column:1 / -1; text-align:left;}
-    .trc.trc-tp{grid-template-columns:1fr 1fr 1fr;}
-    .trc.trc-a{grid-template-columns:1fr auto;} .trc-a .trc-c{grid-column:1;} .trc-a .trc-act{grid-column:2; grid-row:2; text-align:right;}
+    .gcols{display:none;}
+    .grouphead, .gcard > .grouphead{display:flex; flex-wrap:nowrap; padding:12px 16px; border-bottom:1px solid var(--row-line);}
+    .gh-t{flex:1 1 auto;}
+    .grouphead .gwait{flex-basis:100%;} .grouphead .gwait::before{content:none;}
+    .gdoor{flex:none; width:var(--pill-w); height:auto; min-height:40px;}   /* 44px on a phone, from the house rule for things to tap */
+    .abody .grouphead{padding:7px 16px; border-bottom:0;}
+    .trc{grid-template-columns:minmax(0,1fr) auto; column-gap:10px; row-gap:8px; padding:12px 16px;}
+    .trc-who{grid-column:1; grid-row:1;}
+    .trc-act{grid-column:2; grid-row:1;}
+    .trc-cells{grid-column:1 / -1; display:grid; grid-template-columns:max-content minmax(0,1fr); gap:5px 14px; align-items:baseline;}
+    .trc-c{display:contents;}
+    .trc-l{position:static; width:auto; height:auto; overflow:visible; clip-path:none; white-space:normal;}
+    .trc-v{justify-self:start; text-align:left;}
+    .trc-n{grid-column:2; margin-top:-2px; padding-left:16px;}
+    .trc-v.amber + .trc-n, .trc-v.plain + .trc-n{padding-left:0;}
+    .trc-tp .rowbtn, .trc-a .rowbtn{width:var(--pill-w);}
+    /* an assignment's row has one status and its section already names it: no label column */
+    .trc-a .trc-cells{grid-template-columns:minmax(0,1fr);} .trc-a .trc-n{grid-column:1;}
+    .trc-a .trc-l{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);}
+    /* the Trainees tab's two doors go under the statuses, so a long name keeps its line */
+    .g-tr .trc-act{grid-column:1 / -1; grid-row:3; justify-content:flex-start;}
+    .ahead{flex-wrap:wrap; padding:14px 16px;} .ahead .bits{order:9; margin-left:0; flex-basis:100%; text-align:left;} .ahead .caret{margin-left:auto;}
   }
-  @media (max-width:820px){
-    .grid{grid-template-columns:1fr auto !important;}
-    .grid > .mid{display:none;}
-    /* the folded row: observations sit on the second line, labeled, and the
-       head does not repeat a label it cannot align */
-    .ghead > .obs{display:none;}
-    .grow .st.obs::before{content:'Observations · '; color:var(--grey); font-weight:400;}
+  /* Teaching practice has three short statuses, so on a phone wide enough for them it keeps its three columns. The row
+     itself is the grid: the name over the first two, the button over the third, then the labels on one line and the
+     statuses on the next. So the forest button and the mustard pill under it are one column wide, edge to edge, and a
+     label that breaks cannot push one status below its neighbours. A phone narrower than 390px gets the labelled lines above. */
+  @media (min-width:390px) and (max-width:820px){
+    .trc.trc-tp{grid-template-columns:minmax(0,.9fr) minmax(0,1fr) var(--pill-w); gap:3px 8px;}
+    .trc-tp .trc-who{grid-column:1 / span 2;}
+    .trc-tp .trc-act{grid-column:3;} .trc.trc-tp .rowbtn{width:100%;}
+    .trc-tp .trc-cells{display:contents;}
+    .trc-tp .trc-c:nth-child(1) > *{grid-column:1;} .trc-tp .trc-c:nth-child(2) > *{grid-column:2;} .trc-tp .trc-c:nth-child(3) > *{grid-column:3;}
+    .trc-tp .trc-l{grid-row:2; align-self:end; justify-self:center; margin-top:7px; letter-spacing:.02em; text-align:center;}
+    .trc-tp .trc-v{grid-row:3; align-self:center; justify-self:center; font-size:.86rem; text-align:center;}
+    .trc-tp .trc-v.amber{justify-self:stretch; width:100%; padding:4px; font-size:10px; letter-spacing:.06em;}
+    .trc-tp .trc-n{grid-row:4; justify-self:center; margin-top:0; padding-left:0;}
   }
+  @media (max-width:560px){ #rows{--pill-w:118px; --pill-h:44px;} .focusbar button{min-height:44px;} .trc-v.amber{padding:4px;} .trc-v.amber .trc-w{font-size:10.5px;} }
 
   /* ---- v6 (7 Oct 2026): the day line, a calm empty queue, the joining card ---- */
   .dv6-brief{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:22px 0 0;}
@@ -565,9 +623,10 @@
   @media print{ .dv6-hero{display:none;} }
 
   .st .waited{display:block; font-size:0.74rem; font-weight:500; color:var(--grey); margin-top:2px;}
-  .focusbar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 12px; font-size:.82rem;} .focusbar > span{font-weight:700; color:var(--grey); margin-right:4px;}
-  .focusbar button{font:inherit; font-size:.8rem; font-weight:700; padding:5px 12px; border-radius:99px; border:1px solid var(--sand-line); background:var(--paper); color:var(--ink); cursor:pointer;}
-  .focusbar button[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:var(--paper);} .focusbar small{color:var(--grey); margin-left:6px;}
+  .focusbar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 14px; font-size:.82rem;}
+  .focusbar > span{margin-right:6px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+  .focusbar button{font:inherit; font-size:.8rem; font-weight:700; padding:6px 14px; border-radius:99px; border:0; background:var(--paper); box-shadow:var(--nb-shadow); color:var(--ink); cursor:pointer;}
+  .focusbar button[aria-pressed="true"]{background:var(--teal); color:var(--paper);} .focusbar small{color:var(--grey); margin-left:6px;}
   /* the tutorials panel under the day's line (31 Oct 2026) */
   #dv6Mine{margin:10px 0 10px; padding:14px 18px; background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow);}
   #dv6Mine .h{margin:0 0 8px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.05rem;} #dv6Mine .h a{color:var(--ink); text-decoration:none;} #dv6Mine .h a:hover{color:var(--teal);}
@@ -589,7 +648,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611182310">
+<link rel="stylesheet" href="hub-house.css?v=202611190022">
 </head>
 <body>
 <div class="board">
@@ -721,26 +780,26 @@
 
 </div>
 
-<script src="hub-due.js?v=202611182310"></script>
-<script src="observation-defaults.js?v=202611182310"></script>
-<script src="hub-rotation.js?v=202611182310"></script>
-<script src="hub-shared.js?v=202611182310"></script>
+<script src="hub-due.js?v=202611190022"></script>
+<script src="observation-defaults.js?v=202611190022"></script>
+<script src="hub-rotation.js?v=202611190022"></script>
+<script src="hub-shared.js?v=202611190022"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611182310"></script>
-<script src="hub-say.js?v=202611182310"></script>
-<script src="hub-hand.js?v=202611182310"></script>
-<script src="hub-ink.js?v=202611182310"></script>
-<script src="hub-shelf.js?v=202611182310"></script>
+<script src="hub-store.js?v=202611190022"></script>
+<script src="hub-say.js?v=202611190022"></script>
+<script src="hub-hand.js?v=202611190022"></script>
+<script src="hub-ink.js?v=202611190022"></script>
+<script src="hub-shelf.js?v=202611190022"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611182310"></script>
-<script src="hub-sync.js?v=202611182310"></script>
-<script src="hub-notebook.js?v=202611182310"></script>
-<script src="hub-tracker.js?v=202611182310"></script>
-<script src="hub-feedback.js?v=202611182310"></script>
+<script src="assignment-defaults.js?v=202611190022"></script>
+<script src="hub-sync.js?v=202611190022"></script>
+<script src="hub-notebook.js?v=202611190022"></script>
+<script src="hub-tracker.js?v=202611190022"></script>
+<script src="hub-feedback.js?v=202611190022"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -953,18 +1012,41 @@ function byGroup(rows, of){
   rows.forEach(r => { const g = String(of(r) || ''); if (!groups.has(g)) groups.set(g, []); groups.get(g).push(r); });
   return [...groups.entries()].sort((a, b) => (a[0] === '') - (b[0] === '') || a[0].localeCompare(b[0], undefined, { numeric: true }));
 }
-function groupHead(g, n){
-  return `<div class="grouphead"><b>${g ? 'Group ' + esc(g) : 'No group yet'}</b><span>${n} trainee${n === 1 ? '' : 's'}</span></div>`;
+function groupHead(g, n, o){
+  o = o || {};
+  return `<div class="grouphead"><div class="gh-t"><b>${g ? 'Group ' + esc(g) : 'No group yet'}</b><span>${n} trainee${n === 1 ? '' : 's'}</span>${o.waiting ? `<span class="gwait">${esc(o.waiting)}</span>` : ''}</div>${o.door || ''}</div>`;
 }
-/* a labelled status cell (16 Nov 2026): its own small heading, a status in words, an optional note under it */
-function tcell(label, word, tone, note){ return `<div class="trc-c"><span class="trc-l">${esc(label)}</span><span class="trc-v ${tone || ''}">${esc(word)}</span>${note ? `<span class="trc-n">${esc(note)}</span>` : ''}</div>`; }
+/* A GROUP IS A CARD (18 Nov 2026): its heading, the column labels once, then its rows. The labels sit in the same grid
+   as the rows (--cols on the card), so a label cannot stand over the wrong column; on a phone they are not shown and
+   each status carries its own label instead. */
+function groupCard(g, n, o){
+  return `<section class="gcard${o.kind ? ' ' + o.kind : ''}" aria-label="${g ? 'Group ' + esc(g) : 'No group yet'}">${groupHead(g, n, o)}<div class="gcols" aria-hidden="true"><span></span>${o.cols.map(c => `<span>${esc(c)}</span>`).join('')}<span></span></div>${o.rows}</section>`;
+}
+/* a status cell: its label (the column's heading on a wide screen, beside the status on a phone), the status in words
+   with its mark -- ok a tick, in a half, faint a ring (not there yet), late the ring with a red light in it (most of
+   the group have it, this trainee does not), brick a dot, amber the pill that waits on you -- and a note under it */
+function tcell(label, word, tone, note){
+  const pill = tone === 'amber';   /* what waits on you: the note (how long it has waited) goes inside the pill, not under it */
+  return `<div class="trc-c">${label ? `<span class="trc-l">${esc(label)}</span>` : ''}<span class="trc-v ${tone || ''}"${tone === 'late' ? ' title="Most of their group already have this"' : ''}>${pill ? `<b>${esc(word)}</b>${note ? `<span class="trc-w">${esc(note)}</span>` : ''}` : esc(word)}</span>${note && !pill ? `<span class="trc-n">${esc(note)}</span>` : ''}</div>`;
+}
 function tbtn(label, go, href){ return `<a class="rowbtn${go ? ' go' : ''}" href="${href}">${esc(label)}</a>`; }
-function row(cols, cells){
-  return `<div class="grid grow" style="grid-template-columns:${cols}">${cells}</div>`;
+/* BEHIND THE REST (Ramy, 19 Nov 2026). For one group's rows, and for each thing named in `keys` (a number in r.f: 0 or 1
+   for a thing that is in or not, a count for things that are counted), find the level more than half of the group have
+   reached, and mark r.late[key] on every row that is under it. Nobody has it: the level is 0 and nobody is marked.
+   Three of four have it: the fourth is. Half and half: nobody, so the two who teach tomorrow are not lit by the two
+   who taught today. `numberOf` (teaching practice only) keeps the comparison to one TP: the rows on the number most
+   of the group are on, and the rows with no number yet; a trainee already on the next TP is not compared at all. */
+function markBehind(rs, keys, numberOf){
+  let pool = rs;
+  if (numberOf){ const tally = {}; rs.forEach(r => { const n = numberOf(r); if (n) tally[n] = (tally[n] || 0) + 1; });
+    const mode = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0] || '';
+    pool = rs.filter(r => !numberOf(r) || numberOf(r) === mode); }
+  keys.forEach(k => { const v = pool.map(r => r.f[k] || 0).sort((a, b) => b - a), most = v.length ? v[Math.floor(v.length / 2)] : 0;
+    rs.forEach(r => { (r.late = r.late || {})[k] = pool.includes(r) && (r.f[k] || 0) < most; }); });
+  return rs;
 }
-function action(label, go, href){
-  return `<div class="act"><a class="rowbtn ${go?'go':''}" href="${href}">${esc(label)}</a></div>`;
-}
+/* who the row is: their letter, their name, and the TP the row is about */
+function twho(tr, tag){ return `<div class="trc-who">${hubAvatar(tr.name)}<span class="nm">${esc(tr.name)}</span>${tag ? `<span class="tpn">${esc(tag)}</span>` : ''}</div>`; }
 
 function paintRows(){
   const host=document.getElementById('rows');
@@ -976,29 +1058,48 @@ function paintRows(){
   }
 
   if (TAB==='tp'){
-    const cols='1.5fr 0.5fr 1.3fr auto';
     /* What needs the tutor first, then the rest in name order -- nothing hidden. */
-    let rows=list.map(tr=>({tr, s:tpState(tr)})).sort((a,b)=>(b.s.act?1:0)-(a.s.act?1:0) || (a.s.act ? oldestFirst(waitedSince(a.tr), waitedSince(b.tr)) : 0));
+    /* what each row has, as numbers, for the red light: the TP it is on, plan in, self-evaluation in, feedback under way */
+    const tpFacts = (tr, s) => { const t=tr.tp||{}, plan=t.plan, self=t.selfeval, fb=t.feedback;
+      const pm = String(((plan && plan.state || {}).meta || {}).tp || (plan && plan.label) || '').match(/\d+/), pn = pm ? parseInt(pm[0], 10) : 0;
+      const n0 = pn ? 'TP' + pn : tpNumberOf(tr);
+      return { pn, n: n0 && n0 !== '—' ? n0 : '', plan: plan && plan.status === 'turned_in' ? 1 : 0, self: self && self.status === 'turned_in' ? 1 : 0,
+               fb: s.act || (fb && (fb.status === 'returned' || fb.status === 'draft')) ? 1 : 0 }; };
+    let rows=list.map(tr=>{ const s=tpState(tr); return {tr, s, f:tpFacts(tr, s)}; }).sort((a,b)=>(b.s.act?1:0)-(a.s.act?1:0) || (a.s.act ? oldestFirst(waitedSince(a.tr), waitedSince(b.tr)) : 0));
     /* THE SAME LABELLED ROW AS THE TRAINEES TAB (Ramy, 16 Nov 2026: "Do the same thing for the other cards"): the three
        pieces of a teaching practice side by side, each a word -- the plan, the self-evaluation, your feedback -- and the
-       one button. Ready for feedback stays first and amber. */
-    const tpRow = ({tr,s}) => {
-      const t=tr.tp||{}, plan=t.plan, self=t.selfeval, fb=t.feedback;
-      const pm = String(((plan && plan.state || {}).meta || {}).tp || (plan && plan.label) || '').match(/\d+/), pn = pm ? parseInt(pm[0], 10) : 0;
+       one button. What is ready for feedback stays first. Since 18 Nov the rows sit in their group's card, the labels
+       are the card's column headings on a wide screen, and what waits on you is a mustard pill the size of the button. */
+    /* THEIR TP POINTS, ONE PRESS FROM THE GROUP (Ramy, 18 Nov 2026, lesson planning in C/21: "what's the quickest way? What's
+       the shortcut to get there? I don't want to go through TP points ... then I get the different view ... and it doesn't
+       have the material and the audio"). The page a trainee reads, with the pages and the audio, was two rooms away:
+       TP points, the board, then "See it as". A link under every trainee's Plan came first and went the same evening
+       ("Looks crowded now"). It is one door in each group's heading: it opens the TP points as that group's first
+       trainee reads them, in a new tab so the dashboard stays, and "See it as" at the top of that page goes from one
+       trainee to the next. It shows once TP points are dealt to the group. */
+    let PTS = null; try { PTS = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null'); } catch (e) {}
+    const hasPoint = tr => !!(PTS && PTS.groups && Object.keys(PTS.groups).some(g => PTS.groups[g] && PTS.groups[g][tr.id]));
+    const groupDoor = g => { const first = all.filter(t => String(t.group) === String(g)).find(hasPoint);
+      return first ? `<a class="gdoor" href="24_tp_points.html?as=${encodeURIComponent(first.id)}" target="_blank" rel="noopener">Their TP points</a>` : ''; };
+    const tpRow = ({tr,s,f,late}) => {
+      const fb=(tr.tp||{}).feedback, pn=f.pn, planIn=!!f.plan, selfIn=!!f.self, n=f.n, L=late||{};
       let pf = 2; try { pf = parseInt((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).planFrom, 10) || 2; } catch (e) {}
-      const planIn = plan && plan.status === 'turned_in', selfIn = self && self.status === 'turned_in';
-      const n = pn ? 'TP' + pn : tpNumberOf(tr);
       const waited = s.act && waitedFor(waitedSince(tr));
-      return `<div class="trc trc-tp">
-         <div class="trc-who">${hubAvatar(tr.name)}<span>${esc(tr.name)}</span></div>
-         ${tcell('Plan' + (n && n !== '—' ? ' · ' + n : ''), planIn ? (pn && pn < pf ? 'Material in' : 'In') : 'Not in yet', planIn ? 'in' : 'faint')}
-         ${tcell('Self-evaluation', selfIn ? 'In' : 'Not yet', selfIn ? 'in' : 'faint')}
-         ${tcell('Your feedback', fb && fb.status === 'returned' ? 'Returned' : s.act ? (fb && fb.status === 'draft' ? 'In progress' : 'Ready to write') : fb && fb.status === 'draft' ? 'Draft' : 'Not started', fb && fb.status === 'returned' ? 'ok' : s.act ? 'amber' : fb && fb.status === 'draft' ? 'in' : 'faint', waited || '')}
+      const fbWord = fb && fb.status === 'returned' ? 'Returned' : s.act ? (fb && fb.status === 'draft' ? 'In progress' : 'Ready to write') : fb && fb.status === 'draft' ? 'Draft' : 'Not started';
+      const fbTone = fb && fb.status === 'returned' ? 'ok' : s.act ? 'amber' : fb && fb.status === 'draft' ? 'in' : L.fb ? 'late' : 'faint';
+      return `<div class="trc trc-tp${s.act ? ' need' : ''}">
+         ${twho(tr, n)}
+         <div class="trc-cells">
+         ${tcell('Plan', planIn ? (pn && pn < pf ? 'Material in' : 'In') : 'Not in yet', planIn ? 'ok' : L.plan ? 'late' : 'faint')}
+         ${tcell('Self-evaluation', selfIn ? 'In' : 'Not yet', selfIn ? 'ok' : L.self ? 'late' : 'faint')}
+         ${tcell('Your feedback', fbWord, fbTone, waited || '')}
+         </div>
          <div class="trc-act">${tbtn(s.act ? 'Write feedback' : s.label === 'Returned' ? 'View feedback' : 'Open', s.act, '3_tutor_feedback.html?trainee=' + encodeURIComponent(tr.id))}</div>
        </div>`;
     };
     host.innerHTML = bar +
-      (rows.length ? byGroup(rows, r => r.tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(tpRow).join('')).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
+      (rows.length ? byGroup(rows, r => r.tr.group).map(([g, rs]) => { const k = rs.filter(r => r.s.act).length; markBehind(rs, ['plan', 'self', 'fb'], r => r.f.n);
+        return groupCard(g, rs.length, { cols: ['Plan', 'Self-evaluation', 'Your feedback'], waiting: k ? k + ' ready for your feedback' : '', door: g ? groupDoor(g) : '', rows: rs.map(tpRow).join('') }); }).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
     return;
   }
 
@@ -1014,7 +1115,6 @@ function paintRows(){
     /* The door to the assignment itself is in the Course menu, "Assignments, as trainees get them". A link at the top of each
        open section here went in and came out the same day (Ramy, 16 Nov 2026: "delete the one from the assignment card,
        because it's kind of pretty ugly"). */
-    const cols='1.5fr 1.3fr auto';
     let wording=null; try{ wording=JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); }catch(e){}
     const keys=hubAssignmentOrder(wording).filter(k=>k!=='a5' && hubReleased(wording,k));
     const a5Rows=assignmentRows(list).filter(r=>r.key==='a5');
@@ -1029,70 +1129,73 @@ function paintRows(){
     let open=null; try{ open=localStorage.getItem('chub:asgOpen'); }catch(e){}
     if (open==='none') open=null;
     else if (!keys.includes(open)) open = keys.find(k=>list.some(tr=>stateOf(tr,k).s.act)) || keys[0] || null;
+    /* one row for every assignment, the Plagiarism Reflection included: who, where it stands, the one door */
+    const aRow=(r, door)=>{
+      const closedOne=r.stage==='closed';
+      const href=(closedOne?'11_assignment_record.html':'10_tutor_assignment_marking.html')+'?trainee='+encodeURIComponent(r.tr.id)+'&a='+r.key;
+      const aTone = r.s.act ? 'amber' : r.s.tone === 'brick' ? 'brick' : closedOne ? 'ok' : r.stage==='none' ? (r.late && r.late.sub ? 'late' : 'faint') : 'in';
+      return `<div class="trc trc-a${r.s.act ? ' need' : ''}">${twho(r.tr)}
+           <div class="trc-cells">${tcell(ASSIGN_NAMES[r.key]||r.key, r.s.label, aTone, r.s.act ? waitedFor(waitedSince(r.tr,r.key)) : '')}</div>
+           <div class="trc-act">${door ? tbtn(r.s.act?'Mark':closedOne?'Open the record':'Open', r.s.act, href) : ''}</div></div>`;
+    };
     const section=key=>{
-      const rows=list.map(tr=>Object.assign({tr,key},stateOf(tr,key)));
+      const rows=list.map(tr=>{ const r=Object.assign({tr,key},stateOf(tr,key)); r.f={sub:r.stage==='none'?0:1}; return r; });   /* f.sub: for the red light */
       const waiting=rows.filter(r=>r.s.act).length, back=rows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length, closed=rows.filter(r=>r.stage==='closed').length, none=rows.filter(r=>r.stage==='none').length;
       const bits=[waiting?`<b class="brick">${waiting} waiting to be marked</b>`:'', back?`${back} back with ${back===1?'a trainee':'trainees'}`:'', closed?`${closed} closed`:'', none?`${none} not submitted`:''].filter(Boolean).join(' · ');
       const isOpen=key===open;
-      const body=!isOpen?'':byGroup(rows.sort((a,b)=>rank(a)-rank(b) || (a.s.act ? oldestFirst(waitedSince(a.tr,key), waitedSince(b.tr,key)) : 0)), r=>r.tr.group).map(([g,rs])=>groupHead(g, rs.length)+rs.map(r=>{
-        const closedOne=r.stage==='closed';
-        const href=(closedOne?'11_assignment_record.html':'10_tutor_assignment_marking.html')+'?trainee='+encodeURIComponent(r.tr.id)+'&a='+key;
-        /* the same labelled row as the Trainees tab (16 Nov 2026) */
-        const aTone = r.s.act ? 'amber' : r.s.tone === 'brick' ? 'brick' : r.stage==='closed' ? 'ok' : r.stage==='none' ? 'faint' : 'in';
-        return `<div class="trc trc-a"><div class="trc-who">${hubAvatar(r.tr.name)}<span>${esc(r.tr.name)}</span></div>
-           ${tcell(ASSIGN_NAMES[key]||key, r.s.label, aTone, r.s.act && waitedFor(waitedSince(r.tr,key)) ? waitedFor(waitedSince(r.tr,key)) : '')}
-           <div class="trc-act">${r.stage==='none'?'':tbtn(r.s.act?'Mark':closedOne?'Open the record':'Open', r.s.act, href)}</div></div>`;
-      }).join('')).join('');
-      return `<div class="asec${isOpen?' open':''}"><button type="button" class="ahead" data-asg="${key}"><span class="code">${esc(ASSIGN_NAMES[key]||key)}</span><span class="full">${esc((ASSIGN_FULL[key]||key).replace(/^[A-Z0-9]+ — /,''))}</span><span class="bits">${bits}</span><span class="caret">${isOpen?'&#9662;':'&#9656;'}</span></button>${isOpen?`<div class="abody">${body}</div>`:''}</div>`;
+      const body=!isOpen?'':byGroup(rows.sort((a,b)=>rank(a)-rank(b) || (a.s.act ? oldestFirst(waitedSince(a.tr,key), waitedSince(b.tr,key)) : 0)), r=>r.tr.group).map(([g,rs])=>groupHead(g, rs.length)+markBehind(rs, ['sub']).map(r=>aRow(r, r.stage!=='none')).join('')).join('');
+      return `<div class="asec${isOpen?' open':''}"><button type="button" class="ahead" data-asg="${key}" aria-expanded="${isOpen}"><span class="code">${esc(ASSIGN_NAMES[key]||key)}</span><span class="full">${esc((ASSIGN_FULL[key]||key).replace(/^[A-Z0-9]+ — /,''))}</span><span class="bits">${bits}</span><span class="caret" aria-hidden="true"></span></button>${isOpen?`<div class="abody">${body}</div>`:''}</div>`;
     };
     host.innerHTML = bar + (keys.length ? keys.map(section).join('') : '<div class="empty">No assignments are switched on for the trainees yet.</div>')
-      + (a5Rows.length ? `<div class="asec open"><div class="ahead" style="cursor:default"><span class="code">A5</span><span class="full">Plagiarism Reflection</span><span class="bits">${a5Rows.length} set</span></div><div class="abody">${a5Rows.map(({tr,key,stage,s})=>row(cols,`<div class="nm">${hubAvatar(tr.name)}${esc(tr.name)}</div><div class="st ${s.tone}">${esc(s.label)}</div>${action(s.act?'Mark':stage==='closed'?'Open the record':'Open', s.act, (stage==='closed'?'11_assignment_record.html':'10_tutor_assignment_marking.html')+'?trainee='+encodeURIComponent(tr.id)+'&a=a5')}`)).join('')}</div></div>` : '');
+      + (a5Rows.length ? `<div class="asec open"><div class="ahead" style="cursor:default"><span class="code">A5</span><span class="full">Plagiarism Reflection</span><span class="bits">${a5Rows.length} set</span></div><div class="abody">${a5Rows.map(r=>aRow(r, true)).join('')}</div></div>` : '');
     host.querySelectorAll('[data-asg]').forEach(b=>b.addEventListener('click',()=>{ try{ localStorage.setItem('chub:asgOpen', b.dataset.asg===open?'none':b.dataset.asg); }catch(e){} paintRows(); }));
     return;
   }
 
-  const cols='1.7fr 1fr 1.1fr 1.2fr auto';
-  /* Observation of experienced teachers, at a glance (Ramy, 29 Sep 2026: the
-     turned-in sheets should show on the roster). Sheets turned in out of the
-     course's set, and the hours those sheets carry against Cambridge's six;
-     the peer sheets are notes and are not counted. */
-  const obsCell = tr => { try { const h = window.hubObservationHours(tr.observations || {}); if (!h.of) return '<div class="st obs">\u2014</div>';
-      const hrs = h.totalMinutes ? Math.round((h.totalMinutes / 60) * 10) / 10 : 0;
-      const done = h.turnedIn === h.of && h.totalMinutes >= 360;
-      return `<div class="st obs${done ? ' ok' : ''}" title="${esc((h.notes || []).join('; '))}">${h.turnedIn} of ${h.of}${hrs ? ' \u00b7 ' + hubHoursText(h.totalMinutes) : ''}</div>`; } catch (e) { return '<div class="st obs">\u2014</div>'; } };
   /* THE TRAINEES TAB, LABELLED IN EVERY CELL (Ramy, C/21 day one, 16 Nov 2026: "it's messy and it's not under the right
      headings ... it's taking me a while to figure out ... if the observations, are they turned in or not"). The header row
      sat over columns the buttons had pushed sideways, so "Teaching practice" stood over the assignments; on a phone two of
      the three were folded away. Now each cell carries its own small label and a status in words, coloured only to support
-     the word: amber for something waiting on the tutor, brick for something back with the trainee, green for done. */
+     the word: amber for something waiting on the tutor, brick for something back with the trainee, green for done.
+     18 Nov 2026: on a wide screen that label is the group card's column heading, centred over its column (the heading row
+     and the rows share one grid, so it cannot stand over the wrong one); on a phone it is beside its status. */
   const cell = tcell;
-  const trRow = tr => {
+  /* what each row has, as numbers, for the red light: how far the TP has got, assignments handed in, sheets turned in */
+  const trFacts = tr => { const subs=tr.assignments||{}, s=tpState(tr), n0=tpNumberOf(tr); let obs=0;
+    try { obs = (window.hubObservationHours(tr.observations || {}) || {}).turnedIn || 0; } catch (e) {}
+    return { n: n0 && n0 !== '—' ? n0 : '', tp: s.label==='Returned' ? 3 : s.act ? 2 : /^Plan in|^Material in/.test(s.label) ? 1 : 0,
+             sub: Object.keys(subs).filter(k => (subs[k]||{}).stage && subs[k].stage !== 'draft').length, obs }; };
+  const trRow = ({tr, f, late}) => {
+      const L=late||{};
       const subs=tr.assignments||{}, st=k=>(subs[k]||{}).stage||'';
       const keys=Object.keys(subs);
       const closed=keys.filter(k=>st(k)==='closed').length;
       const toMark=keys.filter(k=>st(k)==='submitted'||st(k)==='resubmitted').length;
       const back=keys.filter(k=>st(k)==='resubmission_needed'||st(k)==='returned_unmarked').length;
-      const s=tpState(tr), tpN=tpNumberOf(tr);
+      const s=tpState(tr), tpN=f.n;
       const tpWord = s.label==='Not yet turned in' ? 'Nothing in yet' : s.label;
-      const tpTone = s.act ? 'amber' : s.label==='Returned' ? 'ok' : /^Plan in|^Material in/.test(s.label) ? 'in' : 'faint';
+      const tpTone = s.act ? 'amber' : s.label==='Returned' ? 'ok' : L.tp ? 'late' : /^Plan in|^Material in/.test(s.label) ? 'in' : 'faint';
       const aWord = toMark ? toMark + ' to mark' : back ? back + ' back with them' : closed ? closed + ' of 4 closed' : 'None closed yet';
-      const aTone = toMark ? 'amber' : back ? 'brick' : closed === 4 ? 'ok' : closed ? 'in' : 'faint';
-      let oWord = '—', oTone = 'faint', oNote = '';
+      const aTone = toMark ? 'amber' : back ? 'brick' : closed === 4 ? 'ok' : L.sub ? 'late' : closed ? 'in' : 'faint';
+      let oWord = '—', oTone = 'plain', oNote = '';
       try { const h = window.hubObservationHours(tr.observations || {});
         if (h.of) { const done = h.turnedIn === h.of && h.totalMinutes >= 360;
           oWord = done ? 'All ' + h.of + ' turned in' : h.turnedIn + ' of ' + h.of + ' turned in';
-          oTone = done ? 'ok' : h.turnedIn ? 'in' : 'faint';
+          oTone = done ? 'ok' : L.obs ? 'late' : h.turnedIn ? 'in' : 'faint';
           oNote = (h.totalMinutes ? hubHoursText(h.totalMinutes) : '0 h') + ' of 6 h watched'; } } catch (e) {}
-      return `<div class="trc">
-         <div class="trc-who">${hubAvatar(tr.name)}<span>${esc(tr.name)}</span></div>
-         ${cell('Teaching practice' + (tpN && tpN !== '—' ? ' · ' + tpN : ''), tpWord, tpTone)}
+      return `<div class="trc trc-t${s.act || toMark ? ' need' : ''}">
+         ${twho(tr, tpN)}
+         <div class="trc-cells">
+         ${cell('Teaching practice', tpWord, tpTone)}
          ${cell('Assignments', aWord, aTone, toMark || back ? closed + ' of 4 closed' : '')}
          ${cell('Observations', oWord, oTone, oNote)}
-         <div class="trc-act"><a class="rowbtn pair" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">CELTA 5</a><a class="rowbtn pair" href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Portfolio</a></div>
+         </div>
+         <div class="trc-act"><a class="rowbtn" href="20_celta5.html?trainee=${encodeURIComponent(tr.id)}">CELTA 5</a><a class="rowbtn" href="12_assessor_pack.html?trainee=${encodeURIComponent(tr.id)}">Portfolio</a></div>
        </div>`;
     };
   host.innerHTML = bar +
-    byGroup(list, tr => tr.group).map(([g, rs]) => groupHead(g, rs.length) + rs.map(trRow).join('')).join('');
+    byGroup(list.map(tr => ({ tr, f: trFacts(tr) })), r => r.tr.group).map(([g, rs]) => { markBehind(rs, ['tp'], r => r.f.n); markBehind(rs, ['sub', 'obs']);
+      return groupCard(g, rs.length, { kind: 'g-tr', cols: ['Teaching practice', 'Assignments', 'Observations'], rows: rs.map(trRow).join('') }); }).join('');
 }
 
 /* Day one, a center opening its tutor link for the first time met three empty
