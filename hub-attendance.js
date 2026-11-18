@@ -171,7 +171,19 @@
     var out = { days: [], perDay: {}, lessons: tp.length, lessonMinutes: tp.length ? Math.round(tpMin / tp.length) : 0 };
     (tt.days || []).forEach(function (d) {
       if (!d || !d.date) return;
-      if (d.tp) { out.days.push(d.date); return; }
+      /* A TP DAY COUNTS ITS OWN LESSONS (18 Nov 2026). It used to take the course's TP tiles for every TP day, so one
+         extra tile (C/21's third, 3:45-4:30, since removed) added three quarters of an hour to every day in the register
+         and on the certificate. A day whose own sessions carry its TP lessons counts those; a day without them keeps the
+         course's tiles. */
+      if (d.tp) {
+        out.days.push(d.date);
+        var own = (d.sessions || []).filter(function (x) { return x && x.k === 'tp' && hm(x.s) != null && hm(x.e) > hm(x.s); });
+        if (own.length) {
+          var ownMin = own.reduce(function (n, x) { return n + hm(x.e) - hm(x.s); }, 0), avg = Math.round(ownMin / own.length);
+          if (own.length !== out.lessons || avg !== out.lessonMinutes) out.perDay[d.date] = { lessons: own.length, lessonMinutes: avg, from: own[0].s, to: own[own.length - 1].e };
+        }
+        return;
+      }
       var inRoom = (d.sessions || []).filter(function (x) { return x && x.k !== 'break' && x.k !== 'lunch' && /teaching practice/i.test(String(x.room || '')) && hm(x.s) != null && hm(x.e) > hm(x.s); });
       if (!inRoom.length) return;
       var total = inRoom.reduce(function (n, x) { return n + hm(x.e) - hm(x.s); }, 0);
