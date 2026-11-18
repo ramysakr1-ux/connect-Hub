@@ -1841,6 +1841,8 @@ case 'inbox': {
       if (!TRAINEE_READS[kind]) throw new Error('Not yours to read: ' + kind);
       if (kind === 'tracker') return { data: traineeTracker_(read_(course.id, me.token, kind)) };
       if (kind === 'celta5t') return { data: traineeCelta5t_(read_(course.id, me.token, kind)) };
+      /* v263: feedback and its history go through the same hold as a boot (traineeHold_) */
+      if (kind === 'feedback' || kind === 'tpHistory') { var held263 = recordsFor_(course.id, me.token, TRAINEE_READS)[kind]; return { data: held263 == null ? null : held263 }; }
       return { data: read_(course.id, me.token, kind) };
     }
     case 'put': {
@@ -4082,7 +4084,12 @@ function recordsFor_(courseId, token, kinds) {
     if (String(r[1]) !== token) return;
     foldRecord_(out, String(r[2]), r[3], kinds);
   });
-  return finishBucket_(out);
+  /* v263: what a trainee is handed of their feedback (traineeHold_). Not on a demo or a presented day: nothing a
+     visitor writes there reaches the store, so the store would never see their self-evaluation and never let go; on
+     those the pages keep the rule by themselves, as they always did. */
+  if (kinds !== TRAINEE_READS) return finishBucket_(out);
+  var hset = null; try { hset = courseRead_(courseId, 'settings'); } catch (e) {}
+  return courseDay_(hset) ? finishBucket_(out) : traineeHold_(finishBucket_(out));
 }
 /* Each writer marks its course before and after it writes (5 Nov 2026, THE COURSE CACHE): inside a request the mark
    waits for the end; a timed job moves the version at once, so the second mark is the one after the rows changed. */
@@ -4996,6 +5003,36 @@ function traineeCelta5t_(t) {
   ['stage1', 'stage2', 'stage3'].forEach(function (k) { if (out[k] && !out[k].returnedAt) out[k] = {}; });
   if (out.final && !(out.final.signed && out.final.signed.at)) out.final = {};
   return out;
+}
+/* REFLECT BEFORE READING, HELD BY THE STORE (v263, 19 Nov 2026). Ramy, about a C/21 trainee whose TP1 feedback had been
+   returned before his self-evaluation was in: "Just want to make sure that he can't open his feedback, or he couldn't."
+   He could not open it on the feedback page, which waits for the self-evaluation. But the page was the only thing
+   waiting: the store sent a trainee the whole of their feedback the moment it was returned, and a draft while the tutor
+   was still writing it, so the CELTA 5 showed the grade, and "Bring in last TP's action points" on the self-evaluation
+   and on the next plan carried the starred points in. Hiding is not withholding.
+   What a trainee is handed now:
+     - feedback their tutor has not returned: that it exists and which TP it is for, nothing of what is in it;
+     - feedback returned while their self-evaluation is not in: that it is back, which TP, whose, and when -- so the
+       home page can say "your self-evaluation first" -- and the same in the history in place of that TP's document;
+     - everything, once the self-evaluation is in (the same test the feedback page has always used).
+   The records themselves are not changed, and a tutor, the assessor and the center read them as before. */
+function tpNumOf_(rec) { var m = /\d+/.exec(String((rec && rec.state && rec.state.f && rec.state.f.fTP) || (rec && rec.label) || '')); return m ? String(parseInt(m[0], 10)) : ''; }
+function traineeHold_(b) {
+  if (!b || !b.feedback || typeof b.feedback !== 'object') return b;
+  var fb = b.feedback, f = (fb.state && fb.state.f) || {};
+  if (fb.status !== 'returned') {   // still the tutor's to write
+    b.feedback = { status: fb.status || 'draft', held: true, label: fb.label || '', state: { f: { fTP: f.fTP || '' } } };
+    return b;
+  }
+  if (b.selfeval && b.selfeval.status === 'turned_in') return b;
+  var stub = { status: 'returned', held: true, label: fb.label || '', returnedAt: fb.returnedAt || '', state: { f: { fTP: f.fTP || '', fTutor: f.fTutor || '', fDate: f.fDate || '' } } };
+  var n = tpNumOf_(fb);
+  b.feedback = stub;
+  if (b.tpHistory) Object.keys(b.tpHistory).forEach(function (k) {
+    var h = b.tpHistory[k];
+    if (String(k) === n || (h && fb.returnedAt && h.returnedAt === fb.returnedAt)) b.tpHistory[k] = stub;
+  });
+  return b;
 }
 function foldRecord_(bucket, kind, json, kinds) {
   var n = tpOf_(kind);
