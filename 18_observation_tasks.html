@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611180523">
+<link rel="stylesheet" href="hub-tokens.css?v=202611180538">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -213,21 +213,21 @@
   .aud{font-size:.74rem; color:var(--grey); margin-left:8px;}
   .aud.now{font-size:.84rem; color:inherit; font-weight:600; flex:1 1 220px; line-height:1.45;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611180523">
+<link rel="stylesheet" href="hub-house.css?v=202611180538">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202611180523"></script>
-<script src="hub-shared.js?v=202611180523"></script>
-<script src="hub-store.js?v=202611180523"></script>
-<script src="hub-say.js?v=202611180523"></script>
-<script src="hub-rotation.js?v=202611180523"></script>
-<script src="hub-peers.js?v=202611180523"></script>
-<script src="hub-sync.js?v=202611180523"></script>
-<script src="hub-notebook.js?v=202611180523"></script>
+<script src="observation-defaults.js?v=202611180538"></script>
+<script src="hub-shared.js?v=202611180538"></script>
+<script src="hub-store.js?v=202611180538"></script>
+<script src="hub-say.js?v=202611180538"></script>
+<script src="hub-rotation.js?v=202611180538"></script>
+<script src="hub-peers.js?v=202611180538"></script>
+<script src="hub-sync.js?v=202611180538"></script>
+<script src="hub-notebook.js?v=202611180538"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -348,14 +348,14 @@ function list(){
     <div class="grp">
       <div class="hd"><h2>Peer observations</h2></div>
       <p class="note">${READONLY ? 'The trainee’s own teaching practice group. Each task is done twice — once for each half of the TP day. Notes, not turned in.'
-        : 'Your own teaching practice group. Each task is done twice — once for each half of the TP day. These are your notes for feedback; they save as you go and are not turned in. After the oral feedback you can connect what you wrote about a teacher with that teacher: open the sheet and press Connect beside their name, under the sheet.'}</p>
+        : 'Your own teaching practice group. Each task is done twice — once for each half of the TP day. These are your notes for feedback; they save as you go and are not turned in. After the oral feedback you can share what you wrote about a teacher with that teacher: open the sheet and press Share beside their name, under the sheet.'}</p>
       ${/* a and b of one TP sit in a box of their own, so the list reads as pairs and not one long run (Ramy, 18 Nov 2026) */
         TASKS.peer.map(t => `<div class="sub pair">${['a','b'].map(s => row(t, s)).join('')}</div>`).join('')}
     </div>
 
-    ${(!READONLY && SHARED.length) ? `<div class="grp">
+    ${(!READONLY && SHARED.length) ? `<div class="grp" id="shared">
       <div class="hd"><h2>Shared with you</h2></div>
-      <p class="note">What classmates who watched your lessons chose to connect with you, after the oral feedback.</p>
+      <p class="note">What classmates who watched your lessons chose to share with you, after the oral feedback.</p>
       <div class="sub">${SHARED.map(sharedRow).join('')}</div>
     </div>` : ''}
 
@@ -373,6 +373,7 @@ function list(){
         ${TASKS.live.map(t => row(t)).join('')}
       </div>
     </div>`;
+  if (location.hash === '#shared') { const sh = $('shared'); if (sh) sh.scrollIntoView({ block: 'start' }); }
 }
 
 /* ------------------------------------------------------------- one task */
@@ -500,33 +501,35 @@ function connectPanel(t, sit, k){
     let st;
     if (on) {
       const at = on.at || on, stale = on.h && on.h !== rowsHash(rs);
-      st = `<span class="cn-state"><span class="cn-done">Connected</span> <small class="aud">${esc(TL[c])} sees it</small> on ${esc(new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }))}.${stale ? ' You have added to this since.' : ''}</span>
+      st = `<span class="cn-state"><span class="cn-done">Shared</span> <small class="aud">${esc(TL[c])} sees it</small> on ${esc(new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }))}.${stale ? ' You have added to this since.' : ''}</span>
         ${stale ? `<button type="button" class="btn" data-share="${c}">Send the new version</button>` : ''}
         <button type="button" class="btn" data-unshare="${c}">Take it back</button>`;
     }
-    /* THE BUTTON IS ALWAYS THERE (Ramy, 18 Nov 2026: "keep connect button there, and then they click on it and it tells
+    /* THE WORD IS SHARE (18 Nov 2026): the button and every line a trainee reads said Connect; "maybe connect is a bit
+       confusing" (Ramy), and Connect is also the product's name. The code keeps its cn- and connect names.
+       THE BUTTON IS ALWAYS THERE (Ramy, 18 Nov 2026: "keep connect button there, and then they click on it and it tells
        them ... they can connect after oral feedback"). A row that only said "Opens after..." did not look like something
        you could do, so nobody knew the sheet could be shared. Before the feedback, or with nothing written, the button
        answers in words beside it instead of sending. */
-    else if (waits) st = `<button type="button" class="btn" data-cnsay="You can connect after the TP${esc(t.tp)} oral feedback, ${esc(whenText(fe))}.">Connect</button><small class="aud" role="status">Only ${esc(TL[c])} will see it</small>`;
-    else if (!has) st = `<button type="button" class="btn" data-cnsay="Write something about ${esc(TL[c])} first. Then you can connect it.">Connect</button><small class="aud" role="status">Only ${esc(TL[c])} will see it</small>`;
-    else st = `<button type="button" class="btn" data-share="${c}">Connect</button><small class="aud">Only ${esc(TL[c])} will see it</small>`;   /* R36: the audience beside the action */
+    else if (waits) st = `<button type="button" class="btn" data-cnsay="You can share after the TP${esc(t.tp)} oral feedback, ${esc(whenText(fe))}.">Share</button><small class="aud" role="status">Only ${esc(TL[c])} will see it</small>`;
+    else if (!has) st = `<button type="button" class="btn" data-cnsay="Write something about ${esc(TL[c])} first. Then you can share it.">Share</button><small class="aud" role="status">Only ${esc(TL[c])} will see it</small>`;
+    else st = `<button type="button" class="btn" data-share="${c}">Share</button><small class="aud">Only ${esc(TL[c])} will see it</small>`;   /* R36: the audience beside the action */
     return `<div class="cn-row"><span class="cn-who">${esc(TL[c])}</span>${st}</div>`;
   }).join('');
   if (!rows) return '';
-  return `<div class="connect"><h4>Connect what you wrote</h4>
-    <p class="lines">After the oral feedback, you can connect what you wrote about a teacher with that teacher. Only their part goes to them, and they can read it straight away. It is your choice, and you can take it back.</p>
+  return `<div class="connect"><h4>Share what you wrote</h4>
+    <p class="lines">After the oral feedback, you can share what you wrote about a teacher with that teacher. Only their part goes to them, and they can read it straight away. It is your choice, and you can take it back.</p>
     ${CNOTE ? `<p class="cn-note" role="status">${esc(CNOTE)}</p>` : ''}${rows}</div>`;
 }
 function connectNow(t, sit, k, c, btn){
   const p = (peerTeachers(t, sit) || [])[c]; if (!p || !p.token) return;
   const rows = peerRowsFor(t, k, c), TL = teacherLabels(t, sit);
-  btn.disabled = true; btn.textContent = 'Connecting';
+  btn.disabled = true; btn.textContent = 'Sharing';
   HubStore.call({ op: 'shareSheet', token: HubStore.token(), to: p.token, task: t.id, sit, tp: t.tp, col: t.shape === 'single' ? -1 : c, title: t.title, rows }).then(r => {
     rec(k); WORK[k].shared = WORK[k].shared || {}; WORK[k].shared[p.token] = { at: new Date().toISOString(), h: rowsHash(rows) }; save();
-    CNOTE = (r && r.demo ? 'Demo: connected on this device only. ' : '') + 'Connected with ' + TL[c] + '.';
+    CNOTE = (r && r.demo ? 'Demo: shared on this device only. ' : '') + 'Shared with ' + TL[c] + '.';
     sheet(t, sit);
-  }, e => { btn.disabled = false; btn.textContent = 'Connect'; CNOTE = (e && e.message) || 'That did not go. Try again.'; sheet(t, sit); });
+  }, e => { btn.disabled = false; btn.textContent = 'Share'; CNOTE = (e && e.message) || 'That did not go. Try again.'; sheet(t, sit); });
 }
 function takeBack(t, sit, k, c, btn){
   const p = (peerTeachers(t, sit) || [])[c]; if (!p || !p.token) return;
@@ -547,9 +550,11 @@ function sharedSheet(id){
   const s = SHARED.find(x => x.id === id);
   $('back').href = location.pathname + (KEYQ ? '?' + KEYQ : '');
   if (!s || s.locked) { $('app').innerHTML = `<p class="eyebrow">Shared with you</p><h1>Not open yet</h1><p class="lede">${s ? 'It opens once you have handed in your self-evaluation for that teaching practice.' : 'That sheet is not here any more. The one who wrote it can take it back.'}</p>`; return; }
+  /* read: the home page's line about it goes (index.html, 18 Nov 2026) */
+  try { localStorage.setItem('chub:peerSeen:' + s.id, String(s.at || '1')); } catch (e) {}
   $('app').innerHTML = `<p class="eyebrow">Shared with you · TP${esc(s.tp)}${esc(s.sit)}</p>
     <h1>${esc(s.title)}</h1>
-    <p class="lede"><b>${esc(s.by)}</b> watched your TP${esc(s.tp)} lesson and chose to connect what they wrote about it. Only the part about you is here. They can take it back, so it may disappear.</p>
+    <p class="lede"><b>${esc(s.by)}</b> watched your TP${esc(s.tp)} lesson and chose to share what they wrote about it. Only the part about you is here. They can take it back, so it may disappear.</p>
     ${s.rows.filter(r => r.a).map(r => `<div class="part"><h4>${esc(r.q)}</h4><div class="theirs">${esc(r.a)}</div></div>`).join('')}`;
 }
 /* Look again at the store when the page opens: a sheet that was waiting may be open now (the teacher has handed in), or taken back. */

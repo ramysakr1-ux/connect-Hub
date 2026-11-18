@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611180523">
+<link rel="stylesheet" href="hub-tokens.css?v=202611180538">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -469,7 +469,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611180523">
+<link rel="stylesheet" href="hub-house.css?v=202611180538">
 </head>
 <body>
 <div class="board">
@@ -681,20 +681,20 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202611180523"></script>
-<script src="observation-defaults.js?v=202611180523"></script>
-<script src="hub-shared.js?v=202611180523"></script>
-<script src="hub-hand.js?v=202611180523"></script>
-<script src="hub-ink.js?v=202611180523"></script>
+<script src="hub-due.js?v=202611180538"></script>
+<script src="observation-defaults.js?v=202611180538"></script>
+<script src="hub-shared.js?v=202611180538"></script>
+<script src="hub-hand.js?v=202611180538"></script>
+<script src="hub-ink.js?v=202611180538"></script>
 <script src="input-sessions/library.js?v=202610141516"></script>
-<script src="hub-store.js?v=202611180523"></script>
-<script src="hub-say.js?v=202611180523"></script>
-<script src="hub-shelf.js?v=202611180523"></script>
-<script src="hub-front.js?v=202611180523"></script>
-<script src="hub-sync.js?v=202611180523"></script>
-<script src="hub-notebook.js?v=202611180523"></script>
-<script src="hub-feedback.js?v=202611180523"></script>
-<script src="hub-about.js?v=202611180523"></script>
+<script src="hub-store.js?v=202611180538"></script>
+<script src="hub-say.js?v=202611180538"></script>
+<script src="hub-shelf.js?v=202611180538"></script>
+<script src="hub-front.js?v=202611180538"></script>
+<script src="hub-sync.js?v=202611180538"></script>
+<script src="hub-notebook.js?v=202611180538"></script>
+<script src="hub-feedback.js?v=202611180538"></script>
+<script src="hub-about.js?v=202611180538"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1533,6 +1533,18 @@ if (fbBack){
     add('Pick your getting-to-know-you activity for today', '31_getting_to_know_you.html');
   if (ASG.tone === 'stuck') add(ASG.text, '9_assignment_submission.html' + (ASG.failed && ASG.failed.length ? '?a=' + encodeURIComponent(ASG.failed[0]) : ''), ASG.failed && ASG.failed.length ? 'red' : 'amber');
   if (fbBack && selfIn && !fbOpened) add('Your teaching practice feedback is back — open it', '4_feedback_returned.html');
+  /* A CLASSMATE SHARED THEIR NOTES (Ramy, 18 Nov 2026: "yes, add the line to the home page"). A peer sheet a
+     classmate connected only showed on the Observation tasks page, so nobody knew one had arrived. One line, until
+     it is opened there (18_observation_tasks keeps chub:peerSeen:<id> with the version it showed, so a new version
+     says so again). One sheet is named; several are counted and open the list. */
+  (function(){
+    const fresh = (rec('connect_peer_sheets_v1') || []).filter(function(x){
+      if (!x || !x.id || x.locked) return false;
+      let seen = ''; try { seen = localStorage.getItem('chub:peerSeen:' + x.id) || ''; } catch (e) {}
+      return seen !== String(x.at || '1'); });
+    if (fresh.length === 1) add((fresh[0].by || 'A classmate') + ' shared their notes on your TP' + fresh[0].tp + ' lesson: read them', '18_observation_tasks.html?shared=' + encodeURIComponent(fresh[0].id));
+    else if (fresh.length > 1) add(fresh.length + ' classmates shared their notes on your lessons: read them', '18_observation_tasks.html#shared');
+  })();
   /* A PASSED ASSIGNMENT IS BACK (Ramy, 9 Nov 2026: "yes, add it"). Marked, finished and not a fail: one line each, until
      the trainee opens it (9_assignment_submission sets chub:asgSeen:<key>). A resubmission or a fail says so above. */
   (function(){
