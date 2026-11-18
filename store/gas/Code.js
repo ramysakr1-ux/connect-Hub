@@ -424,7 +424,7 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
@@ -471,7 +471,7 @@ function settleVersions_(op) {
 /* Recordings the input library plays through the store (op audio), whatever the course: the speed flat-mating
    demo lesson's two tracks, in Connect Lite materials / Connect Lite assets / Input library audio (12 Nov 2026). */
 /* What the trainee view (Maya, v224) may call: reads a trainee's pages make, and nothing that writes, mails or uploads. */
-var TEMPLATE_READS_ = { checkLink: 1, boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
+var TEMPLATE_READS_ = { drivePicker: 1, checkLink: 1, boot: 1, version: 1, ping: 1, get: 1, me: 1, course: 1, audio: 1, celta5Assets: 1, getInterviewAudio: 1, getNoteAudio: 1, getQuestionAudio: 1,
   passInfo: 1, peerSheets: 1, questions: 1, bookings: 1, rehearsalNotes: 1, ivClaims: 1, trainerNotes: 1 };
 var LIBRARY_AUDIO_ = ['1R192gsOe-ZBJa7j6TFX9THm4LBNk27B_', '1f1VCFnZYSRgH9GHDSHfWk9KQVrYfePRt',
   /* the emergency demo's book pages, English File Upper-intermediate 3rd edn, File 5A (12 Nov 2026): shown to course links only */
@@ -2651,6 +2651,32 @@ case 'inbox': {
       var tnAll = (typeof TRAINER_NOTES_ === 'object' && TRAINER_NOTES_) || {};
       return { html: tnAll[tnSlug] || '' };
     }
+    /* CHOOSE FROM MY DRIVE (v259, 18 Nov 2026). Ramy: trainees' material should live on their own Drive, "so we don't
+       overload our drive ... they can keep it forever". Google's own file picker needs three public names for the Lite
+       app in Google Cloud: its client ID, its browser key and its project number. They are not secrets (Google sends
+       them to every browser that uses a picker). In Google Cloud the browser key's website restrictions must list BOTH
+       https://lite.celtaconnect.com/* and https://docs.google.com/* (the picker draws in a frame on docs.google.com;
+       without it the picker opens on "API developer key is invalid"), and its API restriction is the Google Picker API. They are
+       kept here, set from the owner console, so they are not written into the pages. Empty = the choice does not show. */
+    case 'drivePicker': {
+      var dpRaw = PropertiesService.getScriptProperties().getProperty('DRIVE_PICKER'), dpCfg = null;
+      try { dpCfg = dpRaw ? JSON.parse(dpRaw) : null; } catch (dpErr) { dpCfg = null; }
+      if (!dpCfg || !dpCfg.clientId || !dpCfg.apiKey || !dpCfg.appId) return { on: false };
+      if (owner) return { on: true };                                   // the console only needs to know it is set
+      if (!course) throw new Error('This link is not on a course');
+      return { on: true, clientId: dpCfg.clientId, apiKey: dpCfg.apiKey, appId: dpCfg.appId };
+    }
+    case 'setDrivePicker': {
+      requireOwner_(owner);
+      var spC = String(req.clientId || '').trim(), spK = String(req.apiKey || '').trim(), spA = String(req.appId || '').trim();
+      var spProps = PropertiesService.getScriptProperties();
+      if (!spC && !spK && !spA) { spProps.deleteProperty('DRIVE_PICKER'); return { on: false }; }
+      if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(spC)) throw new Error('That does not look like a Google client ID (it ends .apps.googleusercontent.com)');
+      if (!/^AIza[0-9A-Za-z_\-]{30,}$/.test(spK)) throw new Error('That does not look like a Google browser key (it starts AIza)');
+      if (!/^\d{6,}$/.test(spA)) throw new Error('The project number is digits only');
+      spProps.setProperty('DRIVE_PICKER', JSON.stringify({ clientId: spC, apiKey: spK, appId: spA }));
+      return { on: true };
+    }
     case 'transcriptionOn': {
       return { on: !!PropertiesService.getScriptProperties().getProperty('OPENAI_KEY') };
     }
@@ -3048,7 +3074,7 @@ case 'inbox': {
       var clUrl = String(req.url || '').trim();
       if (!/^https:\/\/(drive|docs)\.google\.com\//i.test(clUrl) || clUrl.length > 2000) return { state: 'unknown' };
       var clCache = CacheService.getScriptCache(), clKey = 'cl:' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_1, clUrl));
-      var clHit = clCache.get(clKey); if (clHit) return { state: clHit };
+      var clHit = req.fresh ? null : clCache.get(clKey); if (clHit) return { state: clHit };   // fresh: asked straight after the page changed the file's sharing
       var clState = 'unknown', clAt = clUrl;
       try {
         for (var hop = 0; hop < 4; hop++) {
