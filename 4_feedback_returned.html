@@ -13,7 +13,7 @@
 <title>Feedback returned</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611190915">
+<link rel="stylesheet" href="hub-tokens.css?v=202611190933">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -180,7 +180,7 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611190915">
+<link rel="stylesheet" href="hub-house.css?v=202611190933">
 </head>
 <body>
 <div class="board">
@@ -196,11 +196,11 @@
   </div>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202611190915"></script>
-<script src="hub-store.js?v=202611190915"></script>
-<script src="hub-say.js?v=202611190915"></script>
-<script src="hub-sync.js?v=202611190915"></script>
-<script src="hub-notebook.js?v=202611190915"></script>
+<script src="hub-shared.js?v=202611190933"></script>
+<script src="hub-store.js?v=202611190933"></script>
+<script src="hub-say.js?v=202611190933"></script>
+<script src="hub-sync.js?v=202611190933"></script>
+<script src="hub-notebook.js?v=202611190933"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -450,7 +450,17 @@ if(currentOpen || past.length){
     /* The wording used to say this "clears ... this feedback", which was true
        when the page showed one teaching practice and nothing else. It is not
        true now: the document stays on this page with the rest of the record. */
-    if(!(await confirmModal('This files the teaching practice away and clears your plan and self-evaluation, so you can start the next one fresh. The feedback stays in your record on this page, and your tutor\'s starred action points have already carried forward. Continue?','Start next TP'))) return;
+    /* A PLAN ALREADY FOR THE NEXT TP IS KEPT (19 Nov 2026, the morning of C/21's TP2). A trainee had turned their TP1
+       plan into their TP2 plan without pressing this, so their self-evaluation and feedback were still TP1's and the
+       self-evaluation page showed the old one, locked. This button was the only way on, and it cleared the plan with
+       the rest: it would have deleted the TP2 plan they had just turned in. A plan whose number is later than the
+       feedback being filed is the next TP's, and stays. */
+    const tpNum = r => { const m = String((r && r.state && r.state.meta && r.state.meta.tp) || (r && r.state && r.state.f && r.state.f.fTP) || (r && r.label) || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
+    const planNow = rec('chub:plan'), fbNow = rec('chub:feedback');
+    const keepPlan = !!(planNow && fbNow && tpNum(planNow) && tpNum(fbNow) && tpNum(planNow) > tpNum(fbNow));
+    if(!(await confirmModal(keepPlan
+      ? 'This files TP' + tpNum(fbNow) + ' away and clears its self-evaluation, so you can write the one for TP' + tpNum(planNow) + '. Your TP' + tpNum(planNow) + ' plan stays as it is. The feedback stays in your record on this page. Continue?'
+      : 'This files the teaching practice away and clears your plan and self-evaluation, so you can start the next one fresh. The feedback stays in your record on this page, and your tutor\'s starred action points have already carried forward. Continue?','Start next TP'))) return;
 
     /* File it before clearing it. The store normally has it in the history
        already -- the tutor's screen puts it there on returning -- and this page
@@ -471,7 +481,7 @@ if(currentOpen || past.length){
       }
     } catch (e) {}
 
-    localStorage.removeItem('chub:plan');
+    if (!keepPlan) localStorage.removeItem('chub:plan');
     localStorage.removeItem('chub:selfeval');
     localStorage.removeItem('chub:feedback');
     // Let the store take the filing and the three clears before leaving.
