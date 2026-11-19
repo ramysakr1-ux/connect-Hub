@@ -422,7 +422,7 @@ function doPost(e) {
    else counts as a change. The course's own day is part of the version, so a page whose content follows the
    date (a demo clock, released points) boots once the day turns. */
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
-var READ_OPS_ = { adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
+var READ_OPS_ = { tutorPhrases: 1, adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
   ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1, health: 1 };
 function verKey_(id) { return 'ver:' + id; }
@@ -1088,6 +1088,22 @@ case 'inbox': {
     /* v94 (17 Oct 2026): the default marking guidance, for every course that
        has not written its own. Kept in the store under the id '_defaults',
        not in the public site's code: it is for tutors and assessors only. */
+    /* THE TUTORS' PHRASES (v264, 19 Nov 2026; Ramy: "it should be able to learn from different feedback in different
+       courses"). Counts of the lower-case words and two-word phrases tutors use in their feedback, built from returned
+       feedback (never a trainee's own writing, never a name, never a sentence), so word completion offers a tutor's
+       way of writing from the first day of a course. Kept here, under '_defaults', not in the public site's code. The
+       owner writes it; any tutor link reads it; a trainee never. */
+    case 'putTutorPhrases': {
+      requireOwner_(owner);
+      var tpd = req.data || {};
+      if (typeof tpd !== 'object' || JSON.stringify(tpd).length > 400000) throw new Error('The phrases are missing or too large');
+      courseWrite_('_defaults', 'phrases', tpd);
+      return { saved: true, words: Object.keys(tpd.words || {}).length, pairs: Object.keys(tpd.pairs || {}).length };
+    }
+    case 'tutorPhrases': {
+      if (!tutor) throw new Error('Tutors only');
+      return { data: courseRead_('_defaults', 'phrases') || null };
+    }
     case 'putDefaultGuidance': {
       requireOwner_(owner);
       courseWrite_('_defaults', 'guidance', req.data || null);

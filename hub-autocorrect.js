@@ -208,8 +208,28 @@
       try { localStorage.setItem(MINE_KEY, JSON.stringify(mine)); localStorage.setItem(PAIR_KEY, JSON.stringify(pairs)); } catch (e) {}
     }, 1500);
   }
+  /* THE TUTORS' PHRASES FROM PAST COURSES (19 Nov 2026: "it should be able to learn from different feedback in different
+     courses"). The store keeps counts of the words and two-word phrases in tutors' returned feedback (op tutorPhrases,
+     tutor links only); they are fetched once a session, kept for a day, and added to what this device has learnt. */
+  var shared = null, SH_KEY = 'hub:tutorphrases';
+  function sharedPhrases(){
+    if (shared) return shared;
+    try { var c = JSON.parse(localStorage.getItem(SH_KEY) || 'null'); if (c && c.data && Date.now() - c.at < 864e5) return (shared = c.data); } catch (e) {}
+    shared = { words: {}, pairs: {} };
+    try { if (H && H.call) H.call({ op: 'tutorPhrases' }).then(function(r){ var d = r && (r.data || (r.result && r.result.data)); if (d && (d.words || d.pairs)) { shared = d; merged = null; try { localStorage.setItem(SH_KEY, JSON.stringify({ at: Date.now(), data: d })); } catch (e) {} } }, function(){}); } catch (e) {}
+    return shared;
+  }
+  var merged = null, mergedAt = 0;
+  function both(){
+    if (merged && Date.now() - mergedAt < 5000) return merged;
+    var sh = sharedPhrases(), w = {}, p = {}, k;
+    for (k in sh.words || {}) w[k] = sh.words[k]; for (k in sh.pairs || {}) p[k] = sh.pairs[k];
+    var mw = myWords(), mp = myPairs();
+    for (k in mw) w[k] = (w[k] || 0) + mw[k]; for (k in mp) p[k] = (p[k] || 0) + mp[k] * 2;   // this tutor's own use counts double
+    merged = { words: w, pairs: p }; mergedAt = Date.now(); return merged;
+  }
   function bestFor(prefix, prev){
-    return window.hubSpell && typeof hubSpell.complete === 'function' ? hubSpell.complete(prefix, prev, { words: myWords(), pairs: myPairs() }) : null;
+    return window.hubSpell && typeof hubSpell.complete === 'function' ? hubSpell.complete(prefix, prev, both()) : null;
   }
   /* completion has its own switch (19 Nov 2026), on unless turned off, and only while Autocorrect is on */
   var CKEY = 'hub:complete';
