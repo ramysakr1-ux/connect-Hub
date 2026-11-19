@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611200006">
+<link rel="stylesheet" href="hub-tokens.css?v=202611200024">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -165,12 +165,12 @@
   /* THE CARDS IN PAIRS (Ramy, 19 Nov 2026: "a bit more aligned ... a bit more symmetrical"; the assessor reads this page).
      Two columns used to run independently, so only the first pair started level. Now the cards sit in rows of two:
      each pair starts on one line and ends on one line, every card's heading is the same height whether or not it
-     carries a button, and a card left without a partner runs the width of the page. */
+     carries a button, and a card left without a partner, or holding a single line, runs the width of the page. */
   .pf-two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:stretch; margin:0 0 22px;}
   .pf-two > .pf-sec{margin:0; display:flex; flex-direction:column;}
   .pf-two > .pf-sec > header{flex:0 0 auto;}
   .pf-two > .pf-sec > .pf-row{flex:1 1 auto;}                      /* the shorter card's lines share the spare room, so no card ends in a blank */
-  .pf-two > .pf-sec:last-child:nth-child(odd){grid-column:1 / -1;}
+  .pf-two > .pf-sec.wide{grid-column:1 / -1;}
   .pf-two:has(.doc:not([hidden])) > .pf-sec{align-self:start;}     /* a document open inside a card: its neighbour keeps its own height */
   .pf-sec > header{min-height:64px;}
   .pf-row{display:grid; grid-template-columns:minmax(120px,190px) minmax(0,1fr) auto; gap:14px; align-items:center; padding:13px 20px; border-bottom:1px solid var(--row-line, var(--sand-line));}
@@ -423,7 +423,7 @@
   @media (max-width:560px){ .vcheck li{grid-template-columns:1fr auto;} .vcheck .rk{grid-column:1 / -1;} }
   @media print{ .vcheck{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611200006">
+<link rel="stylesheet" href="hub-house.css?v=202611200024">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -455,17 +455,17 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202611200006"></script>
-<script src="hub-shared.js?v=202611200006"></script>
-<script src="fol-interview.js?v=202611200006"></script>
-<script src="gtky-bank.js?v=202611200006"></script>
-<script src="assignment-defaults.js?v=202611200006"></script>
-<script src="hub-tracker.js?v=202611200006"></script>
-<script src="hub-rotation.js?v=202611200006"></script>
-<script src="hub-attendance.js?v=202611200006"></script>
-<script src="hub-store.js?v=202611200006"></script>
-<script src="hub-say.js?v=202611200006"></script>
-<script src="hub-sync.js?v=202611200006"></script>
+<script src="observation-defaults.js?v=202611200024"></script>
+<script src="hub-shared.js?v=202611200024"></script>
+<script src="fol-interview.js?v=202611200024"></script>
+<script src="gtky-bank.js?v=202611200024"></script>
+<script src="assignment-defaults.js?v=202611200024"></script>
+<script src="hub-tracker.js?v=202611200024"></script>
+<script src="hub-rotation.js?v=202611200024"></script>
+<script src="hub-attendance.js?v=202611200024"></script>
+<script src="hub-store.js?v=202611200024"></script>
+<script src="hub-say.js?v=202611200024"></script>
+<script src="hub-sync.js?v=202611200024"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -1338,12 +1338,20 @@ function renderOne(tr){
     ${pfJump(tr, pfG)}
     ${pfSec('pf-tp', 'Teaching practice', pfRet ? pfRet + ' returned, ' + (TP_TOTAL - pfRet) + ' still to come' : 'None returned yet', pfRet ? `<a class="pf-btn" href="4_feedback_returned.html?trainee=${pfId}">Print the TP record</a>` : '', tpSection(tr, c))}
     <div class="pf-two">
-        ${pfSec('pf-asg', 'Assignments', 'In the center’s order', '', assignmentRows(tr, pfG && pfG.n ? { fol: pfG.ivRow + pfG.doc } : null))}
-        ${pfSec('pf-c5', 'CELTA 5', 'The record booklet', `<a class="pf-btn" href="20_celta5.html?trainee=${pfId}">Open the CELTA 5</a>`, celta5Rows(tr))}
-        ${pfSec('pf-obs', 'Observations', 'The sheets, as the trainee wrote them', `<a class="pf-btn" href="18_observation_tasks.html?trainee=${pfId}">Open the sheets</a>`, observationRows(tr))}
-        ${staff.length ? pfSec('pf-staff', 'Staff file on this trainee', 'For the tutors and the assessor. The trainee does not see these.', '', pfLinks(staff)) : ''}
-        ${mine.length ? pfSec('pf-links', 'Private links', 'Given to this trainee alone', '', pfLinks(mine)) : ''}
-        ${pfAgr.at ? pfSec('pf-agr', 'Candidate agreement', 'Written by the center, signed on screen', `<a class="pf-btn" href="29_candidate_agreement.html?trainee=${pfId}">Open it</a>`, pfRow('Signed', esc(when(pfAgr.at)), 'fine', 'Signed')) : ''}
+        ${(function(){
+          /* THE PAIRS (19-20 Nov 2026). The cards that hold several lines go two to a row; if that leaves one over, it runs
+             the width of the page. The candidate agreement is one line, so it always runs the width: beside a four-line
+             card its single line floated in the middle of a tall, empty box (seen on a trainee with no staff file). */
+          const half = [
+            ['pf-asg', 'Assignments', 'In the center’s order', '', assignmentRows(tr, pfG && pfG.n ? { fol: pfG.ivRow + pfG.doc } : null)],
+            ['pf-c5', 'CELTA 5', 'The record booklet', `<a class="pf-btn" href="20_celta5.html?trainee=${pfId}">Open the CELTA 5</a>`, celta5Rows(tr)],
+            ['pf-obs', 'Observations', 'The sheets, as the trainee wrote them', `<a class="pf-btn" href="18_observation_tasks.html?trainee=${pfId}">Open the sheets</a>`, observationRows(tr)],
+            staff.length ? ['pf-staff', 'Staff file on this trainee', 'For the tutors and the assessor. The trainee does not see these.', '', pfLinks(staff)] : null,
+            mine.length ? ['pf-links', 'Private links', 'Given to this trainee alone', '', pfLinks(mine)] : null
+          ].filter(Boolean);
+          return half.map((c, i) => pfSec(c[0], c[1], c[2], c[3], c[4], half.length % 2 && i === half.length - 1 ? 'wide' : '')).join('')
+            + (pfAgr.at ? pfSec('pf-agr', 'Candidate agreement', 'Written by the center, signed on screen', `<a class="pf-btn" href="29_candidate_agreement.html?trainee=${pfId}">Open it</a>`, pfRow('Signed', esc(when(pfAgr.at)), 'fine', 'Signed'), 'wide') : '');
+        })()}
     </div>
     ${(function(){ const tl = timelineHTML(tr), n = (tl.match(/<li class="/g) || []).length;
       /* FOLDED (Ramy, 19 Nov 2026: "don't get the official timeline ... she can already open that from the CELTA 5 ...
