@@ -210,12 +210,16 @@
   }
   /* THE TUTORS' PHRASES FROM PAST COURSES (19 Nov 2026: "it should be able to learn from different feedback in different
      courses"). The store keeps counts of the words and two-word phrases in tutors' returned feedback (op tutorPhrases,
-     tutor links only); they are fetched once a session, kept for a day, and added to what this device has learnt. */
+     tutor links only); they are fetched once a session, kept in this browser and refreshed when two hours old, and added to what this device has learnt. */
   var shared = null, SH_KEY = 'hub:tutorphrases';
   function sharedPhrases(){
     if (shared) return shared;
-    try { var c = JSON.parse(localStorage.getItem(SH_KEY) || 'null'); if (c && c.data && Date.now() - c.at < 864e5) return (shared = c.data); } catch (e) {}
-    shared = { words: {}, pairs: {} };
+    /* the copy this browser kept is used at once; one older than two hours is fetched again behind it, so a list
+       rebuilt during a course reaches a tutor the same day (it used to wait a full day) */
+    var kept = null;
+    try { var c = JSON.parse(localStorage.getItem(SH_KEY) || 'null'); if (c && c.data) kept = c; } catch (e) {}
+    shared = kept ? kept.data : { words: {}, pairs: {} };
+    if (kept && Date.now() - kept.at < 72e5) return shared;
     try { if (H && H.call) H.call({ op: 'tutorPhrases' }).then(function(r){ var d = r && (r.data || (r.result && r.result.data)); if (d && (d.words || d.pairs)) { shared = d; merged = null; try { localStorage.setItem(SH_KEY, JSON.stringify({ at: Date.now(), data: d })); } catch (e) {} } }, function(){}); } catch (e) {}
     return shared;
   }

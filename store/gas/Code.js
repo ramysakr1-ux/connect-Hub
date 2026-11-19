@@ -2774,7 +2774,8 @@ case 'inbox': {
       var tnMaxS = Math.max(1, Math.min(8, parseInt(req.maxS, 10) || 5)), tnMaxA = Math.max(1, Math.min(6, parseInt(req.maxA, 10) || 3));
       var tnSys = 'You help a CELTA tutor turn the rough notes they wrote while watching a trainee teach into the strengths and action points of the trainee\'s feedback. '
         + 'Group the tutor\'s lines: lines about the same thing become one point. Give at most ' + tnMaxS + ' strengths and at most ' + tnMaxA + ' action points in all, counting planning and teaching together; fewer when the notes say less. Choose the points that matter most for this lesson; leave out the rest. '
-        + 'Each point is one or two full sentences addressed to the trainee as "you". Say what you did, with the specific detail the notes give (the stage, the activity, the language, what the students did), and, when the notes say or show it, the effect on the students or on the lesson. '
+        + 'Each point is one or two sentences addressed to the trainee as "you"; a point may open the way tutors do, without a verb ("Good focus on ...", "Clear instructions for ..."). Say what you did, with the specific detail the notes give (the stage, the activity, the language, what the students did), and, when the notes say or show it, the effect on the students or on the lesson. '
+        + trainerVoice_()
         + 'An action point names the problem and ends with one concrete thing to do next time, which must follow directly from the notes. '
         + 'Never add an event, a detail, a strength, a problem or a judgement the notes do not contain, and never give a grade or a standard. Keep the tutor\'s own words and observations where you can; write shorthand out in full, except TTT, STT, CCQs and ICQs. American spelling. No names. No criterion codes in the text. '
         + 'Lists: sp = strength in planning (the written plan and the materials as prepared: aims, staging on paper, language analysis, anticipated problems, timings planned, the look of materials, acknowledging sources); '
@@ -2785,8 +2786,8 @@ case 'inbox': {
         + 'Criteria: ' + tnCrit.join('; ') + '. '
         + celtaShorthand_()
         + 'Example. Notes: "good rapport, Ss laughing in lead-in. instr for ex 2 too long. no demo. vocab analysis clear. no sources on handout". '
-        + 'Answer: {"sp":[{"text":"Your vocabulary analysis was clear.","codes":["4i"]}],"ap":[{"text":"The handout did not say where its material came from. Next time, put the source at the foot of every handout.","codes":["4d"]}],'
-        + '"st":[{"text":"You built good rapport from the start: the students were laughing in the lead-in.","codes":["1d"]}],"at":[{"text":"Your instructions for exercise 2 were too long and you did not demonstrate the task, so the students could not see what to do. Next time, keep the instructions short and show the first item before they start.","codes":["5f"]}]}. '
+        + 'Answer: {"sp":[{"text":"Clear vocabulary analysis in your plan.","codes":["4i"]}],"ap":[{"text":"The handout did not say where its material came from. Remember to put the source at the foot of every handout.","codes":["4d"]}],'
+        + '"st":[{"text":"Good rapport from the start, and the students were laughing in the lead-in.","codes":["1d"]}],"at":[{"text":"Your instructions for exercise 2 were too long and there was no demonstration, so the students could not see what to do. Next time, keep the instructions short and do the first item with them before they start.","codes":["5f"]}]}. '
         + 'Answer as JSON with the four lists sp, ap, st, at.';
       var tnResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + tnKey },
@@ -2837,6 +2838,7 @@ case 'inbox': {
         + 'Keep the tutor\'s own observations and words where you can; correct spelling and grammar; write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
         + 'Address the trainee as "you". No bullet points, no headings, no criterion codes. '
         + 'One or two paragraphs, about 80 to 150 words; shorter if the notes are short. American spelling. No names. '
+        + (onTone === 'own' ? '' : trainerVoice_())
         + celtaShorthand_()
         + 'Answer as JSON: {"text":"..."}.';
       var onResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
@@ -2892,8 +2894,8 @@ case 'inbox': {
         + 'Say every point again in your own words, so it does not repeat the feedback writer\'s phrasing, but keep its meaning, its detail and its strength: '
         + 'a firm point stays firm, a mild one stays mild, and nothing a point names is lost (where, how much, what it led to). '
         + 'The clear, professional register of a CELTA candidate record: natural and readable, never chatty, never stiff or bureaucratic (not prior to, simultaneously, utilize, facilitate). '
-        + 'Strengths: short phrases saying what the trainee did, no full stop, e.g. "Warm welcome and great rapport, with a relaxed atmosphere". '
-        + 'Action points: imperatives addressed to the trainee, e.g. "Keep instructions short and demonstrate first". '
+        + 'Strengths: short phrases saying what the trainee did, no full stop, the way tutors write them, e.g. "Good rapport with the students and a relaxed atmosphere", "Clear staging for a receptive skills lesson", "Good focus on pair and group work". '
+        + 'Action points: imperatives addressed to the trainee, e.g. "Keep instructions short and give a demonstration first", "Reduce your TTT during the feedback stage", "Make sure you monitor during peer checking before you start feedback". '
         + 'If two points say the same thing, join them into one and keep both codes. Keep each point\'s codes exactly as given; never add, change or guess a code. '
         + 'Write "students", never Ss. ' + celtaShorthand_()
         + 'In the points, write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
@@ -5431,6 +5433,21 @@ function nextCourseId_() {
    (24_tp_points.html GLOSSARY), the acronyms and terms of the CELTA glossary the C/17 course
    used, and note-taking shorthand (Ramy, 27 Oct 2026: "use the glossary from C17 ... and the one
    we have at the bottom of TP points"). The C/17 terms are named, not quoted. */
+/* THE TRAINER'S VOICE (v265, 19 Nov 2026). Ramy: "Lite does not understand what it should sound like. It needs to sound
+   more like a CELTA trainer when it writes the feedback, action points, the tutorials." Read off his own TP feedback
+   on his past courses (over 300 forms) and the centre's grade reports: how a tutor says what worked, how they turn to
+   what to change, and what they call the parts of a lesson. Patterns only, no sentence of anyone's is quoted. It joins
+   the prompts that write TO the trainee (Ask Connect's points and the Overall comment); every other rule in those
+   prompts stands: nothing is added to what the tutor noted, no names, shorthand written out. */
+function trainerVoice_() {
+  return 'VOICE. Write the way an experienced CELTA tutor writes to a trainee after watching the lesson: plain, brisk and specific, close to how the tutor would say it across the table. '
+    + 'Ways tutors say what worked: "Good focus on ...", "Good level of ...", "Good use of ...", "Good start to the lesson and ...", "Clear staging for a receptive skills lesson", "Clear instructions for the gist task", "You did well to ...", "Good idea to ...". '
+    + 'Ways tutors turn to what to change: "... but please ...", "... but make sure you ...", "Remember to ...", "Watch out for ...", "Let\'s ...", "Next time, ...", and now and then a short question that makes the trainee think ("How does that help the students use the language?"). '
+    + 'Call each part of the lesson what tutors call it: lead-in, context setting stage, pre-teaching the blocking vocabulary, gist task, detailed task, peer check, feedback stage, clarification stage, controlled practice, freer practice, main aim and sub aim, interaction patterns, pace. '
+    + 'Vary how points open; do not start them all the same way. '
+    + 'Never sound like a reference or a report: not "demonstrated", "showcased", "exhibited", "commendable", "effectively facilitated", "fostered", "a strong ability to", "it is recommended that". No sarcasm and no joke at the trainee\'s expense. ';
+}
+
 function celtaShorthand_() {
   return 'The tutor writes in CELTA shorthand. From the TP points: SB = student\'s book; WB = workbook; p. = page; HO = handout; AK = answer key; TL = target language; '
     + 'MFP = meaning, form and pronunciation; CCQ = concept checking question; ICQ = instruction checking question; ECDW = elicit, CCQ, drill, write; PW = pair work; GW = group work; '
