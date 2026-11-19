@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611192028">
+<link rel="stylesheet" href="hub-tokens.css?v=202611192039">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -89,6 +89,7 @@
   .s1pretty li{margin:0 0 8px; padding-left:2px;}
   .s1pretty li:last-child{margin-bottom:0;}
   .s1pretty .c5tag{display:inline-block; margin-left:6px; padding:0 7px; border-radius:999px; background:var(--paper); border:1px solid var(--sand-line); color:var(--grey); font-size:0.72rem; font-weight:700; line-height:1.6; vertical-align:1px; white-space:nowrap;}
+  #s1 textarea.s1write{font-size:0.92rem; line-height:1.75; padding:12px 14px;}
   .s1view{cursor:text; position:relative; padding:10px 12px 10px 12px; border:1px solid var(--sand-line); border-radius:6px; background:var(--paper);}
   .s1view:hover{border-color:var(--teal);}
   .s1view .s1edit{float:right; margin:-2px 0 4px 10px; font-size:0.75rem; font-weight:700; color:var(--teal); background:none; border:0; padding:2px 0; cursor:pointer; font-family:inherit;}
@@ -232,7 +233,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611192028">
+<link rel="stylesheet" href="hub-house.css?v=202611192039">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -245,20 +246,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611192028"></script>
-<script src="hub-hand.js?v=202611192028"></script>
-<script src="hub-ink.js?v=202611192028"></script>
-<script src="assignment-defaults.js?v=202611192028"></script>
-<script src="celta5-text.js?v=202611192028"></script>
-<script src="celta5-appendix.js?v=202611192028"></script>
-<script src="celta5-criteria.js?v=202611192028"></script>
-<script src="hub-tracker.js?v=202611192028"></script>
-<script src="observation-defaults.js?v=202611192028"></script>
-<script src="hub-shared.js?v=202611192028"></script>
-<script src="hub-store.js?v=202611192028"></script>
-<script src="hub-say.js?v=202611192028"></script>
-<script src="hub-sync.js?v=202611192028"></script>
-<script src="hub-notebook.js?v=202611192028"></script>
+<script src="celta5-pdf.js?v=202611192039"></script>
+<script src="hub-hand.js?v=202611192039"></script>
+<script src="hub-ink.js?v=202611192039"></script>
+<script src="assignment-defaults.js?v=202611192039"></script>
+<script src="celta5-text.js?v=202611192039"></script>
+<script src="celta5-appendix.js?v=202611192039"></script>
+<script src="celta5-criteria.js?v=202611192039"></script>
+<script src="hub-tracker.js?v=202611192039"></script>
+<script src="observation-defaults.js?v=202611192039"></script>
+<script src="hub-shared.js?v=202611192039"></script>
+<script src="hub-store.js?v=202611192039"></script>
+<script src="hub-say.js?v=202611192039"></script>
+<script src="hub-sync.js?v=202611192039"></script>
+<script src="hub-notebook.js?v=202611192039"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -456,8 +457,10 @@ const field = (obj, key, label, opts) => {
   const mine = opts.mine;
   const pretty = opts.o === 's1' && (key === 'strengths' || key === 'actionPlan');
   if (pretty && v && (!mine || opts.locked)) return `<label class="f">${label}</label><div class="ro s1pretty">${s1Pretty(v)}</div>`;
-  if (pretty && mine) return `<label class="f">${label}</label><div class="s1view s1pretty${v ? '' : ' blank'}" data-s1view="${key}" tabindex="0" role="button" aria-label="Edit ${esc(label)}"><button type="button" class="s1edit" tabindex="-1">Edit</button>${v ? s1Pretty(v) : 'Nothing written yet. Press to write.'}</div>`
-    + `<textarea data-o="${opts.o}" data-k="${key}" hidden>${esc(v)}</textarea>`;
+  /* the tutor writes in one steady box: no laid-out copy that swaps for the box when pressed (Ramy, 19 Nov 2026: "as soon
+     as I click inside the box, they get closer to each other"). The laid-out version is what the trainee reads, and
+     what anyone sees once it is returned. */
+  if (pretty && mine) return `<label class="f">${label}</label><textarea class="s1write" data-o="${opts.o}" data-k="${key}">${esc(v)}</textarea>`;
   if (!mine) return `<label class="f">${label}</label><div class="ro ${v ? '' : 'empty'}">${v ? esc(v) : 'Nothing written yet'}</div>`;
   return `<label class="f">${label}</label>` + (opts.input
     ? `<input type="${opts.input}" data-o="${opts.o}" data-k="${key}" value="${esc(v)}"${opts.locked ? ' readonly' : ''}>`
