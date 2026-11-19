@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611191619">
+<link rel="stylesheet" href="hub-tokens.css?v=202611191811">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -736,7 +736,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611191619">
+<link rel="stylesheet" href="hub-house.css?v=202611191811">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -874,6 +874,15 @@ body.hub-paper .day .mine-block.ls > *{margin-left:0; margin-right:0;}
 .ls-uses .ls-eye + .ls-use{border-top:0; padding-top:0;}
 .ls-use b{flex:0 0 auto; color:var(--a-red, var(--brick)); font-weight:600;}
 body.ls-open{overflow:hidden;}
+/* SIDE BY SIDE ON A LAPTOP (Ramy, 19 Nov 2026: "difficult to see the TP plans and the material at the same time").
+   Same sheet, same place. On a wide screen the lesson behind it is no longer dimmed or locked: it moves left to make
+   room, scrolls and can be read while the page is open. A phone keeps the sheet over the lesson, as before. */
+@media (min-width:1100px){
+  .ls-ov{left:auto; width:min(680px, 50vw); box-shadow:-24px 0 48px -24px rgba(10,20,15,.45);}
+  .ls-dim{display:none;}
+  .ls-panel{width:100%; box-shadow:none;}
+  body.ls-open{overflow:auto; padding-right:min(680px, 50vw);}
+}
 @media (max-width:560px){ .ls-title h3{font-size:1.6rem;} .ls-phead{flex-wrap:wrap;} .ls-ptitle{flex-basis:100%;} .ls-pbody{padding:14px;} }
 @media print{
   .ls-ov, .ls-acts, .ls-afternoon, .ls-more{display:none !important;}
@@ -900,15 +909,15 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611191619"></script>
-<script src="hub-tracker.js?v=202611191619"></script>
-<script src="hub-rotation.js?v=202611191619"></script>
-<script src="hub-shared.js?v=202611191619"></script>
+<script src="hub-due.js?v=202611191811"></script>
+<script src="hub-tracker.js?v=202611191811"></script>
+<script src="hub-rotation.js?v=202611191811"></script>
+<script src="hub-shared.js?v=202611191811"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611191619"></script>
-<script src="hub-say.js?v=202611191619"></script>
-<script src="hub-sync.js?v=202611191619"></script>
-<script src="hub-notebook.js?v=202611191619"></script>
+<script src="hub-store.js?v=202611191811"></script>
+<script src="hub-say.js?v=202611191811"></script>
+<script src="hub-sync.js?v=202611191811"></script>
+<script src="hub-notebook.js?v=202611191811"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -1994,23 +2003,27 @@ function lsMaterials(c, key){
 }
 function lsDriveId(u){ const m = String(u || '').match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^"' ]*?id=)([\w-]{20,})/); return m ? m[1] : ''; }
 /* The side sheet. One element for the page, filled when a card is pressed. */
+/* FULL SIZE OPENS IN ITS OWN TAB (Ramy, 19 Nov 2026, laptop, Lite installed as an app: after full screen "there is no
+   going back to the TP points"). Every material goes to one named tab, "lite-material", so pressing the next one
+   reuses that tab instead of piling up new ones, and the TP point stays open where it was. Drive's own full-screen
+   button works inside the sheet (allow="fullscreen"), so Esc comes straight back to the lesson. */
 function lsOpen(key, i, from){
   const list = (window.__LS || {})[key] || []; const m = list[i]; if (!m) return;
   let ov = document.getElementById('lsSheet');
   if (!ov) { ov = document.createElement('div'); ov.id = 'lsSheet'; ov.className = 'ls-ov'; document.body.appendChild(ov); }
   const id = lsDriveId(m.file);
   const pageView = id
-    ? `<div class="ls-page"><iframe src="https://drive.google.com/file/d/${esc(id)}/preview?hl=en" title="${esc(m.kind + ', ' + m.title)}"></iframe></div>
-       <a class="ls-btn" href="https://drive.google.com/file/d/${esc(id)}/view" target="_blank" rel="noopener">Open full size</a>`
+    ? `<div class="ls-page"><iframe src="https://drive.google.com/file/d/${esc(id)}/preview?hl=en" title="${esc(m.kind + ', ' + m.title)}" allow="fullscreen" allowfullscreen></iframe></div>
+       <a class="ls-btn" href="https://drive.google.com/file/d/${esc(id)}/view" target="lite-material">Open full size in a tab</a>`
     : /\.(png|jpe?g|webp|gif)([?#]|$)/i.test(m.file || '')
       ? `<div class="ls-page ls-img"><img src="${esc(m.file)}" alt="${esc(m.kind + ', ' + m.title)}"></div>
-         <a class="ls-btn" href="${esc(m.file)}" target="_blank" rel="noopener">Open full size</a>`
+         <a class="ls-btn" href="${esc(m.file)}" target="lite-material">Open full size in a tab</a>`
     : m.file
-      ? `<a class="ls-btn" href="${esc(m.file)}" target="_blank" rel="noopener">Open the page</a>`
+      ? `<a class="ls-btn" href="${esc(m.file)}" target="lite-material">Open the page in a tab</a>`
       : `<div class="ls-page ls-nopage"><p><b>${esc(m.kind)}, ${esc(m.title.toLowerCase())}</b></p><p>No scan of this page has been added yet. Use it from the coursebook.</p></div>`;
   const uses = m.uses.filter(u => u.what);
   ov.innerHTML = `<button type="button" class="ls-dim" aria-label="Close the page" data-ls-close></button>
-    <div class="ls-panel" role="dialog" aria-modal="true" aria-label="${esc(m.kind + ', ' + m.title)}">
+    <div class="ls-panel" role="dialog" aria-modal="${window.matchMedia && matchMedia('(min-width:1100px)').matches ? 'false' : 'true'}" aria-label="${esc(m.kind + ', ' + m.title)}">
       <div class="ls-phead">
         <div class="ls-ptitle"><span class="ls-eye">Your materials · ${i + 1} of ${list.length}</span><b>${esc(m.kind)}, ${esc(m.title.toLowerCase())}</b></div>
         <button type="button" class="ls-ico" aria-label="Previous material" data-ls-go="${i - 1}"${i ? '' : ' disabled'}><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
