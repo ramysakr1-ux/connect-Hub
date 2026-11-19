@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611191014">
+<link rel="stylesheet" href="hub-tokens.css?v=202611191040">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -587,7 +587,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611191014">
+<link rel="stylesheet" href="hub-house.css?v=202611191040">
 </head>
 <body>
 <div class="board">
@@ -785,14 +785,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611191014"></script>
-<script src="hub-shared.js?v=202611191014"></script>
-<script src="hub-store.js?v=202611191014"></script>
-<script src="hub-say.js?v=202611191014"></script>
-<script src="hub-crit-learn.js?v=202611191014"></script>
-<script src="hub-crit-vocab.js?v=202611191014"></script>
-<script src="hub-sync.js?v=202611191014"></script>
-<script src="hub-notebook.js?v=202611191014"></script>
+<script src="hub-exchange.js?v=202611191040"></script>
+<script src="hub-shared.js?v=202611191040"></script>
+<script src="hub-store.js?v=202611191040"></script>
+<script src="hub-say.js?v=202611191040"></script>
+<script src="hub-crit-learn.js?v=202611191040"></script>
+<script src="hub-crit-vocab.js?v=202611191040"></script>
+<script src="hub-sync.js?v=202611191040"></script>
+<script src="hub-notebook.js?v=202611191040"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1611,8 +1611,11 @@ function showSeen(d){
       <div class="la-body">${inner}</div></details>`;
   };
   const laLabel = l.type==='vocab'?'Vocabulary':(l.type==='grammar'?'Grammar':'Functional language');
+  /* THE ANALYSIS'S CONTEXT (19 Nov 2026, the day C/21 sends its first analysis): the trainee's first box -- the context
+     the language is presented in -- was in their document and missing here, so it could not be read beside the rest. */
+  const laCtx = String(l.context||'').trim() ? `<table style="margin-bottom:14px;"><tr><th width="18%">Section</th><th>What they wrote</th></tr><tr><td><b>Context</b></td><td>${bulletsHTML(l.context)}</td></tr></table>` : '';
   if(l.type==='vocab' && (l.vocab||[]).length){
-    html+=laFold(laLabel, l.vocab.length, `<table>
+    html+=laFold(laLabel, l.vocab.length + (laCtx ? 1 : 0), laCtx + `<table>
       <tr><th width="14%">Item</th><th>Definition</th><th>Clarification</th><th>Problems</th>
           <th class="tc" width="32%">Your comment</th></tr>
       ${l.vocab.map((r,i)=>`<tr><td><b>${nl2br(r.item)}</b></td><td>${bulletsHTML(r.def)}</td>
@@ -1646,8 +1649,8 @@ function showSeen(d){
     const filled = (blocksHTML.match(/<tr>/g)||[]).length > (l.blocks||[]).length;
     /* every row but the header rows: the sections that were actually written */
     const rows = (blocksHTML.match(/<tr>/g)||[]).length - (l.blocks||[]).length;
-    if (filled) html += laFold(laLabel, rows, blocksHTML);
-  }
+    if (filled || laCtx) html += laFold(laLabel, rows + (laCtx ? 1 : 0), laCtx + blocksHTML);
+  } else if (laCtx) html += laFold(laLabel, 1, laCtx);
   if(d.self){
     const s=d.self;
     /* The third table in this card, and the only one that had no header band:
