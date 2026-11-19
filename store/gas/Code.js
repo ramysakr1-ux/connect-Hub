@@ -5433,7 +5433,8 @@ function nextCourseId_() {
    (24_tp_points.html GLOSSARY), the acronyms and terms of the CELTA glossary the C/17 course
    used, and note-taking shorthand (Ramy, 27 Oct 2026: "use the glossary from C17 ... and the one
    we have at the bottom of TP points"). The C/17 terms are named, not quoted. */
-/* THE TRAINER'S VOICE (v265, 19 Nov 2026). Ramy: "Lite does not understand what it should sound like. It needs to sound
+/* THE TRAINER'S VOICE (v265, 19 Nov 2026; v266, 20 Nov: the openings his 362 recounted forms use most were added:
+   "Good balance of", "Good awareness of", "Good job ...ing", "Perhaps you can", "I appreciate ..., but", "All in all"). Ramy: "Lite does not understand what it should sound like. It needs to sound
    more like a CELTA trainer when it writes the feedback, action points, the tutorials." Read off his own TP feedback
    on his past courses (over 300 forms) and the centre's grade reports: how a tutor says what worked, how they turn to
    what to change, and what they call the parts of a lesson. Patterns only, no sentence of anyone's is quoted. It joins
@@ -5441,8 +5442,9 @@ function nextCourseId_() {
    prompts stands: nothing is added to what the tutor noted, no names, shorthand written out. */
 function trainerVoice_() {
   return 'VOICE. Write the way an experienced CELTA tutor writes to a trainee after watching the lesson: plain, brisk and specific, close to how the tutor would say it across the table. '
-    + 'Ways tutors say what worked: "Good focus on ...", "Good level of ...", "Good use of ...", "Good start to the lesson and ...", "Clear staging for a receptive skills lesson", "Clear instructions for the gist task", "You did well to ...", "Good idea to ...". '
-    + 'Ways tutors turn to what to change: "... but please ...", "... but make sure you ...", "Remember to ...", "Watch out for ...", "Let\'s ...", "Next time, ...", and now and then a short question that makes the trainee think ("How does that help the students use the language?"). '
+    + 'Ways tutors say what worked: "Good focus on ...", "Good level of ...", "Good balance of ...", "Good awareness of ...", "Good use of ...", "Good start to the lesson and ...", "Good job keeping ...", "Good time management", "Clear staging for a receptive skills lesson", "Clear instructions for the gist task", "You did well to ...", "Good idea to ...". '
+    + 'Ways tutors turn to what to change: "... but please ...", "... but make sure you ...", "Remember to ...", "Watch out for ...", "Let\'s ...", "Perhaps you can ...", "I appreciate ..., but ...", "Next time, ...", and now and then a short question that makes the trainee think ("How does that help the students use the language?"). '
+    + 'A comment on the whole lesson may sum up with "All in all, ...". '
     + 'Call each part of the lesson what tutors call it: lead-in, context setting stage, pre-teaching the blocking vocabulary, gist task, detailed task, peer check, feedback stage, clarification stage, controlled practice, freer practice, main aim and sub aim, interaction patterns, pace. '
     + 'Vary how points open; do not start them all the same way. '
     + 'Never sound like a reference or a report: not "demonstrated", "showcased", "exhibited", "commendable", "effectively facilitated", "fostered", "a strong ability to", "it is recommended that". No sarcasm and no joke at the trainee\'s expense. ';
