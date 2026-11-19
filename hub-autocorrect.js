@@ -14,8 +14,30 @@
   if (window.hubAutocorrect) return;
   var H = window.HubStore;
   var KEY = 'hub:autocorrect';
+  /* the dictionary and its guesser come from beside this file, loaded once for a tutor with autocorrect on */
+  var HERE = (document.currentScript && document.currentScript.src || '').replace(/[^\/]*$/, '');
+  function wantDictionary(){
+    if (window.hubSpell) { hubSpell.load(HERE + 'library/words-en.txt'); return; }
+    if (document.getElementById('hubSpellJs')) return;
+    var sc = document.createElement('script'); sc.id = 'hubSpellJs'; sc.src = HERE + 'hub-spell.js';
+    sc.onload = function(){ if (window.hubSpell) hubSpell.load(HERE + 'library/words-en.txt'); };
+    document.head.appendChild(sc);
+  }
   var isOn = function(){ try { return localStorage.getItem(KEY) !== 'off'; } catch (e) { return true; } };
   var setOn = function(v){ try { if (v) localStorage.removeItem(KEY); else localStorage.setItem(KEY, 'off'); } catch (e) {} };
+  /* LARGER TEXT IN THE WRITING BOXES (Ramy, 19 Nov 2026: "there's no kind of like place anywhere for a font change"). One
+     setting per device, beside Autocorrect: the boxes a tutor writes in go from about 14px to about 17px, with more room
+     between lines. Nothing else on the page changes size. */
+  var TKEY = 'hub:textsize';
+  var isBig = function(){ try { return localStorage.getItem(TKEY) === 'large'; } catch (e) { return false; } };
+  var setBig = function(v){ try { if (v) localStorage.setItem(TKEY, 'large'); else localStorage.removeItem(TKEY); } catch (e) {} };
+  function sizeCss(){
+    if (document.getElementById('tsStyle')) return;
+    var s = document.createElement('style'); s.id = 'tsStyle';
+    s.textContent = 'html.hub-bigtext textarea, html.hub-bigtext input[type=text], html.hub-bigtext input:not([type]), html.hub-bigtext input[type=search], html.hub-bigtext [contenteditable=true], html.hub-bigtext [contenteditable=""]{font-size:1.06rem !important; line-height:1.65 !important;}';
+    document.head.appendChild(s);
+  }
+  function applySize(){ if (!tutor()) return; sizeCss(); document.documentElement.classList.toggle('hub-bigtext', isBig()); }
   var tutor = function(){ try { return !!(H && H.isTutor() && !H.isTrainee() && !H.isVolunteer()); } catch (e) { return false; } };
 
   var LIST = (
@@ -86,6 +108,9 @@
     if (kept[low]) return null;
     var f = LIST[low];
     if (f) { var out = /^[A-Z]{2}/.test(f) ? f : caseLike(word, f); return out === word ? null : out; }
+    /* Beyond the list, the dictionary (hub-spell.js, 19 Nov 2026): only a word typed all in small letters, so a name,
+       a book title or an abbreviation in capitals is never touched. */
+    if (word === low && window.hubSpell && hubSpell.ready()) return hubSpell.guess(low);
     return null;
   }
   function editable(el){
@@ -175,23 +200,32 @@
     if (innerWidth < 560 && head) { var row = document.createElement('div'); row.className = 'ac-row'; row.appendChild(b); head.parentNode.insertBefore(row, head.nextSibling); }
     else { var before = slot.querySelector('.dictbar') || document.getElementById('pdfBtn');
       if (before && before.parentNode === slot) slot.insertBefore(b, before); else slot.appendChild(b); }
+    var t = document.createElement('button'); t.type = 'button'; t.id = 'tsPill'; t.className = 'ac-pill';
+    b.parentNode.insertBefore(t, b.nextSibling);
     syncMenu();
   }
   function syncMenu(){
     var on = isOn();
     var a = document.getElementById('menuAutocorrect');
     if (a) { a.hidden = !tutor(); a.innerHTML = 'Autocorrect <small>' + (on ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
+    var big = isBig(), m = document.getElementById('menuTextSize');
+    if (m) { m.hidden = !tutor(); m.innerHTML = 'Larger text <small>' + (big ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
+    var t = document.getElementById('tsPill');
+    if (t) { t.classList.toggle('off', !big); t.setAttribute('aria-pressed', big ? 'true' : 'false');
+      t.title = big ? 'The writing boxes use larger text on this device. Press to go back to normal.' : 'Press for larger text in the writing boxes on this device.';
+      t.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Larger text</span>'; }
     var b = document.getElementById('acPill');
     if (b) { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
       b.title = on ? 'Autocorrect fixes misspelled words as you type. Press to turn it off.' : 'Autocorrect is off. Press to turn it on.';
       b.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Autocorrect ' + (on ? 'on' : 'off') + '</span>'; }
   }
   document.addEventListener('click', function(e){
+    var z = e.target.closest && e.target.closest('#menuTextSize, #tsPill'); if (z) { e.preventDefault(); setBig(!isBig()); applySize(); syncMenu(); return; }
     var a = e.target.closest && e.target.closest('#menuAutocorrect, #acPill'); if (!a) return;
-    e.preventDefault(); setOn(!isOn()); last = null; syncMenu();
+    e.preventDefault(); setOn(!isOn()); last = null; syncMenu(); if (isOn()) wantDictionary();
   });
-  addEventListener('storage', function(e){ if (e.key === KEY) syncMenu(); });
-  var boot = function(){ placePill(); syncMenu(); };
+  addEventListener('storage', function(e){ if (e.key === KEY || e.key === TKEY) { applySize(); syncMenu(); } });
+  var boot = function(){ applySize(); placePill(); syncMenu(); if (tutor() && isOn()) wantDictionary(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   document.addEventListener('hub:ready', boot);
   setTimeout(boot, 1500);
