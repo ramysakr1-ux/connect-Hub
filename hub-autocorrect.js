@@ -176,6 +176,83 @@
   }, true);
   document.addEventListener('mousedown', function(){ last = null; }, true);
 
+  /* WORD COMPLETION (Ramy, 19 Nov 2026: "predict the word and the text ... like Google"). While a tutor types a word of three
+     letters or more in a writing box, the rest of the likeliest word shows after the cursor in light grey; Tab takes it,
+     anything else carries on as normal. The likeliest word is one of the tutor's own first (the words they have typed
+     most on this device, learnt as they write, kept in this browser only), then the commonest English word. On with
+     Autocorrect, off with it. Not on a phone or tablet: their keyboards already suggest words. Text boxes only. */
+  var MINE_KEY = 'hub:mywords', mine = null;
+  function myWords(){ if (mine) return mine; try { mine = JSON.parse(localStorage.getItem(MINE_KEY) || '{}') || {}; } catch (e) { mine = {}; } return mine; }
+  var saveT = null;
+  function learn(w){
+    if (!w || w.length < 5 || !/^[a-z]+$/.test(w) || !(window.hubSpell && hubSpell.isWord(w))) return;
+    var m = myWords(); m[w] = (m[w] || 0) + 1;
+    clearTimeout(saveT); saveT = setTimeout(function(){
+      var keys = Object.keys(m); if (keys.length > 800) { keys.sort(function(a, b){ return m[b] - m[a]; }); var k = {}; keys.slice(0, 600).forEach(function(x){ k[x] = m[x]; }); mine = m = k; }
+      try { localStorage.setItem(MINE_KEY, JSON.stringify(m)); } catch (e) {}
+    }, 1500);
+  }
+  function bestFor(prefix){
+    var m = myWords(), best = null, bc = 1;
+    for (var w in m) if (m[w] > bc && w.length >= prefix.length + 2 && w.lastIndexOf(prefix, 0) === 0) { best = w; bc = m[w]; }
+    return best || (window.hubSpell && hubSpell.complete(prefix));
+  }
+  var touch = (function(){ try { return matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches; } catch (e) { return false; } })();
+  var ghost = null, sugg = null;   // the grey ending on screen, and what Tab would add
+  /* The grey ending is drawn by a see-through copy of the box laid exactly over it: the same size, padding, font and
+     wrapping, the text up to the cursor invisible and the rest of the word in grey after it, so it sits on the line. */
+  function ghostEl(){
+    if (ghost) return ghost;
+    ghost = document.createElement('div'); ghost.id = 'acGhost'; ghost.setAttribute('aria-hidden', 'true');
+    ghost.style.cssText = 'position:absolute; z-index:2147483000; pointer-events:none; overflow:hidden; display:none; background:transparent; border-color:transparent !important; box-shadow:none;';
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+  function hideGhost(){ sugg = null; if (ghost) ghost.style.display = 'none'; }
+  var COPY = ['boxSizing','paddingTop','paddingRight','paddingBottom','paddingLeft','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','borderStyle',
+              'fontFamily','fontSize','fontWeight','fontStyle','letterSpacing','lineHeight','textTransform','wordSpacing','textIndent','tabSize','textAlign'];
+  function showGhost(f){
+    hideGhost();
+    if (touch || !isOn() || !tutor() || !(window.hubSpell && hubSpell.ready())) return;
+    if (!(f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') || f.selectionStart !== f.selectionEnd) return;
+    var v = f.value, at = f.selectionStart;
+    if (/[A-Za-z'’]/.test(v.charAt(at))) return;                       // only at the end of a word
+    var m = /(^|[^A-Za-z'’\-@\/._#:\d])([A-Za-z]{3,})$/.exec(v.slice(Math.max(0, at - 30), at)); if (!m) return;
+    var typed = m[2], low = typed.toLowerCase();
+    if (typed !== low && !/^[A-Z][a-z]+$/.test(typed)) return;          // all capitals: an abbreviation, left alone
+    var w = bestFor(low); if (!w) return;
+    var rest = w.slice(low.length);
+    var cs = getComputedStyle(f), r = f.getBoundingClientRect(), g = ghostEl();
+    COPY.forEach(function(k){ g.style[k] = cs[k]; });
+    g.style.whiteSpace = f.tagName === 'TEXTAREA' ? 'pre-wrap' : 'pre'; g.style.overflowWrap = 'break-word';
+    g.style.left = (r.left + scrollX) + 'px'; g.style.top = (r.top + scrollY) + 'px'; g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
+    g.textContent = '';
+    var a = document.createElement('span'); a.style.color = 'transparent'; a.textContent = v.slice(0, at);
+    var b = document.createElement('span'); b.style.color = 'rgba(60,60,70,.45)'; b.textContent = rest;
+    g.appendChild(a); g.appendChild(b); g.style.display = 'block';
+    g.scrollTop = f.scrollTop; g.scrollLeft = f.scrollLeft;
+    var br = b.getBoundingClientRect(); if (br.bottom > r.bottom + 1 || br.top < r.top - 1) { hideGhost(); return; }
+    sugg = { field: f, rest: rest, at: at };
+  }
+  document.addEventListener('input', function(e){
+    var f = editable(e.target); if (!f) { hideGhost(); return; }
+    if (e.inputType === 'insertText' && ENDS.test(e.data || '')) {     // a word just ended: remember it as one of theirs
+      var before = (f.value || '').slice(0, f.selectionStart - 1), mm = /([a-z]{5,})$/.exec(before); if (mm) learn(mm[1]);
+    }
+    if (e.inputType === 'insertText' || e.inputType === 'deleteContentBackward') showGhost(f); else hideGhost();
+  });
+  document.addEventListener('keydown', function(e){
+    if (!sugg) return;
+    if (e.key === 'Tab' && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && editable(e.target) === sugg.field && sugg.field.selectionStart === sugg.at) {
+      e.preventDefault(); var s = sugg; hideGhost(); last = null;
+      if (!document.execCommand('insertText', false, s.rest)) { s.field.setRangeText(s.rest, s.at, s.at, 'end'); s.field.dispatchEvent(new Event('input', { bubbles: true })); }
+      return;
+    }
+    if (e.key !== 'Shift') hideGhost();
+  }, true);
+  ['mousedown', 'scroll', 'resize'].forEach(function(ev){ addEventListener(ev, hideGhost, true); });
+  document.addEventListener('focusout', hideGhost, true);
+
   /* THE SWITCH (Ramy, 18 Nov 2026: "we can do without the comments at the bottom. It's distracting. Let's just have like a
      general on and off pill"). No note when a word changes. One setting for every page on this device, shown as a pill in
      the page's bottom bar (the feedback form, beside Dictate; on a phone, under the form's opening lines) and as a line in the dashboard's Course menu. */
@@ -216,13 +293,13 @@
       t.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Larger text</span>'; }
     var b = document.getElementById('acPill');
     if (b) { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.title = on ? 'Autocorrect fixes misspelled words as you type. Press to turn it off.' : 'Autocorrect is off. Press to turn it on.';
+      b.title = on ? 'Autocorrect fixes misspelled words as you type, and shows the rest of a word in grey: Tab takes it. Press to turn both off.' : 'Autocorrect is off. Press to turn it on.';
       b.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Autocorrect ' + (on ? 'on' : 'off') + '</span>'; }
   }
   document.addEventListener('click', function(e){
     var z = e.target.closest && e.target.closest('#menuTextSize, #tsPill'); if (z) { e.preventDefault(); setBig(!isBig()); applySize(); syncMenu(); return; }
     var a = e.target.closest && e.target.closest('#menuAutocorrect, #acPill'); if (!a) return;
-    e.preventDefault(); setOn(!isOn()); last = null; syncMenu(); if (isOn()) wantDictionary();
+    e.preventDefault(); setOn(!isOn()); last = null; hideGhost(); syncMenu(); if (isOn()) wantDictionary();
   });
   addEventListener('storage', function(e){ if (e.key === KEY || e.key === TKEY) { applySize(); syncMenu(); } });
   var boot = function(){ applySize(); placePill(); syncMenu(); if (tutor() && isOn()) wantDictionary(); };

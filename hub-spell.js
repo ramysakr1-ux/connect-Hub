@@ -14,10 +14,40 @@
   var RANK = null, loading = null;
   var A = 'abcdefghijklmnopqrstuvwxyz';
 
+  var ORDER = null;   // the words, commonest first, for completing a word as it is typed
   function fromText(txt){
     var m = new Map(), lines = txt.split('\n');
     for (var i = 0; i < lines.length; i++) if (lines[i]) m.set(lines[i], i + 1);
+    ORDER = lines.filter(Boolean);
     return m;
+  }
+  /* WORD COMPLETION (Ramy, 19 Nov 2026: "predict the word ... like Google"): the commonest word that starts with what has
+     been typed, at least two letters longer, from the 60,000 commonest. */
+  /* the words of TP feedback, offered before the general list, which comes from film subtitles and would offer
+     "instrumental" for "instr" */
+  var TEACH = ('instructions instruction instructed instructing elicited eliciting elicit elicitation monitored monitoring monitor ' +
+    'nominated nominating nominate pronunciation pronounced vocabulary learners learner students student feedback activities activity ' +
+    'appropriate appropriately effectively effective clarification clarified clarify clarifying meaning context contexts concept ' +
+    'controlled practice practise practising practising freer production presentation demonstration demonstrated demonstrate ' +
+    'interaction interactions interacted engaged engaging engagement encouraged encouraging confidence confident confidently ' +
+    'rapport timing timed staging stages stage transitions transition objectives objective lesson lessons planning planned plan ' +
+    'materials material worksheet worksheets handout handouts boardwork board grammar grammatical lexis lexical language ' +
+    'structure structures sentences sentence examples example accuracy accurate accurately fluency fluent fluently correction ' +
+    'corrected correcting errors error mistakes mistake checked checking questions question concept-checking understanding ' +
+    'understood comprehension listening reading speaking writing skills subskills gist detail specific information predict ' +
+    'prediction predicting discussion discuss discussed partners partner pairs groups grouped whole-class individually ' +
+    'improvement improve improved improving development developing developed consider considered considering remember ' +
+    'particularly especially generally overall excellent successful successfully clearly clear helpful useful supportive ' +
+    'participation participate participated opportunity opportunities realistic relevant personalisation personalised ' +
+    'personalization personalized intonation stress weak forms contractions drilled drilling drill highlighted highlight ' +
+    'modelled modelling modeled modeling elicitation sequence sequencing balance variety pace pacing energy atmosphere ' +
+    'differentiation differentiated stronger weaker anticipated anticipate problems problem solutions solution assistance').split(' ');
+  function complete(prefix){
+    if (!ORDER || !prefix || prefix.length < 3) return null;
+    for (var t = 0; t < TEACH.length; t++) { var x = TEACH[t]; if (x.length >= prefix.length + 2 && x.lastIndexOf(prefix, 0) === 0 && x.indexOf('-') === -1) return x; }
+    var n = Math.min(ORDER.length, 60000), need = prefix.length + 2;
+    for (var i = 0; i < n; i++) { var w = ORDER[i]; if (w.length >= need && w.lastIndexOf(prefix, 0) === 0 && w.indexOf("'") === -1) return w; }
+    return null;
   }
   /* QWERTY neighbours: a slip to the next key is a likelier typo than a letter from across the keyboard */
   var ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'], NEAR = {};
@@ -65,7 +95,7 @@
       .then(function(t){ RANK = fromText(t); return true; }, function(){ loading = null; return false; });
     return loading;
   }
-  var api = { load: load, guess: guess, isWord: function(w){ return !!(RANK && RANK.has(w)); }, ready: function(){ return !!RANK; },
+  var api = { load: load, guess: guess, complete: complete, isWord: function(w){ return !!(RANK && RANK.has(w)); }, ready: function(){ return !!RANK; },
               _useText: function(t){ RANK = fromText(t); } };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.hubSpell = api;
 })(this);
