@@ -15,12 +15,16 @@
   var H = window.HubStore;
   var KEY = 'hub:autocorrect';
   /* the dictionary and its guesser come from beside this file, loaded once for a tutor with autocorrect on */
-  var HERE = (document.currentScript && document.currentScript.src || '').replace(/[^\/]*$/, '');
+  var SRC = (document.currentScript && document.currentScript.src) || '';
+  var HERE = SRC.replace(/[?#].*$/, '').replace(/[^\/]*$/, '');
+  /* the helper and the list carry this file's own ?v=, so a browser never pairs this file with an older helper it kept
+     (19 Nov 2026: word completion did not show because a kept hub-spell.js from the push before had no completion) */
+  var VQ = (SRC.match(/\?v=[^&#]*/) || [''])[0];
   function wantDictionary(){
-    if (window.hubSpell) { hubSpell.load(HERE + 'library/words-en.txt'); return; }
+    if (window.hubSpell) { hubSpell.load(HERE + 'library/words-en.txt' + VQ); return; }
     if (document.getElementById('hubSpellJs')) return;
-    var sc = document.createElement('script'); sc.id = 'hubSpellJs'; sc.src = HERE + 'hub-spell.js';
-    sc.onload = function(){ if (window.hubSpell) hubSpell.load(HERE + 'library/words-en.txt'); };
+    var sc = document.createElement('script'); sc.id = 'hubSpellJs'; sc.src = HERE + 'hub-spell.js' + VQ;
+    sc.onload = function(){ if (window.hubSpell) hubSpell.load(HERE + 'library/words-en.txt' + VQ); };
     document.head.appendChild(sc);
   }
   var isOn = function(){ try { return localStorage.getItem(KEY) !== 'off'; } catch (e) { return true; } };
@@ -195,7 +199,7 @@
   function bestFor(prefix){
     var m = myWords(), best = null, bc = 1;
     for (var w in m) if (m[w] > bc && w.length >= prefix.length + 2 && w.lastIndexOf(prefix, 0) === 0) { best = w; bc = m[w]; }
-    return best || (window.hubSpell && hubSpell.complete(prefix));
+    return best || (window.hubSpell && typeof hubSpell.complete === 'function' ? hubSpell.complete(prefix) : null);
   }
   var touch = (function(){ try { return matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches; } catch (e) { return false; } })();
   var ghost = null, sugg = null;   // the grey ending on screen, and what Tab would add
