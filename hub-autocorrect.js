@@ -107,7 +107,7 @@
     if (/^[A-Z]/.test(word) && /^[a-z]/.test(fix)) return fix.charAt(0).toUpperCase() + fix.slice(1);
     return fix;
   }
-  function fixFor(word){
+  function fixFor(word, start){
     var low = word.toLowerCase();
     if (kept[low]) return null;
     var f = LIST[low];
@@ -115,6 +115,9 @@
     /* Beyond the list, the dictionary (hub-spell.js, 19 Nov 2026): only a word typed all in small letters, so a name,
        a book title or an abbreviation in capitals is never touched. */
     if (word === low && window.hubSpell && hubSpell.ready()) return hubSpell.guess(low);
+    /* the first word of a sentence or a line has a capital and is no name for that (19 Nov 2026): fixed too, only on a
+       stricter guess, and given its capital back */
+    if (start && /^[A-Z][a-z]{2,}$/.test(word) && window.hubSpell && hubSpell.ready()) { var g = hubSpell.guess(low, true); if (g) return g.charAt(0).toUpperCase() + g.slice(1); }
     return null;
   }
   function editable(el){
@@ -161,13 +164,17 @@
     if (before != null && before.slice(-tail.length) === tail) replaceBefore(c.field, tail.length, c.was + c.end);
   }
   document.addEventListener('input', function(e){
-    if (e.inputType !== 'insertText' || e.isComposing || !isOn() || !tutor()) return;
+    /* Enter ends a word too (19 Nov 2026: the last word of every line went unchecked, and feedback is written a point a line) */
+    var nl = e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph';
+    if ((e.inputType !== 'insertText' && !nl) || e.isComposing || !isOn() || !tutor()) return;
     var field = editable(e.target); if (!field) return;
-    if (!ENDS.test(e.data || '')) { last = null; return; }
+    if (!nl && !ENDS.test(e.data || '')) { last = null; return; }
     var before = textBefore(field); if (before == null) return;
     var m = /(^|[^A-Za-z'’\-@\/._#:\d])([A-Za-z][A-Za-z'’]*)([\s.,;:!?)\]"”’])$/.exec(before);
     if (!m) return;
-    var word = m[2].replace(/’/g, "'"), fix = fixFor(word), endCh = m[3];
+    var lead = before.slice(0, before.length - m[2].length - m[3].length);
+    var start = /(^|[.!?]\s+|\n\s*|[•\-*–]\s+)$/.test(lead) && (lead.length < 40 - m[2].length - m[3].length - 1 || /[.!?\n•\-*–]\s*$/.test(lead));
+    var word = m[2].replace(/’/g, "'"), fix = fixFor(word, start), endCh = m[3];
     if (!fix) { last = null; return; }
     replaceBefore(field, m[2].length + endCh.length, fix + endCh);
     last = { field: field, was: m[2], fix: fix, end: endCh };
@@ -185,22 +192,29 @@
      anything else carries on as normal. The likeliest word is one of the tutor's own first (the words they have typed
      most on this device, learnt as they write, kept in this browser only), then the commonest English word. On with
      Autocorrect, off with it. Not on a phone or tablet: their keyboards already suggest words. Text boxes only. */
-  var MINE_KEY = 'hub:mywords', mine = null;
+  var MINE_KEY = 'hub:mywords', PAIR_KEY = 'hub:mypairs', mine = null, pairs = null;
   function myWords(){ if (mine) return mine; try { mine = JSON.parse(localStorage.getItem(MINE_KEY) || '{}') || {}; } catch (e) { mine = {}; } return mine; }
+  function myPairs(){ if (pairs) return pairs; try { pairs = JSON.parse(localStorage.getItem(PAIR_KEY) || '{}') || {}; } catch (e) { pairs = {}; } return pairs; }
+  function trim(m, max){ var keys = Object.keys(m); if (keys.length <= max) return m; keys.sort(function(a, b){ return m[b] - m[a]; }); var k = {}; keys.slice(0, Math.round(max * 0.75)).forEach(function(x){ k[x] = m[x]; }); return k; }
   var saveT = null;
-  function learn(w){
-    if (!w || w.length < 5 || !/^[a-z]+$/.test(w) || !(window.hubSpell && hubSpell.isWord(w))) return;
-    var m = myWords(); m[w] = (m[w] || 0) + 1;
+  /* a word just finished, and the word before it: both remembered on this device (two-word phrases, 19 Nov 2026) */
+  function learn(w, prev){
+    if (!w || !/^[a-z]+$/.test(w) || !(window.hubSpell && hubSpell.isWord(w))) return;
+    var m = myWords(), p = myPairs();
+    if (w.length >= 5) m[w] = (m[w] || 0) + 1;
+    if (prev && w.length >= 4 && /^[a-z']+$/.test(prev)) { var k = prev.replace(/'/g, '') + ' ' + w; p[k] = (p[k] || 0) + 1; }
     clearTimeout(saveT); saveT = setTimeout(function(){
-      var keys = Object.keys(m); if (keys.length > 800) { keys.sort(function(a, b){ return m[b] - m[a]; }); var k = {}; keys.slice(0, 600).forEach(function(x){ k[x] = m[x]; }); mine = m = k; }
-      try { localStorage.setItem(MINE_KEY, JSON.stringify(m)); } catch (e) {}
+      mine = trim(m, 800); pairs = trim(p, 1500);
+      try { localStorage.setItem(MINE_KEY, JSON.stringify(mine)); localStorage.setItem(PAIR_KEY, JSON.stringify(pairs)); } catch (e) {}
     }, 1500);
   }
-  function bestFor(prefix){
-    var m = myWords(), best = null, bc = 1;
-    for (var w in m) if (m[w] > bc && w.length >= prefix.length + 2 && w.lastIndexOf(prefix, 0) === 0) { best = w; bc = m[w]; }
-    return best || (window.hubSpell && typeof hubSpell.complete === 'function' ? hubSpell.complete(prefix) : null);
+  function bestFor(prefix, prev){
+    return window.hubSpell && typeof hubSpell.complete === 'function' ? hubSpell.complete(prefix, prev, { words: myWords(), pairs: myPairs() }) : null;
   }
+  /* completion has its own switch (19 Nov 2026), on unless turned off, and only while Autocorrect is on */
+  var CKEY = 'hub:complete';
+  var completeOn = function(){ try { return localStorage.getItem(CKEY) !== 'off'; } catch (e) { return true; } };
+  var setComplete = function(v){ try { if (v) localStorage.removeItem(CKEY); else localStorage.setItem(CKEY, 'off'); } catch (e) {} };
   var touch = (function(){ try { return matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches; } catch (e) { return false; } })();
   var ghost = null, sugg = null;   // the grey ending on screen, and what Tab would add
   /* The grey ending is drawn by a see-through copy of the box laid exactly over it: the same size, padding, font and
@@ -217,14 +231,16 @@
               'fontFamily','fontSize','fontWeight','fontStyle','letterSpacing','lineHeight','textTransform','wordSpacing','textIndent','tabSize','textAlign'];
   function showGhost(f){
     hideGhost();
-    if (touch || !isOn() || !tutor() || !(window.hubSpell && hubSpell.ready())) return;
+    if (touch || !isOn() || !completeOn() || !tutor() || !(window.hubSpell && hubSpell.ready())) return;
     if (!(f.tagName === 'TEXTAREA' || f.tagName === 'INPUT') || f.selectionStart !== f.selectionEnd) return;
     var v = f.value, at = f.selectionStart;
     if (/[A-Za-z'’]/.test(v.charAt(at))) return;                       // only at the end of a word
     var m = /(^|[^A-Za-z'’\-@\/._#:\d])([A-Za-z]{3,})$/.exec(v.slice(Math.max(0, at - 30), at)); if (!m) return;
     var typed = m[2], low = typed.toLowerCase();
     if (typed !== low && !/^[A-Z][a-z]+$/.test(typed)) return;          // all capitals: an abbreviation, left alone
-    var w = bestFor(low); if (!w) return;
+    var pm = /([A-Za-z'’]+)[^A-Za-z'’\n]*$/.exec(v.slice(Math.max(0, at - typed.length - 40), at - typed.length));
+    var prevW = pm && !/[.!?\n]/.test(v.slice(at - typed.length - (pm ? pm[0].length - pm[1].length : 0), at - typed.length)) ? pm[1].toLowerCase().replace(/’/g, "'") : '';
+    var w = bestFor(low, prevW); if (!w) return;
     var rest = w.slice(low.length);
     var cs = getComputedStyle(f), r = f.getBoundingClientRect(), g = ghostEl();
     COPY.forEach(function(k){ g.style[k] = cs[k]; });
@@ -241,7 +257,7 @@
   document.addEventListener('input', function(e){
     var f = editable(e.target); if (!f) { hideGhost(); return; }
     if (e.inputType === 'insertText' && ENDS.test(e.data || '')) {     // a word just ended: remember it as one of theirs
-      var before = (f.value || '').slice(0, f.selectionStart - 1), mm = /([a-z]{5,})$/.exec(before); if (mm) learn(mm[1]);
+      var before = (f.value || '').slice(0, f.selectionStart - 1), mm = /(?:([A-Za-z'’]+)[ ,;:]+)?([a-z]{4,})$/.exec(before); if (mm) learn(mm[2], mm[1] ? mm[1].toLowerCase().replace(/’/g, "'") : '');
     }
     if (e.inputType === 'insertText' || e.inputType === 'deleteContentBackward') showGhost(f); else hideGhost();
   });
@@ -283,12 +299,20 @@
       if (before && before.parentNode === slot) slot.insertBefore(b, before); else slot.appendChild(b); }
     var t = document.createElement('button'); t.type = 'button'; t.id = 'tsPill'; t.className = 'ac-pill';
     b.parentNode.insertBefore(t, b.nextSibling);
+    var c = document.createElement('button'); c.type = 'button'; c.id = 'wcPill'; c.className = 'ac-pill';
+    b.parentNode.insertBefore(c, b.nextSibling);
     syncMenu();
   }
   function syncMenu(){
     var on = isOn();
     var a = document.getElementById('menuAutocorrect');
     if (a) { a.hidden = !tutor(); a.innerHTML = 'Autocorrect <small>' + (on ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
+    var cOn = completeOn(), mc = document.getElementById('menuComplete');
+    if (mc) { mc.hidden = !tutor(); mc.innerHTML = 'Word completion <small>' + (cOn ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
+    var cp = document.getElementById('wcPill');
+    if (cp) { cp.classList.toggle('off', !cOn || !on); cp.setAttribute('aria-pressed', cOn ? 'true' : 'false'); cp.hidden = !on;
+      cp.title = cOn ? 'The rest of a word shows in grey as you type; Tab takes it. Press to turn it off.' : 'Press to show the rest of a word in grey as you type.';
+      cp.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Word completion</span>'; }
     var big = isBig(), m = document.getElementById('menuTextSize');
     if (m) { m.hidden = !tutor(); m.innerHTML = 'Larger text <small>' + (big ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
     var t = document.getElementById('tsPill');
@@ -301,11 +325,12 @@
       b.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Autocorrect ' + (on ? 'on' : 'off') + '</span>'; }
   }
   document.addEventListener('click', function(e){
+    var y = e.target.closest && e.target.closest('#menuComplete, #wcPill'); if (y) { e.preventDefault(); setComplete(!completeOn()); hideGhost(); syncMenu(); return; }
     var z = e.target.closest && e.target.closest('#menuTextSize, #tsPill'); if (z) { e.preventDefault(); setBig(!isBig()); applySize(); syncMenu(); return; }
     var a = e.target.closest && e.target.closest('#menuAutocorrect, #acPill'); if (!a) return;
     e.preventDefault(); setOn(!isOn()); last = null; hideGhost(); syncMenu(); if (isOn()) wantDictionary();
   });
-  addEventListener('storage', function(e){ if (e.key === KEY || e.key === TKEY) { applySize(); syncMenu(); } });
+  addEventListener('storage', function(e){ if (e.key === KEY || e.key === TKEY || e.key === CKEY) { applySize(); syncMenu(); } });
   var boot = function(){ applySize(); placePill(); syncMenu(); if (tutor() && isOn()) wantDictionary(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   document.addEventListener('hub:ready', boot);
