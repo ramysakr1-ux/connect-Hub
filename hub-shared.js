@@ -953,6 +953,46 @@ window.hubMoveOn = function(page){
     return true;
   } catch (e) { return false; }
 };
+/* RECOMMENDED RESOURCES, GROUPED AND CLICKABLE (Ramy, 19 Nov 2026: "at the bottom of every assignment, they have recommended
+   resources. Why don't we make them clickable? ... FOL, we can take the Turkish chapter and the other book and just put it
+   at the bottom with the rest ... organize them, books related to pronunciation, ones to grammar, vocab, functional
+   language ... a bit more organized").
+   The list stays the course's own wording, one resource a line. Here it is drawn in groups, by what each one is about,
+   and each line opens: a web address as it is written, a book from the course's library. The library's addresses are
+   the course's, in its settings (settings.library: [{ match: 'words in the title', url, label?, add?: ['fol', ...] }]),
+   never in this code, which is public: an entry with `add` is also listed on those assignments (the Turkish chapter
+   on FOL). A book the library does not have stays plain text.
+     hubResourcesHTML(text, key) -> HTML */
+window.hubResourcesHTML = function(text, key){
+  var e = function(v){ return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  var cs = null; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || 'null'); } catch (err) {}
+  var lib = (cs && Array.isArray(cs.library)) ? cs.library.filter(function(x){ return x && x.url && /^https:\/\//i.test(x.url); }) : [];
+  var lines = String(text || '').split('\n').map(function(l){ return l.replace(/^\s*[•\-*]\s*/, '').trim(); }).filter(Boolean);
+  var items = lines.map(function(l){ return { text: l }; });
+  lib.forEach(function(x){ if (Array.isArray(x.add) && x.add.indexOf(key) > -1 && x.label) items.unshift({ text: x.label, lib: x }); });
+  var WEB = /\b((?:https?:\/\/)?(?:[a-z0-9-]+\.)+(?:org|com|net|edu|co\.uk|org\.uk|ac\.uk)(?:\/[^\s—–,;)]*)?)/i;
+  var GROUPS = [
+    ['Learners and their languages', /learner english|speakers\b|first language|mother tongue/i],
+    ['Grammar', /grammar|english usage|how english works/i],
+    ['Vocabulary', /vocabular|lexi|collocation/i],
+    ['Pronunciation', /pronunc|ship or sheep|tree or three|minimal pair|phonolog|sound foundations/i],
+    ['Functional language', /function/i],
+    ['Teaching the skills', /\b(reading|writing|speaking|listening)\b/i],
+    ['Teaching in general', /./]
+  ];
+  var groups = {};
+  items.forEach(function(it){
+    var t = it.text, web = WEB.exec(t), url = '', name = it.lib ? it.lib.label : '';
+    if (it.lib) url = it.lib.url;
+    else if (web) url = /^https?:/i.test(web[1]) ? web[1] : 'https://' + web[1].replace(/^www\./i, 'www.');
+    else { var lt = t.toLowerCase(); var hit = lib.filter(function(x){ return x.match && String(x.match).toLowerCase().split(/\s+/).every(function(w){ return lt.indexOf(w) > -1; }); })[0]; if (hit) url = hit.url; }
+    var g = web && !it.lib ? 'Websites and dictionaries' : (GROUPS.filter(function(G){ return G[1].test(t); })[0] || GROUPS[GROUPS.length - 1])[0];
+    if (!it.lib && /dictionar/i.test(t)) g = 'Websites and dictionaries';
+    (groups[g] = groups[g] || []).push(url ? '<li><a href="' + e(url) + '" target="_blank" rel="noopener">' + e(t) + '</a></li>' : '<li>' + e(t) + '</li>');
+  });
+  var order = GROUPS.map(function(G){ return G[0]; }).concat(['Websites and dictionaries']);
+  return '<div class="resgroups">' + order.filter(function(g){ return groups[g]; }).map(function(g){ return '<div class="resgroup"><h4>' + e(g) + '</h4><ul>' + groups[g].join('') + '</ul></div>'; }).join('') + '</div>';
+};
 window.a5InPlay = function(subs){
   var s = subs && subs.a5;
   return !!(s && (s.assigned || (s.stage && s.stage !== 'draft')));

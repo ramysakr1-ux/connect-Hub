@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611191049">
+<link rel="stylesheet" href="hub-tokens.css?v=202611191252">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -122,6 +122,15 @@
      (25 Sep 2026, and the same class-name trap as the Lite house style note). */
   .card.declcard{background:var(--surface); border-left-color:var(--sand-line);}
   .card .refbody strong{font-weight:700;}
+  /* recommended resources in groups, each a link (19 Nov 2026) */
+  .resgroups{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:6px 28px;}
+  .resgroup h4{margin:10px 0 4px; font-family:'Instrument Sans','Karla',sans-serif; font-size:10.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+  .resgroup ul{margin:0; padding:0; list-style:none;}
+  .resgroup li{margin:0 0 6px; padding-left:14px; position:relative; line-height:1.45;}
+  .resgroup li::before{content:''; position:absolute; left:0; top:.6em; width:5px; height:5px; border-radius:50%; background:var(--sand-line);}
+  .resgroup a{color:var(--teal); text-decoration:underline; text-decoration-color:color-mix(in oklch, var(--teal) 35%, transparent); text-underline-offset:3px;}
+  .resgroup a:hover{text-decoration-color:var(--teal);}
+  details.card.ref .refbody:has(.resgroups){max-width:none;}
   .card.guide-card{padding:12px;}
   /* the worked example: the lesson plan's own link and gold-edged box (1_trainee_plan_and_analysis.html), inside its section */
   .wex{margin:2px 0 14px;}
@@ -209,7 +218,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611191049">
+<link rel="stylesheet" href="hub-house.css?v=202611191252">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -217,19 +226,19 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611191049"></script>
-<script src="assignment-history.js?v=202611191049"></script>
-<script src="assignment-examples.js?v=202611191049"></script>
-<script src="hub-due.js?v=202611191049"></script>
-<script src="hub-shared.js?v=202611191049"></script>
-<script src="hub-store.js?v=202611191049"></script>
-<script src="hub-say.js?v=202611191049"></script>
-<script src="hub-sync.js?v=202611191049"></script>
-<script src="hub-notebook.js?v=202611191049"></script>
-<script src="observation-defaults.js?v=202611191049"></script>
-<script src="hub-rotation.js?v=202611191049"></script>
-<script src="hub-peers.js?v=202611191049"></script>
-<script src="fol-interview.js?v=202611191049"></script>
+<script src="assignment-defaults.js?v=202611191252"></script>
+<script src="assignment-history.js?v=202611191252"></script>
+<script src="assignment-examples.js?v=202611191252"></script>
+<script src="hub-due.js?v=202611191252"></script>
+<script src="hub-shared.js?v=202611191252"></script>
+<script src="hub-store.js?v=202611191252"></script>
+<script src="hub-say.js?v=202611191252"></script>
+<script src="hub-sync.js?v=202611191252"></script>
+<script src="hub-notebook.js?v=202611191252"></script>
+<script src="observation-defaults.js?v=202611191252"></script>
+<script src="hub-rotation.js?v=202611191252"></script>
+<script src="hub-peers.js?v=202611191252"></script>
+<script src="fol-interview.js?v=202611191252"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -484,7 +493,9 @@ function render(){
         const startsClosed = /recommended|reading|reference materials|resources|reasons for resubmission/i.test(s.label) && !/^text |the text/i.test(s.label);
         // **bold** in a reference text is the target language ("The target
         // language is in bold"), and it showed as bare asterisks (25 Sep 2026).
-        const refHtml = nl2br(s.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+        /* a list of recommended resources: grouped, each one a link (hubResourcesHTML, 19 Nov 2026) */
+        const isRes = /^recommended|reference materials$/i.test(String(s.label).trim()) && window.hubResourcesHTML;
+        const refHtml = isRes ? hubResourcesHTML(s.body, CURRENT) : nl2br(s.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
         /* Advice, not material: "Before you start" and the reasons work comes
            back sit in the house's guidance box (Ramy, 17 Oct 2026: "I like
            that yellow box... use that inside Connect Lite. More often"). */
