@@ -26,7 +26,7 @@
 <title>Getting to know you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611192314">
+<link rel="stylesheet" href="hub-tokens.css?v=202611192347">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -154,21 +154,21 @@
   .iv-tutor td, .iv-tutor th{text-align:left; padding:6px 10px 6px 0; font-size:.88rem; vertical-align:top;}
   @media print{ .gk .act{animation:none;} .gk.gk-picked .act:not(.chosen) ol{display:block;} .gk-peek{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611192314">
+<link rel="stylesheet" href="hub-house.css?v=202611192347">
 </head>
 <body>
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611192314"></script>
-<script src="hub-store.js?v=202611192314"></script>
-<script src="hub-say.js?v=202611192314"></script>
-<script src="hub-sync.js?v=202611192314"></script>
-<script src="hub-notebook.js?v=202611192314"></script>
-<script src="gtky-bank.js?v=202611192314"></script>
-<script src="fol-interview.js?v=202611192314"></script>
-<script src="hub-audio-fit.js?v=202611192314"></script>
+<script src="hub-shared.js?v=202611192347"></script>
+<script src="hub-store.js?v=202611192347"></script>
+<script src="hub-say.js?v=202611192347"></script>
+<script src="hub-sync.js?v=202611192347"></script>
+<script src="hub-notebook.js?v=202611192347"></script>
+<script src="gtky-bank.js?v=202611192347"></script>
+<script src="fol-interview.js?v=202611192347"></script>
+<script src="hub-audio-fit.js?v=202611192347"></script>
 <script type="text/x-hub-app">
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
   throw new Error('Connect Lite: stopping this page on purpose — this is one of the course’s own pages.');
@@ -222,7 +222,8 @@ function fmt(){ const f = String(settings().gtkyFormat || ''); return f === 'int
 let ivView = '';
 /* THE TUTORS' TWO DOORS (Ramy, 28 Oct 2026: "the tab from Teaching practice should only show the collective pool ... none of the
    other stuff"; the activities "should live with the TP points"). ?view=pool is the pool alone; ?view=bank is the bank of
-   activities alone. Who picked what and who interviewed whom are in each trainee's portfolio. */
+   activities, with who picked what folded above it (19 Nov 2026). Who interviewed whom is in each trainee's portfolio,
+   under the assignments. */
 const TUTOR_VIEW = new URLSearchParams(location.search).get('view') === 'bank' ? 'bank' : 'pool';
 function curView(){ const f = fmt(); if (f === 'both') return ivView || 'interview'; return f === 'interview' ? 'interview' : 'activities'; }
 function switcher(){ return fmt() === 'both' ? `<div class="fmt"><button class="chip${curView() === 'interview' ? ' on' : ''}" type="button" data-view="interview">Student interview</button><button class="chip${curView() === 'activities' ? ' on' : ''}" type="button" data-view="activities">Activities</button></div>` : ''; }
@@ -245,9 +246,20 @@ function render(){
   if (!band) { KNOWN = IS_TRAINEE ? groupBand(g) : ''; band = KNOWN || groupBand(g) || (IS_TRAINEE ? '' : 'high'); }
   const mine = IS_TRAINEE ? pickOf(MY_NAME) : null;
   /* who picked what, for the tutors (Ramy, 28 Oct 2026: "which getting to know you everyone is doing") */
-  const picksBox = '';   /* who picked what is in each trainee's portfolio (28 Oct 2026) */
+  /* WHO PICKED WHAT, HERE AGAIN (19 Nov 2026). It moved to each trainee's portfolio on 28 Oct, as a card called "The first
+     afternoon"; Ramy, reading the portfolio as the assessor will: "I'm not gonna go to the portfolio to look for the
+     activities that they chose". It is the tutors' business and it belongs with the activities: one folded list, by
+     group, on the tutors' view of this page. Trainees never see it. */
+  const picksBox = IS_TRAINEE ? '' : (function(){
+    const rows = roster().filter(t => t && t.name && !(t.withdrawn === true || t.withdrawn === 'true')).map(t => { const p = pickOf(t.name); return { g: String(t.group || ''), name: t.name, act: p ? String(p.name).slice(0, String(p.name).lastIndexOf(SEP)) : '' }; });
+    const done = rows.filter(r => r.act); if (!done.length) return '';
+    const groups = [...new Set(rows.map(r => r.g))].sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
+    const body = groups.map(g => `${groups.length > 1 ? `<h3 style="margin:12px 0 4px;font:700 .78rem/1.2 'Karla',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--grey)">${g ? 'Group ' + esc(g) : 'No group'}</h3>` : ''}`
+      + rows.filter(r => r.g === g).map(r => `<div style="display:flex;justify-content:space-between;gap:14px;padding:6px 0;border-top:1px solid var(--row-line, var(--sand-line));font-size:.9rem;"><span>${esc(r.name)}</span><b style="text-align:right;${r.act ? '' : 'font-weight:400;color:var(--grey);'}">${r.act ? esc(r.act) : 'Nothing picked'}</b></div>`).join('')).join('');
+    return `<details class="iv-box"><summary style="cursor:pointer;font-weight:700;">Who picked what <span style="font-weight:400;color:var(--grey);">&middot; ${done.length} of ${rows.length} trainees have picked</span></summary>${body}</details>`;
+  })();
   const head = `<div class="title"><h1>Getting to know you</h1>
-    <p>${IS_TRAINEE ? 'One short activity to run with your students, after the demonstration lesson. Unassessed, no tutor in the room. Here are three for the level you teach: read them, pick one, and that is all you need to do before day one. ' + esc(minutesLine()) : 'Connect’s bank for the first afternoon: a trainee is offered three for the level they teach and picks one; the pick lands on their portfolio and on the shelf. ' + esc(minutesLine())}</p></div>`;
+    <p>${IS_TRAINEE ? 'One short activity to run with your students, after the demonstration lesson. Unassessed, no tutor in the room. Here are three for the level you teach: read them, pick one, and that is all you need to do before day one. ' + esc(minutesLine()) : 'Connect’s bank for the trainees’ first meeting with the students: a trainee is offered three for the level they teach and picks one; the pick lands on their portfolio and on the shelf. ' + esc(minutesLine())}</p></div>`;
   const pickBox = IS_TRAINEE
     ? (mine ? `<div class="pick"><b>Your pick: ${esc(activityOf(mine))}</b><br><span class="note">Your tutor and your group see it on the shelf. Changed your mind? Take it back below and pick again.</span></div>`
             : `<div class="pick"><b>You have not picked yet.</b><br><span class="note">Pick one of the three. You can change it until day one.</span></div>`)

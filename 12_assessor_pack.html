@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611192314">
+<link rel="stylesheet" href="hub-tokens.css?v=202611192347">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -156,7 +156,17 @@
   .pf-btn{display:inline-block; font-family:'Karla',sans-serif; font-size:.83rem; font-weight:700; padding:8px 16px; border-radius:999px; border:1.5px solid var(--a-forest, var(--teal)); color:var(--a-forest, var(--teal)); background:none; text-decoration:none; white-space:nowrap; cursor:pointer; transition:transform .15s ease;}
   .pf-btn:hover{transform:translateY(-2px);}
   .pf-btn.quiet{border-color:var(--sand-line); color:var(--ink); padding:6px 14px;}
-  .pf-two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 22px; align-items:start;}
+  /* THE CARDS IN PAIRS (Ramy, 19 Nov 2026: "a bit more aligned ... a bit more symmetrical"; the assessor reads this page).
+     Two columns used to run independently, so only the first pair started level. Now the cards sit in rows of two:
+     each pair starts on one line and ends on one line, every card's heading is the same height whether or not it
+     carries a button, and a card left without a partner runs the width of the page. */
+  .pf-two{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:stretch; margin:0 0 22px;}
+  .pf-two > .pf-sec{margin:0; display:flex; flex-direction:column;}
+  .pf-two > .pf-sec > header{flex:0 0 auto;}
+  .pf-two > .pf-sec > .pf-row{flex:1 1 auto;}                      /* the shorter card's lines share the spare room, so no card ends in a blank */
+  .pf-two > .pf-sec:last-child:nth-child(odd){grid-column:1 / -1;}
+  .pf-two:has(.doc:not([hidden])) > .pf-sec{align-self:start;}     /* a document open inside a card: its neighbour keeps its own height */
+  .pf-sec > header{min-height:64px;}
   .pf-row{display:grid; grid-template-columns:minmax(120px,190px) minmax(0,1fr) auto; gap:14px; align-items:center; padding:13px 20px; border-bottom:1px solid var(--row-line, var(--sand-line));}
   .pf-row:last-child{border-bottom:0;}
   .pf-row.two{grid-template-columns:minmax(0,1fr) auto;} .pf-row.two .l{overflow-wrap:anywhere;}
@@ -206,6 +216,7 @@
     body.pf-one .board{max-width:none;}
     .pf-btn, .pf-bar, .pf-tp .go{display:none !important;}
     .pf-sec{box-shadow:none; overflow:visible;} .pf-two .pf-sec, .pf-jump{break-inside:avoid; page-break-inside:avoid;}
+    .pf-sec > header{min-height:0;}   /* on paper the even heading height pushed the TP tiles onto a page of their own (19 Nov 2026) */
     .pf-sheet{background:none; border:0;} .pf-sheet .doc{margin:0;}
     body.pf-printone .back, body.pf-printone .header, body.pf-printone .howline, body.pf-printone .foot, body.pf-printone .say-pill,
     body.pf-printone #app > :not(#pf-tp), body.pf-printone #pf-tp > :not(.pf-sheet){display:none !important;}
@@ -400,7 +411,7 @@
   @media (max-width:560px){ .vcheck li{grid-template-columns:1fr auto;} .vcheck .rk{grid-column:1 / -1;} }
   @media print{ .vcheck{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611192314">
+<link rel="stylesheet" href="hub-house.css?v=202611192347">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -432,17 +443,17 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202611192314"></script>
-<script src="hub-shared.js?v=202611192314"></script>
-<script src="fol-interview.js?v=202611192314"></script>
-<script src="gtky-bank.js?v=202611192314"></script>
-<script src="assignment-defaults.js?v=202611192314"></script>
-<script src="hub-tracker.js?v=202611192314"></script>
-<script src="hub-rotation.js?v=202611192314"></script>
-<script src="hub-attendance.js?v=202611192314"></script>
-<script src="hub-store.js?v=202611192314"></script>
-<script src="hub-say.js?v=202611192314"></script>
-<script src="hub-sync.js?v=202611192314"></script>
+<script src="observation-defaults.js?v=202611192347"></script>
+<script src="hub-shared.js?v=202611192347"></script>
+<script src="fol-interview.js?v=202611192347"></script>
+<script src="gtky-bank.js?v=202611192347"></script>
+<script src="assignment-defaults.js?v=202611192347"></script>
+<script src="hub-tracker.js?v=202611192347"></script>
+<script src="hub-rotation.js?v=202611192347"></script>
+<script src="hub-attendance.js?v=202611192347"></script>
+<script src="hub-store.js?v=202611192347"></script>
+<script src="hub-say.js?v=202611192347"></script>
+<script src="hub-sync.js?v=202611192347"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -1140,7 +1151,12 @@ function observationRows(tr){
   const hrs = o.minutes == null ? pfRow('Hours observed', '—', '', '') : (function(){ const p = word(Math.round((o.minutes / 60) * 10) / 10, 6); return pfRow('Hours observed', esc(hubHoursText(o.minutes)) + ' of 6 hours', p[0], p[1]); })();
   return hrs + row('Filmed lessons', o.filmed) + row('Live demonstration lessons', o.live) + row('Peer observation notes', o.peer);
 }
-/* GETTING TO KNOW YOU AND THE STUDENT INTERVIEW, THE TRAINEE'S OWN (Ramy, 28 Oct 2026: "the three tasks they were
+/* 19 Nov 2026: this was a card of its own, "The first afternoon". Ramy: "not really sure what the first afternoon card
+   exactly is about ... it's not something that the assessor needs to see or needs to have its own card", and of the
+   name, "you're assuming that it's always going to be in the afternoon?" (he had said so on 8 Oct). The card is gone.
+   The interview is evidence for Focus on the Learner, so it is a line under the assignments; who picked which
+   activity is back on the tutors' Getting to know you page, where the activities are.
+   GETTING TO KNOW YOU AND THE STUDENT INTERVIEW, THE TRAINEE'S OWN (Ramy, 28 Oct 2026: "the three tasks they were
    assigned and the one they chose ... and the FOL transcription for the student they interviewed, so in case of
    suspicion we can go back and check"). The three offered are dealt the way the trainee's own page dealt them; a
    pick from an earlier three is shown too. The interview as the trainee wrote it: answers, recordings, transcripts,
@@ -1166,7 +1182,9 @@ function gtkyParts(tr){
   const n = iv ? Object.keys(iv.students).length : 0;
   const int = ivHtml ? pfRow('Student interview', `${n} student${n === 1 ? '' : 's'} interviewed for Focus on the Learner: the answers, the recordings and their transcripts, and what was heard`, 'fine', 'Recorded')
     : pfRow('Student interview', 'No interview recorded', 'nd', 'Not yet');
-  return { rows: act + int, doc: ivHtml ? `<div class="doc" id="doc-gtky" hidden>${ivHtml}</div>` : '', n: ivHtml ? n : 0 };
+  /* the interview alone, as a line under the assignments it is evidence for (19 Nov 2026) */
+  const ivRow = ivHtml ? pfRow('Student interview', `${n} student${n === 1 ? '' : 's'} interviewed<small>For Focus on the Learner: answers, recordings and transcripts</small>`, '', '', '<button class="pf-btn quiet" type="button" data-doc="gtky">Show the interview</button>') : '';
+  return { rows: act + int, ivRow, doc: ivHtml ? `<div class="doc" id="doc-gtky" hidden>${ivHtml}</div>` : '', n: ivHtml ? n : 0 };
 }
 /* THE OFFICIAL TIMELINE (30 Oct 2026, the specification's R35: "present dated formal events in one portfolio timeline").
    Read only, from the records that already hold them: the candidate agreement, the CELTA 5's stages (returned, signed,
@@ -1237,8 +1255,7 @@ function pfJump(tr, g){
     tile('pf-obs', 'Observations', o.minutes == null ? '—' : hubHoursText(o.minutes), 'of 6 hours'),
     tile('pf-c5', 'CELTA 5', st ? 'Stage ' + st : 'Not started', st ? 'returned' : 'no stage record yet')
   ];
-  if (g) out.push(tile('pf-first', 'Student interview', g.n ? g.n + ' student' + (g.n === 1 ? '' : 's') : 'None yet', g.n ? 'recorded' : 'no interview recorded'));
-  return `<div class="pf-jump${g ? '' : ' four'}">${out.join('')}</div>`;
+  return `<div class="pf-jump four">${out.join('')}</div>`;
 }
 function renderOne(tr){
   const c = T.recordFor(tr), r = T.readCandidate(c), chip = T.STATE_CHIP[r.state], man = tr.tracker || {};
@@ -1283,17 +1300,12 @@ function renderOne(tr){
     ${pfJump(tr, pfG)}
     ${pfSec('pf-tp', 'Teaching practice', pfRet ? pfRet + ' returned, ' + (TP_TOTAL - pfRet) + ' still to come' : 'None returned yet', pfRet ? `<a class="pf-btn" href="4_feedback_returned.html?trainee=${pfId}">Print the TP record</a>` : '', tpSection(tr, c))}
     <div class="pf-two">
-      <div class="pf-col">
-        ${pfSec('pf-asg', 'Assignments', 'In the center’s order', '', assignmentRows(tr))}
-        ${pfSec('pf-obs', 'Observations', 'The sheets, as the trainee wrote them', `<a class="pf-btn" href="18_observation_tasks.html?trainee=${pfId}">Open the sheets</a>`, observationRows(tr))}
-        ${pfAgr.at ? pfSec('pf-agr', 'Candidate agreement', 'Written by the center, signed on screen', `<a class="pf-btn" href="29_candidate_agreement.html?trainee=${pfId}">Open it</a>`, pfRow('Signed', esc(when(pfAgr.at)), 'fine', 'Signed')) : ''}
-        ${mine.length ? pfSec('pf-links', 'Private links', 'Given to this trainee alone', '', pfLinks(mine)) : ''}
-      </div>
-      <div class="pf-col">
+        ${pfSec('pf-asg', 'Assignments', 'In the center’s order', '', assignmentRows(tr) + (pfG && pfG.n ? pfG.ivRow + pfG.doc : ''))}
         ${pfSec('pf-c5', 'CELTA 5', 'The record booklet', `<a class="pf-btn" href="20_celta5.html?trainee=${pfId}">Open the CELTA 5</a>`, celta5Rows(tr))}
-        ${pfG ? pfSec('pf-first', 'The first afternoon', 'Getting to know you and the student interview, unassessed', pfG.doc ? '<button class="pf-btn" type="button" data-doc="gtky">Show the interview</button>' : '', pfG.rows + pfG.doc) : ''}
-        ${staff.length ? pfSec('pf-staff', 'Staff file on this trainee', 'Application, interview notes, pre-course task: for the tutors and the assessor. The trainee does not see these.', '', pfLinks(staff)) : ''}
-      </div>
+        ${pfSec('pf-obs', 'Observations', 'The sheets, as the trainee wrote them', `<a class="pf-btn" href="18_observation_tasks.html?trainee=${pfId}">Open the sheets</a>`, observationRows(tr))}
+        ${staff.length ? pfSec('pf-staff', 'Staff file on this trainee', 'For the tutors and the assessor. The trainee does not see these.', '', pfLinks(staff)) : ''}
+        ${mine.length ? pfSec('pf-links', 'Private links', 'Given to this trainee alone', '', pfLinks(mine)) : ''}
+        ${pfAgr.at ? pfSec('pf-agr', 'Candidate agreement', 'Written by the center, signed on screen', `<a class="pf-btn" href="29_candidate_agreement.html?trainee=${pfId}">Open it</a>`, pfRow('Signed', esc(when(pfAgr.at)), 'fine', 'Signed')) : ''}
     </div>
     ${pfSec('pf-time', 'Official timeline', 'The formal events, dated, read from the records', '', timelineHTML(tr))}`;
   if (switcher) $('app').insertAdjacentHTML('beforeend', switcher.replace('class="switcher"', 'class="switcher foot"') + '<p class="swback"><a href="' + HOME.href + '">' + HOME.label + '</a></p>');

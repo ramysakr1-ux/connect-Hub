@@ -1956,6 +1956,11 @@ RECIPES.append(dict(
   ol.why li{margin:0 0 6px;}
   #s6 > .card{background:none; border:0; padding:0; box-shadow:none;}   /* the choices are the cards; no frame round them */
   #s6 .wl-pick .btns button{min-height:44px;}
+  #s6 .wl-bridge{margin-top:14px; background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--gold); border-radius:var(--r-strip); padding:16px 18px;}
+  #s6 .wl-bridge h4{margin:0 0 6px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.12rem;}
+  #s6 .wl-bridge p{margin:0 0 10px; font-size:.95rem; line-height:1.55;}
+  #s6 .wl-bridge .btn-row{margin:0;}
+  @media print{ #s6 .wl-bridge a.btn{display:none;} }
   .why-end{min-height:30px; padding:3px 12px; font-size:.8rem; margin-left:6px; vertical-align:1px;}
   @media print{ .why-end{display:none !important;} }
   section{background:var(--surface); border-left:5px solid var(--gold); border-radius:var(--r-control); padding:20px 22px 22px; margin:0 0 14px;}
