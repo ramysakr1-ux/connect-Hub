@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611191446">
+<link rel="stylesheet" href="hub-tokens.css?v=202611191520">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -517,6 +517,22 @@
     text-decoration-thickness:2px; text-underline-offset:5px;}
   .la-fold .la-body{margin-top:4px;}
   .seen th.tc{background:var(--teal); color:var(--paper);}
+  /* the trainee's vocabulary card, read-only, with the comment box at its foot (Ramy, 19 Nov 2026: "I want the tutor
+     side to look similar to the trainees side") */
+  .seen .vo-item{background:var(--surface); border-radius:6px; padding:20px 24px; margin:0 0 16px; border-left:5px solid var(--teal);
+    border-top:1px solid var(--sand-line); border-right:1px solid var(--sand-line); border-bottom:1px solid var(--sand-line);}
+  .seen .vo-head{margin:0 0 16px; padding-bottom:12px; border-bottom:1px solid var(--sand-line);}
+  .seen .vo-head h3{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; margin:0; color:var(--teal);}
+  .seen .vo-row{margin:0 0 14px;}
+  .seen .vo-row:last-child{margin-bottom:0;}
+  .seen .vo-row > label{display:block; font-size:0.78rem; font-weight:700; color:var(--teal);
+    text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;}
+  .seen .vo-box{padding:9px 12px; border:1px solid #DCDCE3; border-radius:6px; background:#F3F3F7;
+    color:var(--ink); font-size:0.9rem; line-height:1.6;}
+  .seen .vo-box ul{margin:0; padding-left:16px;}
+  .seen .vo-phon{font-size:1rem; letter-spacing:.02em;}
+  .seen .vo-c > label{color:var(--teal);}
+  @media(max-width:760px){ .seen .vo-item{padding:16px;} }
   .seen textarea.tc{width:100%; min-height:72px; font-family:'Karla',sans-serif; font-size:0.86rem;
     padding:5px 7px; border:1px solid var(--gold); border-radius:5px; background:var(--field);
     color:var(--ink); line-height:1.5; resize:vertical; overflow:hidden;}
@@ -587,7 +603,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611191446">
+<link rel="stylesheet" href="hub-house.css?v=202611191520">
 </head>
 <body>
 <div class="board">
@@ -785,14 +801,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611191446"></script>
-<script src="hub-shared.js?v=202611191446"></script>
-<script src="hub-store.js?v=202611191446"></script>
-<script src="hub-say.js?v=202611191446"></script>
-<script src="hub-crit-learn.js?v=202611191446"></script>
-<script src="hub-crit-vocab.js?v=202611191446"></script>
-<script src="hub-sync.js?v=202611191446"></script>
-<script src="hub-notebook.js?v=202611191446"></script>
+<script src="hub-exchange.js?v=202611191520"></script>
+<script src="hub-shared.js?v=202611191520"></script>
+<script src="hub-store.js?v=202611191520"></script>
+<script src="hub-say.js?v=202611191520"></script>
+<script src="hub-crit-learn.js?v=202611191520"></script>
+<script src="hub-crit-vocab.js?v=202611191520"></script>
+<script src="hub-sync.js?v=202611191520"></script>
+<script src="hub-notebook.js?v=202611191520"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1464,6 +1480,13 @@ $('fGrade').addEventListener('change', e=>{
 
 /* ================= your comments against their stages and analysis ================= */
 const TCOMM={};
+/* A vocabulary item's problems: as Problem and Solution pairs when the trainee's sheet has them (19 Nov 2026),
+   the one text otherwise (sheets written before the pairs). */
+function vocabProbHTML(r){
+  const pairs=(Array.isArray(r.pairs)?r.pairs:[]).filter(x=>String(x.problem||'').trim()||String(x.solution||'').trim());
+  if(!pairs.length) return bulletsHTML(r.prob);
+  return pairs.map(x=>`<div class="ps"><span>Problem</span><div>${bulletsHTML(x.problem)}</div><span>Solution</span><div>${bulletsHTML(x.solution)}</div></div>`).join('<div style="height:8px"></div>');
+}
 function tcBox(key,ph){
   return `<textarea class="tc blt" data-tc="${key}" placeholder="${ph||'comment'}">${esc(TCOMM[key]||'')}</textarea>`;
 }
@@ -1617,13 +1640,18 @@ function showSeen(d){
   if(l.type==='vocab' && (l.vocab||[]).length){
     /* every column the trainee's vocabulary sheet has (19 Nov 2026): how the meaning is conveyed and the form were in their
        document and not here, nor the reference they used */
-    html+=laFold(laLabel, l.vocab.length + (laCtx ? 1 : 0), laCtx + `<table>
-      <tr><th width="13%">Item</th><th>Definition</th><th>Conveying the meaning</th><th>Clarification</th><th>Form</th><th>Problems</th>
-          <th class="tc" width="26%">Your comment</th></tr>
-      ${l.vocab.map((r,i)=>`<tr><td><b>${nl2br(r.item)}</b></td><td>${bulletsHTML(r.def)}</td><td>${bulletsHTML(r.convey)}</td>
-        <td>${bulletsHTML(r.clar)}</td><td>${bulletsHTML(r.form)}</td><td>${bulletsHTML(r.prob)}</td>
-        <td>${tcBox('vo'+i,'on this item')}</td></tr>`).join('')}
-    </table>${String(l.ref||'').trim() ? `<p style="margin:8px 0 0;"><b>Reference material:</b> ${nl2br(l.ref)}</p>` : ''}`);
+    /* A card per item, the shape of the grammar section beside it and of the trainee's own sheet (Ramy, 19 Nov 2026:
+       the seven columns were too cramped): what they wrote down the left, the comment box on the right the height of
+       the card, below it on a phone. Comment keys stay vo0, vo1... so anything already written stays with its item. */
+    html+=laFold(laLabel, l.vocab.length + (laCtx ? 1 : 0), laCtx + l.vocab.map((r,i)=>{
+      const parts=[['Definition',bulletsHTML(r.def)],['Conveying the meaning',bulletsHTML(r.convey)],
+        ['Clarification',bulletsHTML(r.clar)],['Form',bulletsHTML(r.form)],['Problems &amp; solutions',vocabProbHTML(r)]]
+        .filter(([,v])=>String(v||'').replace(/<[^>]+>/g,'').replace(/[\s•.]/g,''));
+      return `<div class="vo-item"><div class="vo-head"><h3>Vocab item ${i+1}</h3></div>
+          <div class="vo-row"><label>Vocab item</label><div class="vo-box vo-phon">${nl2br(r.item)||'&nbsp;'}</div></div>
+          ${parts.map(([k,v])=>`<div class="vo-row"><label>${k}</label><div class="vo-box">${v}</div></div>`).join('')}
+          <div class="vo-row vo-c"><label>Your comment</label>${tcBox('vo'+i,'on this item')}</div></div>`;
+    }).join('') + (String(l.ref||'').trim() ? `<p style="margin:8px 0 0;"><b>Reference material:</b> ${nl2br(l.ref)}</p>` : ''));
   } else if((l.blocks||[]).length){
     /* Built first, shown only if there is anything in it. Every field filters
        itself out when empty, so a section with nothing written produced a
@@ -1853,7 +1881,8 @@ function traineeHTML(d, selfComment, tc, laComment){
     // where there is one, is its own trailing row in that item's block.
     const heads=['Vocab item','Definition','How the meaning is conveyed','Clarification','Form','Problems &amp; solutions'];
     html+=(l.vocab||[]).map((r,i)=>{
-      const vals=[nl2br(r.item),nl2br(r.def),nl2br(r.convey),nl2br(r.clar),nl2br(r.form),nl2br(r.prob)];
+      const vals=[nl2br(r.item),nl2br(r.def),nl2br(r.convey),nl2br(r.clar),nl2br(r.form),
+        (Array.isArray(r.pairs)&&r.pairs.length ? r.pairs.map((x,n)=>`<strong>Problem ${n+1}:</strong> ${nl2br(x.problem)}<br><strong>Solution ${n+1}:</strong> ${nl2br(x.solution)}`).join('<br><br>') : nl2br(r.prob))];
       const rows=heads.map((h,k)=>`<tr><td ${TH} width="26%">${h}</td><td ${TD}>${vals[k]||'&nbsp;'}</td></tr>`).join('')
         +(has('vo'+i)?`<tr><td ${THT} width="26%">Tutor comments</td><td ${TD}>${bulletsHTML(tc['vo'+i]||'')||'&nbsp;'}</td></tr>`:'');
       return `<h3 ${H3}>Vocab item ${i+1}</h3>
