@@ -922,6 +922,37 @@ window.hubReadableHistory = function(h){
   Object.keys(h || {}).forEach(function(k){ var r = h[k]; if (!r || r.held) return; if (n > 0 && parseInt(k, 10) === n) return; out[k] = r; });
   return out;
 };
+/* MOVING ON TO THE NEXT TP BY ITSELF (Ramy, 19 Nov 2026: "No one reads their feedback and then click on start next TP
+   right after. They just go to lesson plan and start a new one, or they wait for the hero card to tell them TP2 points
+   and then start. Like it's just unnatural to have start next TP at the foot of the previous TP." Six of eight C/21
+   trainees had not pressed it by the morning of TP2, and one had typed TP2 over the TP1 plan, which left the TP1
+   self-evaluation and feedback in place under a TP2 plan.)
+   A teaching practice is finished when its feedback is back and readable and the self-evaluation is turned in. Then,
+   when the trainee opens the lesson plan, it is filed away and the plan, the self-evaluation and the feedback start
+   fresh -- what Start next TP did. A plan already for a later TP is kept. The self-evaluation page does the same for
+   that case only, so a trainee who typed the next plan over the last one gets a fresh self-evaluation. The feedback
+   stays on Read your feedback with the rest of the record. Returns true when it filed something.
+     hubMoveOn('plan' | 'self') */
+window.hubMoveOn = function(page){
+  try {
+    if (!(window.HubSync && HubSync.mode === 'trainee')) return false;
+    var rd = function(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+    var num = function(r){ var m = String((r && r.state && r.state.meta && r.state.meta.tp) || (r && r.state && r.state.f && r.state.f.fTP) || (r && r.label) || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
+    var plan = rd('chub:plan'), se = rd('chub:selfeval'), fb = rd('chub:feedback');
+    if (!fb || fb.status !== 'returned' || !fb.docHTML || fb.held) return false;
+    if (!se || se.status !== 'turned_in') return false;
+    var nF = num(fb), nP = num(plan); if (!nF) return false;
+    var later = !!(plan && nP > nF);
+    if (page === 'self' && !later) return false;
+    if (plan && !later && !(plan.status === 'turned_in' && (!nP || nP === nF))) return false;
+    var h = rd('chub:tpHistory') || {};
+    if (!h[nF]) { h[nF] = fb; localStorage.setItem('chub:tpHistory', JSON.stringify(h)); }
+    if (!later) localStorage.removeItem('chub:plan');
+    localStorage.removeItem('chub:selfeval');
+    localStorage.removeItem('chub:feedback');
+    return true;
+  } catch (e) { return false; }
+};
 window.a5InPlay = function(subs){
   var s = subs && subs.a5;
   return !!(s && (s.assigned || (s.stage && s.stage !== 'draft')));
