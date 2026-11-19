@@ -7,7 +7,7 @@
      way: the tutor's English is theirs.
    - Backspace straight after puts the word back, and that word is left alone on this page from then on.
    - no note when a word changes (Ramy: "distracting").
-   - on or off per device, from the pill in the page's bottom bar or the dashboard's Course menu (localStorage 'hub:autocorrect').
+   - on or off per device, from the Typing pill in the feedback form's bottom bar (localStorage 'hub:autocorrect').
    Tutors only: trainees and students get no correction at all (hub-store.js, 16 Nov 2026). A field marked
    autocorrect="off" is left alone. Loaded by hub-store.js. */
 (function(){
@@ -297,63 +297,75 @@
   ['mousedown', 'scroll', 'resize'].forEach(function(ev){ addEventListener(ev, hideGhost, true); });
   document.addEventListener('focusout', hideGhost, true);
 
-  /* THE SWITCH (Ramy, 18 Nov 2026: "we can do without the comments at the bottom. It's distracting. Let's just have like a
-     general on and off pill"). No note when a word changes. One setting for every page on this device, shown as a pill in
-     the page's bottom bar (the feedback form, beside Dictate; on a phone, under the form's opening lines) and as a line in the dashboard's Course menu. */
+  /* THE SWITCHES, BEHIND ONE PILL (19 Nov 2026). There was one pill, Autocorrect (Ramy, 18 Nov: "a general on and off
+     pill"); Larger text and Word completion each added one, and three more lines in the dashboard's Course menu. Ramy:
+     "The Course drop-down menu is getting longer and longer ... we don't need to have them there", and on a 1280px
+     laptop the three pills pushed the feedback form's bottom bar onto a second row. Now one pill, Typing, in the bar
+     (on a phone, under the form's opening lines); pressing it shows the three switches. Nothing is in the Course menu.
+     One setting each for every page on this device. No note when a word changes ("distracting"). */
   function pillCss(){
     if (document.getElementById('acStyle')) return;
     var s = document.createElement('style'); s.id = 'acStyle';
     s.textContent = '.ac-pill{display:inline-flex; align-items:center; gap:7px; white-space:nowrap; background:var(--field); color:var(--teal); border:2px solid var(--teal); padding:9px 14px; border-radius:20px; font:700 0.86rem Karla,sans-serif; cursor:pointer;}' +
-      '.ac-pill .sw{width:26px; height:14px; border-radius:8px; background:var(--teal); position:relative; flex:none; transition:background .15s;}' +
-      '.ac-pill .sw::after{content:""; position:absolute; top:2px; left:14px; width:10px; height:10px; border-radius:50%; background:var(--paper); transition:left .15s;}' +
-      '.ac-pill.off{color:var(--grey); border-color:var(--sand-line);} .ac-pill.off .sw{background:var(--sand-line);} .ac-pill.off .sw::after{left:2px;}' +
       '.ac-pill:hover{background:var(--sand-deep);}' +
-      '.ac-row{display:flex; justify-content:center; margin:4px 0 12px;}';
+      '.ac-row{display:flex; justify-content:center; margin:4px 0 12px;}' +
+      '#typePop{position:fixed; z-index:1500; width:min(320px, calc(100vw - 24px)); background:var(--paper); border:1px solid var(--sand-line); border-radius:14px; box-shadow:0 10px 30px rgba(20,20,30,.18); padding:6px;}' +
+      '#typePop[hidden]{display:none;}' +
+      '#typePop button{display:flex; align-items:center; justify-content:space-between; gap:14px; width:100%; min-height:44px; padding:9px 12px; border:0; border-radius:9px; background:none; font:700 0.9rem Karla,sans-serif; color:var(--ink); text-align:left; cursor:pointer;}' +
+      '#typePop button:hover{background:var(--sand);}' +
+      '#typePop button[hidden]{display:none;}' +
+      '#typePop small{display:block; font-weight:400; font-size:0.78rem; line-height:1.35; color:var(--grey); margin-top:1px;}' +
+      '#typePop .sw{width:30px; height:16px; border-radius:9px; background:var(--teal); position:relative; flex:none; transition:background .15s;}' +
+      '#typePop .sw::after{content:""; position:absolute; top:2px; left:16px; width:12px; height:12px; border-radius:50%; background:var(--paper); transition:left .15s;}' +
+      '#typePop button.off .sw{background:var(--sand-line);} #typePop button.off .sw::after{left:2px;}' +
+      '@media print{ #typePop, .ac-pill, .ac-row{display:none !important;} }';
     document.head.appendChild(s);
   }
   function placePill(){
-    if (!tutor() || document.getElementById('acPill')) return;
+    if (!tutor() || document.getElementById('typePill')) return;
     var slot = document.querySelector('.actionbar .rhs'); if (!slot) return;
     pillCss();
-    var b = document.createElement('button'); b.type = 'button'; b.id = 'acPill'; b.className = 'ac-pill';
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'typePill'; b.className = 'ac-pill'; b.textContent = 'Typing';
+    b.setAttribute('aria-haspopup', 'true'); b.setAttribute('aria-expanded', 'false'); b.title = 'Autocorrect, word completion and larger text, on this device';
     /* A phone's bottom bar is full (Return, Dictate, Print): there the pill sits under the form's opening lines instead. */
     var head = document.querySelector('.header .sub');
     if (innerWidth < 560 && head) { var row = document.createElement('div'); row.className = 'ac-row'; row.appendChild(b); head.parentNode.insertBefore(row, head.nextSibling); }
     else { var before = slot.querySelector('.dictbar') || document.getElementById('pdfBtn');
       if (before && before.parentNode === slot) slot.insertBefore(b, before); else slot.appendChild(b); }
-    var t = document.createElement('button'); t.type = 'button'; t.id = 'tsPill'; t.className = 'ac-pill';
-    b.parentNode.insertBefore(t, b.nextSibling);
-    var c = document.createElement('button'); c.type = 'button'; c.id = 'wcPill'; c.className = 'ac-pill';
-    b.parentNode.insertBefore(c, b.nextSibling);
+    var pop = document.createElement('div'); pop.id = 'typePop'; pop.hidden = true; pop.setAttribute('role', 'group'); pop.setAttribute('aria-label', 'Typing, on this device');
+    pop.innerHTML = '<button type="button" id="acPill"></button><button type="button" id="wcPill"></button><button type="button" id="tsPill"></button>';
+    document.body.appendChild(pop);
     syncMenu();
   }
+  function popClose(){ var pop = document.getElementById('typePop'), b = document.getElementById('typePill'); if (pop) pop.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); }
+  function popOpen(){
+    var pop = document.getElementById('typePop'), b = document.getElementById('typePill'); if (!pop || !b) return;
+    pop.hidden = false; b.setAttribute('aria-expanded', 'true');
+    var r = b.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    pop.style.left = Math.max(12, Math.min(r.left, innerWidth - w - 12)) + 'px';
+    /* above the pill when the pill is in the bottom bar, below it when it sits under the heading */
+    pop.style.top = (r.top > innerHeight / 2 ? Math.max(12, r.top - h - 8) : Math.min(innerHeight - h - 12, r.bottom + 8)) + 'px';
+  }
   function syncMenu(){
-    var on = isOn();
-    var a = document.getElementById('menuAutocorrect');
-    if (a) { a.hidden = !tutor(); a.innerHTML = 'Autocorrect <small>' + (on ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
-    var cOn = completeOn(), mc = document.getElementById('menuComplete');
-    if (mc) { mc.hidden = !tutor(); mc.innerHTML = 'Word completion <small>' + (cOn ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
-    var cp = document.getElementById('wcPill');
-    if (cp) { cp.classList.toggle('off', !cOn || !on); cp.setAttribute('aria-pressed', cOn ? 'true' : 'false'); cp.hidden = !on;
-      cp.title = cOn ? 'The rest of a word shows in grey as you type; Tab takes it. Press to turn it off.' : 'Press to show the rest of a word in grey as you type.';
-      cp.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Word completion</span>'; }
-    var big = isBig(), m = document.getElementById('menuTextSize');
-    if (m) { m.hidden = !tutor(); m.innerHTML = 'Larger text <small>' + (big ? 'On. Press to turn it off.' : 'Off. Press to turn it on.') + '</small>'; }
-    var t = document.getElementById('tsPill');
-    if (t) { t.classList.toggle('off', !big); t.setAttribute('aria-pressed', big ? 'true' : 'false');
-      t.title = big ? 'The writing boxes use larger text on this device. Press to go back to normal.' : 'Press for larger text in the writing boxes on this device.';
-      t.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Larger text</span>'; }
-    var b = document.getElementById('acPill');
-    if (b) { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.title = on ? 'Autocorrect fixes misspelled words as you type, and shows the rest of a word in grey: Tab takes it. Press to turn both off.' : 'Autocorrect is off. Press to turn it on.';
-      b.innerHTML = '<span class="sw" aria-hidden="true"></span><span>Autocorrect ' + (on ? 'on' : 'off') + '</span>'; }
+    var on = isOn(), cOn = completeOn(), big = isBig();
+    var row = function(id, isOnNow, name, what){ var el = document.getElementById(id); if (!el) return null;
+      el.classList.toggle('off', !isOnNow); el.setAttribute('aria-pressed', isOnNow ? 'true' : 'false');
+      el.innerHTML = '<span>' + name + '<small>' + what + '</small></span><span class="sw" aria-hidden="true"></span>'; return el; };
+    row('acPill', on, 'Autocorrect', 'Fixes a misspelled word as you finish it');
+    var c = row('wcPill', on && cOn, 'Word completion', on ? 'The rest of a word in grey. Tab takes it' : 'Works when Autocorrect is on');
+    if (c) c.hidden = touch;                                     // a phone's own keyboard suggests words
+    row('tsPill', big, 'Larger text', 'In the boxes you write in');
   }
   document.addEventListener('click', function(e){
-    var y = e.target.closest && e.target.closest('#menuComplete, #wcPill'); if (y) { e.preventDefault(); setComplete(!completeOn()); hideGhost(); syncMenu(); return; }
-    var z = e.target.closest && e.target.closest('#menuTextSize, #tsPill'); if (z) { e.preventDefault(); setBig(!isBig()); applySize(); syncMenu(); return; }
-    var a = e.target.closest && e.target.closest('#menuAutocorrect, #acPill'); if (!a) return;
-    e.preventDefault(); setOn(!isOn()); last = null; hideGhost(); syncMenu(); if (isOn()) wantDictionary();
+    var t = e.target.closest ? e.target : null; if (!t) return;
+    if (t.closest('#typePill')) { e.preventDefault(); var pop = document.getElementById('typePop'); if (pop && pop.hidden) popOpen(); else popClose(); return; }
+    if (t.closest('#wcPill')) { e.preventDefault(); if (isOn()) { setComplete(!completeOn()); hideGhost(); syncMenu(); } return; }
+    if (t.closest('#tsPill')) { e.preventDefault(); setBig(!isBig()); applySize(); syncMenu(); return; }
+    if (t.closest('#acPill')) { e.preventDefault(); setOn(!isOn()); last = null; hideGhost(); syncMenu(); if (isOn()) wantDictionary(); return; }
+    if (!t.closest('#typePop')) popClose();
   });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') popClose(); });
+  addEventListener('resize', popClose);
   addEventListener('storage', function(e){ if (e.key === KEY || e.key === TKEY || e.key === CKEY) { applySize(); syncMenu(); } });
   var boot = function(){ applySize(); placePill(); syncMenu(); if (tutor() && isOn()) wantDictionary(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
