@@ -1947,13 +1947,15 @@ RECIPES.append(dict(
 # ---- Writing the lesson plan -------------------------------------------------
 RECIPES.append(dict(
     slug='writing-the-lesson-plan', src='writing-the-lesson-plan/index.html', end='<footer>', number_sections=True,
-    title='Writing the lesson plan', sub='Why we plan at all, then the four decisions you make on every plan: your aims, your procedure, your interaction patterns, and what could go wrong. Then the rest of what a plan needs, a plan to fix, and two stages to write yourself.',
-    nav=[('leadin', 'Lead-in: why plan?'), ('s1', '1 · Aims'), ('s2', '2 · Procedure'), ('s3', '3 · Interaction'), ('s4', '4 · Anticipated problems'), ('restplan', '5 · The rest of the plan'), ('s5', '6 · Fix this plan'), ('s6', '7 · Your turn')],
+    title='Writing the lesson plan', sub='Why we plan at all, then the four decisions you make on every plan: your aims, your procedure, your interaction patterns, and what could go wrong. Then the rest of what a plan needs, a plan to fix, and a last choice that leads into the lesson frameworks.',
+    nav=[('leadin', 'Lead-in: why plan?'), ('s1', '1 · Aims'), ('s2', '2 · Procedure'), ('s3', '3 · Interaction'), ('s4', '4 · Anticipated problems'), ('restplan', '5 · The rest of the plan'), ('s5', '6 · Fix this plan')],
     sources="""The aims, procedures and problems to judge are the tutor's own, written for this course's lesson plan and language analysis sheets.""",
     css=r"""
   /* the lead-in's reasons, and the last line the trainees finish (Ramy, 19 Nov 2026) */
   ol.why{margin:4px 0 0; padding-left:22px; font-size:.95rem; line-height:1.6;}
   ol.why li{margin:0 0 6px;}
+  #s6 > .card{background:none; border:0; padding:0; box-shadow:none;}   /* the choices are the cards; no frame round them */
+  #s6 .wl-pick .btns button{min-height:44px;}
   .why-end{min-height:30px; padding:3px 12px; font-size:.8rem; margin-left:6px; vertical-align:1px;}
   @media print{ .why-end{display:none !important;} }
   section{background:var(--surface); border-left:5px solid var(--gold); border-radius:var(--r-control); padding:20px 22px 22px; margin:0 0 14px;}
