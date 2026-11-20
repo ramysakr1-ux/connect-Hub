@@ -868,3 +868,21 @@ ALIAS['teaching-vocabulary'] = ALIAS.get('teaching-vocabulary', []) + [
     ('    <table class="plan">', '    <div class="vwrap"><table class="plan">'),
     ('    </table>\n    <h3>Then two more lines</h3>', '    </table></div>\n    <h3>Then two more lines</h3>'),
 ]
+
+# FOUND WALKING WORD AND SENTENCE STRESS (20 Nov 2026), and one decision of his:
+#   - Lisbon showed each question with its stressed word in capitals before the reveal, though the task says to decide
+#     first (Ramy: "show Lisbon plain"); the first question was also bold from end to end;
+#   - the sort's stress patterns are background colors and did not print; a phone scrolled sideways with two
+#     four-syllable words open; quiz answers and lead-in words were small to tap; "colour" and "travelling".
+ALIAS['word-and-sentence-stress'] = ALIAS.get('word-and-sentence-stress', []) + [
+    ('  .circle{border-radius:50%;}',
+     '  .circle{border-radius:50%;} .circle, .legend .dot{-webkit-print-color-adjust:exact; print-color-adjust:exact;}  /* the bubbles are colors, which a browser leaves off paper: the sort printed with no patterns (20 Nov 2026) */'),
+    ('  @media(max-width:560px){ .hm{grid-template-columns:1fr; gap:4px;} .word-grid{grid-template-columns:1fr 1fr;} }',
+     '  @media(max-width:560px){ .hm{grid-template-columns:1fr; gap:4px;} .word-grid{grid-template-columns:1fr 1fr;} .syll-row{gap:6px;} .syll{min-width:26px;} .opt-btn, .hm .pick{min-height:44px;} }  /* a phone: four syllables fit their card (America and Slovakia, both open, pushed the page sideways), and an answer is 44px to tap (20 Nov 2026) */'),
+    ("  'implies a different colour',",
+     "  'implies a different color',"),
+    ('  { q:[\'Is she \',\'DRIVING\',\' to Lisbon on Friday?\'], a:\'No, taking the train.\', reveal:"The stress is on <b>DRIVING</b>: the answer corrects <i>how</i> she\\u2019s travelling." },',
+     '  { q:[\'Is she \',\'DRIVING\',\' to Lisbon on Friday?\'], a:\'No, taking the train.\', reveal:"The stress is on <b>DRIVING</b>: the answer corrects <i>how</i> she\\u2019s traveling." },'),
+    ('  q.innerHTML = \'<b>A:</b> \' + ex.q.map(function(part, i){\n    var isStress = (i % 2 === 1) || (ex.stressedFirst && i===0);\n    return isStress ? \'<span class="stress">\'+part+\'</span>\' : part;\n  }).join(\'\');',
+     "  q.innerHTML = '<b>A:</b> Is she driving to Lisbon on Friday?';   /* plain, the same five times: the stressed word in capitals and bold gave the answer away before the reveal, and the first question was bold from end to end (decided 20 Nov 2026) */"),
+]

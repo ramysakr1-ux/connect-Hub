@@ -58,6 +58,6 @@
     if (!QUIZ[i]) return;
     var b = btn('Hear it', [{ text: QUIZ[i] }]); b.hidden = true;
     w.appendChild(b);
-    w.querySelector('.quiz-options').addEventListener('click', function(){ setTimeout(function(){ b.hidden = false; }, 0); });
+    w.querySelector('.quiz-options').addEventListener('click', function(e){ if (!e.target.closest('.opt-btn')) return; setTimeout(function(){ b.hidden = false; }, 0); });   /* an answer, not the row beside it: a stray click there gave the recording, and so the stress, before anything was chosen (20 Nov 2026) */
   });
 })();

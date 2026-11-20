@@ -112,7 +112,7 @@ window.LiteVoice = window.LiteVoice || (function(){
     var short = /-short$/.test(here || '') && !!document.querySelector('[data-voices-here]');
     if (VOICED.indexOf(here) === -1 && !short) return;
     mount();
-    if (here !== 'phonology-sounds' && !short) { var sc = document.createElement('script'); sc.src = 'audio/hooks.js?v=' + (window.LITE_V || '1'); document.body.appendChild(sc); }
+    if (here !== 'phonology-sounds' && !short) { var sc = document.createElement('script'); sc.src = 'audio/hooks.js?v=' + (window.LITE_V || '2');   /* 2 since 20 Nov 2026: two sessions' hooks were corrected, and a browser that kept the old file would keep its faults */ document.body.appendChild(sc); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
   return { say: say, sayAll: sayAll, button: button, fileFor: fileFor, slug: slug, set: function(o){ for (var k in o) cfg[k] = o[k]; paint(); }, voices: VOICES };

@@ -470,7 +470,7 @@ try {
    browser that kept the old one fetches the new. "Writing the lesson plan" carries its own card on the page and is
    not listed. */
 (function(){
-  var READY = { 'phonology-sounds': 1, 'teaching-vocabulary': 1, 'connected-speech': 1 };
+  var READY = { 'phonology-sounds': 1, 'teaching-vocabulary': 1, 'connected-speech': 1, 'word-and-sentence-stress': 1 };
   var m = location.pathname.match(/\/input-sessions\/([^\/]+)\/(?:index\.html)?$/); if (!m) return;
   var v = READY[m[1]]; if (!v) return;
   var load = function(src, then){ var s = document.createElement('script'); s.src = src; if (then) s.onload = then; document.head.appendChild(s); };
