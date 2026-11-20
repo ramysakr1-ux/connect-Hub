@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611210130">
+<link rel="stylesheet" href="hub-tokens.css?v=202611210145">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -91,6 +91,7 @@
      paper again, as the rest of Lite is, and the color says what a block is
      from its left edge: teal for something to read, gold for something to
      choose or fill in, sand for the declaration. */
+  .crit-fold .gb ol{margin:6px 0 4px; padding-left:22px; line-height:1.6;} .crit-fold .gb li{margin:4px 0;}
   .critfold{margin-top:12px; font-size:0.82rem;}
   .critfold summary{cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:6px; font-weight:600; color:var(--teal);}
   .critfold summary::-webkit-details-marker{display:none;}
@@ -220,7 +221,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611210130">
+<link rel="stylesheet" href="hub-house.css?v=202611210145">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -228,19 +229,19 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611210130"></script>
-<script src="assignment-history.js?v=202611210130"></script>
-<script src="assignment-examples.js?v=202611210130"></script>
-<script src="hub-due.js?v=202611210130"></script>
-<script src="hub-shared.js?v=202611210130"></script>
-<script src="hub-store.js?v=202611210130"></script>
-<script src="hub-say.js?v=202611210130"></script>
-<script src="hub-sync.js?v=202611210130"></script>
-<script src="hub-notebook.js?v=202611210130"></script>
-<script src="observation-defaults.js?v=202611210130"></script>
-<script src="hub-rotation.js?v=202611210130"></script>
-<script src="hub-peers.js?v=202611210130"></script>
-<script src="fol-interview.js?v=202611210130"></script>
+<script src="assignment-defaults.js?v=202611210145"></script>
+<script src="assignment-history.js?v=202611210145"></script>
+<script src="assignment-examples.js?v=202611210145"></script>
+<script src="hub-due.js?v=202611210145"></script>
+<script src="hub-shared.js?v=202611210145"></script>
+<script src="hub-store.js?v=202611210145"></script>
+<script src="hub-say.js?v=202611210145"></script>
+<script src="hub-sync.js?v=202611210145"></script>
+<script src="hub-notebook.js?v=202611210145"></script>
+<script src="observation-defaults.js?v=202611210145"></script>
+<script src="hub-rotation.js?v=202611210145"></script>
+<script src="hub-peers.js?v=202611210145"></script>
+<script src="fol-interview.js?v=202611210145"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -432,8 +433,13 @@ function render(){
   const CX = !!(window.hubIsConnectsAsg && hubIsConnectsAsg(CURRENT, a));
   let html = `<div class="header hue-${esc(CURRENT)} as-head"><p class="eyebrow">Written assignment · ${esc(CURRENT === 'a5' ? 'Assignment 5' : CURRENT.toUpperCase())}</p><h1>${esc(a.title)}</h1>
     <div class="meta">${duePillHTML(dueFor(a, sub), locked)}${a.wordMin?`<span id="wcCounter"></span>`:''}</div>
-    ${(a.criteria&&a.criteria.length)?`<details class="critfold"><summary>Marking criteria · ${a.criteria.length}</summary><ol>${a.criteria.map(c=>`<li>${esc(c.text)}</li>`).join('')}</ol></details>`:''}
   </div>`;
+  /* THE MARKING CRITERIA GET THEIR OWN FOLD (Ramy, 21 Nov 2026: "sitting on top could easily be ignored. It needs to be
+     clearer than that"). They were a small line inside the header; now a fold the size of "Click here before you start",
+     straight after it (or after the header when the assignment has no such part). */
+  const CRIT_HTML = (a.criteria&&a.criteria.length) ? `<div class="card guide-card"><details class="guide-box guide-solo crit-fold"><summary>What your tutor marks: the ${a.criteria.length} marking criteria</summary><div class="gb"><ol>${a.criteria.map(c=>`<li>${esc(c.text)}</li>`).join('')}</ol></div></details></div>` : '';
+  let critPlaced = !CRIT_HTML || (a.sections||[]).some(x => x.type==='text' && /^before you start$/i.test(String(x.label||'').trim()));
+  const critPending = () => { if (critPlaced) return ''; critPlaced = true; return CRIT_HTML; };
 
   if (locked) html += `<div class="locked-banner sent"><span>${sub.stage==='closed'?'This assignment is closed.':sub.stage==='resubmitted'?'Resubmitted \u2014 waiting on your tutor.':'Submitted \u2014 waiting on your tutor.'}</span>${sub.stage==='resubmission_needed'?'':''}</div>`;
 
@@ -477,6 +483,7 @@ function render(){
      (16 Nov 2026: the book's chapters by language, with their pages). */
   { let CL = []; try { CL = ((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).courseLinks || []).filter(l => l && l.url && l.label && String(l.asg || '') === CURRENT); } catch (e) {}
     if (CL.length) html += `<div class="card" style="padding:14px 18px; margin-bottom:16px;"><p class="eyebrow" style="margin:0 0 6px;">Reading for this assignment</p>${CL.map(l => `<p style="margin:0 0 4px; font-size:0.95rem;"><a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" style="font-weight:700; color:var(--teal);">${esc(l.label)}</a></p>${l.note ? `<p style="margin:0 0 10px; font-size:0.84rem; line-height:1.6; color:var(--grey);">${esc(l.note)}</p>` : ''}`).join('')}</div>`; }
+  html += critPending();
   a.sections.forEach((s,i) => {
     if (s.type==='text') {
       // Reference material: read it, don't write in it. Was the label
@@ -507,6 +514,7 @@ function render(){
              drop down of the task so they can open it and close it"). It starts closed and opens for the print. */
           const isTask = /^before you start$/i.test(String(s.label).trim());
           html += `<div class="card guide-card"><details class="guide-box guide-solo${isTask?' task-fold':''}"${(startsClosed||isTask)?'':' open'}><summary>${isTask?'Click here before you start':esc(s.label)}</summary><div class="gb">${hubGuidanceHTML(s.body)}${TW}</div></details></div>`;
+          if (isTask) html += CRIT_HTML;
           return;
         }
         html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${refHtml}${TW}</div></details>`;
