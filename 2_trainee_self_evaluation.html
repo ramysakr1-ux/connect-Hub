@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611210053">
+<link rel="stylesheet" href="hub-tokens.css?v=202611210106">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -208,8 +208,14 @@
   @media(max-width:1000px){ .sv5 button span, .sv5 .sep{display:none;} .sv5 button{padding:0 5px;} }
   @media(max-width:640px){ .sv5{display:none;} }
   @media print{ .sv5, .sv5-env{display:none !important;} .ap-row.sv5-carried, .ap-row.sv5-answered{background:none; box-shadow:none; padding:0;} }
+  .prev-pill{display:block; margin:0 0 12px; padding:4px 12px; border-radius:999px; border:1px solid var(--fb-act); background:transparent; color:var(--fb-act); font:600 0.76rem 'Inter',sans-serif; cursor:pointer;}
+  .card.next .prev-pill, .card.next .btn-add{color:var(--paper); border-color:var(--paper);} .card.next .prev-pill:hover, .card.next .btn-add:hover{background:transparent; text-decoration:underline;}
+  /* the four boxes are one size (Ramy, 21 Nov 2026): the action point was a one-line field beside a taller box */
+  .ap-pair textarea{min-height:78px; height:78px; box-sizing:border-box; width:100%;}
+  .prev-pill:hover{background:var(--fb-act-wash);} .prev-pill:disabled{opacity:.5; cursor:default;}
+  @media print{ .prev-pill{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611210053">
+<link rel="stylesheet" href="hub-house.css?v=202611210106">
 </head>
 <body>
 <div class="board">
@@ -221,9 +227,7 @@
     </div>
     <h1>Self-evaluation</h1>
     <p class="sub">Fill this in after you have taught, and before your tutor writes their feedback.
-    Your plan is pulled in automatically below so you can evaluate against what you actually planned.
-    This saves itself as you go — click <strong>Turn in</strong> when you're ready for your tutor to
-    see it.</p>
+    It saves itself as you go. When you're ready, click <strong>Turn in</strong>.</p>
     <div class="turnstatus" id="turnStatus"></div>
     <p class="loaded" id="loadedInfo" style="text-align:center;margin:6px 0 0;font-size:0.86rem;color:var(--teal);font-weight:600;"></p>
   </div>
@@ -247,8 +251,6 @@
 
   <div class="card">
     <h2>What evidence did you see that the learners had learned?</h2>
-    <p class="guide">Not whether they enjoyed it — what they could do by the end that they could not
-    do at the start.</p>
     <textarea id="sLearn" class="blt" rows="4" placeholder="What could they do at the end that they could not do at the start?"></textarea>
   </div>
 
@@ -259,16 +261,13 @@
 
   <div class="card next">
     <h2>Your action points from the last TP</h2>
-    <p class="guide">Press Bring in last TP's action points and they come in from your last TP's feedback, with nothing to type or copy.
-    Then say what you actually did about each one in this lesson. The ones your tutor starred (★) are the ones they asked you to carry into this TP.</p>
+    <button type="button" class="prev-pill" id="prevBtn">Bring in last TP's action points</button>
     <div id="apList"></div>
-    <button class="btn btn-gold" id="prevBtn">Bring in last TP's action points</button>
     <button class="btn-add" type="button" id="addAP">+ Add another</button>
   </div>
 
   <div class="card next">
     <h2>What do you want to work on in the next TP?</h2>
-    <p class="guide">Your own priorities, before you read your tutor's.</p>
     <textarea id="sNext" class="blt" rows="3" placeholder="One or two things, in your own words."></textarea>
   </div>
 
@@ -287,12 +286,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611210053"></script>
-<script src="hub-shared.js?v=202611210053"></script>
-<script src="hub-store.js?v=202611210053"></script>
-<script src="hub-say.js?v=202611210053"></script>
-<script src="hub-sync.js?v=202611210053"></script>
-<script src="hub-notebook.js?v=202611210053"></script>
+<script src="hub-due.js?v=202611210106"></script>
+<script src="hub-shared.js?v=202611210106"></script>
+<script src="hub-store.js?v=202611210106"></script>
+<script src="hub-say.js?v=202611210106"></script>
+<script src="hub-sync.js?v=202611210106"></script>
+<script src="hub-notebook.js?v=202611210106"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -354,7 +353,7 @@ function addAP(prev,did){
   row.innerHTML=`<span class="n">${n}</span>
     <div class="ap-pair">
       <div><p class="lab">Action point set last time</p>
-        <input type="text" class="ap-prev" value="${esc(prev||'')}" placeholder="e.g. Give instructions before handing out materials"></div>
+        <textarea class="ap-prev" rows="2" placeholder="e.g. Give instructions before handing out materials">${esc(prev||'')}</textarea></div>
       <div><p class="lab">What I did about it</p>
         <textarea class="ap-did blt" rows="2" placeholder="What you actually did about it, not what you meant to do.">${esc(did||'')}</textarea></div>
     </div>
@@ -626,7 +625,7 @@ function renderTurnStatus(){
   const planRec=loadPlanRecord();
   if(planRec&&planRec.state){
     DOC=planRec.state; showRecall(DOC);
-    $('loadedInfo').textContent='Plan pulled in: '+((DOC.meta.tp||'TP')+' · '+(DOC.meta.name||''));
+    $('loadedInfo').textContent='';
   } else {
     $('loadedInfo').textContent='No lesson plan yet.';
   }
