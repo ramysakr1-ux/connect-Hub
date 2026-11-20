@@ -13,7 +13,7 @@ NOTES = '''<h4>Running this session</h4>
 <h4>Choral first, always</h4>
 <p>It's safe, nobody's heard alone. Individual drilling comes second, to find who actually has it versus who's hiding in the chorus. Keep individual drilling fast-moving; don't let it turn into a spotlight moment for a nervous trainee playing "learner."</p>
 <h4>Scenario answers</h4>
-<p>1 = back-chaining (long/awkward phrase), 2 = substitution drill (can say it but can't bend it), 3 = individual drill (choral is hiding a real gap), 4 = transformation drill (grammar manipulation, e.g. statement to question).</p>
+<p>1 = substitution drill (can say it but can't bend it), 2 = back-chaining (long/awkward phrase), 3 = individual drill (choral is hiding a real gap), 4 = transformation drill (grammar manipulation, e.g. statement to question).</p>
 <h4>If trainees dismiss drilling as old-fashioned</h4>
 <p>Push back gently: it fell out of favor for being the whole lesson, not for being useless as one stage of one. It still earns criteria points, and used well it's genuinely fast.</p>
 <h4>Ten drill types total now, in two batches</h4>
