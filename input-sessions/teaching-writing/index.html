@@ -230,7 +230,7 @@
           <li>work / Marlowe's / toy factory</li>
           <li>Dan and Ruth / like / cinema / cycling</li>
           <li>not buy toys</li>
-          <li>not like it</li>
+          <li>not like them</li>   <!-- 20 Nov 2026 (Ramy): the model answer says "They don't like them!" -->
         </ul>
       </div>
       <button class="reveal-btn" id="parallelBtn">Reveal a model answer</button>
@@ -465,8 +465,12 @@ const terms = [
 ];
 const termDisplay = document.getElementById('termDisplay');
 const termDef = document.getElementById('termDef');
+/* 20 Nov 2026 (Ramy: "deal all twelve"): the terms come as a shuffled deck, all twelve before any comes again; it used to
+   pick at random each time, and on every device the first twelve presses gave five terms and never the other seven. */
+let termDeck = [], termLast = null;
 document.getElementById('termBtn').addEventListener('click', () => {
-  const t = terms[Math.floor(__lr() * terms.length)];
+  if (!termDeck.length) { termDeck = terms.slice(); for (let i = termDeck.length - 1; i > 0; i--) { const j = Math.floor(__lr() * (i + 1)); [termDeck[i], termDeck[j]] = [termDeck[j], termDeck[i]]; } if (termDeck[termDeck.length - 1] === termLast) termDeck.unshift(termDeck.pop()); }
+  const t = termDeck.pop(); termLast = t;
   termDisplay.textContent = t.word;
   termDef.textContent = t.def;
 });

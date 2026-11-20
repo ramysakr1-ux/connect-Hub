@@ -922,3 +922,28 @@ ALIAS['eliciting-and-ccqs'] = ALIAS.get('eliciting-and-ccqs', []) + [
     ("      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';",
      "      /* 20 Nov 2026: crossOrigin is back, as on 22 Oct and as on the guided discovery page: the film host answers this site when asked this way, and the offline copy can only keep a film it was allowed to read */\n      var v = document.createElement('video'); v.crossOrigin = 'anonymous'; v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';"),
 ]
+
+
+# RAMY'S CALLS ON ELICITING AND CCQS (20 Nov 2026): "accept both" (the taxi moment takes An anecdote or Unfinished
+# sentences) and "change the question" (the drawing moment asks "What is he going to do?", answered "travel").
+ALIAS['eliciting-and-ccqs'] = ALIAS.get('eliciting-and-ccqs', []) + [
+    ("""and asks: "What is he doing?"', word:'travel'},""",
+     """and asks: "What is he going to do?"', word:'travel'},   // 20 Nov 2026 (Ramy: "change the question"): "What is he doing?" is answered "traveling", not "travel\""""),
+    ("""I was…"', word:'furious'},""",
+     """I was…"', word:'furious', also:'Unfinished sentences'},   // 20 Nov 2026 (Ramy: "accept both"): the moment is an anecdote that ends as an unfinished sentence"""),
+    ("  const right = gameOrder[gameAt]===i, r=document.getElementById('gameResult');",
+     "  const right = gameOrder[gameAt]===i || techniques[gameOrder[gameAt]].also===techniques[i].name, r=document.getElementById('gameResult');   // 20 Nov 2026: a moment may accept a second technique (also)"),
+    ("""This elicits "'+techniques[i].word+'".'; r.className='game-result good';""",
+     """This elicits "'+techniques[gameOrder[gameAt]].word+'".'; r.className='game-result good';   // 20 Nov 2026: the moment's own word, whichever accepted technique was chosen"""),
+]
+
+# RAMY'S CALLS ON TEACHING WRITING (20 Nov 2026): "deal all twelve" (New term deals the twelve terms before any comes
+# again) and "not like them" (the parallel-writing prompt, as the model answer has it).
+ALIAS['teaching-writing'] = ALIAS.get('teaching-writing', []) + [
+    ('          <li>not like it</li>',
+     '          <li>not like them</li>   <!-- 20 Nov 2026 (Ramy): the model answer says "They don\'t like them!" -->'),
+    ("const termDef = document.getElementById('termDef');",
+     'const termDef = document.getElementById(\'termDef\');\n/* 20 Nov 2026 (Ramy: "deal all twelve"): the terms come as a shuffled deck, all twelve before any comes again; it used to\n   pick at random each time, and on every device the first twelve presses gave five terms and never the other seven. */\nlet termDeck = [], termLast = null;'),
+    ('  const t = terms[Math.floor(__lr() * terms.length)];',
+     '  if (!termDeck.length) { termDeck = terms.slice(); for (let i = termDeck.length - 1; i > 0; i--) { const j = Math.floor(__lr() * (i + 1)); [termDeck[i], termDeck[j]] = [termDeck[j], termDeck[i]]; } if (termDeck[termDeck.length - 1] === termLast) termDeck.unshift(termDeck.pop()); }\n  const t = termDeck.pop(); termLast = t;'),
+]

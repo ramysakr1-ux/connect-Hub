@@ -288,7 +288,7 @@ function buildPillMatch(items,leftId,rightId,fbId,keyL,keyR){
 // The eleven techniques from the session's own list (Eliciting.doc). Each has
 // a classroom moment for the game and an example for the reference cards.
 const techniques = [
-  {name:'Drawing pictures', def:'Sketch a quick picture on the board so students guess the word.', ex:'A stick figure with a suitcase → "travel"', moment:'The teacher draws a stick figure with a suitcase walking toward a plane, and asks: "What is he doing?"', word:'travel'},
+  {name:'Drawing pictures', def:'Sketch a quick picture on the board so students guess the word.', ex:'A stick figure with a suitcase → "travel"', moment:'The teacher draws a stick figure with a suitcase walking toward a plane, and asks: "What is he going to do?"', word:'travel'},   // 20 Nov 2026 (Ramy: "change the question"): "What is he doing?" is answered "traveling", not "travel"
   {name:'Acting out — gestures & mime', def:'Use your body and face to mime the action or feeling, without words.', ex:'Pretending to shiver → "cold"', moment:'Without a word, the teacher wraps her arms round herself and shivers.', word:'cold'},
   {name:'Antonyms / Synonyms', def:'Give a word with the opposite or a similar meaning as a clue.', ex:'"The opposite of huge" → "tiny"', moment:'"It’s the opposite of huge."', word:'tiny'},
   {name:'Use visuals', def:'Show a photo, flashcard or image to prompt the word.', ex:'A photo of a motorway at a standstill → "traffic jam"', moment:'The teacher shows a photo of cars stuck nose to tail on a motorway.', word:'traffic jam'},
@@ -297,7 +297,7 @@ const techniques = [
   {name:'Questions', def:'Ask a question that the target word answers.', ex:'"What do you call a doctor for animals?" → "vet"', moment:'"What do you call a doctor for animals?"', word:'vet'},
   {name:'Sound prompts', def:'Play a sound and let students name what makes it, or what is happening.', ex:'A recording of a siren → "ambulance"', moment:'The teacher plays a recording of a siren getting louder.', word:'ambulance'},
   {name:'Gap-fill exercises', def:'Give a sentence with the word missing for students to supply.', ex:'"I got to the till and realized I’d ___ my wallet at home" → "left"', moment:'On the board: "I got to the till and realized I’d ___ my wallet at home."', word:'left'},
-  {name:'An anecdote', def:'Tell a short personal story that leads naturally to the word.', ex:'A story about missing a flight → "furious"', moment:'"Last week the taxi never came and I missed my flight. I wasn’t just angry, I was…"', word:'furious'},
+  {name:'An anecdote', def:'Tell a short personal story that leads naturally to the word.', ex:'A story about missing a flight → "furious"', moment:'"Last week the taxi never came and I missed my flight. I wasn’t just angry, I was…"', word:'furious', also:'Unfinished sentences'},   // 20 Nov 2026 (Ramy: "accept both"): the moment is an anecdote that ends as an unfinished sentence
   {name:'Unfinished sentences', def:'Start a sentence and let students complete it with the target word.', ex:'"If I won the lottery, I would feel..." → "ecstatic"', moment:'"If I won the lottery, I would feel…" and the teacher stops, waiting.', word:'ecstatic'}
 ];
 const techCols=[['#1F497D','#e3ebf5'],['#2a8c82','#dff1ee']];
@@ -327,11 +327,11 @@ function showMoment(){
   techniques.forEach((o,i)=>{ const b=document.createElement('button'); b.className='tech-btn'; b.textContent=o.name; b.onclick=()=>choose(b,i); opts.appendChild(b); });
 }
 function choose(btn,i){
-  const right = gameOrder[gameAt]===i, r=document.getElementById('gameResult');
+  const right = gameOrder[gameAt]===i || techniques[gameOrder[gameAt]].also===techniques[i].name, r=document.getElementById('gameResult');   // 20 Nov 2026: a moment may accept a second technique (also)
   if(right){
     if(gameFirstTry) gameScore++;
     btn.classList.add('right'); document.querySelectorAll('#gameOpts .tech-btn').forEach(b=>b.disabled=true);
-    r.textContent = (gameFirstTry?'Right! ':'Got it. ')+'This elicits "'+techniques[i].word+'".'; r.className='game-result good';
+    r.textContent = (gameFirstTry?'Right! ':'Got it. ')+'This elicits "'+techniques[gameOrder[gameAt]].word+'".'; r.className='game-result good';   // 20 Nov 2026: the moment's own word, whichever accepted technique was chosen
     document.getElementById('gameScore').textContent='Score '+gameScore;
     if(gameAt<techniques.length-1) document.getElementById('gameNext').style.display='inline-block';
     else { r.textContent+=' Final score: '+gameScore+' out of '+techniques.length+'.'; document.getElementById('gameAgain').style.display='inline-block'; }

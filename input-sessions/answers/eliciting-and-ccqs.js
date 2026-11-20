@@ -54,7 +54,8 @@ SessionAnswers.register(function(A){
     list.forEach(function(t){
       var label = labels[labels.indexOf(t.name)];
       if (!label || !t.moment || !t.word) return;
-      at = A.after(at, esc(t.moment) + '<br><b>' + esc(label) + '.</b> This elicits "' + esc(t.word) + '".') || at;
+      var also = t.also && labels.indexOf(t.also) !== -1 ? ' <b>' + esc(t.also) + '</b> is also right.' : '';   /* a moment that accepts two (20 Nov 2026) */
+      at = A.after(at, esc(t.moment) + '<br><b>' + esc(label) + '.</b>' + also + ' This elicits "' + esc(t.word) + '".') || at;
     });
   }
   /* the eleven cards behind See all eleven: the grid, and the back of each card */
