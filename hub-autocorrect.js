@@ -188,7 +188,7 @@
   document.addEventListener('mousedown', function(){ last = null; }, true);
 
   /* WORD COMPLETION (Ramy, 19 Nov 2026: "predict the word and the text ... like Google"). While a tutor types a word of three
-     letters or more in a writing box, the rest of the likeliest word shows after the cursor in light grey; Tab takes it,
+     letters or more in a writing box, the rest of the likeliest word shows after the cursor in light grey; Enter or Tab takes it,
      anything else carries on as normal. The likeliest word is one of the tutor's own first (the words they have typed
      most on this device, learnt as they write, kept in this browser only), then the commonest English word. On with
      Autocorrect, off with it. Not on a phone or tablet: their keyboards already suggest words. Text boxes only. */
@@ -285,11 +285,30 @@
     }
     if (e.inputType === 'insertText' || e.inputType === 'deleteContentBackward') showGhost(f); else hideGhost();
   });
+  /* ENTER TAKES THE WORD (Ramy, 20 Nov 2026: "I don't want to use that key on top of the caps ... click enter and then the
+     word will complete", and "there should be a space between it and the next word"). Enter or Tab takes the grey word and
+     puts a space after it, so the next word never runs into it. A full stop, comma, question mark, exclamation mark, colon
+     or semicolon typed straight after takes that space back, so a sentence still ends "word." With no grey word showing,
+     Enter is Enter. */
+  var taken = null;   // { field, at }: where the space after a taken word sits
+  var put = function(f, text, from, to){
+    f.setSelectionRange(from, to);
+    if (!document.execCommand('insertText', false, text)) { f.setRangeText(text, from, to, 'end'); f.dispatchEvent(new Event('input', { bubbles: true })); }
+  };
   document.addEventListener('keydown', function(e){
+    if (taken) {
+      var tf = taken.field, ta = taken.at; taken = null;
+      if (/^[.,?!:;]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey && editable(e.target) === tf && tf.selectionStart === ta && tf.selectionEnd === ta && (tf.value || '').charAt(ta - 1) === ' ') {
+        e.preventDefault(); hideGhost(); put(tf, e.key + ' ', ta - 1, ta); return;
+      }
+    }
     if (!sugg) return;
-    if (e.key === 'Tab' && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && editable(e.target) === sugg.field && sugg.field.selectionStart === sugg.at) {
+    if ((e.key === 'Tab' || e.key === 'Enter') && !e.isComposing && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && editable(e.target) === sugg.field && sugg.field.selectionStart === sugg.at) {
       e.preventDefault(); var s = sugg; hideGhost(); last = null;
-      if (!document.execCommand('insertText', false, s.rest)) { s.field.setRangeText(s.rest, s.at, s.at, 'end'); s.field.dispatchEvent(new Event('input', { bubbles: true })); }
+      var nextCh = (s.field.value || '').charAt(s.at);
+      var add = (nextCh === '' || nextCh === '\n') ? s.rest + ' ' : s.rest;
+      put(s.field, add, s.at, s.at);
+      if (add !== s.rest) taken = { field: s.field, at: s.field.selectionStart };
       return;
     }
     if (e.key !== 'Shift') hideGhost();
@@ -352,7 +371,7 @@
       el.classList.toggle('off', !isOnNow); el.setAttribute('aria-pressed', isOnNow ? 'true' : 'false');
       el.innerHTML = '<span>' + name + '<small>' + what + '</small></span><span class="sw" aria-hidden="true"></span>'; return el; };
     row('acPill', on, 'Autocorrect', 'Fixes a misspelled word as you finish it');
-    var c = row('wcPill', on && cOn, 'Word completion', on ? 'The rest of a word in grey. Tab takes it' : 'Works when Autocorrect is on');
+    var c = row('wcPill', on && cOn, 'Word completion', on ? 'The rest of a word in grey. Enter takes it' : 'Works when Autocorrect is on');
     if (c) c.hidden = touch;                                     // a phone's own keyboard suggests words
     row('tsPill', big, 'Larger text', 'In the boxes you write in');
   }
