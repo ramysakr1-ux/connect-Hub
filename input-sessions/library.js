@@ -120,7 +120,7 @@ window.InputLib = (function(){
            opening rule all read this list, so none of them offers Lite's page for it. Her materials link travels. */
         var slugs = x.own ? [] : (x.lib ? [String(x.lib)] : slugsFor(x.t));   /* the page the session was placed from, first (R05, 31 Oct 2026) */
         if (!slugs.length) slugs = [''];
-        slugs.forEach(function(sl){ out.push({ date: d.date, s: x.s || '', t: x.t, slug: sl, own: !!x.own, mat: x.own && /^https?:\/\//i.test(String(x.mat || '')) ? String(x.mat) : '' }); });
+        slugs.forEach(function(sl){ out.push({ date: d.date, s: x.s || '', t: x.t, slug: sl, own: !!x.own, by: (x.by === undefined || x.by === null) ? '' : String(x.by), mat: x.own && /^https?:\/\//i.test(String(x.mat || '')) ? String(x.mat) : '' }); });
       });
     });
     out.sort(function(a, b){ return (a.date + a.s) < (b.date + b.s) ? -1 : (a.date + a.s) > (b.date + b.s) ? 1 : 0; });

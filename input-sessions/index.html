@@ -427,6 +427,15 @@
   /* THE COURSE, WEEK BY WEEK (29 Oct 2026). Every input session on the timetable, a band per course week: this week and
      next named, the weeks already taught folded shut. Each card says whose it is: Connect's (a page in this library)
      or the center's own. */
+  /* WHOSE SESSION, BY INITIALS (Ramy, 20 Nov 2026: "instead of saying your own, just put the initials of the tutor"): the
+     tutor the timetable gives the session to, from Course admin's tutor list; "Your own" only when none is set */
+  function tutorTag(x, cs){
+    var names = []; cs = cs || {};
+    var add = function(n){ n = String(n || '').trim(); if (n && !names.some(function(y){ return y.toLowerCase() === n.toLowerCase(); })) names.push(n); };
+    String(cs.tutorNames || '').split(/[,\n;]+/).forEach(add); (Array.isArray(cs.tutorContacts) ? cs.tutorContacts : []).forEach(function(c){ if (c) add(c.name); });
+    var n = x.by !== '' && x.by != null ? names[+x.by] : '';
+    return n ? String(n).split(/\s+/).map(function(w){ return w.charAt(0); }).join('').slice(0, 3).toUpperCase() : 'Your own';
+  }
   function paintWeeks(list, now, cs){
     var box = $('weeksCard'); if (!box) return;
     /* One card per page a title names (Ramy, 4 Nov 2026: "by week and by topic, make sure they are obviously the same"):
@@ -444,8 +453,8 @@
         if (x.demo) { var dn = '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(x.t) + '</h3><p class="m"><span class="src cx">Demo lesson</span>' + (x.lesson && x.t.toLowerCase().indexOf(x.lesson.toLowerCase()) === -1 ? ' ' + esc(x.lesson) : '') + '</p>';
           return '<a class="s' + (x.date < now ? ' done' : '') + '" href="' + esc(x.href) + '">' + dn + '</a>'; }
         var cx = !!(x.slug && NAMES[x.slug] != null), done = x.date < now;
-        var inner = '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(cx ? NAMES[x.slug] : x.t) + '</h3><p class="m"><span class="src ' + (cx ? 'cx">Lite’s' : 'own">Your own') + '</span>' + (x.date === now ? '<span class="pill now">Today</span>' : done ? '<span class="pill">Done</span>' : '') + '</p>';
-        return cx ? '<a class="s' + (done ? ' done' : '') + '" href="' + esc(x.slug) + '/">' + inner + '</a>' : '<div class="s still' + (done ? ' done' : '') + '">' + inner + '</div>';
+        var inner = '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(cx ? NAMES[x.slug] : x.t) + '</h3><p class="m"><span class="src ' + (cx ? 'cx">Lite’s' : 'own">' + esc(tutorTag(x, cs))) + '</span>' + (x.date === now ? '<span class="pill now">Today</span>' : done ? '<span class="pill">Done</span>' : '') + '</p>';
+        return cx ? '<a class="s' + (done ? ' done' : '') + '" href="' + esc(x.slug) + '/">' + inner + '</a>' : x.mat ? '<a class="s ext' + (done ? ' done' : '') + '" href="' + esc(x.mat) + '" target="_blank" rel="noopener noreferrer">' + inner + '</a>' : '<div class="s still' + (done ? ' done' : '') + '">' + inner + '</div>';   /* a tutor's own session with materials opens them (20 Nov 2026) */
       }).join('');
       return '<details class="wk' + (kind ? ' wk-' + kind : '') + '"' + (kind === 'past' ? '' : ' open') + '><summary class="wkhead"><h2>Week ' + (i + 1) + '</h2><span class="when">' + esc(fmt(w.mon)) + ' to ' + esc(fmt(w.sun > w.items[w.items.length - 1].date ? w.items[w.items.length - 1].date : w.sun)) + ' · ' + w.items.length + ' session' + (w.items.length === 1 ? '' : 's') + '</span>' + (tag ? '<span class="tag">' + tag + '</span>' : '') + '</summary><div class="cards">' + cards + '</div></details>';
     }).join('');
@@ -504,13 +513,16 @@
     });
     /* Earlier WEEKS only: this week's given sessions are in This week above, and the page listed them twice (Ramy,
        31 Oct 2026, the mid-course demo: "something is wrong ... like one long wide sheet"). */
-    var earlierSeen = {}, earlier = all.filter(function(x){ return x.date < wk.mon && isPage(x); }).reverse()
+    var earlierSeen = {}, earlier = all.filter(function(x){ return x.date < wk.mon && (isPage(x) || x.mat); }).reverse()   /* and a tutor's own session with its materials (20 Nov 2026) */
       .filter(function(x){ if (!isPage(x)) return true; if (earlierSeen[x.slug] || todays.some(function(t){ return t.slug === x.slug; })) return false; earlierSeen[x.slug] = 1; return true; });
     var head = function(x){ return '<p class="k">' + esc(dayName(x.date, true)) + (x.s ? ' · ' + esc(clockOf(x.s, cs)) : '') + '</p><h3>' + esc(nameOf(x)) + '</h3>'; };
     var openCard = function(x){
       /* a given session's date is already in its heading; the pill is for news: today, or opened early */
       var pill = x.date < now ? '' : '<span class="pill ' + (x.date === now ? 'now' : 'wait') + '">' + esc(x.date === now ? 'Today' : dayName(x.date)) + '</span>';
       if (isPage(x)) return '<a class="s" href="' + esc(x.slug) + '/">' + head(x) + '<p class="m">' + pill + '</p></a>';
+      /* A TUTOR'S MATERIALS LINK OPENS FROM THE CARD (Ramy, 20 Nov 2026: "if someone has a link, then the cards in the input session
+         library will open them as a rule"): the link a tutor added to the session on the timetable */
+      if (x.mat) return '<a class="s ext" href="' + esc(x.mat) + '" target="_blank" rel="noopener noreferrer">' + head(x) + '<p class="m"><span class="src own">' + esc(tutorTag(x, cs)) + '</span>' + pill + ' Open the materials</p></a>';
       var link = centreLinkFor(x, cs, tt);
       return link
         ? '<a class="s ext" href="' + esc(link.url) + '" target="_blank" rel="noopener noreferrer">' + head(x) + '<p class="m">' + pill + ' Opens where the center keeps it</p></a>'
@@ -541,7 +553,7 @@
       var open = isPage(x) && (given[x.slug] || L.isOpen(x, cs));
       var st = x.date === now ? 'Today' : x.date < now ? 'Given' : open ? 'Open' : 'Opens ' + dayName(L.opensOn(x.date, cs)).split(' ')[0];
       if (x.date > now && !open) toCome = true;
-      var name = open ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a>' : esc(nameOf(x));
+      var name = open ? '<a href="' + esc(x.slug) + '/">' + esc(NAMES[x.slug]) + '</a>' : (x.mat && L.isOpen(x, cs)) ? '<a href="' + esc(x.mat) + '" target="_blank" rel="noopener noreferrer">' + esc(nameOf(x)) + '</a>' : esc(nameOf(x));   /* a tutor's own session opens its materials (20 Nov 2026) */
       return '<li class="' + (x.date === now ? 'now' : '') + '"><span class="d">' + esc(dayName(x.date)) + '</span><span>' + name + '</span><span class="st">' + esc(st) + '</span></li>';
     }).join('') + (toCome ? '<li><span class="none">Each session opens here ' + esc(L.whenText(cs)) + '.</span></li>' : '')
       : '<li><span class="none">No input sessions this week.</span></li>';
