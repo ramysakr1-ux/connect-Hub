@@ -26,8 +26,8 @@
 <style>
   .play{display:inline-flex; align-items:center; justify-content:center; gap:6px; background:var(--teal); color:var(--paper); border:none; border-radius:999px; padding:5px 12px; font-weight:700; font-size:.76rem; cursor:pointer; min-height:30px;}
   .play:hover{background:var(--teal-lifted);}
-  .sound-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:12px 0;}
-  @media(max-width:700px){ .sound-grid{grid-template-columns:repeat(2,1fr);} }
+  .sound-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin:12px 0;}
+  @media(max-width:700px){ .sound-grid{grid-template-columns:1fr;} }
   .sound-card{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px; text-align:center;}
   .sound-card .sym{font-size:1.7rem; font-weight:700; color:var(--teal);}
   .sound-card .eg{font-size:.8rem; color:var(--grey); margin:2px 0 8px;}
@@ -309,10 +309,10 @@ function buildPillMatch(items, leftId, rightId, fbId, keyL, keyR){
     p.onclick=()=>{ if(p.classList.contains('matched'))return; R.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); selR=p; go(); }; R.appendChild(p); });
   function go(){
     if(!selL||!selR)return;
-    if(selL.dataset.i===selR.dataset.i){ selL.classList.replace('selected','matched'); selR.classList.replace('selected','matched'); done++;
+    if(selL.dataset.i===selR.dataset.i){ [selL,selR].forEach(x=>{ x.classList.remove('selected','wrong'); x.classList.add('matched'); }); done++;
       fb.textContent = done===items.length ? 'All six matched' : done+' / '+items.length+' matched'; fb.className='feedback good'; selL=selR=null; }
     else { selL.classList.add('wrong'); selR.classList.add('wrong'); const a=selL,b=selR; selL=selR=null;
-      setTimeout(()=>{ a.classList.remove('selected','wrong'); b.classList.remove('selected','wrong'); },500); }
+      setTimeout(()=>{ [a,b].forEach(x=>{ x.classList.remove('wrong'); if(x!==selL && x!==selR) x.classList.remove('selected'); }); },500); }
   }
 }
 buildPillMatch(terms,'termLeft','termRight','termFeedback','t','d');
@@ -389,10 +389,10 @@ const script = [
 ];
 const sa=document.getElementById('scriptArea');
 script.forEach((s,i)=>{ const r=document.createElement('div'); r.className='fill-row';
-  r.innerHTML='<span class="lbl">'+s.w+'</span><button class="play" onclick="say(\''+s.w+'\')">Play</button><span style="font-weight:700;color:var(--grey)">/</span><input class="blank" id="sc'+i+'" style="width:180px;font-size:1.05rem" autocomplete="off"><span style="font-weight:700;color:var(--grey)">/</span>';
+  r.innerHTML='<span class="lbl">'+s.w+'</span><button class="play" onclick="say(\''+s.w+'\')">Play</button><span style="font-weight:700;color:var(--grey)">/</span><input class="blank" id="sc'+i+'" style="width:180px;font-size:1.05rem" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><span style="font-weight:700;color:var(--grey)">/</span>';
   sa.appendChild(r); });
 document.querySelectorAll('#scriptArea input').forEach(inp=>{ inp.addEventListener('focus',()=>activeInput=inp); });
-function normIPA(s){ return s.trim().replace(/[\/\s]/g,'').replace(/\u02a4/g,'d\u0292').replace(/\u02a7/g,'t\u0283').replace(/:/g,'\u02d0').replace(/\u0261/g,'g'); }
+function normIPA(s){ return s.trim().replace(/[\/\s]/g,'').replace(/^[A-Z]/, c=>c.toLowerCase()).replace(/\u02a4/g,'d\u0292').replace(/\u02a7/g,'t\u0283').replace(/:/g,'\u02d0').replace(/\u0261/g,'g'); }
 function checkScript(){ let ok=0; script.forEach((s,i)=>{ const inp=document.getElementById('sc'+i); const r=normIPA(inp.value)===s.a; mark(inp,r); ok+=r; });
   const fb=document.getElementById('scriptFeedback'); fb.textContent=ok+' / '+script.length+' correct'; fb.className='feedback '+(ok===script.length?'good':'bad'); }
 document.getElementById('scriptAnswers').innerHTML = script.map(s=>'<b>'+s.w+'</b> /'+s.a+'/').join(' &nbsp;·&nbsp; ');
@@ -412,7 +412,7 @@ document.getElementById('filmAnswers').innerHTML = films.map(f=>'<b>'+f.ipa+'</b
 // ---------- nav ----------
 const navLinks=document.querySelectorAll('.sticky-nav a'), allSections=document.querySelectorAll('section[id]');
 function onScroll(){ const d=document.documentElement; const st=d.scrollTop||document.body.scrollTop; const sh=d.scrollHeight-d.clientHeight;
-  let cur=allSections[0]?allSections[0].id:''; allSections.forEach(s=>{ if(s.getBoundingClientRect().top<=150) cur=s.id; });
+  let cur=allSections[0]?allSections[0].id:''; allSections.forEach(s=>{ if(!s.hidden && s.getBoundingClientRect().top<=150) cur=s.id; });
   navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur)); }
 document.addEventListener('scroll',onScroll); onScroll();
 </script>

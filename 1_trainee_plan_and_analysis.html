@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611201208">
+<link rel="stylesheet" href="hub-tokens.css?v=202611201248">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -110,6 +110,7 @@
   .matsfile a{color:var(--teal); font-weight:700;}
   .matsfile button{border:none; background:none; color:var(--grey); cursor:pointer; font-size:0.9rem;}
   .matsfile button:hover{color:var(--brick);}
+  .matsfile + #matsDropText{display:block; margin-top:12px;}   /* the line under a list of attached files (up to five, 20 Nov 2026) */
   .drivepill{display:inline-flex; align-items:center; gap:6px; margin-top:8px; background:oklch(94% 0.03 195); border:1.5px solid var(--teal); color:var(--teal); font-weight:700; font-size:0.82rem; padding:6px 14px; border-radius:20px;}
   .drivepill a{color:inherit;}
   .card h2{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 4px; color:var(--teal);}
@@ -500,7 +501,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611201208">
+<link rel="stylesheet" href="hub-house.css?v=202611201248">
 </head>
 <body>
 <div class="board">
@@ -606,7 +607,7 @@
     <div id="matsFileRow" hidden>
       <div class="dropzone" id="matsDrop">
         <span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span>
-        <input type="file" id="matsFileInput" style="display:none;">
+        <input type="file" id="matsFileInput" multiple style="display:none;">
       </div>
     </div>
     <!-- Ramy, 30 Sep 2026: trainees should be able to share material with the
@@ -744,14 +745,14 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611201208"></script>
-<script src="hub-shared.js?v=202611201208"></script>
-<script src="hub-rotation.js?v=202611201208"></script>
-<script src="hub-store.js?v=202611201208"></script>
-<script src="hub-drive-pick.js?v=202611201208"></script>
-<script src="hub-say.js?v=202611201208"></script>
-<script src="hub-sync.js?v=202611201208"></script>
-<script src="hub-notebook.js?v=202611201208"></script>
+<script src="hub-due.js?v=202611201248"></script>
+<script src="hub-shared.js?v=202611201248"></script>
+<script src="hub-rotation.js?v=202611201248"></script>
+<script src="hub-store.js?v=202611201248"></script>
+<script src="hub-drive-pick.js?v=202611201248"></script>
+<script src="hub-say.js?v=202611201248"></script>
+<script src="hub-sync.js?v=202611201248"></script>
+<script src="hub-notebook.js?v=202611201248"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -921,7 +922,12 @@ const MATS_LOCAL_KEY = 'chub:matsfile';   /* deliberately NOT a synced key */
    (Ramy, 23 Sep 2026). */
 const MATS_MAX_BYTES = 2 * 1024 * 1024;
 
-let MATS_FILE=null;
+/* UP TO FIVE FILES (Ramy, 20 Nov 2026: "Why is it that the trainees can't upload more than one file?" ... "go, five is
+   fine"). The plan held one file and one link, and a second file had nowhere to go. It now holds a list, each file
+   sent to the course's Drive folder as before, one after another. The plan keeps the list as matsFiles and, for
+   anything that still reads the old field, the first of them as matsFile. A file that has reached Drive is kept by its
+   link, not by its bytes: five files' bytes would not fit in this browser's storage, and the link opens anywhere. */
+let MATS_FILES=[]; const MATS_MAX_FILES = 5;
 
 /* What goes in the plan: enough to name the file, none of its weight -- and,
    since 23 Sep 2026, the Drive link the store gives back when it stores the
@@ -940,7 +946,7 @@ let MATS_FILE=null;
 function sharableMaterial(){
   const url = ($('fMatsLink').value || '').trim();
   if (/^https?:\/\//i.test(url) && !LINK_BAD) return { url: url, name: ($('fMats').value || '').split('\n')[0].trim() || 'Materials for the lesson' };
-  if (MATS_FILE && MATS_FILE.url) return { url: MATS_FILE.url, name: MATS_FILE.name || 'Materials for the lesson' };
+  const sf = MATS_FILES.find(f => f && f.url); if (sf) return { url: sf.url, name: sf.name || 'Materials for the lesson' };
   return null;
 }
 /* setLocked() sweeps every input on the board and sets disabled to whether
@@ -970,27 +976,27 @@ function rec0(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } 
    off the attached-file row, so a brand new plan -- the one case the waiting
    state exists for -- reached neither.
 
-   IT HAS TO BE HERE, below `let MATS_FILE`. The first attempt put it up beside
+   IT HAS TO BE HERE, below `let MATS_FILES`. The first attempt put it up beside
    the fMatsLink listener, 55 lines above that declaration: sharableMaterial()
-   reads MATS_FILE, which is still in its temporal dead zone there, so the call
+   reads MATS_FILES, which is still in its temporal dead zone there, so the call
    threw a ReferenceError and took the whole of the rest of this script with it
    -- no autosave, no Turn in, nothing (6 Oct 2026, caught by driving the page
    rather than by reading it). */
 renderShareVol();
 
-function matsFileMeta(){
-  if (!MATS_FILE) return null;
-  var m = { name: MATS_FILE.name, type: MATS_FILE.type || '', size: MATS_FILE.size || 0 };
-  if (MATS_FILE.url) m.url = MATS_FILE.url;
-  return m;
+function matsFilesMeta(){
+  return MATS_FILES.map(function(f){ var m = { name: f.name, type: f.type || '', size: f.size || 0 }; if (f.url) m.url = f.url; return m; });
 }
+function matsFileMeta(){ return matsFilesMeta()[0] || null; }
+/* this browser keeps the bytes only of a file that has not reached Drive (a failed or unfinished send) */
 function saveMatsLocal(){
   try {
-    if (MATS_FILE && MATS_FILE.dataUrl) localStorage.setItem(MATS_LOCAL_KEY, JSON.stringify(MATS_FILE));
+    const held = MATS_FILES.filter(f => f && f.dataUrl && !f.url).map(f => ({ name: f.name, type: f.type || '', size: f.size || 0, dataUrl: f.dataUrl }));
+    if (held.length) localStorage.setItem(MATS_LOCAL_KEY, JSON.stringify(held));
     else localStorage.removeItem(MATS_LOCAL_KEY);
   } catch (e) {
-    /* out of room: the plan still saves, the file is what goes */
-    MATS_FILE = null;
+    /* out of room: the plan still saves; a file that reached Drive keeps its link, one that did not is the one that goes */
+    MATS_FILES = MATS_FILES.filter(f => f && (f.url || f.sending));
     try { localStorage.removeItem(MATS_LOCAL_KEY); } catch (e2) {}
     matsNote('There was not enough room in this browser to keep that file. Your plan is safe \u2014 use the materials link instead.');
     renderMatsFile();
@@ -1000,13 +1006,23 @@ function saveMatsLocal(){
    names. Otherwise a file left behind by the last teaching practice would
    reappear on the next one. Older plans that still carry their own bytes are
    read as they are and re-saved the new way. */
-function restoreMatsFile(meta){
-  if (!meta || !meta.name) { try { localStorage.removeItem(MATS_LOCAL_KEY); } catch (e) {} return null; }
-  if (meta.dataUrl) { MATS_FILE = meta; saveMatsLocal(); return MATS_FILE; }
+function restoreMatsFiles(list){
+  list = (Array.isArray(list) ? list : []).filter(m => m && m.name).slice(0, MATS_MAX_FILES);
+  if (!list.length) { try { localStorage.removeItem(MATS_LOCAL_KEY); } catch (e) {} return []; }
   let held = null;
   try { held = JSON.parse(localStorage.getItem(MATS_LOCAL_KEY) || 'null'); } catch (e) {}
-  if (held && held.name === meta.name && (!meta.size || !held.size || held.size === meta.size)) return held;
-  return { name: meta.name, type: meta.type || '', size: meta.size || 0 };  /* named, but not on this device */
+  held = Array.isArray(held) ? held : (held && held.name ? [held] : []);   /* one file, as it was kept before five were allowed */
+  return list.map(meta => {
+    if (meta.dataUrl) return meta;                                          /* an older plan that carries its own bytes */
+    const out = { name: meta.name, type: meta.type || '', size: meta.size || 0 };
+    /* THE LINK STAYS WITH THE FILE. This used to return the name alone when the bytes were not on this device, so a
+       plan opened on another laptop lost its Drive link, and the next save sent the plan to the tutor without it:
+       the tutor saw "held on the trainee's own device" for a file that was on Drive all along (found 20 Nov 2026). */
+    if (meta.url) { out.url = meta.url; return out; }
+    const h = held.find(x => x && x.name === meta.name && (!meta.size || !x.size || x.size === meta.size));
+    if (h && h.dataUrl) out.dataUrl = h.dataUrl;
+    return out;                                                             /* without either: named, but not on this device */
+  });
 }
 function matsNote(text){
   let el = $('matsNote');
@@ -1022,8 +1038,6 @@ function prettySize(n){
 function renderMatsFile(){
   try{ matsRows(); }catch(e){}
   const drop=$('matsDrop');
-  if(!MATS_FILE){ drop.innerHTML='<span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span><input type="file" id="matsFileInput" style="display:none;">'; bindFileInput(); return; }
-  const size = MATS_FILE.size ? ' \u00b7 ' + prettySize(MATS_FILE.size) : '';
   /* The local copy (dataUrl) only ever exists in the browser that did the
      attaching -- open the plan on another device and this read "not on this
      device" with nothing to be done about it, although the upload had already
@@ -1031,52 +1045,80 @@ function renderMatsFile(){
      (Ramy, 26 Sep 2026, having asked the same of the owner console). Drive
      first, because it works from anywhere; the local Download stays for the
      one browser that still holds the bytes. */
-  drop.innerHTML = `<div class="matsfile"><span class="name">\uD83D\uDCCE ${esc(MATS_FILE.name)}${size}</span>
-    ${MATS_FILE.url ? `<a href="${esc(MATS_FILE.url)}" target="_blank" rel="noopener">Open in Drive</a>` : ''}
-    ${MATS_FILE.dataUrl ? `<a href="${MATS_FILE.dataUrl}" download="${esc(MATS_FILE.name)}">Download</a>`
-      : (MATS_FILE.url ? '' : '<span style="color:var(--grey);font-style:italic;">not on this device</span>')}
-    <button type="button" id="matsFileRemove">Remove</button></div>`;
-  $('matsFileRemove').addEventListener('click', e=>{ e.stopPropagation(); MATS_FILE=null; MATS_WANT = MATS_WANT === 'file' ? '' : MATS_WANT; saveMatsLocal(); matsNote(''); dirty=true; autosave(); renderMatsFile(); });
+  const rows = MATS_FILES.map((f, i) => {
+    const size = f.size ? ' \u00b7 ' + prettySize(f.size) : '';
+    return `<div class="matsfile"><span class="name">\uD83D\uDCCE ${esc(f.name)}${size}</span>
+    ${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">Open in Drive</a>` : ''}
+    ${f.url ? '' : f.sending ? '<span style="color:var(--grey);font-style:italic;">sending</span>'
+      : f.dataUrl ? `<a href="${f.dataUrl}" download="${esc(f.name)}">Download</a>`
+      : '<span style="color:var(--grey);font-style:italic;">not on this device</span>'}
+    <button type="button" data-mats-remove="${i}" aria-label="Remove ${esc(f.name)}">Remove</button></div>`; }).join('');
+  const room = MATS_FILES.length < MATS_MAX_FILES;
+  drop.innerHTML = rows + (room
+    ? `<span id="matsDropText">${MATS_FILES.length ? 'Drag and drop another file here, or <u>click to choose</u>' : 'Drag and drop a file here, or <u>click to choose</u>'}</span><input type="file" id="matsFileInput" multiple style="display:none;">`
+    : `<span id="matsDropText">A plan holds five files. Remove one to add another, or use Add a link.</span>`);
+  bindFileInput();
+  drop.querySelectorAll('[data-mats-remove]').forEach(b => b.addEventListener('click', e => { e.stopPropagation();
+    MATS_FILES.splice(+b.dataset.matsRemove, 1); if (!MATS_FILES.length && MATS_WANT === 'file') MATS_WANT = '';
+    saveMatsLocal(); matsNote(''); dirty=true; autosave(); renderMatsFile(); }));
 
   if (typeof renderShareVol === "function") renderShareVol();
 }
-function handleMatsFile(file){
-  if(!file) return;
+/* One file or several, chosen or dropped. Each is listed at once and sent to the course in turn (the store drops calls
+   that arrive together). What cannot be added is said in one line: over the size, already attached, or past five. */
+let MATS_QUEUE = Promise.resolve();
+function handleMatsFiles(files){
+  const list = [].slice.call(files || []); if (!list.length) return;
   matsNote('');
-  if (file.size > MATS_MAX_BYTES){
-    matsNote(file.name + ' is ' + prettySize(file.size) + '. Attachments are capped at '
-      + prettySize(MATS_MAX_BYTES) + '. Put it on your own Drive, then choose Attach material and Add a link. The file stays yours.');
-    return;
-  }
-  const reader=new FileReader();
-  reader.onerror = ()=>{ matsNote('That file could not be read. Choose Attach material and Add a link instead.'); };
-  reader.onload = async ()=>{
-    MATS_FILE={ name:file.name, type:file.type, size:file.size, dataUrl:reader.result };
-    saveMatsLocal(); dirty=true; autosave(); renderMatsFile();
-    /* The local copy first, so the trainee sees it attached at once, then
-       the upload behind it. A failed upload is not a failed attachment: the
-       file is still on their machine and the plan still saves -- they are told
-       the tutor will not be able to open it, which is the truth and is
-       actionable (use the Drive link box above). */
-    const tok = (function(){ try { return localStorage.getItem('hub:t') || ''; } catch(e){ return ''; } })();
-    if (!tok || !window.HubStore || !HubStore.putMaterial) return;
-    const base64 = String(reader.result || '').split(',')[1] || '';
-    if (!base64) return;
-    matsNote('Sending ' + file.name + ' to the course\u2026');
-    try {
-      const r = await HubStore.putMaterial(tok, file.name, file.type || '', base64);
-      MATS_FILE.url = r && r.url ? r.url : '';
-      saveMatsLocal(); dirty=true; autosave(); renderMatsFile();
-      matsNote(MATS_FILE.url ? '' : 'That file is on this device only \u2014 your tutor will not be able to open it. Choose Attach material and Add a link instead.');
-    } catch (err) {
-      matsNote('That file could not be sent to the course (' + (err && err.message ? err.message : 'no answer') + '). It is still on this device, but your tutor will not be able to open it. Choose Attach material and Add a link instead.');
-    }
-  };
-  reader.readAsDataURL(file);
+  const said = []; let full = false;
+  list.forEach(file => {
+    if (MATS_FILES.length >= MATS_MAX_FILES) { full = true; return; }
+    if (file.size > MATS_MAX_BYTES) { said.push(file.name + ' is ' + prettySize(file.size) + '. Attachments are capped at '
+      + prettySize(MATS_MAX_BYTES) + '. Put it on your own Drive, then choose Attach material and Add a link. The file stays yours.'); return; }
+    if (MATS_FILES.some(f => f.name === file.name && f.size === file.size)) { said.push(file.name + ' is already attached.'); return; }
+    const entry = { name: file.name, type: file.type, size: file.size, sending: true };
+    MATS_FILES.push(entry);
+    MATS_QUEUE = MATS_QUEUE.then(() => sendMatsFile(file, entry));
+  });
+  if (full) said.push('A plan holds five files, so the rest were not added. Use Add a link for more.');
+  dirty=true; autosave(); renderMatsFile();
+  if (said.length) matsNote(said.join(' '));
+}
+function sendMatsFile(file, entry){
+  return new Promise(done => {
+    const here = () => MATS_FILES.indexOf(entry) >= 0;     /* the trainee may have removed it while it was on its way */
+    const reader=new FileReader();
+    reader.onerror = ()=>{ if (here()) { MATS_FILES.splice(MATS_FILES.indexOf(entry), 1); dirty=true; autosave(); renderMatsFile(); matsNote(file.name + ' could not be read. Choose Attach material and Add a link instead.'); } done(); };
+    reader.onload = async ()=>{
+      if (!here()) return done();
+      /* The local copy first, so a failed send is not a failed attachment: the
+         file is still on their machine and the plan still saves -- they are told
+         the tutor will not be able to open it, which is the truth and is
+         actionable (use the link box above). */
+      entry.dataUrl = reader.result;
+      const tok = (function(){ try { return localStorage.getItem('hub:t') || ''; } catch(e){ return ''; } })();
+      const base64 = String(reader.result || '').split(',')[1] || '';
+      if (!tok || !window.HubStore || !HubStore.putMaterial || !base64) { delete entry.sending; saveMatsLocal(); renderMatsFile(); return done(); }
+      saveMatsLocal(); renderMatsFile();
+      try {
+        const r = await HubStore.putMaterial(tok, file.name, file.type || '', base64);
+        delete entry.sending;
+        if (r && r.url) { entry.url = r.url; delete entry.dataUrl; }
+        if (here()) { saveMatsLocal(); dirty=true; autosave(); renderMatsFile();
+          if (!entry.url) matsNote(file.name + ' is on this device only \u2014 your tutor will not be able to open it. Choose Attach material and Add a link instead.'); }
+      } catch (err) {
+        delete entry.sending;
+        if (here()) { saveMatsLocal(); renderMatsFile();
+          matsNote(file.name + ' could not be sent to the course (' + (err && err.message ? err.message : 'no answer') + '). It is still on this device, but your tutor will not be able to open it. Choose Attach material and Add a link instead.'); }
+      }
+      done();
+    };
+    reader.readAsDataURL(file);
+  });
 }
 function bindFileInput(){
   const input=$('matsFileInput');
-  if(input) input.addEventListener('change', e=>handleMatsFile(e.target.files[0]));
+  if(input) input.addEventListener('change', e=>{ handleMatsFiles(e.target.files); e.target.value=''; });
 }
 bindFileInput();
 /* ONE DOOR: the pill opens the choices; a row shows once it is chosen or holds something (18 Nov 2026) */
@@ -1085,8 +1127,8 @@ function matsRows(want){
   if (want !== undefined) MATS_WANT = want; want = MATS_WANT;
   const link = ($('fMatsLink').value || '').trim();
   $('matsLinkRow').hidden = !(link || want === 'link');
-  $('matsFileRow').hidden = !(MATS_FILE || want === 'file');
-  $('matsAttach').textContent = (link || MATS_FILE) ? 'Attach something else' : 'Attach material';
+  $('matsFileRow').hidden = !(MATS_FILES.length || want === 'file');
+  $('matsAttach').textContent = (link || MATS_FILES.length) ? 'Attach something else' : 'Attach material';
 }
 function matsMenu(open){ $('matsMenu').hidden = !open; $('matsAttach').setAttribute('aria-expanded', open ? 'true' : 'false'); }
 $('matsAttach').addEventListener('click', () => { matsMenu($('matsMenu').hidden); if (!$('matsDriveOpt').hidden && window.HubDrivePick) HubDrivePick.prepare().catch(() => {}); });
@@ -1118,7 +1160,7 @@ $('matsMenu').addEventListener('click', e => {
   const b = e.target.closest('[data-att]'); if (!b) return;
   matsMenu(false);
   if (b.dataset.att === 'link') { matsRows('link'); $('fMatsLink').focus(); }
-  if (b.dataset.att === 'file') { matsRows('file'); if (!MATS_FILE && $('matsFileInput')) $('matsFileInput').click(); }
+  if (b.dataset.att === 'file') { matsRows('file'); if (MATS_FILES.length < MATS_MAX_FILES && $('matsFileInput')) $('matsFileInput').click(); }
   if (b.dataset.att === 'course') matsCourseOpen();
   if (b.dataset.att === 'drive') matsDrivePick();
 });
@@ -1178,10 +1220,10 @@ function matsCourseOpen(){
 $('matsLinkRemove').addEventListener('click', () => { const i = $('fMatsLink'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); matsRows(MATS_WANT === 'link' ? '' : MATS_WANT); });
 matsRows();
 const matsDrop=$('matsDrop');
-matsDrop.addEventListener('click', e=>{ if(!MATS_FILE && e.target.id!=='matsFileInput') $('matsFileInput').click(); });
+matsDrop.addEventListener('click', e=>{ if(MATS_FILES.length < MATS_MAX_FILES && $('matsFileInput') && !e.target.closest('a, button, input')) $('matsFileInput').click(); });
 ['dragover','dragenter'].forEach(ev=>matsDrop.addEventListener(ev, e=>{ e.preventDefault(); matsDrop.classList.add('dragover'); }));
 ['dragleave','drop'].forEach(ev=>matsDrop.addEventListener(ev, e=>{ e.preventDefault(); matsDrop.classList.remove('dragover'); }));
-matsDrop.addEventListener('drop', e=>{ if(e.dataTransfer.files[0]) handleMatsFile(e.dataTransfer.files[0]); });
+matsDrop.addEventListener('drop', e=>{ if(e.dataTransfer.files && e.dataTransfer.files.length) handleMatsFiles(e.dataTransfer.files); });
 function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
 function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+2)+'px'; }
 let dirty=false, lastPhon=null;
@@ -1852,7 +1894,7 @@ function collect(){
            date:$('fDate').value, length:$('fLength').value,
            framework: fwSel.value ? FRAMEWORKS[fwSel.value].name : '' },
     plan:{
-      main:procText($('fMain').value), sub:procText($('fSub').value), pers:procText($('fPers').value), mats:procText($('fMats').value), matsLink:$('fMatsLink').value, matsFile:matsFileMeta(),
+      main:procText($('fMain').value), sub:procText($('fSub').value), pers:procText($('fPers').value), mats:procText($('fMats').value), matsLink:$('fMatsLink').value, matsFile:matsFileMeta(), matsFiles:matsFilesMeta(),
       profile:$('fProfile').value,
       probs:[...document.querySelectorAll('.prob-pair')].map(p=>({
         problem:procText(p.querySelector('.p-prob').value), solution:procText(p.querySelector('.p-sol').value) })),
@@ -2011,7 +2053,7 @@ function restore(d){
   fwSel.value=key||''; fwRender();
   const p=d.plan||{};
   $('fMain').value=procText(p.main||''); $('fSub').value=procText(p.sub||'');
-  $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); try{ checkMatsLink(); }catch(e){} MATS_FILE=restoreMatsFile(p.matsFile); renderMatsFile(); $('fProfile').value=p.profile||'';
+  $('fPers').value=procText(p.pers||''); $('fMats').value=procText(p.mats||''); $('fMatsLink').value=p.matsLink||''; renderMatsPreview(); try{ checkMatsLink(); }catch(e){} MATS_FILES=restoreMatsFiles(Array.isArray(p.matsFiles) && p.matsFiles.length ? p.matsFiles : (p.matsFile ? [p.matsFile] : [])); renderMatsFile(); $('fProfile').value=p.profile||'';
   renderShareVol();
   const pairs=[...document.querySelectorAll('.prob-pair')];
   (p.probs||[]).forEach((x,i)=>{
@@ -2263,7 +2305,7 @@ $('turnInBtn').addEventListener('click', async()=>{
   const MAT = isMatOnly();
   const missing=[];
   if(!d.meta.name.trim()) missing.push('your name');
-  if(MAT && !(String(d.plan.mats||'').trim() || String(d.plan.matsLink||'').trim() || MATS_FILE)) missing.push('your material');
+  if(MAT && !(String(d.plan.mats||'').trim() || String(d.plan.matsLink||'').trim() || MATS_FILES.length)) missing.push('your material');
   if(!MAT && !d.plan.main.trim()) missing.push('the main aims');
   if(!MAT && !d.plan.rows.some(r=>r.proc.trim())) missing.push('the procedure');
   /* The sentence that used to sit beside the button now asks at the moment it
@@ -2475,7 +2517,7 @@ async function takeBack(){
      stays in the browser for the rest of the course. */
   if(!(rec && rec.state && rec.state.plan && rec.state.plan.matsFile)){
     try{ localStorage.removeItem(MATS_LOCAL_KEY); }catch(e){}
-    MATS_FILE=null; renderMatsFile();
+    MATS_FILES=[]; renderMatsFile();
   }
   renderTurnStatus();
   /* Opened from the home page's "Write your lesson plan for TP n" (the clock's

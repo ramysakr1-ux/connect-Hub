@@ -42,7 +42,9 @@ window.LiteVoice = window.LiteVoice || (function(){
     /* a line that must be heard in one accent whatever the bar says (the link maze is British, Ramy, 5 Nov 2026): same sex, that accent */
     if (item.accent) voice = item.accent + '-' + voice.split('-')[1];
     player.src = 'audio/' + voice + '/' + fileFor(item.text, item.stress) + '.mp3';
-    var p = player.play(); if (p && p.catch) p.catch(function(){ queue = []; fallback(item.text); });
+    /* a second sound pressed before the first has started rejects the first play() with AbortError: that is an
+       interruption, not a missing recording, and the device's own voice must not speak over the next one (20 Nov 2026) */
+    var p = player.play(); if (p && p.catch) p.catch(function(e){ if (e && e.name === 'AbortError') return; queue = []; fallback(item.text); });
   }
   player.addEventListener('ended', function(){ if (queue.length) setTimeout(function(){ if (queue.length) play(queue.shift()); }, queue[0].gap != null ? queue[0].gap : 450); });
   function say(text, speaker, stress){ sayAll([{ text: text, speaker: speaker, stress: stress }]); }

@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611201208">
+<link rel="stylesheet" href="hub-tokens.css?v=202611201248">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -598,7 +598,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611201208">
+<link rel="stylesheet" href="hub-house.css?v=202611201248">
 </head>
 <body>
 <div class="board">
@@ -796,14 +796,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611201208"></script>
-<script src="hub-shared.js?v=202611201208"></script>
-<script src="hub-store.js?v=202611201208"></script>
-<script src="hub-say.js?v=202611201208"></script>
-<script src="hub-crit-learn.js?v=202611201208"></script>
-<script src="hub-crit-vocab.js?v=202611201208"></script>
-<script src="hub-sync.js?v=202611201208"></script>
-<script src="hub-notebook.js?v=202611201208"></script>
+<script src="hub-exchange.js?v=202611201248"></script>
+<script src="hub-shared.js?v=202611201248"></script>
+<script src="hub-store.js?v=202611201248"></script>
+<script src="hub-say.js?v=202611201248"></script>
+<script src="hub-crit-learn.js?v=202611201248"></script>
+<script src="hub-crit-vocab.js?v=202611201248"></script>
+<script src="hub-sync.js?v=202611201248"></script>
+<script src="hub-notebook.js?v=202611201248"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1557,13 +1557,13 @@ function showSeen(d){
      the list of materials and no way to look at them (Ramy, 24 Sep 2026). */
   const matsHTML=p=>{
     const link=(p.matsLink||'').trim();
-    const f=p.matsFile&&p.matsFile.name?p.matsFile:null;
-    const fUrl=f?(f.url||f.dataUrl||''):'';
+    /* a plan can carry up to five files (20 Nov 2026): matsFiles is the list, matsFile the first of them and all an older plan has */
+    const files=(Array.isArray(p.matsFiles)&&p.matsFiles.length?p.matsFiles:(p.matsFile?[p.matsFile]:[])).filter(f=>f&&f.name);
     const acts=[
-      link?`<a class="mats-open" href="${esc(link)}" target="_blank" rel="noopener">Open the materials</a>`:'',
-      f?(fUrl?`<a class="mats-open file" href="${esc(fUrl)}" target="_blank" rel="noopener"${f.dataUrl&&!f.url?` download="${esc(f.name)}"`:''}>${esc(f.name)}</a>`
-            :`<span class="mats-open file off" title="Held on the trainee\u2019s own device \u2014 not sent with the plan">${esc(f.name)}</span>`):''
-    ].filter(Boolean).join(' ');
+      link?`<a class="mats-open" href="${esc(link)}" target="_blank" rel="noopener">Open the materials</a>`:''
+    ].concat(files.map(f=>{ const fUrl=f.url||f.dataUrl||'';
+      return fUrl?`<a class="mats-open file" href="${esc(fUrl)}" target="_blank" rel="noopener"${f.dataUrl&&!f.url?` download="${esc(f.name)}"`:''}>${esc(f.name)}</a>`
+            :`<span class="mats-open file off" title="Held on the trainee\u2019s own device \u2014 not sent with the plan">${esc(f.name)}</span>`; })).filter(Boolean).join(' ');
     const list=p.mats?bulletsHTML(p.mats):'';
     if(!list&&!acts) return '';
     return (acts?`<div class="mats-acts">${acts}</div>`:'')+list;

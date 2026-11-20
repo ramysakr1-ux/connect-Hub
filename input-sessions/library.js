@@ -381,6 +381,9 @@ window.InputLib = (function(){
     });
     document.querySelectorAll('button, [role="button"], a.btn').forEach(function(b){
       var label = (b.textContent || '').trim();
+      /* an answer option is part of the task, whatever word it starts with: "Show it" is the first choice of ten questions
+         in Teaching vocabulary, and was left off the printed handout as if it were a control (20 Nov 2026) */
+      if (b.classList.contains('opt')) return;
       if (!CONTROL.test(label) && !b.classList.contains('reveal')) return;
       var d = b.style.getPropertyValue('display'), dp = b.style.getPropertyPriority('display'); b.style.setProperty('display', 'none', 'important'); undo.push(function(){ b.style.setProperty('display', d, dp); });
     });
@@ -452,7 +455,8 @@ try {
    session.css fades its right edge. On a phone the section links run off the screen and "Trainer notes" was unseen. */
 (function(){
   function watch(el){ if (!el || el.__moreR) return; el.__moreR = 1;
-    var set = function(){ el.classList.toggle('more-r', el.scrollWidth - el.clientWidth - el.scrollLeft > 6); };
+    var set = function(){ el.classList.toggle('more-r', el.scrollWidth - el.clientWidth - el.scrollLeft > 6);
+      if (el.offsetHeight) document.documentElement.style.setProperty('--strip-h', el.offsetHeight + 'px'); };   /* session.css: where a part lands under the strip */
     el.addEventListener('scroll', set, { passive: true }); window.addEventListener('resize', set); set(); setTimeout(set, 600); setTimeout(set, 2500); }
   function go(){ var n = document.querySelectorAll('nav.sticky-nav'); for (var i = 0; i < n.length; i++) watch(n[i]); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
@@ -466,7 +470,7 @@ try {
    browser that kept the old one fetches the new. "Writing the lesson plan" carries its own card on the page and is
    not listed. */
 (function(){
-  var READY = {};
+  var READY = { 'phonology-sounds': 1, 'teaching-vocabulary': 1, 'connected-speech': 1 };
   var m = location.pathname.match(/\/input-sessions\/([^\/]+)\/(?:index\.html)?$/); if (!m) return;
   var v = READY[m[1]]; if (!v) return;
   var load = function(src, then){ var s = document.createElement('script'); s.src = src; if (then) s.onload = then; document.head.appendChild(s); };

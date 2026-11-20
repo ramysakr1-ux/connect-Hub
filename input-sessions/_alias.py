@@ -842,3 +842,29 @@ _TASKS = [
 ]
 for _slug, _old, _new in _TASKS:
     ALIAS.setdefault(_slug, []).append((_old, _new))
+
+# TWO FAULTS FOUND WALKING THE SESSIONS (20 Nov 2026), in code these pages share with Phonology: sounds:
+#   - the matching exercise: a term pressed again inside the red flash's half second stayed white though it counted;
+#   - the strip: the hidden trainer notes part measured as "at the top", so no part was ever marked for a trainee.
+for _slug in ('eliciting-and-ccqs', 'teaching-exam-classes'):
+    ALIAS[_slug] = ALIAS.get(_slug, []) + [
+        ("selL.classList.replace('selected','matched'); selR.classList.replace('selected','matched'); done++;",
+         "[selL,selR].forEach(x=>{ x.classList.remove('selected','wrong'); x.classList.add('matched'); }); done++;"),
+        ("setTimeout(()=>{ a.classList.remove('selected','wrong'); b.classList.remove('selected','wrong'); },500);",
+         "setTimeout(()=>{ [a,b].forEach(x=>{ x.classList.remove('wrong'); if(x!==selL && x!==selR) x.classList.remove('selected'); }); },500);"),
+        ('allSections.forEach(s=>{ if(s.getBoundingClientRect().top<=150) cur=s.id; });',
+         'allSections.forEach(s=>{ if(!s.hidden && s.getBoundingClientRect().top<=150) cur=s.id; });'),
+    ]
+
+# FOUND WALKING TEACHING VOCABULARY (20 Nov 2026):
+#   - "Print the handout" printed all five answer boxes: a print rule opened every hidden box for everybody. It is now
+#     the tutor's print only; the trainees' answers print shows them through answers/teaching-vocabulary.js.
+#   - the gap fill says "Fill the gaps with the words in the box", and the box was left off the paper.
+#   - on a phone the planning table pushed the page sideways once real words were typed: it now scrolls inside its own frame.
+ALIAS['teaching-vocabulary'] = ALIAS.get('teaching-vocabulary', []) + [
+    ('  @media print{ .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }',
+     '  @media print{ body.tutor .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }'),
+    ('  @media print{ .bank, .line, #formCheck, #formClear{display:none !important;} }\n', ''),
+    ('    <table class="plan">', '    <div class="vwrap"><table class="plan">'),
+    ('    </table>\n    <h3>Then two more lines</h3>', '    </table></div>\n    <h3>Then two more lines</h3>'),
+]

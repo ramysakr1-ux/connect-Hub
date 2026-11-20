@@ -25,8 +25,8 @@
 <link rel="stylesheet" href="../session.css">
 <style>
   .reveal-card .q{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.02rem;}
-  .pill-col .pill .dc-real{color:var(--teal) !important;}
-  .pill-col .pill .dc-real div{color:var(--grey) !important;}
+  /* Two rules went from here (found walking the session, 20 Nov 2026): they set the real sentence to forest and its
+     feature to grey, on a matched pill that is forest too, so neither could be read. Both take the pill's own light text now. */
   .maze-legend{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;}
   .maze-legend span{font-size:.78rem; font-weight:700; padding:4px 11px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--box); color:oklch(45% 0.02 70);}
   .maze-grid{display:grid; grid-template-columns:28px repeat(5,1fr) 28px; gap:5px; margin:12px 0; align-items:stretch;}
@@ -42,7 +42,8 @@
   .maze-cell.visited{background:color-mix(in oklab, var(--teal) 11%, var(--paper)); border-color:var(--teal); color:var(--teal);}
   .maze-cell.start.visited{background:var(--ink-warm); color:var(--paper);}
   .maze-cell.route{position:relative; border-color:var(--teal); background:color-mix(in oklab, var(--teal) 18%, var(--paper)); color:var(--teal);}
-  .maze-cell.route::after{content:attr(data-step); position:absolute; top:2px; right:5px; font-size:.6rem; font-weight:800; color:var(--teal);}
+  /* the step number sits at the foot of the cell: at the top it was printed over the words on a phone, in 12 of the 17 cells (20 Nov 2026) */
+  .maze-cell.route::after{content:attr(data-step); position:absolute; bottom:2px; right:5px; font-size:.6rem; font-weight:800; color:var(--teal);}
   .maze-route{font-size:.86rem; line-height:1.6; margin:8px 0 0;}
   .maze-grid{position:relative;}
   .walker{position:absolute; width:26px; height:46px; margin:-23px 0 0 -13px; pointer-events:none; display:flex; flex-direction:column; align-items:center; transition:left .32s ease, top .32s ease; z-index:2; filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));}
@@ -67,10 +68,11 @@
   .link-gap{display:inline-block; width:20px; text-align:center; cursor:pointer; color:var(--sand-line); font-weight:700; font-size:1.15rem; transition:.15s; vertical-align:middle;}
   .link-gap:hover{color:var(--gold-deep);}
   .link-gap.marked{color:var(--gold-deep); transform:scale(1.5);}
-  .link-gap.linked{color:var(--teal); transform:scale(1.5);}
+  /* the key's marks are for the screen only (20 Nov 2026): once revealed they printed on the plain handout, and so did the weak forms and the maze route below */
+  @media screen{ .link-gap.linked{color:var(--teal); transform:scale(1.5);} }
   .word-link{display:inline-block; padding:3px 2px; margin:1px; border-radius:4px; cursor:pointer; font-size:.95rem; transition:.15s;}
   .word-link.marked{background:var(--gold-wash); box-shadow:0 2px 0 var(--gold);}
-  .word-link.weak{background:color-mix(in oklab, var(--teal) 12%, transparent); box-shadow:0 2px 0 var(--teal);}
+  @media screen{ .word-link.weak{background:color-mix(in oklab, var(--teal) 12%, transparent); box-shadow:0 2px 0 var(--teal);} }
   .feat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0 0;}
   @media(max-width:640px){ .feat-grid{grid-template-columns:1fr;} }
   .feat-card{border-radius:var(--r-strip); border:1.5px solid var(--sand-line); overflow:hidden; cursor:pointer; background:var(--paper); transition:border-color .12s ease;}
@@ -88,7 +90,7 @@
   .feat-written{color:var(--grey); text-decoration:line-through; text-decoration-color:var(--sand-line);}
   .feat-arrow{font-family:'Instrument Sans','Karla',sans-serif; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold-deep); font-weight:600;}
   .feat-heard{font-weight:600;}
-  @media print{ .feat-back, .reveal-card .a, .dc-real{display:none !important;} .maze-grid{display:none;} }
+  @media print{ .feat-back, .reveal-card .a, .dc-real, .maze-route{display:none !important;} .maze-grid{display:none;} }
 </style>
 </head>
 <body>
@@ -310,8 +312,10 @@ dcItems.forEach((it,i)=>{
   p.onclick=()=>{ if(p.classList.contains('matched'))return; dcL.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelL=p; dcGo(); };
   dcL.appendChild(p);
 });
-dcShuffled.forEach(s=>{
-  const p=document.createElement('div'); p.className='pill'; p.dataset.i=s.idx; p.textContent=String.fromCharCode(97+s.idx)+'. '+s.reply;
+/* the letter is the reply's place in the list, a to j from the top. It was the number of its sentence (1 was always a,
+   2 always b), so the letters gave every match away (found walking the session, 20 Nov 2026) */
+dcShuffled.forEach((s,k)=>{
+  const p=document.createElement('div'); p.className='pill'; p.dataset.i=s.idx; p.textContent=String.fromCharCode(97+k)+'. '+s.reply;
   p.onclick=()=>{ if(p.classList.contains('matched'))return; dcR.querySelectorAll('.pill').forEach(x=>x.classList.remove('selected')); p.classList.add('selected'); dcSelR=p; dcGo(); };
   dcR.appendChild(p);
 });
@@ -328,14 +332,16 @@ function dcGo(){
     a.classList.add('wrong'); b.classList.add('wrong');
     dcFb.textContent='Not that one. Read the reply again and ask what it tells you about the real sentence.';
     dcFb.className='feedback bad';
-    setTimeout(()=>{ a.classList.remove('selected','wrong'); b.classList.remove('selected','wrong'); },600);
+    /* a pill pressed again inside the 0.6 s is the new choice and keeps its mark: it used to lose it here, and then counted as matched without ever turning green (20 Nov 2026) */
+    setTimeout(()=>{ a.classList.remove('wrong'); b.classList.remove('wrong'); if(a!==dcSelL) a.classList.remove('selected'); if(b!==dcSelR) b.classList.remove('selected'); },600);
   }
 }
 document.getElementById('dcReveal').onclick=()=>{
   dcL.querySelectorAll('.pill').forEach((p,i)=>{
-    p.classList.add('matched'); const real=p.querySelector('.dc-real'); if(real) real.style.display='block';
+    p.classList.remove('selected'); p.classList.add('matched'); const real=p.querySelector('.dc-real'); if(real) real.style.display='block';
   });
-  dcR.querySelectorAll('.pill').forEach(p=>p.classList.add('matched'));
+  dcR.querySelectorAll('.pill').forEach(p=>{ p.classList.remove('selected'); p.classList.add('matched'); });
+  dcSelL=null; dcSelR=null;   /* a sentence or reply chosen before the button was pressed is no longer chosen (20 Nov 2026) */
   dcDone=dcItems.length;
   dcFb.textContent='Answers shown.'; dcFb.className='feedback good';
 };
@@ -457,7 +463,10 @@ words.forEach((w,i)=>{
   }
 });
 lp.innerHTML = html;
-const keyIdx = [8,9,21,23,30,37,40,45,59,65,68,76,77,90,92];
+/* The key was still the old story's (found walking the session, 20 Nov 2026): when the text changed on 14 Oct the numbers
+   stayed, and five links landed on the wrong gap (one across a full stop). Moved to the same links in this text: of us,
+   stepped in, front of, soon it, was impossible. 21 (heavy in) is vowel to vowel and is left for the tutor to decide. */
+const keyIdx = [8,9,21,23,30,37,40,45,60,67,69,76,77,91,93];
 let keyShown=false;
 function toggleKey(){
   keyShown = !keyShown;
@@ -471,7 +480,7 @@ function toggleKey(){
 const weakSentences = [
   {text:'You and me', weak:[1]},
   {text:'He must have gone', weak:[1,2]},
-  {text:'The corner of the table', weak:[0,3]},
+  {text:'The corner of the table', weak:[0,2,3]},   /* "of" is weak here too (Ramy, 20 Nov 2026: "mark of"); the key had The and the only */
   {text:'I can swim', weak:[1]},
   {text:'She was there for an hour', weak:[1,3,4]}
 ];
@@ -520,7 +529,8 @@ features.forEach(f=>{
 // ---------- nav ----------
 const navLinks=document.querySelectorAll('.sticky-nav a'), allSections=document.querySelectorAll('section[id]');
 function onScroll(){ const d=document.documentElement; const st=d.scrollTop||document.body.scrollTop; const sh=d.scrollHeight-d.clientHeight;
-  let cur=allSections[0]?allSections[0].id:''; allSections.forEach(s=>{ if(s.getBoundingClientRect().top<=150) cur=s.id; });
+  /* a hidden part measures as "at the top": the trainer notes, hidden for a trainee, were always the part marked, so no link ever was (20 Nov 2026) */
+  let cur=allSections[0]?allSections[0].id:''; allSections.forEach(s=>{ if(!s.hidden && s.getBoundingClientRect().top<=150) cur=s.id; });
   navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur)); }
 document.addEventListener('scroll',onScroll); onScroll();
 </script>

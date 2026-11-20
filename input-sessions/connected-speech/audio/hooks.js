@@ -5,7 +5,9 @@
    lines are in lines.json beside this file. */
 (function(){
   var V = window.LiteVoice; if (!V) return;
-  var btn = function(label, items){ var b = V.button(label, items); b.addEventListener('click', function(e){ e.stopPropagation(); }); return b; };
+  /* The button plays its own recording (20 Nov 2026). The click is stopped here so that a card does not shut when its
+     Hear it is pressed, and that also stopped it reaching voices.js, which listens on the document: all 34 were silent. */
+  var btn = function(label, items){ var b = V.button(label, items); b.addEventListener('click', function(e){ e.stopPropagation(); V.sayAll(items); }); return b; };
   var add = function(el, b){ if (el && !el.querySelector('.say-btn')) { el.appendChild(document.createTextNode(' ')); el.appendChild(b); } };
 
   // Lead-in and elision: inside each card's answer.
