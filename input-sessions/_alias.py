@@ -963,3 +963,26 @@ ALIAS['error-correction'] = ALIAS.get('error-correction', []) + [
     ('  .answer-key.shown{display:block;}',
      '  .answer-key.shown{display:block;} @media print{ .order-line{opacity:1 !important;} .order-line .num{visibility:hidden;} #errorMatchArea select.blank{color:transparent;} #ideasArea .flash > div:not(.ans-line){display:none !important;} } /* 20 Nov 2026: the handout printed a task as it was answered on screen (the order clicked, the match chosen, the ideas opened); on paper every task is blank */'),
 ]
+
+
+# RAMY'S CALLS ON LESSON FRAMEWORKS (20 Nov 2026): "always print them" (part 10's Step 2 on paper) and "Reveal the fix" (part 7's button).
+ALIAS['lesson-framework'] = ALIAS.get('lesson-framework', []) + [
+    ('  @media print{ .progress-note, .sp-score, .seq-feedback, .seq-build > *, .zone .dropped-card{display:none !important;} .stage-card.placed{display:inline-flex !important;} .stage-card.selected{outline:0 !important; border-color:var(--sand-line) !important; background:var(--field) !important;} .zone.correct{border-style:dashed !important; border-color:var(--sand-line) !important;} .seq-chip.used{opacity:1 !important;} .sp-opt.good, .sp-opt.bad, .sp-opt.dim{font-weight:400 !important; opacity:1 !important;} }',
+     '  @media print{ .progress-note, .sp-score, .seq-feedback, .seq-build > *, .zone .dropped-card{display:none !important;} .stage-card.placed{display:inline-flex !important;} .stage-card.selected{outline:0 !important; border-color:var(--sand-line) !important; background:var(--field) !important;} .zone.correct{border-style:dashed !important; border-color:var(--sand-line) !important;} .seq-chip.used{opacity:1 !important;} .sp-opt.good, .sp-opt.bad, .sp-opt.dim{font-weight:400 !important; opacity:1 !important;} }\n  @media print{ #spShapeHead[hidden], #spShapes[hidden]{display:block !important;} }   /* 20 Nov 2026 (Ramy: "always print them"): Step 2\'s three questions are on paper whether or not Step 1 is done on screen */'),
+    ('    <button class="flaw-toggle" data-idx="${i}">What\'s the flaw?</button>',
+     '    <button class="flaw-toggle" data-idx="${i}">Reveal the fix</button>   <!-- 20 Nov 2026 (Ramy): the label the instructions name -->'),
+    ('    e.target.textContent = fixEl.classList.contains(\'open\') ? \'Hide the fix\' : "What\'s the flaw?";',
+     '    e.target.textContent = fixEl.classList.contains(\'open\') ? \'Hide the fix\' : \'Reveal the fix\';   // 20 Nov 2026 (Ramy): "Reveal the fix"'),
+]
+
+
+# RAMY'S CALL ON ERROR CORRECTION (20 Nov 2026): "print the list": the eight error types print above the match task, A to Z;
+# the dropdowns list them A to Z too (in the items' own order each choice was its own row's answer).
+ALIAS['error-correction'] = ALIAS.get('error-correction', []) + [
+    ('  .answer-key{display:none; margin-top:14px; padding:14px 18px; border-radius:var(--r-strip); background:var(--gold-wash); border:1px solid var(--amber-edge);}',
+     '  .answer-key{display:none; margin-top:14px; padding:14px 18px; border-radius:var(--r-strip); background:var(--gold-wash); border:1px solid var(--amber-edge);}\n  .ec-types{display:none;} @media print{ .ec-types{display:block; margin:6px 0 10px;} .ec-types ul{margin:4px 0 0; padding-left:20px; columns:2;} }   /* 20 Nov 2026: the error types, on paper only */'),
+    ('const errorDescriptions = errorItems.map(e=>e.answer);',
+     "const errorDescriptions = errorItems.map(e=>e.answer).sort((a,b)=>a.localeCompare(b));   // 20 Nov 2026: in A to Z order; in the items' own order the first choice was the first row's answer, the second the second's, and so on"),
+    ('  errorMatchArea.appendChild(row);\n});',
+     '  errorMatchArea.appendChild(row);\n});\n/* 20 Nov 2026 (Ramy: "print the list"): the eight types are the dropdowns\' choices, and a dropdown prints as a line, so on paper the\n   task had nothing to choose from. They print once above the sentences, A to Z, to write beside each one. */\n{ const list = document.createElement(\'div\'); list.className = \'ec-types\';\n  list.innerHTML = \'<p><b>Error types:</b></p><ul>\' + errorDescriptions.map(d => \'<li>\' + d + \'</li>\').join(\'\') + \'</ul>\';\n  errorMatchArea.parentNode.insertBefore(list, errorMatchArea); }'),
+]
