@@ -107,6 +107,53 @@
       cursorY += lineHeight * 0.4;
     }
   }
+  /* A STAGE'S TEXT, AS IT WAS WRITTEN (Ramy, 20 Nov 2026: "100% fix the PDF"). drawWrapped above takes a text as one
+     run of words, so a stage written as an opening paragraph and a list of points went into Cambridge's box as a
+     single block, the points one after another on the same lines; and whatever did not fit the box was left out with
+     nothing said. The tables still use drawWrapped, where a cell is one line of words. A stage's boxes use this:
+       - every line of the text starts a line in the box, and an empty line leaves a small gap;
+       - a point that runs onto a second line keeps that line under its own words, not under its bullet;
+       - a text too long for the box at the form's size is set smaller, a half point at a time down to 7, before
+         anything is left out;
+       - and if it still does not fit, as much as fits is drawn and the box is named in OVERFLOW, which the page
+         reads after the download (lastOverflow) so the tutor is told. Nothing is ever cut without a word.
+     At the form's size a text of one paragraph lands exactly where it did before. */
+  let OVERFLOW = [];
+  function layoutStageText(font, text, maxWidth, size){
+    const out = [];
+    String(text).replace(/\r\n?/g, '\n').split('\n').forEach(raw => {
+      const line = raw.replace(/\s+/g, ' ').trim();
+      if (!line) { if (out.length && out[out.length - 1]) out.push(null); return; }   // one gap, never two, never first
+      const m = line.match(/^([•–*-])\s+(.*)$/);
+      const lead = m ? m[1] + ' ' : '', body = m ? m[2] : line;
+      const hang = m ? font.widthOfTextAtSize(lead, size) : 0;
+      let cur = '', first = true;
+      const push = () => { out.push({ text: (first ? lead : '') + cur, x: first ? 0 : hang }); first = false; };
+      body.split(' ').forEach(word => {
+        const cand = cur ? cur + ' ' + word : word;
+        if (cur && font.widthOfTextAtSize(cand, size) + hang > maxWidth) { push(); cur = word; } else cur = cand;
+      });
+      if (cur) push();
+    });
+    while (out.length && !out[out.length - 1]) out.pop();
+    return out;
+  }
+  function drawStageText(page, font, text, box, name, firstLeading){
+    if (!text || !String(text).trim()) return;
+    const maxWidth = box.x1 - box.x0, room = box.y1 - box.y0;
+    let size = 9.5, lead = firstLeading || 12, lines = [];
+    for (const s of [9.5, 9, 8.5, 8, 7.5, 7]) {
+      size = s; lead = s === 9.5 ? (firstLeading || 12) : Math.round(s * 1.263 * 10) / 10;
+      lines = layoutStageText(font, text, maxWidth, s);
+      if (lines.reduce((h, l) => h + (l ? lead : lead * 0.5), 0) <= room) break;
+    }
+    let y = box.y0;
+    for (const l of lines) {
+      if (!l) { y += lead * 0.5; continue; }
+      if (y + lead > box.y1) { OVERFLOW.push(name || 'A box'); return; }
+      drawAt(page, font, l.text, box.x0 + l.x, y, size); y += lead;
+    }
+  }
   function drawOvalAround(page, box){
     page.drawEllipse({ x: (box.x0 + box.x1) / 2, y: fitzY(page, (box.y0 + box.y1) / 2, 0), xScale: (box.x1 - box.x0) / 2 + 10, yScale: (box.y1 - box.y0) / 2 + 9, borderColor: rgb(0, 0, 0), borderWidth: 1.1 });
   }
@@ -159,8 +206,8 @@
     if (d.tutorialGiven === true) drawCheck(page, f.bold, GIVEN);
     if (d.tutorialGiven === false) drawCheck(page, f.bold, NOT_GIVEN);
     if (d.hoursTaught !== null && d.hoursTaught !== undefined && d.hoursTaught !== '') drawAt(page, f.regular, String(d.hoursTaught), 0, (HOURS[1] + HOURS[3]) / 2 + 4, 11, { align: 'center', xMid: (HOURS[0] + HOURS[2]) / 2 });
-    if (d.strengths) drawWrapped(page, f.regular, [d.strengths], { x0: 52, y0: 230, x1: 538, y1: 335 });
-    if (d.actionPlan) drawWrapped(page, f.regular, [d.actionPlan], { x0: 52, y0: 394, x1: 538, y1: 625 });
+    if (d.strengths) drawStageText(page, f.regular, d.strengths, { x0: 52, y0: 230, x1: 538, y1: 335 }, 'Stage 1, Strengths');
+    if (d.actionPlan) drawStageText(page, f.regular, d.actionPlan, { x0: 52, y0: 394, x1: 538, y1: 625 }, 'Stage 1, Action plan');
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 156, 666.6, 434 - 156 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 434, 666.6); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 181, 729.7, 434 - 181 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 434, 729.7); }
     /* "I have read and agree/do not agree with the above comments." The form
@@ -249,19 +296,19 @@
        481.1-709.4. The old YOU column ran 88pt into the tutor's, and both
        boxes ran past their bottoms. */
     const YOU = { x0: 51, x1: 292 }, TUT = { x0: 303, x1: 544 }, WA = { y0: 150, y1: 362 }, OTHER = { y0: 494, y1: 706 };
-    if (d.candidateWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.candidateWrittenAssignmentsNotes], Object.assign({}, YOU, WA));
-    if (d.tutorWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.tutorWrittenAssignmentsNotes], Object.assign({}, TUT, WA));
-    if (d.candidateOtherNotes) drawWrapped(page, f.regular, [d.candidateOtherNotes], Object.assign({}, YOU, OTHER));
-    if (d.tutorOtherNotes) drawWrapped(page, f.regular, [d.tutorOtherNotes], Object.assign({}, TUT, OTHER));
+    if (d.candidateWrittenAssignmentsNotes) drawStageText(page, f.regular, d.candidateWrittenAssignmentsNotes, Object.assign({}, YOU, WA), 'Stage 2, the candidate\u2019s notes on written assignments');
+    if (d.tutorWrittenAssignmentsNotes) drawStageText(page, f.regular, d.tutorWrittenAssignmentsNotes, Object.assign({}, TUT, WA), 'Stage 2, the tutor\u2019s notes on written assignments');
+    if (d.candidateOtherNotes) drawStageText(page, f.regular, d.candidateOtherNotes, Object.assign({}, YOU, OTHER), 'Stage 2, the candidate\u2019s other notes');
+    if (d.tutorOtherNotes) drawStageText(page, f.regular, d.tutorOtherNotes, Object.assign({}, TUT, OTHER), 'Stage 2, the tutor\u2019s other notes');
   }
   const RATINGS = ['above_standard', 'to_standard', 'not_to_standard'];
   function drawStage2Overall(page, f, d){
     const CAND = [{ x0: 70, y0: 97.7, x1: 310, y1: 110.0 }, { x0: 70, y0: 110.4, x1: 292, y1: 122.7 }, { x0: 70, y0: 123.2, x1: 483, y1: 135.5 }];
     const TUT = [{ x0: 70, y0: 353.1, x1: 310, y1: 365.4 }, { x0: 70, y0: 365.7, x1: 292, y1: 378.0 }, { x0: 70, y0: 378.4, x1: 483, y1: 390.7 }];
     if (d.candidateOverall) drawOvalAround(page, CAND[RATINGS.indexOf(d.candidateOverall)]);
-    if (d.candidateNotes) drawWrapped(page, f.regular, [d.candidateNotes], { x0: 62, y0: 178, x1: 525, y1: 316 });
+    if (d.candidateNotes) drawStageText(page, f.regular, d.candidateNotes, { x0: 62, y0: 178, x1: 525, y1: 316 }, 'Stage 2, the candidate\u2019s areas to work on');
     if (d.tutorOverall) drawOvalAround(page, TUT[RATINGS.indexOf(d.tutorOverall)]);
-    if (d.tutorNotes) drawWrapped(page, f.regular, [d.tutorNotes], { x0: 57, y0: 431, x1: 525, y1: 618 });
+    if (d.tutorNotes) drawStageText(page, f.regular, d.tutorNotes, { x0: 57, y0: 431, x1: 525, y1: 618 }, 'Stage 2, Summary of tutorial and action points');
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 165, 657.4, 440 - 165 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 440, 657.4); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 190, 726.5, 440.5 - 190 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 440.5, 726.5); }
     /* "This is/is not an accurate record of the tutorial discussion and my
@@ -275,13 +322,13 @@
   function drawStage3Notes(page, f, d){
     /* boxes measured 102.0-304.9 and 406.6-647.6 (second audit): the old
        bottoms of 335 and 750 let long comments spill out of Cambridge's boxes */
-    if (d.tutorWrittenAssignmentsNotes) drawWrapped(page, f.regular, [d.tutorWrittenAssignmentsNotes], { x0: 65, y0: 116, x1: 530, y1: 301 });
-    if (d.tutorOtherNotes) drawWrapped(page, f.regular, [d.tutorOtherNotes], { x0: 65, y0: 421, x1: 530, y1: 644 });
+    if (d.tutorWrittenAssignmentsNotes) drawStageText(page, f.regular, d.tutorWrittenAssignmentsNotes, { x0: 65, y0: 116, x1: 530, y1: 301 }, 'Stage 3, Notes on written assignments');
+    if (d.tutorOtherNotes) drawStageText(page, f.regular, d.tutorOtherNotes, { x0: 65, y0: 421, x1: 530, y1: 644 }, 'Stage 3, Other notes');
   }
   function drawStage3Overall(page, f, d){
     const TUT = [{ x0: 78, y0: 89.1, x1: 318, y1: 101.5 }, { x0: 78, y0: 101.9, x1: 300, y1: 114.2 }, { x0: 78, y0: 114.5, x1: 492, y1: 126.8 }];
     if (d.tutorOverall) drawOvalAround(page, TUT[RATINGS.indexOf(d.tutorOverall)]);
-    if (d.tutorNotes) drawWrapped(page, f.regular, [d.tutorNotes], { x0: 65, y0: 168, x1: 530, y1: 568 });
+    if (d.tutorNotes) drawStageText(page, f.regular, d.tutorNotes, { x0: 65, y0: 168, x1: 530, y1: 568 }, 'Stage 3, Summary of tutorial and action points');
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 170, 608.5, 448 - 170 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 448, 608.5); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 195, 665.2, 449 - 195 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 449, 665.2); }
     if (d.candidateAgrees === true) drawOvalAround(page, { x0: 144.9, y0: 622.8, x1: 174.1, y1: 634.9 });
@@ -297,7 +344,7 @@
        all candidates whose portfolios are submitted to Cambridge English."
        Exactly the Fail and borderline candidates. No field existed until
        29 Sep 2026. */
-    if (d.gradeReviewComments) drawWrapped(page, f.regular, [d.gradeReviewComments], { x0: 62, y0: 583, x1: 534, y1: 772 }, 9.5, 12.5);
+    if (d.gradeReviewComments) drawStageText(page, f.regular, d.gradeReviewComments, { x0: 62, y0: 583, x1: 534, y1: 772 }, 'The grade review comments', 12.5);
   }
   /* An appended page, not one of Cambridge's: the centre's own record that the
      candidate was given, and signed for, the portfolio requirements and the
@@ -336,6 +383,7 @@
   // ---- the booklet ---------------------------------------------------------
   async function render(input, assets){
     if (!window.PDFLib) throw new Error('pdf-lib did not load');
+    OVERFLOW = [];
     const master = await PDFDocument.load(assets.master);
     const out = await PDFDocument.create();
     if (window.fontkit) out.registerFontkit(window.fontkit);
@@ -382,5 +430,6 @@
     return out.save();
   }
   const b64 = s => { const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-  window.hubCelta5Pdf = { render, fromBase64: b64 };
+  /* lastOverflow: the boxes whose text was too long for Cambridge's form in the booklet just drawn, by name */
+  window.hubCelta5Pdf = { render, fromBase64: b64, lastOverflow: () => OVERFLOW.slice() };
 })();
