@@ -106,6 +106,8 @@ STYLE = r'''
   .scen.done .why{display:block;}
   .scen.done.right{border-color:var(--teal);} .scen.done.right .why{color:var(--teal);}
   .scen.done.wrong{border-color:color-mix(in oklab, var(--brick) 40%, transparent);} .scen.done.wrong .why{color:var(--brick);}
+  /* 21 Nov 2026: an answered item printed solved on the handout: a teal or red edge round it, and the option not picked faded. On paper each prints as it did untouched. */
+  @media print{ .scen.done.right, .scen.done.wrong{border-color:var(--sand-line);} .scen .opt.dim{opacity:1;} }
   button.order-line{width:100%; font-family:'Karla',sans-serif; color:var(--ink); text-align:left;}
   .order-line.done{border-color:var(--teal); color:var(--teal); cursor:default;}
   .status{font-size:.86rem; font-weight:600; color:var(--gold-deep); margin:10px 0 0;}

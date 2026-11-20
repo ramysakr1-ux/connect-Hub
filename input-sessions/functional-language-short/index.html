@@ -62,7 +62,8 @@
   .stagebox{margin-top:14px; border-top:1px solid var(--row-line); padding-top:12px;}
   .stagebox h4{margin:12px 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem;}
   table.grid td:nth-child(2){white-space:nowrap;}
-  @media print{ .keyblock{display:block;} .stagebox .btn{display:none;} }
+  /* 21 Nov 2026: "Print the handout" printed the whole answer key once it had been opened, and the staging example once it had been opened. The key now prints only from its own Print button (body.print-key, set in answerKey below) or in a tutor's print; the example stays on the screen. */
+  @media print{ .keyblock{display:block;} body:not(.print-key):not(.tutor) .keyblock{display:none !important;} .stagebox .btn{display:none;} .stagebox h4, .stagebox table{display:none !important;} }
   .sl{font-weight:700; font-size:.92rem; color:var(--ink); margin:18px 0 6px;} .sl:first-of-type{margin-top:4px;}
   .rank{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
   .rank .row{background:var(--paper); border:1.5px solid var(--teal); border-radius:var(--r-control); padding:9px 14px; font-weight:600; font-size:.92rem; background:color-mix(in oklab, var(--teal) 7%, var(--paper));}
@@ -70,6 +71,15 @@
   .rank button.opt{text-align:left; background:var(--paper); border:1.5px solid var(--sand-line); padding:9px 14px; font:400 .92rem 'Karla',sans-serif; color:var(--ink); cursor:pointer;}
   .rank button.opt:hover{border-color:var(--gold);}
   .rankmsg{font-size:.88rem; margin:8px 0 0;} .rankmsg.no{color:var(--a-red);} .rankmsg.ok{color:var(--teal);}
+  /* 21 Nov 2026: an answered task printed solved on the handout: matched meanings in a heavier weight with "5 of 5 matched"; the ranked exponents numbered in the order picked, in teal or red, with "In order" or "Not the order"; the ordered stages with their numbers, their fill and "All 5 in order"; an opened card without its "Click to reveal". On paper each prints as it did untouched, without the counts (.rank.paper is the four exponents as first shown, for the paper only: see drawRank below). */
+  .rank.paper{display:none;}
+  @media print{
+    .mhead span, .ostatus, .rankmsg, .rank:not(.paper){display:none !important;} .rank.paper{display:flex;}
+    .pill.matched:not(.term){font-weight:500;}
+    .order-line.done{border-color:var(--sand-line); background:var(--paper);}
+    .order-line.done .num{background:var(--box); color:var(--grey); font-size:0;} .order-line.done .num::after{content:"?"; font-size:.8rem;}
+    .reveal-card.open .hint{display:block;}
+  }
 
 </style>
 </head>
@@ -257,9 +267,10 @@ function answerKey(el, terms, details){
   }
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if (!b) return;
-    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { window.print(); return; }
+    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { document.body.classList.add('print-key'); window.print(); return; }   // 21 Nov 2026: the key prints from its own Print button only (see the print rule above)
     draw();
   });
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));   // 21 Nov 2026
   draw();
 }
 
@@ -285,6 +296,8 @@ function drawRank(){
   $('rank').innerHTML = '<p class="sl">Rank these exponents, most to least formal</p><p class="quiet">Function: making a request. Click each in order, most formal first.</p>'
     + '<div class="rank">' + ranked.map((x, i) => '<div class="row' + (wrong ? ' no' : '') + '">' + (i + 1) + '. ' + esc(x) + '</div>').join('')
     + remaining.map(x => '<button type="button" class="opt" data-rank="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>'
+    // 21 Nov 2026: the four exponents as first shown, for the paper only (.rank.paper, never on the screen), so "Print the handout" prints a ranked task as the task it was. They carry no data-rank, so a click on them does nothing.
+    + '<div class="rank paper">' + RANK_SHUFFLED.map(x => '<button type="button" class="opt">' + esc(x) + '</button>').join('') + '</div>'
     + (wrong ? '<p class="rankmsg no">Not the order most people would rank these: reset and try again.</p>' : full ? '<p class="rankmsg ok">✓ In order.</p>' : '')
     + '<div class="btn-row"><button type="button" class="btn" data-reset>Reset</button></div>';
 }

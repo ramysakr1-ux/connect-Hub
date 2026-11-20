@@ -68,6 +68,9 @@
   .kv .kvr:last-child{border-bottom:0;} .kv .kvr b{font-weight:700;} .kv .kvr span{color:var(--grey);}
   @media(max-width:560px){ .kv .kvr{grid-template-columns:1fr; gap:2px;} }
   @media print{ #keyOpen, .akey-top .btn-row, #stgBtn, .model-btn{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: part 3 printed "Correct." or "Not this one." with the explanation in place of the two options, inside a green or red edge; part 4 printed "Bad CCQ" or "Actually fine" on each question with its color and the explanation box; part 5 printed every model CCQ left open; an opened card in part 6 lost its "When would you use this?". On paper each prints as it did untouched (.opts.paper is the two options of an answered moment, for the paper only). */
+  .opts.paper{display:none;}
+  @media print{ .opts.paper{display:flex !important;} #eot .res, .ccqb .st, #ccqWhy, .model{display:none !important;} #eot .box.good, #eot .box.bad{border-color:var(--sand-line);} .ccqb.good, .ccqb.bad{border-color:var(--sand-line); background:var(--paper);} .reveal-card.open .q .closed{display:inline !important;} body.tutor .model:not([hidden]){display:block !important;} }
 
 </style>
 </head>
@@ -219,7 +222,8 @@ function drawEot(){
     const pick = eot[i];
     if (pick === undefined) return '<div class="box"><p class="fb" style="margin:0">' + esc(s[0]) + '</p><div class="opts"><button type="button" class="opt" data-i="' + i + '" data-p="elicit">Elicit it</button><button type="button" class="opt" data-i="' + i + '" data-p="tell">Just tell them</button></div></div>';
     const ok = pick === s[1];
-    return '<div class="box ' + (ok ? 'good' : 'bad') + '"><p class="fb" style="margin:0">' + esc(s[0]) + '</p><p class="fb"><b class="' + (ok ? 'good">Correct.' : 'bad">Not this one.') + '</b> ' + esc(s[2]) + '</p></div>';
+    // 21 Nov 2026: the result carries "res" and the two options stay in the box for the paper only (.opts.paper, never on the screen), so "Print the handout" prints an answered moment as the task it was.
+    return '<div class="box ' + (ok ? 'good' : 'bad') + '"><p class="fb" style="margin:0">' + esc(s[0]) + '</p><p class="fb res"><b class="' + (ok ? 'good">Correct.' : 'bad">Not this one.') + '</b> ' + esc(s[2]) + '</p><div class="opts paper"><button type="button" class="opt" tabindex="-1" data-o="elicit">Elicit it</button><button type="button" class="opt" tabindex="-1" data-o="tell">Just tell them</button></div></div>';
   }).join('');
 }
 $('eot').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; eot[b.dataset.i] = b.dataset.p; drawEot(); });

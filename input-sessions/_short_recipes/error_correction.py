@@ -87,6 +87,8 @@ STYLE = r'''
   .prow select.blank{width:100%; max-width:340px;}
   .prow .reveal-card{margin:10px 0 0;}
   @media print{ .prow select{display:none;} }
+  /* 21 Nov 2026: an answered task printed solved: the ordered steps printed their numbers, their fill and "All 5 in order". On paper each prints as it did untouched: a blank circle to number in, no count. */
+  @media print{ .ostat{display:none !important;} .ox .order-line.done{border-color:#999 !important; background:none !important;} .ox .order-line .num{display:none !important;} .ox .order-line::before{content:""; flex:none; width:22px; height:22px; border:1px solid #999; border-radius:50%;} }
 '''
 
 SCRIPT = r'''
