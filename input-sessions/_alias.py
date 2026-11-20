@@ -861,13 +861,10 @@ for _slug in ('eliciting-and-ccqs', 'teaching-exam-classes'):
 #     the tutor's print only; the trainees' answers print shows them through answers/teaching-vocabulary.js.
 #   - the gap fill says "Fill the gaps with the words in the box", and the box was left off the paper.
 #   - on a phone the planning table pushed the page sideways once real words were typed: it now scrolls inside its own frame.
-ALIAS['teaching-vocabulary'] = ALIAS.get('teaching-vocabulary', []) + [
-    ('  @media print{ .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }',
-     '  @media print{ body.tutor .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }'),
-    ('  @media print{ .bank, .line, #formCheck, #formClear{display:none !important;} }\n', ''),
-    ('    <table class="plan">', '    <div class="vwrap"><table class="plan">'),
-    ('    </table>\n    <h3>Then two more lines</h3>', '    </table></div>\n    <h3>Then two more lines</h3>'),
-]
+# These three fixes live in the page itself (input-sessions/teaching-vocabulary/index.html). Teaching vocabulary is one of
+# the HAND pages: the builder patches the page it finds, so the page is its own source, and a replacement listed here
+# works once and then stops the build ("alias target not found") because the old words are gone. They were listed
+# here for a few hours on 20 Nov 2026 and that is exactly what happened. For a HAND page, edit the page.
 
 # FOUND WALKING WORD AND SENTENCE STRESS (20 Nov 2026), and one decision of his:
 #   - Lisbon showed each question with its stressed word in capitals before the reveal, though the task says to decide
@@ -885,4 +882,43 @@ ALIAS['word-and-sentence-stress'] = ALIAS.get('word-and-sentence-stress', []) + 
      '  { q:[\'Is she \',\'DRIVING\',\' to Lisbon on Friday?\'], a:\'No, taking the train.\', reveal:"The stress is on <b>DRIVING</b>: the answer corrects <i>how</i> she\\u2019s traveling." },'),
     ('  q.innerHTML = \'<b>A:</b> \' + ex.q.map(function(part, i){\n    var isStress = (i % 2 === 1) || (ex.stressedFirst && i===0);\n    return isStress ? \'<span class="stress">\'+part+\'</span>\' : part;\n  }).join(\'\');',
      "  q.innerHTML = '<b>A:</b> Is she driving to Lisbon on Friday?';   /* plain, the same five times: the stressed word in capitals and bold gave the answer away before the reveal, and the first question was bold from end to end (decided 20 Nov 2026) */"),
+]
+
+
+# FOUND WALKING TEACHING WRITING (20 Nov 2026):
+#   - once a sort had been done on the screen, "Print the handout" printed it solved: every chip in its box, the bank
+#     empty and "8 / 8 sorted" under it. The handout now prints each sort as it starts.
+#   - the last part's heading still read 9, the number "Write the model first" took when it was added; the strip says 10.
+#   - on a phone the chips and this page's own buttons were 38 to 41px to tap; they are 44.
+ALIAS['teaching-writing'] = ALIAS.get('teaching-writing', []) + [
+    ('  @media(max-width:560px){ .sort-zones, .zone-grid{grid-template-columns:1fr 1fr;} }',
+     "  @media(max-width:560px){ .sort-zones, .zone-grid{grid-template-columns:1fr 1fr;} .sort-chip, .sort-reset, .reveal-btn{min-height:44px;} }  /* a phone: a chip and this page's own buttons are 44px to tap, like the rest of Lite (they were 38 to 41px) (20 Nov 2026) */"),
+    ('  @media print{ .dictation-line{opacity:1;} .term-display, .term-def{display:none;} }',
+     '  @media print{ .dictation-line{opacity:1;} .term-display, .term-def{display:none;} .sort-chip.placed{display:inline-flex !important;} .sort-chip.selected{border-color:var(--sand-line); outline:0;} .sort-zone .dropped, .sort-progress{display:none !important;} }  /* the handout prints each sort as it starts: once sorted on the screen it printed solved, the chips gone from the bank and "8 / 8 sorted" under it (20 Nov 2026) */'),
+    ('    <span class="section-label">9 · Wrap-up: backs to the board</span>',
+     '    <span class="section-label">10 · Wrap-up: backs to the board</span>   <!-- 10, as the strip says: the heading still read 9, the number Write the model first took when it was added (20 Nov 2026) -->'),
+]
+
+
+# FOUND WALKING ELICITING AND CCQS (20 Nov 2026):
+#   - "Watch the film" opened a player with nothing in it: the film lives on the film host, not beside the page, and a
+#     rebuild on 26 Oct had put the old address back (and dropped crossOrigin from this page's player).
+#   - the five reasons of part 2, once opened on the screen, printed on the plain handout.
+#   - a closed answer card was an empty outlined box under each of the 24 Reveal answer buttons, on screen and on paper.
+#   - "Personalising" and "self-centred" (American spelling on Lite); the game's options were 36px to tap on a phone;
+#     at the very end of the page the strip marked part 8 while part 9 was on screen.
+#   - for the answers print only: a task and its answer stay on one sheet.
+ALIAS['eliciting-and-ccqs'] = ALIAS.get('eliciting-and-ccqs', []) + [
+    ('  @media print{ .game-box{display:none;} }',
+     "  @media print{ .game-box{display:none;} }\n  /* 20 Nov 2026: on a phone the game's eleven options were 36px high. Things to tap are 44px there (session.css, 12 Nov 2026), and in this game a finger landing on the option next door costs the point. */\n  @media(max-width:560px){ .tech-btn{min-height:44px;} }\n  /* 20 Nov 2026: the five reasons are the answer to part 2. Once opened on screen they printed on the plain handout; they now print only with the answers, or on a tutor's own print as before. */\n  @media print{ body:not(.with-answers):not(.tutor) #whyList, html.hub-clean #whyList{display:none !important;} }\n  /* 20 Nov 2026: a closed answer card was an empty outlined box under every Reveal answer button (24 of them), and the plain handout printed all 24 as empty boxes. It now takes no room until it is opened; on paper it shows only where its answer prints (with the answers, or on a tutor's own print). Opened, it is as it was. */\n  @media screen{ .word-card .reveal-card:not(.open){display:none;} }\n  @media print{ body:not(.with-answers):not(.tutor) .word-card .reveal-card, html.hub-clean .word-card .reveal-card{display:none;} }\n  /* 20 Nov 2026, for Print with the answers only (answers/eliciting-and-ccqs.js): a card or an answer is not cut in two by the foot of a page, so an answer stays on the sheet its task is on; and the eleven technique cards, which that print lists one under another, keep a gap between them. */\n  @media print{ body.with-answers .word-card, body.with-answers .flip-card, body.with-answers .ans-line{break-inside:avoid;} body.with-answers #techGrid.ans-show .flip-card + .flip-card{margin-top:8px;} }"),
+    ('<div class="film sd closed" data-video="elicited-dialogue.mp4" data-title="An elicited dialogue"><button type="button" class="btn teal film-btn">Watch the film</button></div>',
+     '<!-- 20 Nov 2026: the film\'s full address again. The file lives on the film host, not beside this page (22 Oct 2026); a rebuild on 26 Oct put the old address back, and Watch the film opened a player with nothing in it. -->\n<div class="film sd closed" data-video="https://films.connectlitefilms.com/input-sessions/eliciting-and-ccqs/elicited-dialogue.mp4" data-title="An elicited dialogue"><button type="button" class="btn teal film-btn">Watch the film</button></div>'),
+    ("  {name:'Personalising or giving examples', how:'Students give their own examples. A right example shows understanding.', ex:'T: What’s an example of a mammal? S: A monkey.'}",
+     "  {name:'Personalizing or giving examples', how:'Students give their own examples. A right example shows understanding.', ex:'T: What’s an example of a mammal? S: A monkey.'}   // 20 Nov 2026: Personalizing, American spelling as on the rest of Lite (it read Personalising)"),
+    ("  ['self-centred','<b>An anecdote:</b> a dinner where one guest talked only about himself all evening and asked nobody a question.','Does he think much about other people? (No, not much.) Is it a positive or a negative word? (Negative.)'],",
+     "  ['self-centered','<b>An anecdote:</b> a dinner where one guest talked only about himself all evening and asked nobody a question.','Does he think much about other people? (No, not much.) Is it a positive or a negative word? (Negative.)'],   // 20 Nov 2026: self-centered, American spelling as on the rest of Lite (it read self-centred)"),
+    ("  let cur=allSections[0]?allSections[0].id:''; allSections.forEach(s=>{ if(!s.hidden && s.getBoundingClientRect().top<=150) cur=s.id; });",
+     '  let cur=allSections[0]?allSections[0].id:\'\'; allSections.forEach(s=>{ if(!s.hidden && s.getBoundingClientRect().top<=150) cur=s.id; });\n  if(sh>0 && st>=sh-2) allSections.forEach(s=>{ if(!s.hidden) cur=s.id; });   // 20 Nov 2026: at the very end of the page the last part is the one marked. On a tall window (900px and up) the last part cannot reach the top, so pressing "9 · The blind test" left "8 · Your turn" marked.'),
+    ("      var v = document.createElement('video'); v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';",
+     "      /* 20 Nov 2026: crossOrigin is back, as on 22 Oct and as on the guided discovery page: the film host answers this site when asked this way, and the offline copy can only keep a film it was allowed to read */\n      var v = document.createElement('video'); v.crossOrigin = 'anonymous'; v.src = f.dataset.video; v.controls = true; v.autoplay = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'metadata'; v.title = f.dataset.title || 'Film';"),
 ]

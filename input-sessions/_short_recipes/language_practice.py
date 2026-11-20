@@ -71,6 +71,10 @@ BODY = r'''
     <div class="card" data-n="6">
       <div class="stage-title">Spot the mismatch <span class="badge">6 minutes</span></div>
       <p class="lead">A trainee labels their pairwork activity “free practice” because learners are talking in pairs, but every learner must complete the sentence frame “If I were you, I’d ___.” What’s the actual stage, and why does “pairs” not decide it?</p>
+      <details class="reveal">
+        <summary>Reveal answer</summary>
+        <div class="content">Semi-controlled: the sentence frame (“If I were you, I’d ___”) fixes the structure even though it’s pairwork.</div>
+      </details>
     </div>
   </section>
 
@@ -110,7 +114,9 @@ STYLE = r'''
   .opt:hover{border-color:var(--gold);}
   .scen .why{margin:8px 0 0; font-size:.88rem; line-height:1.5;}
   .scen.good .why{color:var(--teal);} .scen.bad .why{color:var(--a-red);}
-  @media print{ .reveal-card .wx{display:block;} }
+  .chips.on-paper{display:none;}   /* 20 Nov 2026: an answered scenario keeps its options in the page for the paper only (see draw() below) */
+  @media print{ .reveal-card .wx{display:block;} .chips.on-paper{display:flex;} .scen.good, .scen.bad{border-color:var(--sand-line); background:var(--paper);} }   /* 20 Nov 2026: on paper an answered scenario is the task again, its options back and no mark of right or wrong */
+  @media print{ details.reveal > summary{display:none;} }   /* 20 Nov 2026: "Reveal answer" is a word for the screen; on paper the question stands alone, and the answers print writes the answer under it */
 '''
 
 SCRIPT = r'''
@@ -156,8 +162,9 @@ function scenCards(host, list){
   function draw(){
     host.innerHTML = list.map((s, i) => {
       const p = st[i], cls = p === null ? '' : p === s[2] ? ' good' : ' bad';
-      const inner = p === null ? '<div class="chips">' + s[1].map((c, j) => '<button type="button" class="opt" data-s="' + i + ':' + j + '">' + esc(c) + '</button>').join('') + '</div>'
-        : '<p class="why">' + (p === s[2] ? '✓ ' : '✗ ') + esc(s[3]) + '</p>';
+      /* 20 Nov 2026: an answered scenario keeps its three options in the page, shown on paper only (.on-paper). They were dropped at the first pick, so "Print the handout" then printed that scenario with nothing to circle. They carry no data-s, so the first pick still locks. */
+      const chips = '<div class="chips' + (p === null ? '' : ' on-paper') + '">' + s[1].map((c, j) => '<button type="button" class="opt"' + (p === null ? ' data-s="' + i + ':' + j + '"' : '') + '>' + esc(c) + '</button>').join('') + '</div>';
+      const inner = p === null ? chips : chips + '<p class="why">' + (p === s[2] ? '✓ ' : '✗ ') + esc(s[3]) + '</p>';
       return '<div class="scen' + cls + '"><p>' + esc(s[0]) + '</p>' + inner + '</div>';
     }).join('');
   }

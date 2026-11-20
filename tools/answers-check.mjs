@@ -56,7 +56,7 @@ try {
     const vis = e => { const cs = getComputedStyle(e); return cs.display !== 'none' && cs.visibility !== 'hidden' && e.getClientRects().length > 0; };
     const count = (root, sel) => [...root.querySelectorAll(sel)].filter(vis).length;
     return [...document.querySelectorAll('section')].filter(s => s.id !== 'trainer' && !s.classList.contains('trainer-notes') && vis(s)).map(s => ({
-      id: s.id || '', head: ((s.querySelector('h2, h3') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60),
+      id: s.id || '', head: ((s.querySelector('h2, h3, .stage-title, .section-label') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60),
       answersWritten: count(s, '.ans-line'), blocksShown: count(s, '.reveal-block, .reveal-card .a, .answer-key, .ans-show'),
       buttonsLeft: count(s, 'button'), dropdownsLeft: count(s, 'select'), boxesLeft: count(s, 'input, textarea'),
       text: s.innerText.replace(/\n{3,}/g, '\n\n').trim() }));

@@ -52,6 +52,7 @@ window.SessionAnswers = (function(){
     last.appendChild(card);
     card.querySelector('#ansPrint').addEventListener('click', function(){ prepare(); window.print(); });
     window.addEventListener('afterprint', done);
+    if (window.InputLibAnswersDoor) window.InputLibAnswersDoor();   /* the same print, from the top of the page (library.js) */
   }
   return {
     register: function(fn){ fill = fn; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount(); },

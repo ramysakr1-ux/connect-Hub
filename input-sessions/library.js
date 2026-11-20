@@ -424,6 +424,28 @@ window.InputLib = (function(){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
 })();
 
+/* THE ANSWERS PRINT HAS A DOOR AT THE TOP (Ramy, 20 Nov 2026: "trainees can't see print with answers option"). The card
+   "Take the answers with you" sits at the end of a session's last part, and nothing at the top of the page said it was
+   there. Where a page has the card, the strip now carries "Print with the answers" after the other print button, in the
+   same words as the card's own button, and pressing it presses that button: one print, reached from the top or from the
+   end. On a phone the strip carries no print buttons at all, as before; the card is still there. answers.js calls
+   InputLibAnswersDoor once it has put a session's card in. */
+(function(){
+  if (window.INPUTLIB_ONLY) return;
+  var st = document.createElement('style');
+  st.textContent = 'nav.sticky-nav .print-btn.print-answers{margin-left:18px;}';
+  (document.head || document.documentElement).appendChild(st);
+  function add(){
+    var card = document.getElementById('ansPrint'); if (!card || document.querySelector('.print-answers')) return;
+    var all = document.querySelectorAll('nav.sticky-nav .print-btn'), last = all[all.length - 1]; if (!last) return;
+    var c = document.createElement('button'); c.type = 'button'; c.className = 'print-btn print-answers'; c.textContent = 'Print with the answers';
+    c.addEventListener('click', function(){ card.click(); });
+    last.parentNode.insertBefore(c, last.nextSibling);
+  }
+  window.InputLibAnswersDoor = add;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
+})();
+
 /* The offline copy (sw.js at the site root). The input sessions do not load hub-shared.js,
    which is where every other screen registers it, so a visitor who opened a session first
    never got the worker. Registered here, with the address worked out from this script. */
@@ -470,7 +492,7 @@ try {
    browser that kept the old one fetches the new. "Writing the lesson plan" carries its own card on the page and is
    not listed. */
 (function(){
-  var READY = { 'phonology-sounds': 1, 'teaching-vocabulary': 1, 'connected-speech': 1, 'word-and-sentence-stress': 1 };
+  var READY = { 'phonology-sounds': 2, 'teaching-vocabulary': 2, 'connected-speech': 2, 'word-and-sentence-stress': 2, 'language-practice-short': 2, 'teaching-writing': 2, 'eliciting-and-ccqs': 2 };   /* 2: answers.js gained the door at the top (20 Nov 2026) */
   var m = location.pathname.match(/\/input-sessions\/([^\/]+)\/(?:index\.html)?$/); if (!m) return;
   var v = READY[m[1]]; if (!v) return;
   var load = function(src, then){ var s = document.createElement('script'); s.src = src; if (then) s.onload = then; document.head.appendChild(s); };
