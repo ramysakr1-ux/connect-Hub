@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611200801">
+<link rel="stylesheet" href="hub-tokens.css?v=202611200827">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -402,6 +402,12 @@
   @media (min-width:781px){ .grid.roster.pins{grid-template-columns:minmax(0,1.5fr) minmax(0,1.3fr) 214px 236px;} }
   .roster .nm em.certok{background:var(--a-mint-wash); color:var(--a-forest);}
   .roster .nm em.certno{background:var(--box); color:var(--grey);}
+  /* Change name, with the row's status words; the name becomes a box in place (20 Nov 2026) */
+  .roster .nm .marks .rname{font-size:0.72rem; margin-left:2px; text-decoration:underline; text-underline-offset:2px;}
+  .roster .nm .rnedit{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
+  .roster .nm .rnbox{flex:1 1 100%; min-width:0; font:inherit; font-size:0.9rem; padding:7px 10px; border:1px solid var(--sand-line); border-radius:8px; background:var(--field); color:inherit;}
+  .roster .nm .rnbox:focus{outline:2px solid var(--teal); outline-offset:1px; background:var(--field-focus);}
+  .roster .nm .rnnote{display:block; margin:4px 0 2px; font-size:0.74rem; font-weight:400; color:var(--grey); line-height:1.4;}
   .certline .linkbtn{margin-left:6px;}
   .rset{margin:20px 4px 2px; font-size:0.7rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gold-deep);}
   /* THE ASSIGNMENT AND OBSERVATION CARDS (27 Oct 2026) */
@@ -697,7 +703,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611200801">
+<link rel="stylesheet" href="hub-house.css?v=202611200827">
 </head>
 <body>
 <div class="board">
@@ -1307,20 +1313,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611200801"></script>
-<script src="hub-store.js?v=202611200801"></script>
-<script src="hub-xlsx.js?v=202611200801"></script>
-<script src="hub-say.js?v=202611200801"></script>
-<script src="agreement-defaults.js?v=202611200801"></script>
-<script src="observation-defaults.js?v=202611200801"></script>
-<script src="hub-shared.js?v=202611200801"></script>
+<script src="assignment-defaults.js?v=202611200827"></script>
+<script src="hub-store.js?v=202611200827"></script>
+<script src="hub-xlsx.js?v=202611200827"></script>
+<script src="hub-say.js?v=202611200827"></script>
+<script src="agreement-defaults.js?v=202611200827"></script>
+<script src="observation-defaults.js?v=202611200827"></script>
+<script src="hub-shared.js?v=202611200827"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611200801"></script>
-<script src="hub-due.js?v=202611200801"></script>
-<script src="hub-sync.js?v=202611200801"></script>
-<script src="hub-notebook.js?v=202611200801"></script>
-<script src="hub-hand.js?v=202611200801"></script>
-<script src="hub-ink.js?v=202611200801"></script>
+<script src="hub-rotation.js?v=202611200827"></script>
+<script src="hub-due.js?v=202611200827"></script>
+<script src="hub-sync.js?v=202611200827"></script>
+<script src="hub-notebook.js?v=202611200827"></script>
+<script src="hub-hand.js?v=202611200827"></script>
+<script src="hub-ink.js?v=202611200827"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1364,7 +1370,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611200801'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611200827'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -2729,6 +2735,16 @@ async function renderAssessorBlock(rotated){
    "there seems to be a lag"). Now the ops that change the roster answer WITH
    it, and everything else redraws from what is already here. */
 let ROSTER = null;
+/* A TUTOR CHANGES A TRAINEE'S NAME (Ramy, 20 Nov 2026, before the names went to Cambridge: "let's make that small
+   change in the roster for the name edit, just in case"). The store has taken a name on renameTrainee since 3 Nov, and
+   writes the change into the certificate name with its date and "by a tutor"; a trainee who has confirmed their name
+   is told to ask their tutor; and no page had anywhere to do it. Change name sits with the row's status words; the
+   name becomes a box in place, with Save and Cancel. The row being changed and what has been typed are kept here, so a
+   redraw from the store does not close the box or lose the typing. */
+let RENAMING = null, RENAME_DRAFT = null;
+function renameBox(t){
+  return `<span class="rnedit"><input type="text" class="rnbox" id="renameBox" value="${esc(RENAME_DRAFT != null ? RENAME_DRAFT : (t.name || ''))}" maxlength="80" autocomplete="off" spellcheck="false" aria-label="The name for ${esc(t.name)}"><button type="button" class="btn small primary" data-rename-save="${esc(t.token)}">Save</button><button type="button" class="btn quiet small" data-rename-cancel>Cancel</button></span><span class="rnnote">The name as they want it on the certificate. It changes everywhere in Lite.</span>`;
+}
 /* LINK PINs (v87, 15 Oct 2026). Each person chooses their own the first time
    they open their link; admin never sees it. Admin switches PINs on for the
    course, sees which links have one, and gives a trainee who lost theirs a
@@ -2942,7 +2958,7 @@ async function renderStoreRoster(next){
       ${trainees.length ? `<p class="rnote">Each trainee’s personal link is theirs alone. Send it and Lite emails it to them from lite@ in the center’s name, with the PIN and what to do before day one; the email asks them not to reply.${(() => { const n = trainees.filter(t => t.email && !t.invited).length; return n ? ` <button class="btn quiet small" type="button" id="sendLinksAll">Send the links to ${n} trainee${n === 1 ? '' : 's'}</button>` : ''; })()}</p>${trainees.length > 1 ? `<p class="rnote rhow"><b>To move a trainee</b>, drag them onto the trainee to swap places with, in either group, or onto a set’s heading to take a free place there. You can also click their name, then click where they go. <button type="button" class="linkbtn" id="mixOpen">Or let Lite mix the groups</button></p><div id="mixHost" hidden></div>` : ''}
       <div class="grid roster ghead${PINS.on ? ' pins' : ''}"><div>Trainee</div><div class="col-email">Email</div><div class="col-link">Personal link</div><div></div></div>` : ''}
       ${trainees.length ? rosterSets(trainees).map(sec => `${sec.head ? `<div class="rset"${sec.group != null && sec.set >= 0 ? ` data-rgroup="${esc(sec.group)}" data-rset="${sec.set}"` : ''}>${esc(sec.head)}</div>` : ''}${sec.empty ? `<div class="rset rempty" data-rgroup="${esc(sec.group)}" data-rset="${sec.set}">Nobody in this set yet. Drag a trainee here, or click a trainee and then this box.</div>` : ''}${sec.people.map(t=>`<div class="grid roster grow${PINS.on ? ' pins' : ''}" data-tok="${esc(t.token)}" data-rgroup="${esc(String(t.group || '1'))}">
-        <div class="name">${t.letter ? `<span class="grip" title="Drag onto another trainee to swap places, or onto a set to move there. Or click, then click." aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${esc(t.name)}<span class="marks">${(PINS.on && opened(t)) ? `<em class="certok" title="They opened their link and chose a PIN">Opened</em>` : t.invited ? (PINS.on ? `<em class="certno" title="Lite sent their link on ${esc(sentDay(t.invited))}. They have not chosen a PIN yet.">Not opened yet</em>` : '') : (!ANY_SENT || opened(t)) ? '' : `<em class="certno" title="${t.email ? 'Lite has not emailed this trainee their link. Press Send it.' : 'Lite has not emailed this trainee their link. Add their email, then press Send it.'}">Link not sent</em>`}${t.certName && t.certName.at ? `<em class="certok" title="Confirmed ${esc(String(t.certName.at).slice(0, 10))}${t.certName.by === 'tutor' ? ' by a tutor' : ' by the trainee'}">Name confirmed</em>` : `<em class="certno" title="The trainee confirms it when they sign the agreement">Name not confirmed</em>`}</span>${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
+        <div class="name">${t.letter ? `<span class="grip" title="Drag onto another trainee to swap places, or onto a set to move there. Or click, then click." aria-label="Move ${esc(t.name)}"><svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true"><circle cx="2.5" cy="3" r="1.4"/><circle cx="7.5" cy="3" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13" r="1.4"/><circle cx="7.5" cy="13" r="1.4"/></svg></span><span class="avi avi-cand" aria-hidden="true">${esc(t.letter)}</span>` : ''}<span class="nm">${RENAMING === t.token ? renameBox(t) : esc(t.name)}<span class="marks">${(PINS.on && opened(t)) ? `<em class="certok" title="They opened their link and chose a PIN">Opened</em>` : t.invited ? (PINS.on ? `<em class="certno" title="Lite sent their link on ${esc(sentDay(t.invited))}. They have not chosen a PIN yet.">Not opened yet</em>` : '') : (!ANY_SENT || opened(t)) ? '' : `<em class="certno" title="${t.email ? 'Lite has not emailed this trainee their link. Press Send it.' : 'Lite has not emailed this trainee their link. Add their email, then press Send it.'}">Link not sent</em>`}${t.certName && t.certName.at ? `<em class="certok" title="Confirmed ${esc(String(t.certName.at).slice(0, 10))}${t.certName.by === 'tutor' ? ' by a tutor' : ' by the trainee'}">Name confirmed</em>` : `<em class="certno" title="The trainee confirms it when they sign the agreement">Name not confirmed</em>`}${RENAMING === t.token ? '' : `<button type="button" class="linkbtn rname" data-rename="${esc(t.token)}" aria-label="Change ${esc(t.name)}’s name">Change name</button>`}</span>${SHOW_URLS ? `<code class="addr">${esc(S.inviteFor('trainee', t.token))}</code>` : ''}</span></div>
         <div class="col-email"><input type="email" class="temail" value="${esc(t.email || '')}" placeholder="Add their email" data-email-for="${esc(t.token)}" title="The trainee’s email. Saved when you leave the box."></div>
         <div class="acts col-link">
           <button class="pillbtn" type="button" data-copy="${esc(S.inviteFor('trainee', t.token))}" aria-label="Copy ${esc(t.name)}’s link">Copy link</button>
@@ -3039,7 +3055,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611200801'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611200827'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();
@@ -3250,7 +3266,7 @@ async function setPinSwitch(on){
   }
   function drop(){ pick = null; paintPick(); }
   host.addEventListener('click', e => {
-    if (e.target.closest('code, a, button:not(.grip), input, select, textarea, label')) return;
+    if (e.target.closest('code, a, button:not(.grip), input, select, textarea, label, .rnedit, .rnnote')) return;
     const head = pick && e.target.closest('.rset[data-rgroup]');
     if (head) { const p = pick; drop(); moveTrainee(p.tok, { el: head, group: head.dataset.rgroup, set: +head.dataset.rset }); return; }
     const cell = e.target.closest('.grid.roster.grow[data-tok] .name'); if (!cell || !cell.querySelector('.grip')) return;
@@ -3288,7 +3304,7 @@ async function setPinSwitch(on){
   }
   host.addEventListener('pointerdown', e => {
     if (e.pointerType === 'touch' || e.button !== 0) return;
-    if (e.target.closest('code, a, button:not(.grip), input, select, textarea, label')) return;
+    if (e.target.closest('code, a, button:not(.grip), input, select, textarea, label, .rnedit, .rnnote')) return;
     const row = e.target.closest('.grid.roster.grow[data-tok]'); if (!row || !row.querySelector('.name .grip')) return;
     DR = { tok: row.dataset.tok, row, name: ((list().find(t => t.token === row.dataset.tok) || {}).name || '').trim(), x0: e.clientX, y0: e.clientY, moved: false };
     e.preventDefault();   // no text selection while dragging
@@ -3700,8 +3716,37 @@ document.getElementById('storeRoster').addEventListener('click', async e => {
   FRESH_PINS = PINS; renderStoreRoster(ROSTER);   /* the PINs have not changed: redraw at once */
   if (failed.length) alert('Sent to ' + sent + '. Not sent to ' + failed.join(', ') + ': use Send it on their row.');
 });
+/* CHANGE NAME (20 Nov 2026). Save asks once, because this is the name that goes to Cambridge; then the store changes
+   the one name and answers with the roster. A name has to start with a letter: the roster is a sheet, and a cell that
+   starts with = is a formula. Nothing is sent when the name has not changed. */
+async function saveRename(tok){
+  const box = document.getElementById('renameBox'); if (!box || !tok || ROSTER_BUSY) return;
+  const list = Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {});
+  const was = String(((list.find(t => t.token === tok) || {}).name) || box.defaultValue || '').trim();
+  const name = box.value.replace(/\s+/g, ' ').trim();
+  const bad = !name ? 'Type the name first.' : !/^\p{L}/u.test(name) ? 'A name starts with a letter.' : '';
+  if (bad) { box.setCustomValidity(bad); box.reportValidity(); return; }
+  box.setCustomValidity('');
+  if (name === was) { RENAMING = null; RENAME_DRAFT = null; renderStoreRoster(ROSTER); return; }
+  if (!(await confirmModal(`Change ${was} to ${name}? This is the name that goes to Cambridge for the certificate, and it changes everywhere in Lite.`, 'Change name'))) return;
+  ROSTER_BUSY = true;
+  try { const res = await window.HubStore.renameTrainee(tok, name, null, null); RENAMING = null; RENAME_DRAFT = null; renderStoreRoster(res.trainees); }
+  catch (err) { alert(err.message); }
+  ROSTER_BUSY = false;
+}
+document.getElementById('storeRoster').addEventListener('input', e => { if (e.target.id === 'renameBox') { RENAME_DRAFT = e.target.value; e.target.setCustomValidity(''); } });
+document.getElementById('storeRoster').addEventListener('keydown', e => {
+  if (e.target.id !== 'renameBox') return;
+  if (e.key === 'Enter') { e.preventDefault(); saveRename(RENAMING); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); RENAMING = null; RENAME_DRAFT = null; renderStoreRoster(ROSTER); }
+});
 document.getElementById('storeRoster').addEventListener('click', async e=>{
   const S = window.HubStore;
+  const rn = e.target.closest('[data-rename]');
+  if (rn){ RENAMING = rn.dataset.rename; RENAME_DRAFT = null; await renderStoreRoster(ROSTER); const b = document.getElementById('renameBox'); if (b) { b.focus(); b.select(); } return; }
+  if (e.target.closest('[data-rename-cancel]')){ RENAMING = null; RENAME_DRAFT = null; renderStoreRoster(ROSTER); return; }
+  const rs = e.target.closest('[data-rename-save]');
+  if (rs){ await saveRename(rs.dataset.renameSave); return; }
   const l = e.target.closest('#copyRosterList');
   if (l){ const list = Array.isArray(ROSTER) ? ROSTER : Object.values((ROSTER && ROSTER.trainees) || {}); await hubCopyButton(l, rosterList(list)); return; }
   const an = e.target.closest('#copyAppianNames');
