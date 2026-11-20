@@ -2827,6 +2827,48 @@ window.hubHeadHTML = function (text, heads) {
     STRIP.classList.toggle('full', full);
     place();
   }
+  /* A TUTOR'S WORD, TRANSCRIBED (Ramy, 20 Nov 2026: "if you open a slash and then you start typing inside ... it should just
+     automatically be transcribed phonetically for the trainers. But for the trainees, then it will open the chart and then make
+     some suggestions as it is now"). For a tutor, closing the slash after plain words (/water/) puts the British transcription in
+     their place (/ˈwɔːtə/), from library/ipa-en.json (Britfone, MIT; see library/ipa-en-LICENSE.txt). A word the dictionary does
+     not know leaves the whole thing as typed. Cmd+Z puts the words back. Trainees keep the chart and the suggestions. */
+  var DICT = null, DICT_ASKED = false;
+  var HERE_IPA = (function(){ var s = document.currentScript && document.currentScript.src; return s ? s.replace(/[?#].*$/, '').replace(/[^\/]*$/, '') : ''; })();
+  function tutor(){ try { return !!(window.HubStore && HubStore.isTutor && HubStore.isTutor()); } catch (e) { return false; } }
+  function wantDict(){ if (DICT_ASKED || !tutor()) return; DICT_ASKED = true;
+    fetch(HERE_IPA + 'library/ipa-en.json').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){ if (d) DICT = d; }).catch(function(){}); }
+  var CONTR = { "'ve": 'v', "'m": 'm', "'s": 'z', "'ll": 'l', "'d": 'd', "'re": 'ə' };
+  function sayWord(w){
+    w = String(w || '').toLowerCase().replace(/[’‘]/g, "'").replace(/^[^a-z']+|[^a-z']+$/g, '');
+    if (!w) return null; if (DICT[w]) return DICT[w];
+    var m = w.match(/^(.+)('ve|'m|'s|'ll|'d|'re)$/); if (m && DICT[m[1]]) return DICT[m[1]] + CONTR[m[2]];
+    return null;
+  }
+  function transcribe(){
+    if (!DICT || !target) return;
+    var line = before(); if (line.slice(-1) !== '/') return;
+    var prior = line.slice(0, -1), openAt = -1, open = false;
+    for (var i = 0; i < prior.length; i++) { if (prior[i] !== '/') continue; if (open) open = false; else if (i === 0 || /[\s(\[“"‘:;,=]/.test(prior[i - 1])) { open = true; openAt = i; } }
+    if (!open) return;
+    var inner = prior.slice(openAt + 1);
+    if (!inner.trim() || /\s$/.test(inner) || /[^\x00-\x7f’‘]/.test(inner)) return;   /* already in symbols, or nothing to say */
+    var words = inner.trim().split(/\s+/), said = words.map(sayWord);
+    if (said.some(function(x){ return !x; })) return;
+    var text = said.join(' ');
+    if (isBox(target)) {
+      var end = target.selectionStart - 1, start = end - inner.length;
+      target.setSelectionRange(start, end);
+      var ok = false; try { ok = document.execCommand('insertText', false, text); } catch (x) {}
+      if (!ok) { target.value = target.value.slice(0, start) + text + target.value.slice(end); target.dispatchEvent(new Event('input', { bubbles: true })); }
+      var at = start + text.length + 1; try { target.setSelectionRange(at, at); } catch (x) {}
+    } else {
+      var sel = window.getSelection(); if (!sel.rangeCount) return;
+      try { sel.modify('move', 'backward', 'character'); for (var k = 0; k < inner.length; k++) sel.modify('extend', 'backward', 'character'); } catch (x) { return; }
+      try { document.execCommand('insertText', false, text); } catch (x) { return; }
+      try { sel.modify('move', 'forward', 'character'); } catch (x) {}
+    }
+    shut = true; paint();
+  }
   function leave(){ if (target) target.classList.remove('ipa-open'); target = null; byKey = false; all = false; shut = false; if (STRIP) STRIP.hidden = true; if (KEY) KEY.hidden = true; if (RO) RO.disconnect(); }
   function bar(scope){
     if (STRIP) return;
@@ -2846,10 +2888,10 @@ window.hubHeadHTML = function (text, heads) {
     document.addEventListener('focusin', function(e){
       var t = e.target; if (!t.matches || !t.matches(SCOPE) || t.disabled || t.readOnly) return;
       if (target && target !== t) leave();
-      target = t; KEY.hidden = false; if (RO) { RO.disconnect(); RO.observe(t); } paint();
+      target = t; KEY.hidden = false; wantDict(); if (RO) { RO.disconnect(); RO.observe(t); } paint();
     });
     document.addEventListener('focusout', function(){ setTimeout(function(){ var a = document.activeElement; if (!(a && a.matches && a.matches(SCOPE))) leave(); }, 150); });
-    document.addEventListener('input', function(e){ if (e.target === target) { all = false; paint(); } });
+    document.addEventListener('input', function(e){ if (e.target === target) { all = false; if (DICT && e.inputType === 'insertText' && e.data === '/' && tutor()) { transcribe(); return; } paint(); } });
     document.addEventListener('selectionchange', function(){ if (target && document.activeElement === target) paint(); });
     document.addEventListener('keydown', function(e){
       if (!target || e.target !== target || STRIP.hidden) return;
