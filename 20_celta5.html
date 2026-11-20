@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611200900">
+<link rel="stylesheet" href="hub-tokens.css?v=202611200923">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -89,7 +89,7 @@
   .s1pretty li{margin:0 0 8px; padding-left:2px;}
   .s1pretty li:last-child{margin-bottom:0;}
   .s1pretty .c5tag{display:inline-block; margin-left:6px; padding:0 7px; border-radius:999px; background:var(--paper); border:1px solid var(--sand-line); color:var(--grey); font-size:0.72rem; font-weight:700; line-height:1.6; vertical-align:1px; white-space:nowrap;}
-  #s1 textarea.s1write, #s3 textarea.s1write{font-size:0.92rem; line-height:1.75; padding:12px 14px;}
+  #s1 textarea.s1write, #s2 textarea.s1write, #s3 textarea.s1write{font-size:0.92rem; line-height:1.75; padding:12px 14px;}
   /* Stage 3's summary, read: PLANNING and TEACHING head their halves, and each list has its own line above it */
   .s1pretty p.s3h{margin:16px 0 6px; font-size:0.74rem; font-weight:700; letter-spacing:.09em; color:var(--grey);}
   .s1pretty p.s3sub{margin:10px 0 2px; font-weight:700;}
@@ -236,7 +236,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611200900">
+<link rel="stylesheet" href="hub-house.css?v=202611200923">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -249,20 +249,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611200900"></script>
-<script src="hub-hand.js?v=202611200900"></script>
-<script src="hub-ink.js?v=202611200900"></script>
-<script src="assignment-defaults.js?v=202611200900"></script>
-<script src="celta5-text.js?v=202611200900"></script>
-<script src="celta5-appendix.js?v=202611200900"></script>
-<script src="celta5-criteria.js?v=202611200900"></script>
-<script src="hub-tracker.js?v=202611200900"></script>
-<script src="observation-defaults.js?v=202611200900"></script>
-<script src="hub-shared.js?v=202611200900"></script>
-<script src="hub-store.js?v=202611200900"></script>
-<script src="hub-say.js?v=202611200900"></script>
-<script src="hub-sync.js?v=202611200900"></script>
-<script src="hub-notebook.js?v=202611200900"></script>
+<script src="celta5-pdf.js?v=202611200923"></script>
+<script src="hub-hand.js?v=202611200923"></script>
+<script src="hub-ink.js?v=202611200923"></script>
+<script src="assignment-defaults.js?v=202611200923"></script>
+<script src="celta5-text.js?v=202611200923"></script>
+<script src="celta5-appendix.js?v=202611200923"></script>
+<script src="celta5-criteria.js?v=202611200923"></script>
+<script src="hub-tracker.js?v=202611200923"></script>
+<script src="observation-defaults.js?v=202611200923"></script>
+<script src="hub-shared.js?v=202611200923"></script>
+<script src="hub-store.js?v=202611200923"></script>
+<script src="hub-say.js?v=202611200923"></script>
+<script src="hub-sync.js?v=202611200923"></script>
+<script src="hub-notebook.js?v=202611200923"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -319,8 +319,11 @@ const pill = (t, cls) => `<span class="st ${cls||''}">${t}</span>`;
 /* The hours taught at each stage, as a starting figure. Cambridge asks for six
    hours of assessed teaching across the course, so with eight teaching
    practices each is forty-five minutes: Stage 1 comes after TP2 (1.5), Stage 2
-   at the half-way point (3), Stage 3 at the end (6). Ramy, 30 Sep 2026: "that's
+   at the half-way point (3), Stage 3 after TP6 (4.5). Ramy, 30 Sep 2026: "that's
    the standard" -- and standard means a figure already in the box, not a rule.
+   Stage 3's figure was 6, the whole course, until 20 Nov 2026: his Stage 3 sheet is
+   written with "1.5 hours of teaching left", and he said "6 TP is 4.5 hours". It
+   is the lesson Stage 3's summary is written after (s3Evidence's last).
    The tutor can type anything over it, and a centre whose course is built
    differently gets its own arithmetic from the number of teaching practices it
    actually runs. Nothing is written by looking: the figure goes into the record
@@ -329,7 +332,9 @@ const ASSESSED_HOURS = 6;
 function standardHours(which) {
   const tps = Math.max(2, parseInt(SETTINGS.tpCount, 10) || 8);
   /* Stage 1 closes the first third (10.2), the tracker's own band: after TP2 */
-  const done = which === 's1' ? Math.max(1, Math.floor(tps / 3)) : which === 's3' ? tps : Math.round(tps / 2);
+  const s1End = Math.max(1, Math.floor(tps / 3));
+  const s3At = Math.max(Math.floor(tps / 2) + 1, s1End + 1, tps - Math.ceil(tps / 3) + 1);   // the first lesson of the final third: TP6 of eight
+  const done = which === 's1' ? s1End : which === 's3' ? s3At : Math.round(tps / 2);
   const h = ASSESSED_HOURS * done / tps;
   return String(Math.round(h * 100) / 100);
 }
@@ -475,51 +480,86 @@ function s3Opening(ev){
     + (ev.left > 0 ? 'Since there are just ' + time + ' of teaching left on the course, this is a summary of your performance that should help you understand better what your prospects are and what you need to work on in the final ' + (ev.left === 1 ? 'TP' : ev.left + ' TPs') + '.'
                    : 'This is a summary of your performance in teaching practice.');
 }
-function s3Build(ev, pts){
-  const sec = (head, list) => head + ((list || []).length ? '\n' + s1Bullets(list) : '');
-  return s3Opening(ev)
-    + '\n\nPLANNING\n' + sec('Strengths in planning:', pts.planS) + '\n' + sec('Action points in planning:', pts.planA)
-    + '\n\nTEACHING\n' + sec('Strengths in teaching:', pts.teachS) + '\n' + sec('Action points in teaching:', pts.teachA);
+/* STAGE 2'S SUMMARY FILLS ITSELF IN TOO (Ramy, 20 Nov 2026: "stage two, summary ... basing it on my voice"; "go
+   over and through quite a few of them ... and then choose the best ones"). Forty of his CELTA 5 booklets were read,
+   2020 to 2026, names masked: from 2021 to 2025 his Stage 2 was three blocks (Strengths and Action Points as bullets
+   that open with the code and its label, then an Overall Comment in a paragraph: "You have shown ... progress over
+   the first stage of the course, NAME. ... For the next stage of the course, ... Best of luck!"); on his last two
+   courses, C/17 and C/18, all seven he signed open "Well done on completing TP3 and TP4, NAME. This is a short summary
+   of how things stand at the midpoint of the course" and then run PLANNING and TEACHING, each with its strengths and
+   its action points and a code at the end of each point. That last shape is the one Stage 1 and Stage 3 already have
+   here, so it is the one used: his opening sentence from those seven, with a colon where his had a dash, and the points
+   from the lessons between Stage 1 and the halfway point (TP3 and TP4 of eight). The closing paragraph he writes to
+   each trainee by name is left to him.
+   Like Stage 3's, the text is shown in the box and joins the record only when the tutor writes in it or returns the
+   stage: an assessor's link reads a stage a tutor has not returned, and a draft nobody chose to keep should not be there. */
+function s2Evidence(){
+  const T = window.HubTracker, tr = who && who.tr;
+  if (!T || !tr) return null;
+  const total = Math.max(2, parseInt(SETTINGS.tpCount, 10) || 8);
+  const from = T.stageBands(total).s1End + 1, end = Math.max(from, T.secondHalfFrom(total) - 1);
+  const hist = T.tpHistory(tr), tps = [];
+  for (let n = from; n <= end; n++) if (hist[n]) tps.push(n);
+  return { from, end, total, left: total - end, tps, hist, ready: tps.length === end - from + 1 };
 }
-let S3_RAW = null, S3_NEW = null, S3_WORDS = 'idle';   // the summary as the feedback worded it; the same in fresh words; idle | asking | done | failed
-function s3Prefill(){
-  const ev = s3Evidence(); if (!ev || !ev.ready) return '';
-  if (!S3_RAW) S3_RAW = s3Build(ev, s3Points(ev));
-  return S3_NEW || S3_RAW;
+function s2Opening(ev){
+  const first = String((who && who.name) || '').trim().split(/\s+/)[0];
+  const tps = ev.tps.map(n => 'TP' + n);
+  const done = tps.length > 1 ? tps.slice(0, -1).join(', ') + ' and ' + tps[tps.length - 1] : tps[0];
+  return 'Well done on completing ' + done + (first ? ', ' + first : '') + '. This is a short summary of how things stand at the midpoint of the course: what is consistently working, what has improved, and what to keep your attention on going into the next stage.';
 }
-/* after a render that showed the summary: ask the store once for the same points in new words. The answer goes into the
-   box where it stands, and only if the tutor has not written in it: the page is not drawn again, so nobody loses their place. */
-async function s3Reword(){
-  if (S3_WORDS !== 'idle' || !S3_RAW || !IS_TUTOR) return;
-  const s3 = TT.stage3 || {};
-  if (s3.returnedAt || String(s3.summary || '').trim()) return;
-  const ev = s3Evidence(); if (!ev || !ev.ready) return;
-  S3_WORDS = 'asking';
-  try {
-    const pts = s3Points(ev), flat = JSON.stringify(pts);
-    const cacheKey = 'chub:s3words:' + (who.token || '') + ':' + flat.length + ':' + flat.split('').reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0);
-    let r = null; try { r = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) {}
-    if (!r) {
-      const ask = (strengths, actions) => {
-        if (!strengths.length && !actions.length) return Promise.resolve({ strengths: [], actions: [] });
-        const body = { op: 'stage1Words', strengths, actions };
-        if (HubStore.token && HubStore.token()) body.token = HubStore.token();
-        return HubStore.call(body, 60000);
-      };
-      const [p, t] = await Promise.all([ask(pts.planS, pts.planA), ask(pts.teachS, pts.teachA)]);
-      if (!p || !t || !Array.isArray(p.strengths) || !Array.isArray(p.actions) || !Array.isArray(t.strengths) || !Array.isArray(t.actions)) throw new Error('no words');
-      r = { planS: p.strengths, planA: p.actions, teachS: t.strengths, teachA: t.actions };
-      try { localStorage.setItem(cacheKey, JSON.stringify(r)); } catch (e) {}
-    }
-    if (!['planS', 'planA', 'teachS', 'teachA'].some(k => Array.isArray(r[k]) && r[k].length)) throw new Error('no words');
-    /* a half that had points and came back with none keeps the feedback's own words */
-    ['planS', 'planA', 'teachS', 'teachA'].forEach(k => { if (!(Array.isArray(r[k]) && r[k].length) && pts[k].length) r[k] = pts[k]; });
-    const was = S3_NEW || S3_RAW; S3_NEW = s3Build(ev, r); S3_WORDS = 'done';
-    const ta = document.querySelector('#s3 textarea[data-k="summary"]');
-    if (ta && ta.value === was && !String((TT.stage3 || {}).summary || '').trim()) { ta.value = S3_NEW; ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px'; }
-  } catch (e) { S3_WORDS = 'failed'; }
+/* ONE MACHINE FOR BOTH SUMMARIES. raw is the summary as the feedback worded it, neu the same in fresh words; words is
+   idle | asking | done | failed. prefill is what the empty box shows. reword asks the store once for the same points
+   in new words; the answer goes into the box where it stands, and only if the tutor has not written in it: the page
+   is not drawn again, so nobody loses their place. */
+function stageFill(cfg){
+  const S = { raw: null, neu: null, words: 'idle' };
+  const build = (ev, pts) => {
+    const sec = (head, list) => head + ((list || []).length ? '\n' + s1Bullets(list) : '');
+    return cfg.opening(ev)
+      + '\n\nPLANNING\n' + sec('Strengths in planning:', pts.planS) + '\n' + sec('Action points in planning:', pts.planA)
+      + '\n\nTEACHING\n' + sec('Strengths in teaching:', pts.teachS) + '\n' + sec('Action points in teaching:', pts.teachA);
+  };
+  const kept = () => String((TT[cfg.key] || {}).summary || '').trim();
+  S.prefill = () => {
+    const ev = cfg.evidence(); if (!ev || !ev.ready) return '';
+    if (!S.raw) S.raw = build(ev, s3Points(ev));
+    return S.neu || S.raw;
+  };
+  S.reword = async () => {
+    if (S.words !== 'idle' || !S.raw || !IS_TUTOR) return;
+    if ((TT[cfg.key] || {}).returnedAt || kept()) return;
+    const ev = cfg.evidence(); if (!ev || !ev.ready) return;
+    S.words = 'asking';
+    try {
+      const pts = s3Points(ev), flat = JSON.stringify(pts);
+      const cacheKey = cfg.cache + (who.token || '') + ':' + flat.length + ':' + flat.split('').reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0);
+      let r = null; try { r = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) {}
+      if (!r) {
+        const ask = (strengths, actions) => {
+          if (!strengths.length && !actions.length) return Promise.resolve({ strengths: [], actions: [] });
+          const body = { op: 'stage1Words', strengths, actions };
+          if (HubStore.token && HubStore.token()) body.token = HubStore.token();
+          return HubStore.call(body, 60000);
+        };
+        const [p, t] = await Promise.all([ask(pts.planS, pts.planA), ask(pts.teachS, pts.teachA)]);
+        if (!p || !t || !Array.isArray(p.strengths) || !Array.isArray(p.actions) || !Array.isArray(t.strengths) || !Array.isArray(t.actions)) throw new Error('no words');
+        r = { planS: p.strengths, planA: p.actions, teachS: t.strengths, teachA: t.actions };
+        try { localStorage.setItem(cacheKey, JSON.stringify(r)); } catch (e) {}
+      }
+      if (!['planS', 'planA', 'teachS', 'teachA'].some(k => Array.isArray(r[k]) && r[k].length)) throw new Error('no words');
+      /* a half that had points and came back with none keeps the feedback's own words */
+      ['planS', 'planA', 'teachS', 'teachA'].forEach(k => { if (!(Array.isArray(r[k]) && r[k].length) && pts[k].length) r[k] = pts[k]; });
+      const was = S.neu || S.raw; S.neu = build(ev, r); S.words = 'done';
+      const ta = document.querySelector(cfg.box);
+      if (ta && ta.value === was && !kept()) { ta.value = S.neu; ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px'; }
+    } catch (e) { S.words = 'failed'; }
+  };
+  return S;
 }
-/* Stage 3's summary, read: Stage 1's layout, with PLANNING and TEACHING as headings and the line above each list in bold */
+const S2 = stageFill({ key: 'stage2', box: '#s2 textarea[data-k="summary"]', cache: 'chub:s2words:', evidence: s2Evidence, opening: s2Opening });
+const S3 = stageFill({ key: 'stage3', box: '#s3 textarea[data-k="summary"]', cache: 'chub:s3words:', evidence: s3Evidence, opening: s3Opening });
+/* Stage 2's and Stage 3's summary, read: Stage 1's layout, with PLANNING and TEACHING as headings and the line above each list in bold */
 function s3Pretty(v){
   return s1Pretty(v).replace(/<p>([A-Z][A-Z ]{2,40})<\/p>/g, '<p class="s3h">$1</p>').replace(/<p>([^<]{2,60}:)<\/p>/g, '<p class="s3sub">$1</p>');
 }
@@ -549,10 +589,10 @@ const field = (obj, key, label, opts) => {
   if (opts.o === 's1' && opts.mine && !TT.stage1 && Object.keys(obj).length) TT.stage1 = obj;
   let v = obj[key] || '';
   const mine = opts.mine;
-  /* Stage 3's summary is shown filled in from the lessons since halfway; the record takes it only when the tutor writes
-     in the box or returns the stage (STAGE 3 FILLS ITSELF IN, above) */
-  const s3sum = opts.o === 's3' && key === 'summary';
-  if (s3sum && mine && !opts.locked && !v) v = s3Prefill();
+  /* Stage 2's and Stage 3's summaries are shown filled in from their lessons; the record takes one only when the tutor
+     writes in the box or returns the stage (STAGE 3 FILLS ITSELF IN and STAGE 2'S SUMMARY FILLS ITSELF IN TOO, above) */
+  const s3sum = (opts.o === 's3' || opts.o === 's2t') && key === 'summary';   // either stage's summary
+  if (s3sum && mine && !opts.locked && !v) v = (opts.o === 's3' ? S3 : S2).prefill();
   const pretty = s3sum ? !(mine && opts.locked && !v) : (opts.o === 's1' && (key === 'strengths' || key === 'actionPlan'));
   if (pretty && v && (!mine || opts.locked)) return `<label class="f">${label}</label><div class="ro s1pretty">${s3sum ? s3Pretty(v) : s1Pretty(v)}</div>`;
   /* the tutor writes in one steady box: no laid-out copy that swaps for the box when pressed (Ramy, 19 Nov 2026: "as soon
@@ -1122,9 +1162,10 @@ const save = o => (isMineObj(o) && /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o)) ? sav
 function bind(){
   const app = $('app');
   if (S1_RAW && S1_WORDS === 'idle') s1Reword();
-  if (S3_RAW && S3_WORDS === 'idle') s3Reword();
-  /* Stage 1's boxes open to their whole text, filled in or not; so does Stage 3's summary */
-  app.querySelectorAll('#s1 textarea, #s3 textarea.s1write').forEach(t => { const fit = () => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 4) + 'px'; }; fit(); t.addEventListener('input', fit); });
+  if (S2.raw && S2.words === 'idle') S2.reword();
+  if (S3.raw && S3.words === 'idle') S3.reword();
+  /* Stage 1's boxes open to their whole text, filled in or not; so do Stage 2's and Stage 3's summaries */
+  app.querySelectorAll('#s1 textarea, #s2 textarea.s1write, #s3 textarea.s1write').forEach(t => { const fit = () => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 4) + 'px'; }; fit(); t.addEventListener('input', fit); });
   /* a Stage 1 box shows its text laid out; press it to write in it, and it is laid out again when you leave it */
   app.querySelectorAll('#s1 [data-s1view]').forEach(view => {
     const ta = view.nextElementSibling; if (!ta || ta.tagName !== 'TEXTAREA') return;
@@ -1217,9 +1258,9 @@ function bind(){
       : await window.hubInk.confirm({ askName: true, name: tn, title: 'Sign and return ' + stage.replace('stage', 'Stage ') });
     if (!got || !got.name) return;
     const name = got.name, ink = got.ink;
-    /* a Stage 3 summary still as it was shown, never typed in, joins the record as it is returned */
-    if (stage === 'stage3') { const sum = app.querySelector('#s3 textarea[data-k="summary"]');
-      if (sum && sum.value.trim() && !String((TT.stage3 || {}).summary || '').trim()) { TT.stage3 = TT.stage3 || {}; TT.stage3.summary = sum.value; } }
+    /* a Stage 2 or Stage 3 summary still as it was shown, never typed in, joins the record as it is returned */
+    if (stage === 'stage2' || stage === 'stage3') { const sum = app.querySelector((stage === 'stage2' ? '#s2' : '#s3') + ' textarea[data-k="summary"]');
+      if (sum && sum.value.trim() && !String((TT[stage] || {}).summary || '').trim()) { TT[stage] = TT[stage] || {}; TT[stage].summary = sum.value; } }
     localStorage.setItem('chub:tutorName', name); TT[stage] = TT[stage] || {}; TT[stage].returnedAt = now(); TT[stage].signedBy = ink ? { name, at: now(), ink } : { name, at: now() }; saveT(); render();
   }));
   app.querySelectorAll('[data-reopen]').forEach(b => b.addEventListener('click', () => {
