@@ -947,3 +947,19 @@ ALIAS['teaching-writing'] = ALIAS.get('teaching-writing', []) + [
     ('  const t = terms[Math.floor(__lr() * terms.length)];',
      '  if (!termDeck.length) { termDeck = terms.slice(); for (let i = termDeck.length - 1; i > 0; i--) { const j = Math.floor(__lr() * (i + 1)); [termDeck[i], termDeck[j]] = [termDeck[j], termDeck[i]]; } if (termDeck[termDeck.length - 1] === termLast) termDeck.unshift(termDeck.pop()); }\n  const t = termDeck.pop(); termLast = t;'),
 ]
+
+
+# FOUND WALKING LESSON FRAMEWORKS (20 Nov 2026): an answered task printed solved on the plain handout (the right lesson
+# in bold, the built order marked, the scores, cards sitting in their boxes); on paper every task now prints untouched.
+ALIAS['lesson-framework'] = ALIAS.get('lesson-framework', []) + [
+    ('  @media print{ .quiz-grid .flip-card{height:auto;} .flip-inner{transform:none !important;} .quiz-grid .flip-back, .cb-flip-back, .sp-why{display:none !important;} .quiz-grid .flip-face, .cb-flip-face{position:static; transform:none;} .cb-flip-card{height:auto;} }',
+     '  @media print{ .quiz-grid .flip-card{height:auto;} .flip-inner{transform:none !important;} .quiz-grid .flip-back, .cb-flip-back, .sp-why{display:none !important;} .quiz-grid .flip-face, .cb-flip-face{position:static; transform:none;} .cb-flip-card{height:auto;} }\n  /* 20 Nov 2026: an answered task printed solved (the right lesson in bold, the built order marked, the scores); on paper every task now prints as it stands untouched */\n  @media print{ .progress-note, .sp-score, .seq-feedback, .seq-build > *, .zone .dropped-card{display:none !important;} .stage-card.placed{display:inline-flex !important;} .stage-card.selected{outline:0 !important; border-color:var(--sand-line) !important; background:var(--field) !important;} .zone.correct{border-style:dashed !important; border-color:var(--sand-line) !important;} .seq-chip.used{opacity:1 !important;} .sp-opt.good, .sp-opt.bad, .sp-opt.dim{font-weight:400 !important; opacity:1 !important;} }'),
+]
+
+
+# FOUND WALKING ERROR CORRECTION (20 Nov 2026): the plain handout printed tasks as answered on screen (the order
+# clicked, the match chosen, the ideas opened); on paper every task is blank.
+ALIAS['error-correction'] = ALIAS.get('error-correction', []) + [
+    ('  .answer-key.shown{display:block;}',
+     '  .answer-key.shown{display:block;} @media print{ .order-line{opacity:1 !important;} .order-line .num{visibility:hidden;} #errorMatchArea select.blank{color:transparent;} #ideasArea .flash > div:not(.ans-line){display:none !important;} } /* 20 Nov 2026: the handout printed a task as it was answered on screen (the order clicked, the match chosen, the ideas opened); on paper every task is blank */'),
+]
