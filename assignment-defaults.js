@@ -110,7 +110,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Choose four items from the letter below — one grammar structure, one functional exponent, and two vocabulary items — and analyze each one: meaning, form, pronunciation and use, and what learners will find difficult. Analyze only the words in bold.\n\n750–1,000 words, not counting the letter. Research every item and name your sources, with a page number where you can. Don't use this analysis as the basis of an assessed TP lesson. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Your task\nChoose four items from the letter below:\n• one grammar structure;\n• one functional exponent; and\n• two vocabulary items.\n\nAnalyze each item in terms of its meaning, form, pronunciation, and use. Identify the difficulties learners may have with each item. Analyze only the words in bold.\n\nWrite 750–1,000 words of continuous prose. The letter itself is not included in the word count.\n\nResearch every item and cite all sources. Include a page number wherever the source has one.\n\nDo not use this analysis as the basis of an assessed TP lesson.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {
@@ -242,7 +242,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Choose one of the three texts below for the class described, then design two reading tasks and one productive follow-up task, and explain your decisions.\n\n750–1,000 words of continuous prose, not counting the bibliography and appendices. Attach both reading tasks with their answer keys and the productive task with the materials link. Don't use this text or these tasks as the basis of an assessed TP lesson. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Your task\nChoose one of the three texts below for the class described. Design:\n• two reading tasks; and\n• one productive follow-up task.\n\nExplain why you chose the text and why the tasks are suitable for this class.\n\nWrite 750–1,000 words of continuous prose. The bibliography and appendices are not included in the word count.\n\nAdd both reading tasks, with their answer keys, and the productive task using the Materials link.\n\nDo not use this text or these tasks as the basis of an assessed TP lesson.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {
@@ -438,7 +438,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "A reflection on your progress during the course: your main teaching strengths and action points, what you learned from observing peers and experienced teachers, and how you plan to keep developing after the CELTA.\n\n750–1,000 words of continuous prose, not counting the bibliography. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Your task\nThis assignment asks you to reflect on your progress during the course and plan your development after it.\n\nIdentify:\n• your main teaching strengths;\n• your main action points; and\n• what you have learned from observing your peers and experienced teachers.\n\nThen explain how you plan to keep developing after the CELTA.\n\nWrite 750–1,000 words of continuous prose. The bibliography is not included in the word count.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {
