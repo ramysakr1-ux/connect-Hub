@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611201829">
+<link rel="stylesheet" href="hub-tokens.css?v=202611201853">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -276,6 +276,11 @@
   .rail .rail-hint{margin:6px 0 8px; font-size:0.78rem; color:var(--grey); line-height:1.45; min-height:1.2em;}
   .rail .rail-hint.now{color:var(--teal); font-weight:600;}
   .rail .crit-item{padding:4px 6px;}
+  /* ONE GROUP AT A TIME (Ramy, 20 Nov 2026: "show criteria for planning, and then it only shows the planning criteria"). */
+  .rail-tabs{display:flex; gap:6px; margin:10px 0 4px;}
+  .rail-tabs button{font:700 0.8rem 'Karla',sans-serif; padding:5px 12px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--grey); cursor:pointer;}
+  .rail-tabs button[aria-selected="true"]{background:var(--a-forest); border-color:var(--a-forest); color:var(--pill-good-text, #fff);}
+  .rail-group[hidden]{display:none;}
   .rail .crit-item.on{background:color-mix(in oklab, var(--teal) 12%, transparent);}
   .rail .crit-item.on b::after{content:' \2713';}
   @media(min-width:1080px){
@@ -625,7 +630,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611201829">
+<link rel="stylesheet" href="hub-house.css?v=202611201853">
 </head>
 <body>
 <div class="board">
@@ -746,13 +751,14 @@
   <aside class="rail" id="rail" aria-label="Criteria">
     <details class="railfold" id="railFold">
       <summary>Criteria <button type="button" class="rail-hide" id="railHide">Hide</button></summary>
+      <div class="rail-tabs" role="tablist" aria-label="Which criteria"><button type="button" role="tab" data-scope="planning">Planning</button><button type="button" role="tab" data-scope="teaching">Teaching</button></div>
       <p class="rail-hint" id="railHint">Click into a point, then a criterion, and the tag lands where you are writing.</p>
       <div id="railList"></div>
     </details>
   </aside>
   <div class="fb-bottom">
   <section class="area">
-    <h2 class="area-h">Planning <small>the plan, the analysis, the materials</small><button type="button" class="rail-show" id="railShow" hidden>Show the criteria</button></h2>
+    <h2 class="area-h">Planning <small>the plan, the analysis, the materials</small><button type="button" class="rail-show" id="railShow" data-scope="planning" hidden>Show planning criteria</button></h2>
     <div class="pair">
       <div class="card points">
         <h2>Strengths</h2>
@@ -769,7 +775,7 @@
   </section>
 
   <section class="area">
-    <h2 class="area-h">Teaching <small>what happened in the room</small></h2>
+    <h2 class="area-h">Teaching <small>what happened in the room</small><button type="button" class="rail-show" id="railShowT" data-scope="teaching" hidden>Show teaching criteria</button></h2>
     <div class="pair">
       <div class="card points">
         <h2>Strengths</h2>
@@ -818,14 +824,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611201829"></script>
-<script src="hub-shared.js?v=202611201829"></script>
-<script src="hub-store.js?v=202611201829"></script>
-<script src="hub-say.js?v=202611201829"></script>
-<script src="hub-crit-learn.js?v=202611201829"></script>
-<script src="hub-crit-vocab.js?v=202611201829"></script>
-<script src="hub-sync.js?v=202611201829"></script>
-<script src="hub-notebook.js?v=202611201829"></script>
+<script src="hub-exchange.js?v=202611201853"></script>
+<script src="hub-shared.js?v=202611201853"></script>
+<script src="hub-store.js?v=202611201853"></script>
+<script src="hub-say.js?v=202611201853"></script>
+<script src="hub-crit-learn.js?v=202611201853"></script>
+<script src="hub-crit-vocab.js?v=202611201853"></script>
+<script src="hub-sync.js?v=202611201853"></script>
+<script src="hub-notebook.js?v=202611201853"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1359,16 +1365,28 @@ document.querySelectorAll('.add-pt').forEach(b=>{
 (function buildRail(){
   const host=$('railList'); if(!host) return;
   let html='';
-  ['4','1','2','3','5'].forEach(t=>{
-    html+=`<p class="crit-topic">${TOPIC_NAMES[t]}</p>`;
-    CRITERIA.filter(c=>c[1]===t).forEach(([code,,text])=>{ html+=`<div class="crit-item" data-code="${code}"><b>${code}</b><span>${text}</span></div>`; });
+  [['planning',['4']],['teaching',['1','2','3','5']]].forEach(([sc, ts])=>{
+    html+=`<div class="rail-group" data-scope="${sc}">`;
+    ts.forEach(t=>{
+      html+=`<p class="crit-topic">${TOPIC_NAMES[t]}</p>`;
+      CRITERIA.filter(c=>c[1]===t).forEach(([code,,text])=>{ html+=`<div class="crit-item" data-code="${code}"><b>${code}</b><span>${text}</span></div>`; });
+    });
+    html+='</div>';
   });
   host.innerHTML=html;
+  /* one group at a time: the tabs choose, and clicking into a point brings up its own group (20 Nov 2026) */
+  const railScope=sc=>{ host.querySelectorAll('.rail-group').forEach(g=>{ g.hidden = g.dataset.scope!==sc; });
+    document.querySelectorAll('.rail-tabs button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.scope===sc)));
+    try{ localStorage.setItem('chub:railScope', sc); }catch(e){} };
+  let sc0='planning'; try{ if(localStorage.getItem('chub:railScope')==='teaching') sc0='teaching'; }catch(e){}
+  railScope(sc0);
+  document.querySelectorAll('.rail-tabs button').forEach(b=>b.addEventListener('click',e=>{ e.preventDefault(); railScope(b.dataset.scope); }));
+  document.addEventListener('focusin',e=>{ const l=e.target.closest && e.target.closest('[data-scope]'); if(l && l.closest('.pair')) railScope(l.dataset.scope); });
   const fold=$('railFold'); fold.open = window.innerWidth>=1080;
-  const railOff=on=>{ document.body.classList.toggle('rail-off', on); $('railShow').hidden=!on; try{ localStorage.setItem('chub:railOff', on?'1':''); }catch(e){} };
+  const railOff=on=>{ document.body.classList.toggle('rail-off', on); $('railShow').hidden=!on; $('railShowT').hidden=!on; try{ localStorage.setItem('chub:railOff', on?'1':''); }catch(e){} };
   try{ if(localStorage.getItem('chub:railOff')==='1') railOff(true); }catch(e){}
   $('railHide').addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); railOff(true); });
-  $('railShow').addEventListener('click',()=>{ railOff(false); fold.open=true; });
+  ['railShow','railShowT'].forEach(id=>$(id).addEventListener('click',()=>{ railOff(false); fold.open=true; railScope($(id).dataset.scope); }));
   host.addEventListener('mousedown',e=>e.preventDefault());
   host.addEventListener('click',e=>{
     const item=e.target.closest('.crit-item'); if(!item) return;
