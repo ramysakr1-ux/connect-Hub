@@ -18,6 +18,9 @@ import importlib.util, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 # HOW LONG EACH ONE RUNS: Connect's own figure for it (its registry and agenda). Most are 45; these are not.
+# NO LENGTH SHOWN (Ramy, 20 Nov 2026, of Drilling techniques: "It reads 65 minutes, and it's most definitely not 65 ... just remove
+#   the timing"): no pill under the title, no minutes in the tab's title, none on the parts.
+UNTIMED = {'drilling-techniques'}
 MINUTES = {'classroom-management': 60, 'connected-speech': 50, 'drilling-techniques': 65, 'eliciting-and-concept-checking': 60,
            'language-practice': 72, 'phonology-sounds': 60, 'professional-development': 30, 'teaching-exam-classes': 50}
 FROM = os.path.join(HERE, 'classroom-management', 'index.html')   # the long page the shared parts are read from
@@ -40,18 +43,19 @@ def build(slug):
     head, chrome, foot, tail = parts()
     title = r.TITLE
     mins = MINUTES.get(slug, 45)
+    untimed = slug in UNTIMED
     head = re.sub(r'<!--.*?-->', '<!--\n  Connect Lite — input session, the short one: ' + title + '\n  © 2026 Ramy Sakr. All rights reserved.\n\n'
                   '  Connect\'s 45-minute session on Lite\'s desk. Built by _short.py from _short_recipes/' + slug.replace('-', '_') + '.py;\n'
                   '  edit the recipe there, not this file.\n-->', head, count=1, flags=re.S)
-    head = re.sub(r'<title>.*?</title>', '<title>' + title + ' · %d minutes — Connect Lite</title>' % mins, head, count=1)
+    head = re.sub(r'<title>.*?</title>', '<title>' + title + ('' if untimed else ' · %d minutes' % mins) + ' — Connect Lite</title>', head, count=1)
     nav = '\n'.join('    <a href="#%s">%s</a>' % (a, t) for a, t in r.NAV)
     page = (head + '<style>\n' + SHARED_STYLE + r.STYLE + '\n</style>\n</head>\n' + chrome
             + '<header class="header">\n    <p class="eyebrow">Input session · CELTA</p>\n    <h1>' + title + '</h1>\n'
-            + '    <p class="len"><span class="lenpill">' + str(mins) + ' minutes</span>' +(('<a class="lenlink" href="../' + r.LONG + '/index.html">The longer session</a>') if getattr(r, 'LONG', '') else '') + '</p>\n'
+            + '    <p class="len">' + ('' if untimed else '<span class="lenpill">' + str(mins) + ' minutes</span>') +(('<a class="lenlink" href="../' + r.LONG + '/index.html">The longer session</a>') if getattr(r, 'LONG', '') else '') + '</p>\n'
             + '    <p class="sub">' + r.SUB + '</p>\n  </header>\n\n'
             + '  <nav class="sticky-nav" id="stickyNav">\n' + nav + '\n    <a href="#trainer" class="tn-link" hidden>Trainer notes</a>\n'
             + '    <button class="print-btn" onclick="window.print()">Print the handout</button>\n  </nav>\n\n'
-            + r.BODY.strip('\n') + '\n\n'
+            + (re.sub(r' <span class="badge">\d+ minutes?</span>', '', r.BODY) if untimed else r.BODY).strip('\n') + '\n\n'
             + '  <section id="trainer" class="trainer-notes" data-slug="' + slug + '-short" hidden>\n    <div class="card">\n'
             + '      <div class="stage-title">Trainer notes <span class="badge">Tutor only</span></div>\n'
             + '      <div class="guide-box gb-plain tn-box"><div class="gb" id="tnBody"></div></div>\n    </div>\n  </section>\n\n'

@@ -70,7 +70,7 @@ window.InputLib = (function(){
     ['test-teach-test-short', 'Test-teach-test', 45, 'test-teach-test', 'Loop input', 'Staged exactly like the framework it teaches: test, teach, test again, then name the stages.'],
     ['teaching-speaking-short', 'Teaching speaking', 45, 'teaching-speaking', 'Loop input', 'Prepare ideas, get useful language, do the task, get feedback: the speaking lesson in order.'],
     ['teaching-writing-short', 'Teaching writing', 45, 'teaching-writing', 'Loop input', 'Product, process, and the difference it makes to the lesson.'],
-    ['drilling-techniques-short', 'Drilling techniques', 65, 'guided-to-less-guided-practice', 'Loop input', 'Six drill types, four more techniques, and which drill fixes which problem.'],
+    ['drilling-techniques-short', 'Drilling techniques', 0, 'guided-to-less-guided-practice', 'Loop input', 'Six drill types, four more techniques, and which drill fixes which problem.'],
     ['language-practice-short', 'Language practice', 72, 'guided-to-less-guided-practice', 'Loop input', 'From controlled to free: the three stages of practice, sorted and designed.'],
     ['lesson-planning-short', 'Lesson planning, start to finish', 45, 'writing-the-lesson-plan', 'Planning', 'Why a plan, the jargon, then aims, problems and procedure for a real TP point.'],
     ['language-analysis-short', 'Language analysis', 45, 'language-analysis', 'Planning', 'Why analyze first, the jargon, then a live draft for your own next TP point.'],

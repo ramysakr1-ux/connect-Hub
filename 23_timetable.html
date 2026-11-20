@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611201853">
+<link rel="stylesheet" href="hub-tokens.css?v=202611201956">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -854,27 +854,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611201853">
+<link rel="stylesheet" href="hub-house.css?v=202611201956">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611201853"></script>
-<script src="hub-tracker.js?v=202611201853"></script>
-<script src="hub-rotation.js?v=202611201853"></script>
-<script src="hub-xlsx.js?v=202611201853"></script>
-<script src="hub-docx.js?v=202611201853"></script>
-<script src="hub-timetable-parse.js?v=202611201853"></script>
-<script src="assignment-defaults.js?v=202611201853"></script>
-<script src="hub-shared.js?v=202611201853"></script>
+<script src="hub-due.js?v=202611201956"></script>
+<script src="hub-tracker.js?v=202611201956"></script>
+<script src="hub-rotation.js?v=202611201956"></script>
+<script src="hub-xlsx.js?v=202611201956"></script>
+<script src="hub-docx.js?v=202611201956"></script>
+<script src="hub-timetable-parse.js?v=202611201956"></script>
+<script src="assignment-defaults.js?v=202611201956"></script>
+<script src="hub-shared.js?v=202611201956"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611201853"></script>
-<script src="hub-say.js?v=202611201853"></script>
-<script src="hub-sync.js?v=202611201853"></script>
-<script src="hub-notebook.js?v=202611201853"></script>
+<script src="hub-store.js?v=202611201956"></script>
+<script src="hub-say.js?v=202611201956"></script>
+<script src="hub-sync.js?v=202611201956"></script>
+<script src="hub-notebook.js?v=202611201956"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -3138,7 +3138,7 @@ const STUDIO_LIB = [
 const SHORT_LIB = ((window.InputLib && InputLib.shorts) || []).map(x => [x[0], x[1], x[2], x[3]]);
 SHORT_LIB.slice().reverse().forEach(x => { const i = STUDIO_LIB.findIndex(y => y[0] === x[3]); if (i === -1) STUDIO_LIB.push([x[0], x[1]]); else STUDIO_LIB.splice(i + 1, 0, [x[0], x[1]]); });
 /* a short session has the same name as its topic, so the panel carries the page itself (data-slug), not just the name */
-const libMinutes = slug => { const x = SHORT_LIB.find(y => y[0] === slug); return x ? x[2] : 75; };
+const libMinutes = slug => { const x = SHORT_LIB.find(y => y[0] === slug); return x ? (x[2] || 45) : 75; };   /* a session that shows no length (Drilling techniques, 20 Nov 2026) is placed as 45 minutes */
 /* titles that open a library page under another name (Ramy, 30 Oct 2026: lesson planning opens Writing the lesson plan, as library.js's own rule does) */
 const LIB_ALIASES = [['writing-the-lesson-plan', 'Lesson planning'], ['writing-the-lesson-plan', 'LP'], ['course-introduction', 'Course intro']];   /* short names (Ramy, 30 Oct 2026: "use the jargon"); matched whole, never inside other words */
 const initialsOf = n => window.hubInitials ? hubInitials(n) : String(n || '').split(/\s+/).map(w => w[0] || '').join('').slice(0, 3).toUpperCase();
@@ -3160,7 +3160,7 @@ function libListHTML(){
   const list = STUDIO_LIB.filter(x => !q || normT(x[1]).indexOf(q) !== -1);
   /* where each session already sits (8 Nov 2026): placing it again moves it there */
   const on = x => (PLACED[x[0]] || []).map(p => dayName(p.date));
-  const line = x => { const d = on(x); return !d.length ? 'Input · ' + libMinutes(x[0]) + ' minutes · Schedule' : d.length > 1 ? '<span class="twc">Twice</span> ' + esc(d.join(' and ')) : 'On ' + esc(d[0]) + ' · Place it to move it'; };
+  const line = x => { const d = on(x); return !d.length ? 'Input · ' + (x[2] ? libMinutes(x[0]) + ' minutes · ' : '') + 'Schedule' : d.length > 1 ? '<span class="twc">Twice</span> ' + esc(d.join(' and ')) : 'On ' + esc(d[0]) + ' · Place it to move it'; };
   return list.length ? list.map(x => `<button type="button" class="tpl${on(x).length ? ' placed' : ''}" draggable="true" data-lib="${esc(x[1])}" data-slug="${esc(x[0])}"><b>${esc(x[1])}</b><small>${line(x)}</small></button>`).join('') : '<p>Nothing by that name in the library.</p>';
 }
 function shade(on){
@@ -4478,7 +4478,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611201853'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611201956'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);

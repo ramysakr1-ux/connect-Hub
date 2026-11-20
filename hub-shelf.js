@@ -80,7 +80,7 @@
         });
         return fetch('input-sessions/library.js', { credentials: 'same-origin' }).then(function (r) { return r.text(); }).then(function (js) {
           var m = js.match(/var SHORTS = (\[[\s\S]*?\n  \]);/), list = []; try { list = m ? (new Function('return ' + m[1]))() : []; } catch (e) {}
-          list.forEach(function (x) { out.push({ name: x[1], session: true, level: '', levelName: 'Input session \u00b7 ' + x[2] + ' minutes', parts: [{ label: 'The session', url: base + x[0] + '/', page: true, noStudents: true }] }); });
+          list.forEach(function (x) { out.push({ name: x[1], session: true, level: '', levelName: 'Input session' + (x[2] ? ' \u00b7 ' + x[2] + ' minutes' : ''), parts: [{ label: 'The session', url: base + x[0] + '/', page: true, noStudents: true }] }); });
         });
       }).then(function () { LIB = out; then(); }, function () { LIB = out; then(); });
     }, function () { LIB = []; then(); });
