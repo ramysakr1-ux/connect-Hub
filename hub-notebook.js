@@ -308,7 +308,7 @@
       + '<div class="nbk-audio" hidden></div>'
       + (earlier.length ? '<div class="nbk-earlier"><h3>Earlier in this thread</h3>' + earlier.map(function(n){ return '<p><small>' + esc(dayLabel(n.day)) + (n.audio ? ' · voice note' : '') + '</small>' + esc(String(n.text || '').slice(0, 220)) + (String(n.text || '').length > 220 ? '…' : '') + '</p>'; }).join('') + '</div>' : '')
       + '</div>'
-      + '<div class="nbk-foot"><span class="nbk-msg">' + (MODE === 'trainee' ? 'Yours alone, unless you connect it.' : 'Yours alone, unless you connect it: with the other tutors, or with a trainee or their TP group.') + '</span><a href="' + (location.pathname.indexOf('/input-sessions/') !== -1 ? '../../' : '') + '37_notebook.html">Open your notebook</a></div>';
+      + '<div class="nbk-foot"><span class="nbk-msg">' + (MODE === 'trainee' ? 'Yours alone, unless you share it.' : 'Yours alone, unless you send it: to the other tutor, or to a trainee or their TP group.') + '</span><a href="' + (location.pathname.indexOf('/input-sessions/') !== -1 ? '../../' : '') + '37_notebook.html">Open your notebook</a></div>';
     document.body.appendChild(back); document.body.appendChild(sheet);
     requestAnimationFrame(function(){ back.classList.add('on'); sheet.classList.add('on'); });
     var ta = sheet.querySelector('textarea'), go = sheet.querySelector('.nbk-btn.go'), rb = sheet.querySelector('.nbk-btn.rec'), au = sheet.querySelector('.nbk-audio'), nm = sheet.querySelector('.nbk-name'), msg = sheet.querySelector('.nbk-msg');
@@ -374,8 +374,8 @@
       }).then(function(r){
         var withWhom = scope === 'course' ? 'the whole course' : 'your TP group';
         msg.innerHTML = '<span class="nbk-saved">Saved.</span> ' + (!scope ? 'It is in your notebook, under ' + esc(dayLabel(d)) + (th.k !== 'day' ? ' and ' + esc(th.t) : '') + '.'
-          : (r && r.demo) ? (S.isTemplate && S.isTemplate() ? 'Shown as connected with ' + withWhom + ' in this tab only. Nothing reaches the course.' : 'Demo: connected with ' + withWhom + ' on this device only.')
-          : 'Connected with ' + withWhom + '.');
+          : (r && r.demo) ? (S.isTemplate && S.isTemplate() ? 'Shown as shared with ' + withWhom + ' in this tab only. Nothing reaches the course.' : 'Demo: shared with ' + withWhom + ' on this device only.')
+          : 'Shared with ' + withWhom + '.');
         go.textContent = 'Saved'; ta.value = ''; recBlob = null; au.hidden = true; au.innerHTML = ''; if (rb) rb.querySelector('.lbl').textContent = 'Record a voice note';
         if (mail) { mail.classList.add('off'); mail.setAttribute('aria-disabled', 'true'); }
         paintCount(); setTimeout(close, scope ? 2600 : 1400);
