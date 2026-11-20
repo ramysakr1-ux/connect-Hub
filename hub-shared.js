@@ -2581,8 +2581,8 @@ window.hubHeadHTML = function (text, heads) {
   if (document.getElementById('hub-hl-css')) return;
   var st = document.createElement('style'); st.id = 'hub-hl-css';
   st.textContent = '.hl{display:block; font:700 0.72rem Karla,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--as, var(--teal)); margin:2px 0 1px;}' +
-    '.hdl{display:flex; align-items:center; gap:8px; font:700 0.76rem Karla,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--as, var(--teal)); margin:14px 0 4px;}' +
-    '.hdl::after{content:""; flex:1; height:1px; background:color-mix(in oklab, var(--as, var(--teal)) 30%, transparent);}' +
+    /* no rule beside the heading (Ramy, 21 Nov 2026: "that long line, it's useless really"), and the heading is bigger */
+    '.hdl{display:block; font:700 0.86rem Karla,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--as, var(--teal)); margin:18px 0 6px;}' +
     '.hdl:first-of-type{margin-top:4px;}';
   (document.head || document.documentElement).appendChild(st);
 })();

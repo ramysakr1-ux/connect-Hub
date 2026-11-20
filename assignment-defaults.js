@@ -351,7 +351,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Describe your current TP group, identify one grammar and one pronunciation difficulty you have noticed in TP1–4 or in the student interviews, and present one activity for each. At least one activity must come from a published source.\n\n750–1,000 words of continuous prose, not counting the bibliography and appendices. Attach the two tasks with the materials link, each saying where it came from. Passing on first or second submission does not affect your certificate grade.",
+        "body": "Your task\nThis assignment asks you to identify the needs of the learners you are currently teaching and plan practical classroom responses.\n\nDescribe your current teaching-practice group. Then identify:\n• one grammar difficulty; and\n• one pronunciation difficulty\nthat you have noticed in TP1–4 or in the student interviews. For each difficulty, present one suitable classroom activity. At least one activity must be taken from, or adapted from, a published source.\n\nWrite 750–1,000 words of continuous prose. The bibliography and appendices are not included in the word count.\n\nAdd both activities using the Materials link. For each one, include the materials and state its source; if you have adapted it, say how.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
         "readonly": true
       },
       {

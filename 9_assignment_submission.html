@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611210106">
+<link rel="stylesheet" href="hub-tokens.css?v=202611210119">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -55,8 +55,8 @@
   .outcome.fail{background:var(--mark-not-bg); color:var(--mark-not-text);}
   /* Gold edges the assignment card (Ramy, 24 Sep 2026: "a rule that runs through all the assignments... so it's not all washed"). Ochre stays the tutor's voice, sand the quoted first round. */
   .card{background:var(--surface); border-radius:6px; padding:18px 22px; margin-bottom:16px; border-left:5px solid var(--gold);}
-  .card h2{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 6px; color:var(--ink);}
-  .card .guide{font-size:0.85rem; color:var(--grey); line-height:1.55; margin:0 0 10px;}
+  .card h2{font-family:'Newsreader',Georgia,serif; font-size:1.4rem; font-weight:700; margin:0 0 10px; color:var(--ink);}
+  .card .guide{font-size:0.95rem; color:var(--ink); line-height:1.65; margin:0 0 12px;}
   /* Lessons from the Classroom: the trainee's own course, to read before writing (25 Oct 2026) */
   .lb summary{cursor:pointer; font-weight:700;}
   .lb summary small{display:block; font-weight:400; color:var(--grey); margin-top:2px;}
@@ -220,7 +220,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611210106">
+<link rel="stylesheet" href="hub-house.css?v=202611210119">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -228,19 +228,19 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611210106"></script>
-<script src="assignment-history.js?v=202611210106"></script>
-<script src="assignment-examples.js?v=202611210106"></script>
-<script src="hub-due.js?v=202611210106"></script>
-<script src="hub-shared.js?v=202611210106"></script>
-<script src="hub-store.js?v=202611210106"></script>
-<script src="hub-say.js?v=202611210106"></script>
-<script src="hub-sync.js?v=202611210106"></script>
-<script src="hub-notebook.js?v=202611210106"></script>
-<script src="observation-defaults.js?v=202611210106"></script>
-<script src="hub-rotation.js?v=202611210106"></script>
-<script src="hub-peers.js?v=202611210106"></script>
-<script src="fol-interview.js?v=202611210106"></script>
+<script src="assignment-defaults.js?v=202611210119"></script>
+<script src="assignment-history.js?v=202611210119"></script>
+<script src="assignment-examples.js?v=202611210119"></script>
+<script src="hub-due.js?v=202611210119"></script>
+<script src="hub-shared.js?v=202611210119"></script>
+<script src="hub-store.js?v=202611210119"></script>
+<script src="hub-say.js?v=202611210119"></script>
+<script src="hub-sync.js?v=202611210119"></script>
+<script src="hub-notebook.js?v=202611210119"></script>
+<script src="observation-defaults.js?v=202611210119"></script>
+<script src="hub-rotation.js?v=202611210119"></script>
+<script src="hub-peers.js?v=202611210119"></script>
+<script src="fol-interview.js?v=202611210119"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -292,6 +292,7 @@ if (PREVIEW) {
   new MutationObserver(lock).observe(document.body, { childList: true, subtree: true });
 }
 
+window.addEventListener('beforeprint', () => document.querySelectorAll('details.task-fold').forEach(d => { d.open = true; }));
 const params = new URLSearchParams(location.search);
 /* No assignment named: open the first one in the CENTRE's order, not a
    hard-coded one. This read defaulted to 'lrt', so the trainee home's
@@ -502,7 +503,10 @@ function render(){
            back sit in the house's guidance box (Ramy, 17 Oct 2026: "I like
            that yellow box... use that inside Connect Lite. More often"). */
         if (/^before you start$|reasons for resubmission/i.test(String(s.label).trim()) && window.hubGuidanceHTML) {
-          html += `<div class="card guide-card"><details class="guide-box guide-solo"${startsClosed?'':' open'}><summary>${esc(s.label)}</summary><div class="gb">${hubGuidanceHTML(s.body)}${TW}</div></details></div>`;
+          /* THE TASK FOLDS (Ramy, 21 Nov 2026: "click here before you start, and then they click, and then it opens a
+             drop down of the task so they can open it and close it"). It starts closed and opens for the print. */
+          const isTask = /^before you start$/i.test(String(s.label).trim());
+          html += `<div class="card guide-card"><details class="guide-box guide-solo${isTask?' task-fold':''}"${(startsClosed||isTask)?'':' open'}><summary>${isTask?'Click here before you start':esc(s.label)}</summary><div class="gb">${hubGuidanceHTML(s.body)}${TW}</div></details></div>`;
           return;
         }
         html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${refHtml}${TW}</div></details>`;
