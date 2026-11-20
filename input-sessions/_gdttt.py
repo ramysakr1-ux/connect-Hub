@@ -266,6 +266,8 @@ STYLE = r'''
   .shape td:first-child{font-weight:700; width:34%;}
   @media(max-width:600px){ .shape table, .shape tr, .shape td{display:block; width:auto;} .shape td:first-child{border-bottom:0;} }
   @media print{ .qrow .ans, .mark{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: the answers typed under Two sentences printed in their boxes, the words already used were faded and struck through in the box of words, and the stages taken out printed struck through. On paper each prints as it did untouched. */
+  @media print{ .qrow input.blank{color:transparent !important;} .bank span.used{opacity:1; text-decoration:none;} .outset button.gone{text-decoration:none; color:var(--ink); background:var(--paper);} }
 '''
 
 def script():

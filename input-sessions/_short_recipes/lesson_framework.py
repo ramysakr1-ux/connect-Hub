@@ -157,6 +157,23 @@ STYLE = r'''
   .total.ok{background:color-mix(in oklab, var(--teal) 10%, var(--paper)); color:var(--teal);}
   .total.over{background:color-mix(in oklab, var(--a-red) 8%, var(--paper)); color:var(--a-red);}
   @media print{ .model{display:none !important;} body.tutor .model:not([hidden]){display:block !important;} }
+  /* 21 Nov 2026: an answered task printed solved on "Print the handout": the card sort with each stage written in its shape, the pinned cards faded and "6 of 6 pinned"; the sequence as built, numbered, in its right or wrong color, with "Correct order!", its used stages faded, and only the shape picked on the screen; "Correct" beside each framework named and "4 of 4 correct"; the minutes typed and their total. On paper each task now prints as it does untouched, without the counts; the sequence prints all four shapes, each with its stages in the page's own scrambled order (.seqp, drawn in the script below); the minutes are blank boxes and the total a blank to fill in. */
+  .seqp{display:none;}
+  @media print{
+    #sortCount, #seqStatus, #nameCount, .scen .fb, .zone span{display:none !important;}
+    .chip-b:disabled{opacity:1 !important;}
+    .chip-b.sel{border-color:var(--sand-line); background:var(--paper);}
+    .zone.filled{border-color:var(--sand-line); background:var(--box);}
+    .opt.good{border-color:var(--sand-line); background:var(--field); color:var(--ink);}
+    #seqFws, #seqChips, #seqSlots{display:none !important;}
+    .seqp{display:block;}
+    .seqp-row{margin:0 0 10px; break-inside:avoid;}
+    .seqp-row b{display:block; margin:0 0 5px;}
+    .seqp-row span{display:inline-block; border:1px solid #999; padding:4px 10px; margin:0 6px 6px 0; font:700 .86rem/1.35 'Karla',sans-serif;}
+    .prow input{color:transparent !important;} .prow input::placeholder{color:transparent !important;}
+    .total, .total.ok, .total.over{font-size:0 !important; background:none !important; color:#000 !important;}
+    .total::after{content:"Total: ___ / 45 min"; font:600 1.15rem 'Newsreader',Georgia,serif;}
+  }
 '''
 
 SCRIPT = r'''
@@ -227,6 +244,8 @@ $('seqFws').addEventListener('click', e => { const b = e.target.closest('[data-f
 $('seqChips').addEventListener('click', e => { const b = e.target.closest('[data-chip]'); if (!b || b.disabled) return; built.push(SEQ[seqFw][+b.dataset.chip]); drawSeq(); });
 $('seqSlots').addEventListener('click', e => { const b = e.target.closest('[data-slot]'); if (!b) return; built.splice(+b.dataset.slot, 1); drawSeq(); });
 drawSeq();
+// 21 Nov 2026: for the paper only (see the print rule in the style above). The screen shows one shape at a time, so the handout printed only the shape last picked; this prints all four, each with its stages in the same scrambled order as its chips.
+$('seqSlots').insertAdjacentHTML('afterend', '<div class="seqp" id="seqPaper">' + Object.keys(SEQ).map(f => '<div class="seqp-row" data-fw="' + esc(f) + '"><b>' + esc(f) + '</b>' + SEQ_DEAL[SEQ[f].length].map(i => '<span>' + esc(SEQ[f][i]) + '</span>').join(' ') + '</div>').join('') + '</div>');
 
 // ---------- 6. Name that framework: only the right one answers ----------
 const SCENARIOS = [

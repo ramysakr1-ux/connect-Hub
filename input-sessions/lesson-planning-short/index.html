@@ -92,6 +92,16 @@
     table.stk td{border:0; padding:2px 0;}
   }
   @media print{ .answer-key, .example, .batchnav, .cats{display:none !important;} }
+  /* 21 Nov 2026: "Print the handout" printed only the batch on the screen (6 of the 20 abbreviations, or 5 of the 13 terms, and never both sets), with any matched meaning in a heavier weight. On paper the task now prints whole and as it does untouched: both sets, batch by batch, each batch's meanings in the same order as on the screen (.matchp, drawn in the script below, never on the screen). */
+  .matchp{display:none;}
+  @media print{
+    #match{display:none !important;}
+    .matchp{display:block;}
+    .matchp .sl{margin:12px 0 0;}
+    .matchp .pill-match-wrap{break-inside:avoid;}
+    .matchp .pill{background:none; border:1px solid #999; color:#000; cursor:default;}
+    .matchp .pill.term{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem;}
+  }
 
 </style>
 </head>
@@ -301,6 +311,8 @@ $('cats').addEventListener('click', e => { const b = e.target.closest('[data-cat
 $('prev').onclick = () => { if (shake) return; batch = Math.max(0, batch - 1); selL = selR = null; drawMatch(); };
 $('next').onclick = () => { if (shake) return; batch = Math.min(SETS[cat][1].length - 1, batch + 1); selL = selR = null; drawMatch(); };
 drawMatch();
+// 21 Nov 2026: for the paper only (see the print rule in the style above). The screen shows one batch of one set at a time, so the handout printed only that batch; this prints every batch of both sets, each with its meanings in the same order as its buttons. They are not buttons and carry no data-l or data-r, so nothing here can be clicked or matched.
+$('match').insertAdjacentHTML('afterend', '<div class="matchp" id="matchPaper">' + [['abbr', 'Abbreviations'], ['terms', 'Terminology']].map(s => '<p class="sl">' + s[1] + '</p>' + SETS[s[0]][1].map(pairs => '<div class="pill-match-wrap"><div class="pill-col">' + pairs.map(p => '<div class="pill term">' + esc(p[0]) + '</div>').join('') + '</div><div class="pill-col">' + pairs.slice().reverse().map(p => '<div class="pill">' + esc(p[1]) + '</div>').join('') + '</div></div>').join('')).join('') + '</div>');
 
 // the answer key and the staging example
 $('keyAbbr').innerHTML = ABBR.map(r => '<tr><td class="t">' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('');

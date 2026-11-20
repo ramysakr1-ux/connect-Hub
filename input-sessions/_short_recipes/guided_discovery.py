@@ -68,7 +68,8 @@ BODY = r'''
     </div>
   </section>
 
-  <section id="s7" data-n="7" class="tutor-only">
+  <!-- 21 Nov 2026: "hidden" added. The Debrief is the tutor's, and a trainee never sees it, but answers.js puts its card ("Take the answers with you") in the last part that is not hidden, so the card landed in here where no trainee could press it. With "hidden" the card goes at the end of part 6. Nothing else changes: for a tutor the rule body.tutor .tutor-only still shows this part. -->
+  <section id="s7" data-n="7" class="tutor-only" hidden>
     <div class="card" data-n="7">
       <div class="stage-title">Debrief: order the stages <span class="badge">10 minutes</span></div>
       <div id="order"></div>
@@ -111,7 +112,16 @@ STYLE = r'''
   .stagebox{margin-top:14px; border-top:1px solid var(--row-line); padding-top:12px;}
   .stagebox h4{margin:12px 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem;}
   table.grid td:nth-child(2){white-space:nowrap;}
-  @media print{ .keyblock{display:block;} .stagebox .btn{display:none;} }
+  /* 21 Nov 2026: "Print the handout" printed the whole answer key once it had been opened, and the staging example once it had been opened. The key now prints only from its own Print button (body.print-key, set in answerKey below) or in a tutor's print; the example stays on the screen. */
+  @media print{ .keyblock{display:block;} body:not(.print-key):not(.tutor) .keyblock{display:none !important;} .stagebox .btn{display:none;} .stagebox h4, .stagebox table{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: matched terms and meanings filled, in a heavier weight, with "5 of 5 matched"; the ordered stages with their numbers, their fill and "All 4 in order"; an opened card with its teal edge and without its "Click to reveal". On paper each prints as it did untouched, without the counts. */
+  @media print{
+    .mhead span, .ostatus{display:none !important;}
+    .pill.matched{background:var(--field); border-color:var(--sand-line); color:var(--ink);} .pill.matched:not(.term){font-weight:500;}
+    .order-line.done{border-color:var(--sand-line); background:var(--paper);}
+    .order-line.done .num{background:var(--box); color:var(--grey); font-size:0;} .order-line.done .num::after{content:"?"; font-size:.8rem;}
+    .reveal-card.open{border-color:var(--sand-line);} .reveal-card.open .hint{display:block;}
+  }
 '''
 
 SCRIPT = r'''
@@ -200,9 +210,10 @@ function answerKey(el, terms, details){
   }
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if (!b) return;
-    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { window.print(); return; }
+    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { document.body.classList.add('print-key'); window.print(); return; }   // 21 Nov 2026: the key prints from its own Print button only (see the print rule above)
     draw();
   });
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));   // 21 Nov 2026
   draw();
 }
 

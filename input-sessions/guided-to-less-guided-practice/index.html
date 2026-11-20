@@ -54,6 +54,8 @@
   .info-gap-col h4{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:0 0 6px;}
   .info-gap-col ul{margin:0; padding-left:18px; line-height:1.7;}
   @media print{ .flash .detail, .answer-key, .tryit-answer{display:none !important;} }
+  /* 21 Nov 2026: the handout printed an answered matching task as solved: the matched techniques and examples came out in solid green (and one left red). On paper every pill now prints the same. */
+  @media print{ .pill, .pill.selected, .pill.matched, .pill.wrong{background:none !important; border-color:#bbb !important; color:#000 !important; font-weight:500 !important;} }
 </style>
 </head>
 <body>
@@ -297,7 +299,7 @@
   <section id="s5" data-n="5">
     <div class="card" data-n="5">
       <div class="stage-title">Jazz chants <span class="badge">Rhythm</span></div>
-      <p class="lead">A way of drilling sentences to a beat, often set to music, popularised by Carolyn Graham. Easy to create your own: follow the beat. This one is made up for this session.</p>
+      <p class="lead">A way of drilling sentences to a beat, often set to music, popularized by Carolyn Graham. Easy to create your own: follow the beat. This one is made up for this session.</p><!-- 21 Nov 2026: was "popularised"; the site is American -->
       <div class="text-block">
         <div class="dialogue-line"><span class="who">A:</span> Hello. How's it going? <span class="who" style="margin-left:20px;">B:</span> Good. How's it going?</div>
         <div class="dialogue-line">I'm good. How's Karim? <span style="margin-left:60px;">He's good.</span></div>
@@ -397,7 +399,7 @@
     </div>
   </section>
 
-  <p class="sources"><b>Sources.</b> The examples, the cued dialogue, the chant and the information gap on this page are made up for this session. The drilling techniques are standard in language teaching; see Donn Byrne, <i>Teaching Oral English</i> (Longman, 1986). Jazz chants were popularised by Carolyn Graham (<i>Jazz Chants</i>, Oxford University Press). Video: <i>The Pink Panther</i> (2006, MGM), the dialect-coach scene, on the Movieclips channel.</p>
+  <p class="sources"><b>Sources.</b> The examples, the cued dialogue, the chant and the information gap on this page are made up for this session. The drilling techniques are standard in language teaching; see Donn Byrne, <i>Teaching Oral English</i> (Longman, 1986). Jazz chants were popularized by Carolyn Graham (<i>Jazz Chants</i>, Oxford University Press). Video: <i>The Pink Panther</i> (2006, MGM), the dialect-coach scene, on the Movieclips channel.</p><!-- 21 Nov 2026: was "popularised"; the site is American -->
 
   <footer class="hub-brand-foot">
     <span class="hub-lockup"><span class="hub-lockup-tile"><svg viewBox="8 28 104 64" width="12" height="7" fill="none" aria-hidden="true"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="oklch(70% 0.12 72)" stroke-width="13" stroke-linecap="round"/><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="oklch(99.5% 0.004 90)" stroke-width="13" stroke-linecap="round"/></svg></span><span class="hub-lockup-c">Connect</span><span class="hub-lockup-l">Lite</span></span>
@@ -476,10 +478,12 @@ function tryMatch(){
     }
   } else {
     selectedLeft.classList.add('wrong'); selectedRight.classList.add('wrong');
+    const wasLeft = selectedLeft, wasRight = selectedRight;   // 21 Nov 2026: the wrong pair, kept by name. A right match inside the 500ms empties selectedLeft and selectedRight, and the lines below threw and left a pill red for good.
     setTimeout(()=>{
-      selectedLeft.classList.remove('selected','wrong');
-      selectedRight.classList.remove('selected','wrong');
-      selectedLeft = null; selectedRight = null;
+      wasLeft.classList.remove('selected','wrong');    // 21 Nov 2026: was selectedLeft.classList.remove('selected','wrong');
+      wasRight.classList.remove('selected','wrong');   // 21 Nov 2026: was selectedRight.classList.remove('selected','wrong');
+      if(selectedLeft === wasLeft) selectedLeft = null;     // 21 Nov 2026: was selectedLeft = null; selectedRight = null; (a pill chosen meanwhile keeps its place)
+      if(selectedRight === wasRight) selectedRight = null;
     }, 500);
   }
 }
@@ -507,7 +511,7 @@ const drillTypes = [
   {term:"Whole class", def:"Everyone says the item together, in chorus.", example:"T: \"I go to school.\" Ss (all together): \"I go to school.\""},
   {term:"Half-half", def:"The class splits into two groups who take turns drilling.", example:"Group A: \"Where do you live?\" Group B: \"I live in Lisbon.\" Then they swap."},
   {term:"Open pairs", def:"Two students drill in front of the whole class so everyone can hear.", example:"T: \"Mateo, ask Chloe a question.\" Mateo → Chloe (in front of the class): \"What time is it?\" Chloe: \"It's three o'clock.\""},
-  {term:"Closed pairs", def:"All pairs drill privately, at the same time.", example:"Every pair practises \"What time is it? / It's three o'clock.\" at their own desks, at the same time."},
+  {term:"Closed pairs", def:"All pairs drill privately, at the same time.", example:"Every pair practices \"What time is it? / It's three o'clock.\" at their own desks, at the same time."},   // 21 Nov 2026: was "practises"; the site is American
   {term:"Mumbling", def:"Students quietly say a tricky word to themselves before saying it aloud.", example:"Students quietly repeat \"necessary\" to themselves a few times before saying it out loud to the class."},
   {term:"Humming", def:"Students hum the stress and intonation pattern of a sentence without saying the actual words.", example:"Instead of the real sentence, students hum the stress pattern: \"da-DA-da-da\" for \"I WENT to school.\""},
   {term:"Transformation", def:"The teacher gives a cue and students change the sentence (e.g. change the subject or tense).", example:"T: \"I play tennis. (she)\" → S: \"She plays tennis.\""},
@@ -518,6 +522,8 @@ const drillTypes = [
   {term:"Silent drills", def:"Students mouth the words silently, focusing on mouth shape — e.g. 'why' vs 'when'.", example:"The teacher mouths \"why\" silently; students watch the mouth shape and identify the word."}
 ];
 const drillDefs = drillTypes.map(d=>d.def);
+// 21 Nov 2026: the definitions are mixed once for the dropdowns. They were listed in the order of the terms, so the 1st term's answer was the 1st choice, the 2nd term's the 2nd, and so on down the 13.
+for(let i=drillDefs.length-1;i>0;i--){ const j=Math.floor(__lr()*(i+1)); const t=drillDefs[i]; drillDefs[i]=drillDefs[j]; drillDefs[j]=t; }
 const drillMatchArea = document.getElementById('drillMatchArea');
 drillTypes.forEach((d,i)=>{
   const row = document.createElement('div');

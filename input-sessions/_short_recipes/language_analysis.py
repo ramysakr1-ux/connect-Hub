@@ -107,6 +107,8 @@ STYLE = r'''
     table.stk td{border:0; padding:2px 0;}
   }
   @media print{ .answer-key, .example{display:none !important;} .srow input{border-bottom:1px solid #999;} }
+  /* 21 Nov 2026: an answered jargon match printed solved on the handout: the matched meanings in a heavier weight, with "4 of 7 matched" beside the task. On paper it now prints as it did untouched, without the count. */
+  @media print{ #matchCount{display:none !important;} .pill.matched:not(.term){font-weight:500;} }
 '''
 
 SCRIPT = r'''
