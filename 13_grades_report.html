@@ -23,7 +23,7 @@
 <title>Connect Lite — Grades report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611202008">
+<link rel="stylesheet" href="hub-tokens.css?v=202611202043">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -280,7 +280,7 @@
   .amend{display:grid; gap:4px; margin:6px 0;} .amend span{font-size:0.82rem; color:var(--grey);} .amend p{margin:0; font-size:0.88rem;}
   .amend input{font:inherit; font-size:0.88rem; padding:7px 9px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--field);} .amend input.need{border-color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611202008">
+<link rel="stylesheet" href="hub-house.css?v=202611202043">
 </head>
 <body>
 <div class="board">
@@ -333,12 +333,12 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202611202008"></script>
-<script src="hub-store.js?v=202611202008"></script>
-<script src="hub-say.js?v=202611202008"></script>
-<script src="hub-rotation.js?v=202611202008"></script>
-<script src="hub-shared.js?v=202611202008"></script>
-<script src="hub-sync.js?v=202611202008"></script>
+<script src="hub-tracker.js?v=202611202043"></script>
+<script src="hub-store.js?v=202611202043"></script>
+<script src="hub-say.js?v=202611202043"></script>
+<script src="hub-rotation.js?v=202611202043"></script>
+<script src="hub-shared.js?v=202611202043"></script>
+<script src="hub-sync.js?v=202611202043"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -554,10 +554,12 @@ function foldEvidence(r){
 function gradeClass(g){ return OUTCOMES.includes(g) ? 'out' : g==='FAIL' ? 'fail' : g==='PASS A' ? 'top' : g ? 'set' : ''; }
 
 let DATA={}, ORDER=[], dirty=false;
+var SUGG={};   // the provisionals' four lists as the latest TPs suggest them, shown until the tutor keeps them (see suggestFor)
 
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem('connect_roster_v1')) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
 function persist(){
   if (RO) return;
+  if (OPEN_ID) keepSuggestion(OPEN_ID);   /* saving with a suggested record open keeps it */
   const roster = loadRoster();
   ORDER.forEach(p=>{
     const tr = roster.trainees[p.id]; if (!tr) return;
@@ -659,7 +661,7 @@ function paintCohort(){
 }
 
 function listSection(p, s){
-  const d = DATA[p.id], items = d[s.key] || [];
+  const d = DATA[p.id], items = (SUGG[p.id] && !hasLists(d)) ? (SUGG[p.id][s.key] || []) : (d[s.key] || []);
   return `<div class="sec ${s.action ? 'action' : ''}" data-id="${esc(p.id)}" data-sec="${s.key}">
     <div class="head"><h3>${s.heading}</h3><span class="src">${s.src}</span><button type="button" class="seccopy" data-seccopy="${s.key}">copy</button></div>
     ${items.map((it, n) => `<div class="pt">
@@ -842,6 +844,48 @@ function tpPointsFor(id, key){
   return out;
 }
 
+/* THE PROVISIONALS FILL THEMSELVES IN (Ramy, 20 Nov 2026: "focus on ... the most recent 2 or 3 [TPs] ... more about criteria
+   ... if 2A was a problem earlier, but now it's fixed, then it should no longer be a problem ... start with the starred action
+   points and the repeated strengths ... 5 and 1 first, and then maybe 4 and 2"). From the last three returned TPs, criterion by
+   criterion: a criterion's most recent state wins, so an action point that has since been a strength drops out. Strengths that
+   came up in two or more of those TPs come first (his 5), then single strengths (4); action points that were starred or came
+   up more than once come first (his 1), then single ones (2). No cap (Ramy: "it also depends on the recommended grade ... a
+   pass A will have a lot fewer action points than a pass"): every criterion the three TPs name, in its latest state. The words are the feedback's own, with their code, newest first.
+   Shown in an empty record for a tutor; kept only when the tutor changes something in it or saves with it open. */
+function hasLists(d){ return !!d && SECTIONS.some(s => Array.isArray(d[s.key]) && d[s.key].length); }
+function suggestFor(id){
+  const tr = Object.values(loadRoster().trainees || {}).find(t => t && (t.id || t.name) === id); if (!tr) return null;
+  const history = T.tpHistory(tr) || {};
+  const tps = Object.keys(history).map(Number).filter(n => n >= 1 && history[n] && history[n].state && history[n].state.lists).sort((a, b) => a - b).slice(-3);
+  if (!tps.length) return null;
+  const out = {};
+  [['planning', 'planS', 'planA', 'lSP', 'lAP'], ['teaching', 'teachS', 'teachA', 'lST', 'lAT']].forEach(([, sKey, aKey, sList, aList]) => {
+    const crit = {};   // code -> { last: {tp, kind, text}, s: Set of TPs, a: Set of TPs, star: bool }
+    tps.forEach(n => {
+      const lists = history[n].state.lists;
+      [['S', sList], ['A', aList]].forEach(([kind, lid]) => (lists[lid] || []).forEach(pt => {
+        const { text, code } = pointFromHTML(pt && pt.html); if (!text || !code) return;
+        const c = crit[code] || (crit[code] = { last: null, s: new Set(), a: new Set(), star: false });
+        (kind === 'S' ? c.s : c.a).add(n);
+        if (kind === 'A' && pt.star) c.star = true;
+        /* the newest TP decides; within one TP an action point outweighs a strength */
+        if (!c.last || n > c.last.tp || (n === c.last.tp && kind === 'A' && c.last.kind === 'S')) c.last = { tp: n, kind, text };
+      }));
+    });
+    const rows = Object.keys(crit).map(code => { const c = crit[code];
+      const rank = c.last.kind === 'S' ? (c.s.size >= 2 ? 5 : 4) : (c.star || c.a.size >= 2 ? 1 : 2);
+      return { code, text: c.last.text, tp: c.last.tp, kind: c.last.kind, rank }; });
+    const order = (a, b) => (a.kind === 'S' ? b.rank - a.rank : a.rank - b.rank) || b.tp - a.tp;
+    out[sKey] = rows.filter(r => r.kind === 'S').sort(order).map(r => ({ text: r.text, code: r.code }));
+    out[aKey] = rows.filter(r => r.kind === 'A').sort(order).map(r => ({ text: r.text, code: r.code }));
+  });
+  return SECTIONS.some(sec => out[sec.key].length) ? out : null;
+}
+function fillSuggestions(){ if (RO) return; ORDER.forEach(p => { if (!hasLists(DATA[p.id])) { const g = suggestFor(p.id); if (g) SUGG[p.id] = g; } }); }
+/* the suggestion becomes the record the moment the tutor works on it */
+function keepSuggestion(id){ if (!SUGG[id] || hasLists(DATA[id])) { delete SUGG[id]; return; } const g = SUGG[id]; delete SUGG[id];
+  SECTIONS.forEach(sec => { DATA[id][sec.key] = (g[sec.key] || []).map(it => ({ text: it.text, code: it.code })); }); }
+
 /* ---- the point bank: only what has already been written on this course ---- */
 function bankFor(key, exceptId){
   const seen = new Set(), out = [];
@@ -885,7 +929,7 @@ cands.addEventListener('click', e => {
   if (cp){ const i = ORDER.findIndex(p => p.id === cp.dataset.copyprofile); toClipboard(profileText(cp.dataset.copyprofile, i), cp, 'Copied'); return; }
   if (RO) return;
   const bank = e.target.closest('.reuse .lines button');
-  if (bank){ const sec = bank.closest('[data-sec]'); const d = DATA[sec.dataset.id], key = sec.dataset.sec;
+  if (bank){ const sec = bank.closest('[data-sec]'); keepSuggestion(sec.dataset.id); const d = DATA[sec.dataset.id], key = sec.dataset.sec;
     /* Either drawer adds the same way, and both close behind the click: the
        point is now in the box, and a drawer left open hides it. */
     const det = bank.closest('details'); if (det) det.open = false;
@@ -893,11 +937,11 @@ cands.addEventListener('click', e => {
     else d[key] = (d[key] && d[key].trim() ? d[key].replace(/\s*$/, '') + '\n' : '') + bank.dataset.bankText;
     touch(); paintCands(); return; }
   const a = e.target.closest('[data-add]');
-  if (a){ const sec = a.closest('[data-sec]'); DATA[sec.dataset.id][a.dataset.add].push({ text: '', code: '' }); touch(); paintCands();
+  if (a){ const sec = a.closest('[data-sec]'); keepSuggestion(sec.dataset.id); DATA[sec.dataset.id][a.dataset.add].push({ text: '', code: '' }); touch(); paintCands();
     const rows = document.querySelectorAll(`[data-id="${sec.dataset.id}"][data-sec="${a.dataset.add}"] .pt textarea`);
     if (rows.length) rows[rows.length - 1].focus(); return; }
   const r = e.target.closest('[data-remove]');
-  if (r){ const sec = r.closest('[data-sec]'); DATA[sec.dataset.id][sec.dataset.sec].splice(+r.dataset.remove, 1); touch(); paintCands(); }
+  if (r){ const sec = r.closest('[data-sec]'); keepSuggestion(sec.dataset.id); DATA[sec.dataset.id][sec.dataset.sec].splice(+r.dataset.remove, 1); touch(); paintCands(); }
 });
 
 cands.addEventListener('input', e => {
@@ -905,7 +949,7 @@ cands.addEventListener('input', e => {
   if (RO) return;
   const sec = e.target.closest('[data-sec]'); if (!sec) return;
   const d = DATA[sec.dataset.id];
-  if (e.target.matches('[data-text]')){ d[sec.dataset.sec][+e.target.dataset.text].text = e.target.value; fit(e.target); touch(); return; }
+  if (e.target.matches('[data-text]')){ keepSuggestion(sec.dataset.id); d[sec.dataset.sec][+e.target.dataset.text].text = e.target.value; fit(e.target); touch(); return; }
   if (e.target.matches('[data-field]')){ d[e.target.dataset.field] = e.target.value; touch(); }
 });
 
@@ -940,7 +984,7 @@ document.getElementById('cohort').addEventListener('change', onGrade);
 cands.addEventListener('change', e => {
   if (e.target.matches('select.grade')) return onGrade(e);
   if (RO || !e.target.matches('[data-code]')) return;
-  const sec = e.target.closest('[data-sec]');
+  const sec = e.target.closest('[data-sec]'); keepSuggestion(sec.dataset.id);
   DATA[sec.dataset.id][sec.dataset.sec][+e.target.dataset.code].code = e.target.value; touch();
 });
 
@@ -1051,6 +1095,7 @@ window.addEventListener('beforeprint', buildPrintable);
       '<p style="font-size:0.9rem;color:var(--grey);line-height:1.6;max-width:560px;margin-top:24px;">No trainees on the course yet. Add them on the <a href="6_centre_admin_dashboard.html">Course admin</a> page, then come back — every trainee gets a record here.</p>';
     return;
   }
+  fillSuggestions();
   paint(); paintState();
 })();
 
