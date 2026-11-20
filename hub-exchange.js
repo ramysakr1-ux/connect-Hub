@@ -139,7 +139,8 @@
       var s = doc.self;
       md.push('## Their self-evaluation');
       var sf = function(t, v){ if (lines(v).length) { md.push('**' + t + ':** ' + lines(v).join(' / ')); } };
-      sf('What went well', s.well); sf('What did not', s.not); sf('What they learned', s.learn); sf('What they found difficult', s.diff); sf('Next time', s.next);
+      if (s.v === 2 && window.hubSelfRows) hubSelfRows(s, true).forEach(function(r){ sf(r[0], r[1]); });   /* the second shape (21 Nov 2026) */
+      else { sf('What went well', s.well); sf('What did not', s.not); sf('What they learned', s.learn); sf('What they found difficult', s.diff); sf('Next time', s.next); }
       md.push('');
     }
     return md.join('\n');
@@ -199,7 +200,7 @@
       });
     }
     if (doc.self) {
-      var s = doc.self, sr = [['What went well', s.well], ['What did not', s.not], ['What they learned', s.learn], ['What they found difficult', s.diff], ['Next time', s.next]].filter(function(x){ return lines(x[1]).length; });
+      var s = doc.self, sr = (s.v === 2 && window.hubSelfRows ? hubSelfRows(s, true) : [['What went well', s.well], ['What did not', s.not], ['What they learned', s.learn], ['What they found difficult', s.diff], ['Next time', s.next]]).filter(function(x){ return lines(x[1]).length; });
       if (sr.length) { o.push('<h2>Their self-evaluation</h2>'); o.push(table(['', ''], sr.map(function(x){ return ['<b>' + h(x[0]) + '</b>', cell(x[1])]; })).replace(/<tr><th[^]*?<\/tr>/, '')); }
     }
     return '<div style="font-family:Arial, Helvetica, sans-serif; font-size:11pt;">' + o.join('\n') + '</div>';

@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611210159">
+<link rel="stylesheet" href="hub-tokens.css?v=202611210216">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -79,6 +79,20 @@
   .catwrap{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;}
   @media(max-width:600px){ .catwrap{grid-template-columns:1fr;} }
   .catbox h3{font-family:'Newsreader',Georgia,serif; font-size:0.95rem; margin:0 0 6px;}
+  .card.pick .picktop{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin:0 0 14px;}
+  .card.pick .picktop h2{margin:0;}
+  .card.pick .pickcount{font:700 0.86rem 'Karla',sans-serif; color:var(--grey);} .card.pick .pickcount.done{color:var(--fb-good);}
+  .card.pick .catwrap{grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;}
+  .card.pick .catbox{background:var(--sand); border:1px solid var(--sand-line); border-radius:12px; padding:14px 16px 16px;}
+  .card.pick .catbox.full{border-color:var(--fb-good); background:var(--fb-good-wash);}
+  .card.pick .catbox h3{font:700 0.8rem 'Karla',sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--ink); margin:0 0 2px;}
+  .card.pick .cathint{font:600 0.86rem 'Karla',sans-serif; color:var(--grey); margin:0 0 12px;}
+  .card.pick .catbox.full .cathint{color:var(--fb-good);}
+  .card.pick .chips{display:flex; flex-direction:column; gap:8px;}
+  .card.pick .chip{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; font-size:1rem; padding:10px 14px; border-radius:10px; border:1.5px solid var(--sand-line); background:var(--surface); margin:0; min-height:44px;}
+  .card.pick .chip.picked{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:700; opacity:1;}
+  .card.pick .chip.picked::after{content:"Chosen"; font:700 0.72rem 'Karla',sans-serif; letter-spacing:.06em; text-transform:uppercase; opacity:.85;}
+  .card.pick .chip.disabled{opacity:.45;}
   .cathint{font-size:0.76rem; color:var(--grey); margin:0 0 8px;}
   /* Reference material -- a letter, a text, a class profile -- is read, so it
      is set to be read: body size, paragraph spacing, its own measure. The
@@ -221,7 +235,7 @@
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611210159">
+<link rel="stylesheet" href="hub-house.css?v=202611210216">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -229,19 +243,19 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611210159"></script>
-<script src="assignment-history.js?v=202611210159"></script>
-<script src="assignment-examples.js?v=202611210159"></script>
-<script src="hub-due.js?v=202611210159"></script>
-<script src="hub-shared.js?v=202611210159"></script>
-<script src="hub-store.js?v=202611210159"></script>
-<script src="hub-say.js?v=202611210159"></script>
-<script src="hub-sync.js?v=202611210159"></script>
-<script src="hub-notebook.js?v=202611210159"></script>
-<script src="observation-defaults.js?v=202611210159"></script>
-<script src="hub-rotation.js?v=202611210159"></script>
-<script src="hub-peers.js?v=202611210159"></script>
-<script src="fol-interview.js?v=202611210159"></script>
+<script src="assignment-defaults.js?v=202611210216"></script>
+<script src="assignment-history.js?v=202611210216"></script>
+<script src="assignment-examples.js?v=202611210216"></script>
+<script src="hub-due.js?v=202611210216"></script>
+<script src="hub-shared.js?v=202611210216"></script>
+<script src="hub-store.js?v=202611210216"></script>
+<script src="hub-say.js?v=202611210216"></script>
+<script src="hub-sync.js?v=202611210216"></script>
+<script src="hub-notebook.js?v=202611210216"></script>
+<script src="observation-defaults.js?v=202611210216"></script>
+<script src="hub-rotation.js?v=202611210216"></script>
+<script src="hub-peers.js?v=202611210216"></script>
+<script src="fol-interview.js?v=202611210216"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -545,15 +559,23 @@ function render(){
       html += `</div>`;
     } else if (s.type==='picker') {
       const picked = PICKED[i] || {};
-      html += `<div class="card pick"><h2>${esc(s.label)}</h2>${TW}${s.intro?`<p class="guide">${nl2br(s.intro)}</p>`:''}<div class="catwrap">
-        ${hubPickerCats(s).map(c => {
+      /* A CLEARER PICK (Ramy, 21 Nov 2026: "needs a better design", built from the mock-up he chose): equal boxes, each
+         saying where it stands, a count at the top, items as full rows, a chosen one dark with the word Chosen, a
+         finished box soft green. The sentence under the heading is gone: the boxes say it. */
+      const cats = hubPickerCats(s);
+      const need = cats.reduce((n, c) => n + c.pick, 0);
+      const got = cats.reduce((n, c) => n + (c.fixed ? c.options.length : Math.min((picked[c.key] || []).length, c.pick)), 0);
+      const shortName = l => { const t = String(l || '').replace(/^your\s+/i, '').replace(/^(one|two|three|four|\d+)\s+/i, ''); return t.charAt(0).toUpperCase() + t.slice(1); };
+      html += `<div class="card pick"><div class="picktop"><h2>${esc(s.label)}</h2><span class="pickcount${got >= need ? ' done' : ''}">${got} of ${need} chosen</span></div>${TW}<div class="catwrap">
+        ${cats.map(c => {
           const chosen = c.fixed ? c.options : (picked[c.key] || []);
-          // A fixed group is not a choice. Everyone analyses it, so its chips
+          // A fixed group is not a choice. Everyone analyses it, so its rows
           // show as taken and do nothing -- clearer than hiding it, because
           // the trainee still has to know it is one of their four items.
-          return `<div class="catbox"><h3>${esc(c.label)}</h3>
-          <p class="cathint">${c.fixed ? 'Everyone analyses this one.' : ('Pick ' + c.pick + (c.pick === 1 ? '.' : '.'))}</p>
-          ${c.options.map(opt => `<button type="button" class="chip ${chosen.includes(opt)?'picked':''} ${!c.fixed && !chosen.includes(opt) && chosen.length>=c.pick?'disabled':''}" data-role="chip" data-i="${i}" data-cat="${esc(c.key)}" data-val="${esc(opt)}" ${locked||c.fixed?'disabled':''}>${esc(opt)}</button>`).join('')}
+          const full = c.fixed || chosen.length >= c.pick;
+          return `<div class="catbox${full ? ' full' : ''}"><h3>${esc(shortName(c.label))}</h3>
+          <p class="cathint">${c.fixed ? 'The same for everyone' : (Math.min(chosen.length, c.pick) + ' of ' + c.pick + ' chosen')}</p>
+          <div class="chips">${c.options.map(opt => `<button type="button" class="chip ${chosen.includes(opt)?'picked':''} ${!c.fixed && !chosen.includes(opt) && chosen.length>=c.pick?'disabled':''}" data-role="chip" data-i="${i}" data-cat="${esc(c.key)}" data-val="${esc(opt)}" ${chosen.includes(opt)?'aria-pressed="true"':'aria-pressed="false"'} ${locked||c.fixed?'disabled':''}>${esc(opt)}</button>`).join('')}</div>
         </div>`; }).join('')}
       </div></div>`;
     } else if (s.type==='fields') {

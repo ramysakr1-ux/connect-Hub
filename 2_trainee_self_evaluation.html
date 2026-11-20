@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611210159">
+<link rel="stylesheet" href="hub-tokens.css?v=202611210216">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -210,12 +210,30 @@
   @media print{ .sv5, .sv5-env{display:none !important;} .ap-row.sv5-carried, .ap-row.sv5-answered{background:none; box-shadow:none; padding:0;} }
   .prev-pill{display:block; margin:0 0 12px; padding:4px 12px; border-radius:999px; border:1px solid var(--fb-act); background:transparent; color:var(--fb-act); font:600 0.76rem 'Inter',sans-serif; cursor:pointer;}
   .card.next .prev-pill, .card.next .btn-add{color:var(--paper); border-color:var(--paper);} .card.next .prev-pill:hover, .card.next .btn-add:hover{background:transparent; text-decoration:underline;}
+  .se-aim{background:var(--sand-deep); border-radius:8px; padding:10px 14px; margin:0 0 12px; font-size:0.92rem; line-height:1.5;}
+  .se-aim b{display:block; font-size:0.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin-bottom:2px;}
+  .se-aim ul{margin:0; padding-left:18px;}
+  .se-yn{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px;}
+  .se-yn button{padding:8px 20px; min-height:40px; border-radius:999px; border:1.5px solid var(--sand-line); font:600 0.9rem 'Inter',sans-serif; background:var(--surface); color:var(--ink); cursor:pointer;}
+  .se-yn button[aria-checked="true"]{background:var(--teal); color:var(--paper); border-color:var(--teal);}
+  .se-yn button:disabled{cursor:default; opacity:.7;}
+  .card h2.se-h{font-size:1rem; margin:4px 0 6px;}
+  .se-pill{display:inline-block; padding:4px 14px; border-radius:999px; font:700 1rem 'Newsreader',Georgia,serif; margin:0 0 12px;}
+  .se-good{background:var(--fb-good-wash); color:var(--fb-good);} .se-act{background:var(--fb-act-wash); color:var(--fb-act);}
+  .se-row{display:grid; grid-template-columns:22px 1fr 1fr 24px; gap:10px; margin:0 0 12px; align-items:start;}
+  .se-row.three{grid-template-columns:22px 1fr 1fr 1fr 24px;}
+  .se-row .n{font:700 0.8rem 'Inter',sans-serif; padding-top:26px; text-align:center;}
+  .se-row .lab{font:700 0.66rem 'Inter',sans-serif; letter-spacing:.08em; text-transform:uppercase; margin:0 0 4px; color:var(--grey);}
+  .se-row textarea{min-height:78px; height:78px; width:100%; box-sizing:border-box;}
+  .se-row .del-btn{margin-top:24px;}
+  @media (max-width:640px){ .se-row, .se-row.three{grid-template-columns:1fr 24px;} .se-row .n{display:none;} .se-row > div{grid-column:1;} .se-row .del-btn{grid-column:2; grid-row:1; margin-top:0;} }
+  @media print{ .se-yn button:not([aria-checked="true"]){display:none;} }
   /* the four boxes are one size (Ramy, 21 Nov 2026): the action point was a one-line field beside a taller box */
   .ap-pair textarea{min-height:78px; height:78px; box-sizing:border-box; width:100%;}
   .prev-pill:hover{background:var(--fb-act-wash);} .prev-pill:disabled{opacity:.5; cursor:default;}
   @media print{ .prev-pill{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611210159">
+<link rel="stylesheet" href="hub-house.css?v=202611210216">
 </head>
 <body>
 <div class="board">
@@ -239,6 +257,12 @@
     <ul class="stages" id="recallStages"></ul>
   </div>
 
+  <!-- TWO SHAPES (21 Nov 2026). Ramy: "the self-eval should be a bit meatier", then the mock-up he chose: the main aim
+       answered against the plan, strengths with where they showed, and points to work on with why and what instead, so
+       it lines up with the tutor's feedback. A self-evaluation already written in the first shape (the four boxes) keeps
+       that shape, here and wherever it is shown; only one not yet started gets the second. hubSelfRows (hub-shared.js)
+       is the one reader of both. -->
+  <div id="shapeOld" style="display:none;">
   <div class="card good">
     <h2>What went to plan?</h2>
     <textarea id="sWell" class="blt" rows="4" placeholder="Name one thing that worked — and how you knew it worked."></textarea>
@@ -257,6 +281,33 @@
   <div class="card change">
     <h2>What would you do differently if you taught it again?</h2>
     <textarea id="sDiff" class="blt" rows="4" placeholder="One change, and what difference you think it would make."></textarea>
+  </div>
+  </div>
+
+  <div id="shapeNew">
+  <div class="card">
+    <h2>Did you achieve your main aim?</h2>
+    <div class="se-aim" id="aimBox" style="display:none;"><b>Your main aim, from your plan</b><div id="aimFromPlan"></div></div>
+    <div class="se-yn" id="aimYN" role="radiogroup" aria-label="Did you achieve your main aim?">
+      <button type="button" role="radio" aria-checked="false" data-v="yes">Yes</button>
+      <button type="button" role="radio" aria-checked="false" data-v="partly">Partly</button>
+      <button type="button" role="radio" aria-checked="false" data-v="no">No</button>
+    </div>
+    <h2 class="se-h">How do you know?</h2>
+    <textarea id="nLearn" class="blt" rows="3" placeholder="What could the learners do at the end that they could not do at the start?"></textarea>
+  </div>
+
+  <div class="card">
+    <span class="se-pill se-good">Strengths</span>
+    <div id="stList"></div>
+    <button class="btn-add" type="button" id="addST">+ Add another</button>
+  </div>
+
+  <div class="card">
+    <span class="se-pill se-act">To work on</span>
+    <div id="wkList"></div>
+    <button class="btn-add" type="button" id="addWK">+ Add another</button>
+  </div>
   </div>
 
   <div class="card next">
@@ -286,12 +337,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611210159"></script>
-<script src="hub-shared.js?v=202611210159"></script>
-<script src="hub-store.js?v=202611210159"></script>
-<script src="hub-say.js?v=202611210159"></script>
-<script src="hub-sync.js?v=202611210159"></script>
-<script src="hub-notebook.js?v=202611210159"></script>
+<script src="hub-due.js?v=202611210216"></script>
+<script src="hub-shared.js?v=202611210216"></script>
+<script src="hub-store.js?v=202611210216"></script>
+<script src="hub-say.js?v=202611210216"></script>
+<script src="hub-sync.js?v=202611210216"></script>
+<script src="hub-notebook.js?v=202611210216"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -425,6 +476,7 @@ function showRecall(d){
     (p.main?`<dt>Main aim</dt><dd>${aim(p.main)}</dd>`:'')+
     (p.sub?`<dt>Subsidiary aim</dt><dd>${aim(p.sub)}</dd>`:'')+
     (p.pers?`<dt>Personal aims</dt><dd>${aim(p.pers)}</dd>`:'');
+  if ($('aimBox')) { $('aimBox').style.display = p.main ? '' : 'none'; $('aimFromPlan').innerHTML = p.main ? aim(p.main) : ''; }
   /* "Lead-in: To engage students" is a name and an aim; the name is what you scan for */
   const stageOf = t => { const m2 = String(t||'').match(/^([^:]{2,60}):\s*(.+)$/s); return m2 ? { name: m2[1].trim(), aim: m2[2].trim() } : { name: String(t||'').trim() || '\u2014', aim: '' }; };
   $('recallStages').innerHTML=(p.rows||[])
@@ -432,9 +484,34 @@ function showRecall(d){
     .map(r=>{ const st = stageOf(r.stage); return `<li><span class="min">${r.time?esc(r.time)+' min':''}</span><span class="stage"><b>${esc(st.name)}</b>${st.aim?'<small>'+esc(st.aim)+'</small>':''}</span><span class="what">${esc((r.proc||'').split('\n')[0].replace(/^•\s*/,''))}</span><span class="int">${esc(r.int||'')}</span></li>`; }).join('');
 }
 
+/* WHICH SHAPE. One already written in the first shape keeps it; anything else, and anything empty, takes the second. */
+let SHAPE='new';
+function setShape(x){ SHAPE=x; $('shapeOld').style.display = x==='old' ? '' : 'none'; $('shapeNew').style.display = x==='new' ? '' : 'none'; }
+function seRow(list, labs, vals, phs){
+  const row=document.createElement('div'); row.className='se-row'+(labs.length===3?' three':'');
+  row.innerHTML=`<span class="n">${list.children.length+1}</span>`+labs.map((l,i)=>`<div><p class="lab">${l}</p><textarea rows="2" placeholder="${esc(phs[i]||'')}">${esc(vals[i]||'')}</textarea></div>`).join('')+`<button class="del-btn" type="button" title="Remove">✕</button>`;
+  list.appendChild(row);
+  row.querySelector('.del-btn').addEventListener('click',()=>{ row.remove(); [...list.children].forEach((r,i)=>{ r.querySelector('.n').textContent=i+1; }); dirty=true; autosave(); });
+  return row;
+}
+const ST_LABS=['Strength','Where it showed in the lesson'], WK_LABS=['What did not go as planned','Why it happened','What I would do instead'];
+function addST(a,b){ const first=!$('stList').children.length; return seRow($('stList'), ST_LABS, [a,b], first?['e.g. Clear instructions','e.g. The pair work started straight away, with no questions']:[]); }
+function addWK(a,b,c){ const first=!$('wkList').children.length; return seRow($('wkList'), WK_LABS, [a,b,c], first?['e.g. The controlled practice ran out of time','e.g. My clarification took 15 minutes, not 8','e.g. Plan three CCQs and stop there']:[]); }
+function setAim(v){ document.querySelectorAll('#aimYN button').forEach(b=>b.setAttribute('aria-checked', b.dataset.v===v ? 'true' : 'false')); }
+function getAim(){ const b=document.querySelector('#aimYN button[aria-checked="true"]'); return b ? b.dataset.v : ''; }
+document.querySelectorAll('#aimYN button').forEach(b=>b.addEventListener('click',()=>{ if(b.disabled) return; setAim(getAim()===b.dataset.v ? '' : b.dataset.v); dirty=true; autosave(); }));
+$('addST').addEventListener('click',()=>{ addST('',''); dirty=true; });
+$('addWK').addEventListener('click',()=>{ addWK('','',''); dirty=true; });
+addST('',''); addST('',''); addWK('','',''); addWK('','','');   /* a page with nothing saved yet starts with two rows of each */
 function fillSelf(s){
+  const first = s.v!==2 && ['well','not','learn','diff'].some(k=>String(s[k]||'').replace(/•/g,'').trim());
+  setShape(first ? 'old' : 'new');
   $('sWell').value=procText(s.well||''); $('sNot').value=procText(s.not||'');
   $('sLearn').value=procText(s.learn||''); $('sDiff').value=procText(s.diff||''); $('sNext').value=procText(s.next||'');
+  setAim(s.v===2 ? (s.aim||'') : ''); $('nLearn').value = s.v===2 ? procText(s.learn||'') : '';
+  $('stList').innerHTML=''; $('wkList').innerHTML='';
+  if(s.v===2){ (s.strengths||[]).forEach(x=>addST(x.s,x.where)); (s.work||[]).forEach(x=>addWK(x.what,x.why,x.instead)); }
+  while($('stList').children.length<2) addST('',''); while($('wkList').children.length<2) addWK('','','');
   $('apList').innerHTML='';
   (s.actions||[]).forEach(a=>addAP(a.prev,procText(a.did||'')));
   if(!(s.actions||[]).length){ addAP('',''); addAP('',''); }
@@ -442,6 +519,17 @@ function fillSelf(s){
 }
 
 function collectSelf(){
+  if(SHAPE==='new'){
+    const vals=r=>[...r.querySelectorAll('textarea')].map(t=>t.value.trim());
+    const strengths=[...$('stList').children].map(vals).filter(v=>v.some(Boolean)).map(v=>({s:v[0],where:v[1]}));
+    const work=[...$('wkList').children].map(vals).filter(v=>v.some(Boolean)).map(v=>({what:v[0],why:v[1],instead:v[2]}));
+    const line=a=>a.filter(Boolean).join(': ');
+    /* well, not and diff are written too, from the rows, so a page that only knows the first shape still has words to show */
+    return { v:2, aim:getAim(), learn:procText($('nLearn').value), strengths, work,
+      well:strengths.map(x=>'• '+line([x.s,x.where])).join('\n'), not:work.map(x=>'• '+line([x.what,x.why])).join('\n'),
+      diff:work.filter(x=>x.instead).map(x=>'• '+x.instead).join('\n'), next:procText($('sNext').value),
+      actions:[...$('apList').children].map(r=>({ prev:r.querySelector('.ap-prev').value, did:r.querySelector('.ap-did').value })).filter(a=>a.prev.trim()||a.did.trim()) };
+  }
   return {
     well:procText($('sWell').value), not:procText($('sNot').value), learn:procText($('sLearn').value),
     diff:procText($('sDiff').value), next:procText($('sNext').value),
@@ -457,13 +545,7 @@ const TH=`style="${B}background:#F3EADA;color:#1E6B63;padding:7px 9px;text-align
 const TD=`style="${B}padding:7px 9px;vertical-align:top;"`;
 
 function selfHTML(s,meta){
-  const rows=[
-    ['What went to plan?',s.well],
-    ["What didn't go as planned, and why?",s.not],
-    ['Evidence that the learners had learned',s.learn],
-    ['What I would do differently',s.diff],
-    ['What I want to work on in the next TP',s.next]
-  ].map(([k,v])=>`<tr><td ${TH} width="30%">${k}</td><td ${TD}>${bullets(v)||'&nbsp;'}</td></tr>`).join('');
+  const rows=hubSelfRows(s).map(([k,v])=>`<tr><td ${TH} width="30%">${k}</td><td ${TD}>${bullets(v)||'&nbsp;'}</td></tr>`).join('');
   const acts=s.actions.length
     ? `<h3 style="font-family:Newsreader,Georgia,serif;font-size:12pt;color:#1E6B63;margin:18px 0 6px;">Action points from the last TP</h3>
        <table style="width:100%;border-collapse:collapse;">
@@ -484,7 +566,7 @@ function setStatus(msg){
 
 $('turnInBtn').addEventListener('click', async ()=>{
   const s=collectSelf();
-  if(!s.well.trim() && !s.not.trim() &&
+  if(!s.well.trim() && !s.not.trim() && !(s.v===2 && (s.aim || String(s.learn||'').replace(/•/g,'').trim())) &&
      !(await confirmModal('You haven\'t written much yet. Turn in anyway?','Turn in anyway'))) return;
   saveSelfRecord({ state:s, label:draftLabel(), status:'turned_in', turnedInAt:Date.now() });
   dirty=false;

@@ -1823,6 +1823,36 @@ window.hubPickedItems = function(s, picked){
   return out;
 };
 
+/* ---- A SELF-EVALUATION AS ROWS (21 Nov 2026). The self-evaluation has two shapes. The first (to 21 Nov 2026) is five
+   boxes: well, not, learn, diff, next. The second (Ramy, 21 Nov 2026: "should be a bit meatier", from the mock-up he chose)
+   is v:2: aim ('yes' | 'partly' | 'no'), learn (how they know), strengths [{s, where}], work [{what, why, instead}], next.
+   Every page that SHOWS one (the trainee's own print, the tutor's feedback form, the brief for Ask Connect) asks here, so
+   one written in the first shape keeps showing exactly as it was written and the two cannot drift.
+   Returns [[label, text], ...]; text is plain lines, a list as "• " lines. short: the tutor's narrow first column. */
+window.hubSelfRows = function(s, short){
+  s = s || {};
+  var t = function(v){ return String(v == null ? '' : v).trim(); };
+  if (s.v === 2) {
+    var AIM = { yes: 'Yes', partly: 'Partly', no: 'No' };
+    var one = function(v){ return t(v).replace(/^•\s*/, '').replace(/\s*\n\s*(•\s*)?/g, ' '); };   /* one item, one line */
+    var st = (s.strengths || []).filter(function(x){ return x && (t(x.s) || t(x.where)); })
+      .map(function(x){ return '• ' + one(x.s) + (one(x.where) ? (one(x.s) ? ': ' : '') + one(x.where) : ''); }).join('\n');
+    var wk = (s.work || []).filter(function(x){ return x && (t(x.what) || t(x.why) || t(x.instead)); })
+      .map(function(x){ var end = function(v){ return /[.!?]$/.test(v) ? v : v + '.'; };
+        return '• ' + [one(x.what) && end(one(x.what)), one(x.why) && end('Why: ' + one(x.why)), one(x.instead) && end('Instead: ' + one(x.instead))].filter(Boolean).join(' '); }).join('\n');
+    return [
+      [short ? 'Main aim achieved?' : 'Did you achieve your main aim?', AIM[s.aim] || ''],
+      [short ? 'How they know' : 'How do you know?', s.learn || ''],
+      ['Strengths', st],
+      ['To work on', wk],
+      [short ? 'Wants to work on next' : 'What I want to work on in the next TP', s.next || '']
+    ];
+  }
+  return short
+    ? [['Went to plan', s.well], ["Didn't go as planned", s.not], ['Evidence of learning', s.learn], ['Would do differently', s.diff], ['Wants to work on next', s.next]]
+    : [['What went to plan?', s.well], ["What didn't go as planned, and why?", s.not], ['Evidence that the learners had learned', s.learn], ['What I would do differently', s.diff], ['What I want to work on in the next TP', s.next]];
+};
+
 /* Reference material, not a question. True for a section the trainee reads
  * and does not write in. The "Before you start" label keeps working so that
  * every assignment written before this stays as it was. */
