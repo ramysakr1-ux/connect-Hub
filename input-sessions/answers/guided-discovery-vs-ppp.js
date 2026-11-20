@@ -14,8 +14,8 @@
  *   5  The stages of each       under each stage of the two texts, the words for its gaps, in the order of the gaps (15, on 6 lines)
  *   6  Turn it round            one way to turn it round, behind "Reveal answer"
  * The three boxes behind a button are .reveal-block, which the stylesheet shows in this print without being asked.
- * The lead-in, "Is Frank unlucky, or lucky?", the stage notes and questions 3 to 5 of Two approaches are for the room:
- * the page holds no answer to them, so none is printed.
+ * The lead-in, "Is Frank unlucky, or lucky?", the trainee's own stage notes and questions 3 to 5 of Two approaches
+ * have no answer on the page, so none is printed.
  *
  * WHERE EACH ANSWER COMES FROM. All of it from the page itself; nothing is copied into this file.
  *   The ten questions: each question's own answer in the markup (.ans). The page's print rule keeps that block off the
@@ -31,7 +31,7 @@
 SessionAnswers.register(function(A){
   var esc = function(t){ return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var words = function(el){ return el ? el.textContent.replace(/\s+/g, ' ').trim() : ''; };
-  var DOT = ' · ';
+  var DOT = ' \u00B7 ';
 
   /* The answer of one dropdown: the words on its own option for the value the page counts as right (the page's test:
      the two in small letters are the same). No such option, or more than one: no answer. */
@@ -63,9 +63,11 @@ SessionAnswers.register(function(A){
     if (said) A.line(cell, said);
   });
 
-  /* 5 · The stages of each: under each stage of the two texts, the words for its gaps. */
+  /* 5 · The stages of each: under each stage of the two texts, the words for its gaps. A little room is left under
+     the line, so that it reads as the end of its own stage and not as the start of the next one. */
   A.each('#s5 .gaptext p', function(p){
     var said = p.querySelector('select.blank') ? gaps(p) : '';
-    if (said) A.after(p, said);
+    var line = said ? A.after(p, said) : null;
+    if (line) line.style.marginBottom = '10px';
   });
 });

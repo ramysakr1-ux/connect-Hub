@@ -160,7 +160,7 @@ STYLE = r'''
     table.stk tr{border:1px solid var(--sand-line); background:var(--paper); padding:6px 10px; margin:0 0 6px;}
     table.stk td{border:0; padding:2px 0;}
   }
-  @media print{ .model, .answer-key, .example{display:none !important;} body.tutor .model:not([hidden]){display:block !important;} }
+  @media print{ .model, .answer-key, .example, .toks + .small, .fb, .count{display:none !important;} .tok.good, .tok.bad{color:var(--ink); background:none; font-weight:inherit;} .opt.good, .opt.bad{border-color:var(--sand-line); background:var(--field); color:var(--ink);} body.tutor .model:not([hidden]){display:block !important;} }   /* 20 Nov 2026: on paper an answered row is the task again. "Print the handout" printed the right word in bold with "Right." and its explanation under it, "Right" or "Not quite" beside the options, and the score. */
 '''
 
 SCRIPT = r'''
