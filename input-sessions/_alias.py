@@ -994,3 +994,11 @@ ALIAS['life-after-celta'] = ALIAS.get('life-after-celta', []) + [
     ('  @media print{ .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }',
      "  @media print{ .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }\n  /* 20 Nov 2026: How to handle the awkward ones is the answer to Questions they'll ask you; the plain handout printed it, open or shut. It prints only with the answers, or on a tutor's print. */\n  @media print{ #answers{display:none !important;} body.tutor #answers, body.with-answers #answers{display:block !important;} html.hub-clean body #answers{display:none !important;} }"),
 ]
+
+
+# FOUND WALKING TEACHING SPEAKING (20 Nov 2026): a stage already clicked printed faded with its number, so the stage
+# order printed solved on the plain handout.
+ALIAS['teaching-speaking'] = ALIAS.get('teaching-speaking', []) + [
+    ('  @media print{ .reveal-box{display:none !important;} textarea.text-area{background:none; min-height:60px;} }',
+     '  @media print{ .reveal-box{display:none !important;} textarea.text-area{background:none; min-height:60px;} }\n  /* 20 Nov 2026: a stage already clicked printed faded with its number, so an ordered task printed solved */\n  @media print{ .order-line{opacity:1 !important;} .order-line .num{visibility:hidden;} }'),
+]

@@ -99,6 +99,8 @@
   .trainer h4{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:12px 0 4px;}
   .trainer p{margin:0; font-size:.9rem; line-height:1.55;}
   @media print{ .q .why, .q .ans, .bscore, .bingo-stamp, .confetti, .sq .ask, .sq .who{display:none !important;} .sq{min-height:120px;} .q .opt{border:1px solid #999; background:none;} }
+  /* 20 Nov 2026: an answered task printed solved (the right option bold, the others faded, the bingo squares ticked and ringed, the hunt boxes ticked); on paper every one now prints as untouched */
+  @media print{ .q .opt.good, .q .opt.bad, .q .opt.dim{opacity:1; font-weight:400; border-color:#999; background:none;} .sq.got, .sq.line, .sq.open{border-style:dashed; border-color:var(--sand-line); background:var(--field);} .sq.got::after{display:none;} .hunt input{-webkit-appearance:none; appearance:none; border:1.5px solid #555; border-radius:3px; background:none;} }
 </style>
 </head>
 <body>
@@ -275,6 +277,8 @@
     if (e.target.closest('input, .ask')) return;
     const sq = e.target.closest('.sq'); if (!sq) return; open = +sq.dataset.i === open ? -1 : +sq.dataset.i; drawBingo();
   });
+  /* 20 Nov 2026: a square is a button (role, tabindex) but Enter and Space did nothing; they now open it as a click does */
+  g.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('sq')) { e.preventDefault(); e.target.click(); } });
   drawBingo();
 
   /* ---------- 2. your course, in Lite (read from this browser's copy of the course) ---------- */
