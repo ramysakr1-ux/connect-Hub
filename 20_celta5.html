@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611200923">
+<link rel="stylesheet" href="hub-tokens.css?v=202611201031">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -88,7 +88,19 @@
   .s1pretty ul{margin:4px 0 0; padding:0 0 0 18px;}
   .s1pretty li{margin:0 0 8px; padding-left:2px;}
   .s1pretty li:last-child{margin-bottom:0;}
-  .s1pretty .c5tag{display:inline-block; margin-left:6px; padding:0 7px; border-radius:999px; background:var(--paper); border:1px solid var(--sand-line); color:var(--grey); font-size:0.72rem; font-weight:700; line-height:1.6; vertical-align:1px; white-space:nowrap;}
+  /* THE CRITERION SYMBOLS ARE THE FEEDBACK FORM'S (Ramy, 20 Nov 2026: "the same criteria symbols that we get in feedback
+     ... in the C5 as well, and still manage to convert them into a plain text when we print out the PDF"). They were small
+     grey outlines here; they are now the solid chips of 3_tutor_feedback.html's .tag, with the criterion's wording on
+     hover as there. On paper and in a saved PDF they go back to plain codes in brackets, "(2e, 5g)". Cambridge's own
+     PDF is drawn from the record's text and always had plain codes. */
+  .s1pretty .c5tags{margin-left:4px;}
+  .s1pretty .c5tag{display:inline-block; margin:0 2px; padding:1px 8px; border-radius:6px; background:var(--teal); color:var(--paper); font-size:0.74rem; font-weight:700; vertical-align:1px; white-space:nowrap; cursor:help;}
+  @media print{
+    .s1pretty .c5tags{margin-left:0;}
+    .s1pretty .c5tags::before{content:' (';} .s1pretty .c5tags::after{content:')';}
+    .s1pretty .c5tag{display:inline; margin:0; padding:0; border-radius:0; background:none; color:inherit; font:inherit; vertical-align:baseline;}
+    .s1pretty .c5tag + .c5tag::before{content:', ';}
+  }
   #s1 textarea.s1write, #s2 textarea.s1write, #s3 textarea.s1write{font-size:0.92rem; line-height:1.75; padding:12px 14px;}
   /* Stage 3's summary, read: PLANNING and TEACHING head their halves, and each list has its own line above it */
   .s1pretty p.s3h{margin:16px 0 6px; font-size:0.74rem; font-weight:700; letter-spacing:.09em; color:var(--grey);}
@@ -236,7 +248,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611200923">
+<link rel="stylesheet" href="hub-house.css?v=202611201031">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -249,20 +261,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611200923"></script>
-<script src="hub-hand.js?v=202611200923"></script>
-<script src="hub-ink.js?v=202611200923"></script>
-<script src="assignment-defaults.js?v=202611200923"></script>
-<script src="celta5-text.js?v=202611200923"></script>
-<script src="celta5-appendix.js?v=202611200923"></script>
-<script src="celta5-criteria.js?v=202611200923"></script>
-<script src="hub-tracker.js?v=202611200923"></script>
-<script src="observation-defaults.js?v=202611200923"></script>
-<script src="hub-shared.js?v=202611200923"></script>
-<script src="hub-store.js?v=202611200923"></script>
-<script src="hub-say.js?v=202611200923"></script>
-<script src="hub-sync.js?v=202611200923"></script>
-<script src="hub-notebook.js?v=202611200923"></script>
+<script src="celta5-pdf.js?v=202611201031"></script>
+<script src="hub-hand.js?v=202611201031"></script>
+<script src="hub-ink.js?v=202611201031"></script>
+<script src="assignment-defaults.js?v=202611201031"></script>
+<script src="celta5-text.js?v=202611201031"></script>
+<script src="celta5-appendix.js?v=202611201031"></script>
+<script src="celta5-criteria.js?v=202611201031"></script>
+<script src="hub-tracker.js?v=202611201031"></script>
+<script src="observation-defaults.js?v=202611201031"></script>
+<script src="hub-shared.js?v=202611201031"></script>
+<script src="hub-store.js?v=202611201031"></script>
+<script src="hub-say.js?v=202611201031"></script>
+<script src="hub-sync.js?v=202611201031"></script>
+<script src="hub-notebook.js?v=202611201031"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -570,7 +582,8 @@ function s1Pretty(v){
   const lines = String(v || '').split('\n'); let out = '', list = [];
   const tagged = t => { const m = t.match(/\s*\(((?:\s*\d{1,2}[a-z]?\s*,?)+)\)\s*\.?\s*$/i);
     if (!m) return esc(t);
-    return esc(t.slice(0, m.index)) + m[1].split(',').map(c => c.trim()).filter(Boolean).map(c => '<span class="c5tag">' + esc(c) + '</span>').join(''); };
+    const wording = c => { const row = (window.CONNECT_HUB_CRITERIA || []).find(r => r[0] === c.toLowerCase()); return row ? row[2] : ''; };
+    return esc(t.slice(0, m.index)) + '<span class="c5tags">' + m[1].split(',').map(c => c.trim()).filter(Boolean).map(c => '<span class="c5tag" title="' + esc(wording(c)) + '">' + esc(c) + '</span>').join('') + '</span>'; };
   const flush = () => { if (list.length) out += '<ul>' + list.map(x => '<li>' + tagged(x) + '</li>').join('') + '</ul>'; list = []; };
   lines.forEach(l => { const t = l.trim(); if (!t) { flush(); return; }
     const b = t.match(/^[\u2022\-*\u2013]\s*(.*)$/); if (b) list.push(b[1]); else { flush(); out += '<p>' + tagged(t) + '</p>'; } });

@@ -593,6 +593,14 @@ ALIAS['drama-in-the-elt-classroom'] = [
 ]
 
 ALIAS['writing-the-lesson-plan'] = ALIAS.get('writing-the-lesson-plan', []) + [
+    # THE SCORE WIPED THE EXERCISE (Ramy, 20 Nov 2026, in the session: "issues when they click on the answers for the aim
+    # exercise"). The house numbers the sections s1, s2, s3 and the page's own score counters carry the same ids, so
+    # getElementById('s1') found the SECTION and a right answer replaced the whole Aims part with the number 1. The
+    # counters are now asked for as spans, which the sections are not.
+    ("function bump(k){ scores[k]++; document.getElementById('s'+k).textContent = scores[k]; }",
+     "function bump(k){ scores[k]++; document.querySelector('span#s'+k).textContent = scores[k]; }"),
+    ("scores[g] = 0; document.getElementById('s'+g).textContent = 0;",
+     "scores[g] = 0; document.querySelector('span#s'+g).textContent = 0;"),
     # the lesson frameworks handout, beside the plan (Ramy, 26 Oct 2026: "build the lesson frameworks ... add it to the lesson planning input session")
     ('<h2>Aims</h2>',
      '<div class="guide-box gb-plain" style="margin:0 0 14px"><div class="gb"><h4>Keep this beside you</h4><p>The lesson frameworks handout: which shape fits which lesson, the usual stages of each one, and what each stage is for. <a href="../lesson-frameworks-document/" target="_blank" rel="noopener"><b>Open the handout</b></a>, then print it if you like.</p></div></div>\n    <h2>Aims</h2>'),
