@@ -69,6 +69,7 @@
   .trainer h4{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1rem; margin:12px 0 4px;}
   .trainer p{margin:0; font-size:.9rem; line-height:1.55;}
   @media print{ .concept .d, .scen .why, .choice .note, .tech .a{display:none !important;} }
+  .adapt-paper{display:none;} @media print{ .adapt-paper{display:block;} .adapt-paper .handout{margin:4px 0 6px;} .adapt-paper ol{margin:0 0 12px; padding-left:22px;} #adaptLabel, #s4 p.label, #adaptOriginal, #adaptOptions{display:none !important;} body.with-answers .adapt-paper{display:none !important;} }   /* 20 Nov 2026 (Ramy: "print both"): the handout printed only the one on screen; on paper both handouts print, each with its three versions */
   #nextAdapt[hidden]{display:none;}   /* .btn's display beat the hidden attribute: "Next handout" showed before any pick, and on the last handout it threw and said "Handout 3 of 2" (20 Nov 2026) */
   @media print{ .scen.done.right, .scen.done.wrong, .concept.open, .tech.open{border-color:var(--sand-line);} .concept.open .l{color:inherit;} }   /* an answered moment, an opened idea or technique printed in the right/wrong colour: on paper it is the same as an untouched one (20 Nov 2026) */
 </style>
@@ -302,6 +303,10 @@ function renderAdapt() {
 }
 nextBtn.onclick = () => { adaptIndex++; renderAdapt(); };
 renderAdapt();
+/* 20 Nov 2026 (Ramy: "print both"): both handouts for the paper, each with its versions to circle; built once, shown in print only */
+{ const paper = document.createElement('div'); paper.className = 'adapt-paper';
+  paper.innerHTML = ADAPT.map((a, i) => '<p class="label">Handout ' + (i + 1) + ' of ' + ADAPT.length + '</p><div class="handout">' + a.original.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]) + '</div><ol type="A">' + a.options.map(o => '<li>' + o.text + '</li>').join('') + '</ol>').join('');
+  document.getElementById('adaptOptions').after(paper); }
 
 // ---------- 5. techniques ----------
 const TECHNIQUES = [

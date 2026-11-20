@@ -114,6 +114,9 @@
   .checks li.on .box{background:var(--teal); color:var(--paper);}
   .checks li b{color:var(--ink);}
   @media print{ .fix .good, .fix .tip, .model, .ynm-ans, .flip-back{display:none !important;} .wheel-wrap, .calc, .bars, .big{display:none;} }
+  /* 20 Nov 2026: the paper handout lists all fourteen moments of Spot the problem (built from quotes, in the page's order), and an answered task prints as an untouched one: no screen moment, score, faded or struck-out labels, ticks, spun areas or picks */
+  .match-paper{display:none;}
+  @media print{ .match-paper{display:block; margin:6px 0 12px; padding-left:22px; line-height:1.55;} .match-paper li{margin:0 0 8px; break-inside:avoid;} .match-paper .who{font-weight:700;} #quote, #scorePill, #wyrSay{display:none !important;} .match{grid-template-columns:1fr !important;} .def, .def.used, .def.wrong, .def.right{opacity:1 !important; text-decoration:none !important; animation:none !important; background:none !important; color:#000 !important; border-color:#999 !important; font-weight:500 !important;} .chip.done{background:none !important; color:#000 !important; border-color:#999 !important;} .checks li.on, .fix.open, .wyr .opt.picked{border-color:#999 !important; color:#000 !important;} .checks li.on .box{background:none !important; color:transparent !important;} }
 </style>
 </head>
 <body>
@@ -396,7 +399,7 @@ ynm.forEach(([s,a,why],i)=>{const r=document.createElement('div');r.className='y
   bs[3].onclick=()=>r.classList.toggle('shown'); ynmEl.appendChild(r);});
 
 // ---------- 5. Spot the problem ----------
-const defs=['Too much teacher talking time (TTT)','Echoing','“Helpful” sentence completion','Complicated, unclear instructions','Not checking instructions','Asking “Do you understand?”','Fear of genuine feedback','Not enough authority / over-politeness','The running commentary','No confidence in yourself, the learners or the task','Over-helping, over-organising','Flying with the fastest','Not really listening','Weak rapport'];
+const defs=['Too much teacher talking time (TTT)','Echoing','“Helpful” sentence completion','Complicated, unclear instructions','Not checking instructions','Asking “Do you understand?”','Fear of genuine feedback','Not enough authority / over-politeness','The running commentary','No confidence in yourself, the learners or the task','Over-helping, over-organizing','Flying with the fastest','Not really listening','Weak rapport'];   /* 20 Nov 2026: organizing, American spelling */
 const quotes=[
   {l:[['T','Did you like my lesson?'],['S','Yes.']],d:6,w:'Of course they say yes. Ask something they can answer honestly: “Which activity helped you most?”'},
   {l:[['T','I keep it friendly, but my classes always feel flat.']],d:9,w:'Nice isn’t enough. Trust the learners with a real challenge.'},
@@ -427,6 +430,8 @@ function pick(d){if(d.classList.contains('used')||qi>=order.length)return;const 
     setTimeout(()=>{d.classList.remove('right');d.classList.add('used');qi++;drawQuote();},1500);}
   else{tries++;d.classList.remove('wrong');void d.offsetWidth;d.classList.add('wrong');document.getElementById('why').textContent='Not that one. Try again.';}}
 document.getElementById('matchReset').onclick=startMatch; startMatch();
+/* 20 Nov 2026: the fourteen moments as a list for the paper only (the screen shows one at a time, and printed whichever it was on) */
+(function(){const P=document.createElement('ol');P.className='match-paper';P.id='matchPaper';P.innerHTML=quotes.map(q=>'<li>'+q.l.map(([w,t])=>'<span class="who">'+w+':</span> '+t).join('<br>')+'</li>').join('');document.querySelector('#s5 .match').before(P);})();
 
 // ---------- 6. Grade your language ----------
 const fixes=[

@@ -121,6 +121,8 @@ STYLE = r'''
   .model b{font-family:'Newsreader',Georgia,serif; font-size:1rem;}
   .model .ans{border-left-color:var(--teal); margin-top:6px;}
   @media print{ .ans, .scen .why, .icqscore, #models{display:none !important;} .tally label{border-color:#999;} }
+  /* 20 Nov 2026: a checked ICQ printed solved on the handout (its answer after the question, a teal or amber edge, the pick ringed); on paper every ICQ looks untouched */
+  @media print{ .scen .mark{display:none !important;} .scen, .scen.done.right, .scen.done.wrong{border-color:#999 !important;} .scen .opt, .scen .opt.on{background:none !important; border:1px solid #999 !important; color:#000 !important;} }
 '''
 
 SCRIPT = r'''
