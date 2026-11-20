@@ -25,7 +25,7 @@
 <title>Connect Lite — Micro-teaching</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611201130">
+<link rel="stylesheet" href="hub-tokens.css?v=202611201208">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:var(--doc-width, 1120px); margin:0 auto; padding:26px 20px 64px;}
@@ -69,20 +69,20 @@
   .empty{background:var(--paper); border:1px dashed var(--sand-line); border-radius:10px; padding:18px 20px; color:var(--grey); font-size:.9rem; line-height:1.6;}
   @media(max-width:600px){ .mcard{padding:14px 14px 10px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611201130">
+<link rel="stylesheet" href="hub-house.css?v=202611201208">
 </head>
 <body class="hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="celta5-criteria.js?v=202611201130"></script>
-<script src="hub-shared.js?v=202611201130"></script>
-<script src="hub-store.js?v=202611201130"></script>
-<script src="hub-say.js?v=202611201130"></script>
-<script src="hub-rotation.js?v=202611201130"></script>
-<script src="hub-peers.js?v=202611201130"></script>
-<script src="hub-sync.js?v=202611201130"></script>
+<script src="celta5-criteria.js?v=202611201208"></script>
+<script src="hub-shared.js?v=202611201208"></script>
+<script src="hub-store.js?v=202611201208"></script>
+<script src="hub-say.js?v=202611201208"></script>
+<script src="hub-rotation.js?v=202611201208"></script>
+<script src="hub-peers.js?v=202611201208"></script>
+<script src="hub-sync.js?v=202611201208"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -109,10 +109,16 @@ const sitOf = d => Number(d.setIndex || 0) === 1 ? 'b' : 'a';
 const groupsOf = () => { if (!IS_TUTOR) return [String(ME.group || '')]; const r = (rec('connect_roster_v1') || {}).trainees || {}; return [...new Set(Object.values(r).map(t => String((t && t.group) || '')).filter(Boolean))].sort(); };
 const rowsFor = g => IS_TUTOR ? ((TPP.groups || {})[g] || {}) : (TPP.points || {});
 const label = p => p.token === String(ME.token || '') ? 'You' : (p.name || ('Trainee ' + p.letter));
-function lessonLine(p, g, tp){
+/* A LESSON WITH NO TP POINT SAYS WHY (Ramy, 20 Nov 2026: "yes, change that line"). The course's last two TPs are the
+   trainees' own, planned from the syllabus on the TP planning grid (21_tp_grid.html): they never get a TP point, so
+   "not released yet" was not true of them. And on the rehearser's own card the line speaks to them, not about them. */
+const OWN_FROM = Math.max(1, (parseInt((rec('connect_course_settings') || {}).tpCount, 10) || 8) - 1);
+function lessonLine(p, g, tp, mine){
   const c = (rowsFor(g)[p.token] || {})['tp' + tp] || {};
   const bits = [c.aim ? '<b>' + esc(c.aim) + '</b>' : '', c.framework ? esc(c.framework) : ''].filter(Boolean);
-  return bits.length ? bits.join(' · ') : 'Their TP point is not released yet.';
+  if (bits.length) return bits.join(' · ');
+  if (+tp >= OWN_FROM) return mine ? 'You planned this lesson yourself, on the TP planning grid.' : 'They planned this lesson themselves, on the TP planning grid.';
+  return mine ? 'Your TP point is not released yet.' : 'Their TP point is not released yet.';
 }
 
 /* WHAT TO WATCH FOR (Ramy, 15 Nov 2026: "Give the observers something to say, or to write ... focusing mainly on classroom
@@ -215,7 +221,7 @@ function draw(){
           + (d.sentAt || sentOne ? '<span class="sent">Sent</span>' : '<small>Only ' + esc(label(p)) + ' and the tutors will see it.</small>') + '<span class="sent" data-msg="' + esc(p.token) + '"></span></div>';
       }
       const title = IS_TUTOR ? esc(label(p)) + ' is rehearsing' : mine ? 'Your lesson' : esc(label(p)) + ' is rehearsing';
-      const card = '<div class="mcard' + (mine ? ' me' : '') + '"><h2>' + title + '</h2><p class="what">' + lessonLine(p, g, tp) + '</p>' + inner + '</div>';
+      const card = '<div class="mcard' + (mine ? ' me' : '') + '"><h2>' + title + '</h2><p class="what">' + lessonLine(p, g, tp, mine) + '</p>' + inner + '</div>';
       if (mine) yours += card; else theirs += card;
     });
     if (IS_TUTOR) body += theirs;

@@ -458,3 +458,17 @@ try {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
   document.addEventListener('hub:ready', go);
 })();
+
+/* PRINT WITH THE ANSWERS (Ramy, 20 Nov 2026: "let's make sure that they can do that with all input sessions"). A
+   session on this list has been gone through exercise by exercise, and has a file in answers/ that writes every answer
+   under its task for the print (answers.js says how). A session that is not on the list gets no card: a print with
+   half the answers would be worse than none. The number is the file's version; raise it when the file changes, so a
+   browser that kept the old one fetches the new. "Writing the lesson plan" carries its own card on the page and is
+   not listed. */
+(function(){
+  var READY = {};
+  var m = location.pathname.match(/\/input-sessions\/([^\/]+)\/(?:index\.html)?$/); if (!m) return;
+  var v = READY[m[1]]; if (!v) return;
+  var load = function(src, then){ var s = document.createElement('script'); s.src = src; if (then) s.onload = then; document.head.appendChild(s); };
+  load('../answers.js?v=' + v, function(){ load('../answers/' + m[1] + '.js?v=' + v); });
+})();
