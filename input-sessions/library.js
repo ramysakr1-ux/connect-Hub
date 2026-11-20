@@ -492,7 +492,7 @@ try {
    browser that kept the old one fetches the new. "Writing the lesson plan" carries its own card on the page and is
    not listed. */
 (function(){
-  var READY = { 'phonology-sounds': 2, 'teaching-vocabulary': 2, 'connected-speech': 2, 'word-and-sentence-stress': 2, 'language-practice-short': 2, 'teaching-writing': 2, 'eliciting-and-ccqs': 3, 'drilling-techniques-short': 3, 'mfp-short': 3, 'guided-discovery-vs-ppp': 3, 'tense-and-aspect': 3, 'lesson-framework': 3, 'error-correction': 3 };   /* 2: answers.js gained the door at the top (20 Nov 2026) */
+  var READY = { 'phonology-sounds': 2, 'teaching-vocabulary': 2, 'connected-speech': 2, 'word-and-sentence-stress': 2, 'language-practice-short': 2, 'teaching-writing': 2, 'eliciting-and-ccqs': 3, 'drilling-techniques-short': 3, 'mfp-short': 3, 'guided-discovery-vs-ppp': 3, 'tense-and-aspect': 3, 'lesson-framework': 3, 'error-correction': 3, 'drama-in-the-elt-classroom': 3, 'teaching-literacy': 3, 'life-after-celta': 3 };   /* 2: answers.js gained the door at the top (20 Nov 2026) */
   var m = location.pathname.match(/\/input-sessions\/([^\/]+)\/(?:index\.html)?$/); if (!m) return;
   var v = READY[m[1]]; if (!v) return;
   var load = function(src, then){ var s = document.createElement('script'); s.src = src; if (then) s.onload = then; document.head.appendChild(s); };

@@ -986,3 +986,11 @@ ALIAS['error-correction'] = ALIAS.get('error-correction', []) + [
     ('  errorMatchArea.appendChild(row);\n});',
      '  errorMatchArea.appendChild(row);\n});\n/* 20 Nov 2026 (Ramy: "print the list"): the eight types are the dropdowns\' choices, and a dropdown prints as a line, so on paper the\n   task had nothing to choose from. They print once above the sentences, A to Z, to write beside each one. */\n{ const list = document.createElement(\'div\'); list.className = \'ec-types\';\n  list.innerHTML = \'<p><b>Error types:</b></p><ul>\' + errorDescriptions.map(d => \'<li>\' + d + \'</li>\').join(\'\') + \'</ul>\';\n  errorMatchArea.parentNode.insertBefore(list, errorMatchArea); }'),
 ]
+
+
+# FOUND WALKING LIFE AFTER CELTA (20 Nov 2026): "How to handle the awkward ones", the answer to the interview questions,
+# printed on the plain handout, open or shut; it now prints with the answers or on a tutor's own print.
+ALIAS['life-after-celta'] = ALIAS.get('life-after-celta', []) + [
+    ('  @media print{ .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }',
+     "  @media print{ .hidden{display:block !important;} .tip, .note{break-inside:avoid;} }\n  /* 20 Nov 2026: How to handle the awkward ones is the answer to Questions they'll ask you; the plain handout printed it, open or shut. It prints only with the answers, or on a tutor's print. */\n  @media print{ #answers{display:none !important;} body.tutor #answers, body.with-answers #answers{display:block !important;} html.hub-clean body #answers{display:none !important;} }"),
+]
