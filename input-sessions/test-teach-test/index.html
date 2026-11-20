@@ -87,6 +87,10 @@
   .plan .write-area{margin:6px 0 10px;}
   .plan h4{margin-top:10px;}
   @media print{ .opt{border-color:#999;} .why{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout (the options not chosen came out faded, the chosen ones marked). On paper every option is the same plain word to circle. */
+  @media print{ .opt, .opt.good, .opt.bad, .opt.dim{opacity:1 !important; background:none !important; color:#000 !important; border-color:#999 !important;} }
+  /* 21 Nov 2026: the note under "Which stage?" names the three that do not belong, so it is never on the plain handout (the answers print shows it). */
+  @media print{ .note.after-task{display:none !important;} }
 </style>
 </head>
 <body>
@@ -190,7 +194,7 @@
       <h4>Test-teach-test</h4>
       <p><b>Stage 1.</b> The teacher introduces the target language and <select class="blank" data-key="tests"></select> the students’ current knowledge of it. The teacher could do this in <select class="blank" data-key="several"></select> ways: getting the students to select the correct word or structure to complete a sentence from a choice, filling gaps with a suitable word or structure, discussing the differences in meaning between similar sentences with different structures, or finding matching responses for sentences from a choice of several.</p>
       <p><b>Stage 2.</b> The teacher then uses the <select class="blank" data-key="mistakes"></select> from the first stage to teach or revise the target language. The teacher could do this by getting the students to arrange words or structures on a cline, draw their own <select class="blank" data-key="timelines"></select>, or discuss the answers to concept checking questions on a handout.</p>
-      <p><b>Stage 3.</b> The teacher then gets the students to do <select class="blank" data-key="further"></select> controlled practice exercises. Having <select class="blank" data-key="learnt"></select> from their correction and had their awareness raised in the teach stage, the students should do the exercises better. They will often do activities like the ones in stage 1. After this controlled stage the teacher will usually go on to freer speaking.</p>
+      <p><b>Stage 3.</b> The teacher then gets the students to do <select class="blank" data-key="further"></select> controlled practice exercises. Having <select class="blank" data-key="learned"></select><!-- 21 Nov 2026: was "learnt"; the site is American --> from their correction and had their awareness raised in the teach stage, the students should do the exercises better. They will often do activities like the ones in stage 1. After this controlled stage the teacher will usually go on to freer speaking.</p>
     </div>
     <div class="btns"><button class="btn t" type="button" data-check="#gapTtt">Check</button><button class="btn ghost" type="button" id="gapReveal">Show the answers</button><span class="feedback"></span></div>
   </div>
@@ -202,7 +206,8 @@
     <p class="lead">Fourteen things a teacher might do. Which stage of a test-teach-test lesson could each one be, and which three have no place in one at all? A test task can be the first test or the controlled second test, so those two share an answer.</p>
     <div id="sortTask"></div>
     <div class="btns"><button class="btn ghost" id="sortReveal">Show answers</button></div>
-    <div class="note"><b>The three that do not belong</b>Reading a text for the gist is how a text-based lesson starts, not a test of one structure. A teacher repeating the rules from the front is a lecture, not a teach stage built on what the test showed. Five random sentences test nothing and say nothing: a second test has to let the learners use the language for something.</div>
+    <!-- 21 Nov 2026: this note answers the task above it, so it opens with Show answers, or once every line is right (was: <div class="note">, always open) -->
+    <div class="note after-task hidden" id="sortNote"><b>The three that do not belong</b>Reading a text for the gist is how a text-based lesson starts, not a test of one structure. A teacher repeating the rules from the front is a lecture, not a teach stage built on what the test showed. Five random sentences test nothing and say nothing: a second test has to let the learners use the language for something.</div>
   </div>
 </section>
 
@@ -407,7 +412,7 @@
   ], 'chooseReveal');
 
   /* the stage text */
-  var GAP_WORDS = ['tests', 'several', 'mistakes', 'timelines', 'further', 'learnt', 'marker', 'context'];
+  var GAP_WORDS = ['tests', 'several', 'mistakes', 'timelines', 'further', 'learned', 'marker', 'context'];   /* 21 Nov 2026: was 'learnt'; the site is American */
   document.getElementById('gapWords').innerHTML = GAP_WORDS.map(function(w){ return '<span>' + w + '</span>'; }).join('');
   document.querySelectorAll('#gapTtt select.blank').forEach(function(s){ s.innerHTML = '<option value="">…</option>' + GAP_WORDS.map(function(w){ return '<option>' + w + '</option>'; }).join(''); });
   document.querySelectorAll('[data-check]').forEach(function(btn){
@@ -442,6 +447,12 @@
     { q: 'Students find matching responses for sentences from a choice.', answer: ST },
     { q: 'Students do a discussion activity.', answer: FR }
   ], 'sortReveal', [ST, TE, FR, NO]);
+  /* 21 Nov 2026: the note that names the three that do not belong was open before the task was done. It opens with Show answers, or when every line is right. */
+  (function(){
+    var note = document.getElementById('sortNote'), host = document.getElementById('sortTask'), rb = document.getElementById('sortReveal'); if (!note || !host) return;
+    if (rb) rb.addEventListener('click', function(){ note.classList.remove('hidden'); });
+    host.addEventListener('click', function(){ if (host.querySelectorAll('.opt.good').length === host.querySelectorAll('.qrow').length) note.classList.remove('hidden'); });
+  })();
 
   /* which approach */
   var GD = 'Guided discovery', TTT = 'Test-teach-test';

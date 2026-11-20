@@ -66,6 +66,8 @@ STYLE = r'''
   .scen.good{border-color:var(--teal); background:color-mix(in oklab, var(--teal) 7%, var(--paper));} .scen.good .fb{color:var(--teal);}
   .scen.bad{border-color:var(--a-red); background:color-mix(in oklab, var(--a-red) 5%, var(--paper));} .scen.bad .fb{color:var(--a-red);}
   @media print{ .scen .fb{display:none !important;} }
+  /* 21 Nov 2026: an answered stage printed solved on the handout: it kept its right/wrong border and fill. On paper it prints as it did untouched. */
+  @media print{ .scen.good, .scen.bad{border-color:var(--sand-line) !important; background:var(--paper) !important;} }
 '''
 
 SCRIPT = r'''
@@ -73,7 +75,8 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 const LAYOUTS = [
-  ['Rows / theatre style', 'Lecture-style input, watching a demonstration, exam conditions: anything where the teacher is the sole focus.',
+  /* 21 Nov 2026: "theatre" was British spelling on an American site */
+  ['Rows / theater style', 'Lecture-style input, watching a demonstration, exam conditions: anything where the teacher is the sole focus.',
     'Any pair or group task: half the room can only see the backs of heads, and moving desks mid-lesson costs time.'],
   ['Horseshoe / U-shape', 'Whole-class discussion, eliciting from the board, keeping everyone visible to you and each other.',
     'Large classes: the shape gets too wide for genuine eye contact with everyone, and pair work still needs a rearrange.'],

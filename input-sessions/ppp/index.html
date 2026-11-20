@@ -82,6 +82,8 @@
   .reset-btn:hover{color:var(--ink-warm);}
   @media(max-width:600px){ .match-grid{grid-template-columns:1fr;} }
   @media print{ .tf-feedback, .reveal-card .answer, .debrief-order, .debrief-status, .reset-btn{display:none !important;} .reveal-card.open .tap{display:block;} }
+  /* 21 Nov 2026: the handout printed an answered task as solved: matched terms in green with "5 of 5 matched", and the stages already clicked faded. On paper every term, meaning and stage now prints the same, and the counter is left off. */
+  @media print{ .match-status{display:none !important;} .match-item{background:none !important; border-color:#999 !important; color:#000 !important; animation:none !important;} .debrief-chip.used{opacity:1 !important;} }
 </style>
 </head>
 <body>
@@ -298,9 +300,10 @@ var __lrS = 672; function __lr(){ __lrS = (__lrS * 16807) % 2147483647; return (
     } else {
       el.classList.add('wrong');
       selectedTerm.el.classList.add('wrong');
+      const shaken = selectedTerm.el;   // 21 Nov 2026: kept by name. A right match inside the 300ms empties selectedTerm, and the line below threw and left the term's red edge on.
       setTimeout(()=>{
         el.classList.remove('wrong');
-        selectedTerm.el.classList.remove('wrong');
+        shaken.classList.remove('wrong');
       },300);
     }
   }

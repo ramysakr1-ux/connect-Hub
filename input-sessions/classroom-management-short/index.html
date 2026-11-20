@@ -60,6 +60,9 @@
   .quiet{font-size:.84rem; font-style:italic; color:var(--grey); margin:8px 0 0;}
   .quiet[hidden]{display:none;}
   @media print{ .simhead, #pairs, .simdone, .ichecks, #clockBtn, .clock{display:none !important;} }
+  /* 21 Nov 2026: the handout printed only the one task of the four that was on the screen. On paper all four are listed (#taskPaper, built from TASKS below) and the screen's one is left off. */
+  .task-paper{display:none;}
+  @media print{ .task-paper{display:block; margin:10px 0 12px; padding-left:22px; line-height:1.55;} .task-paper li{margin:0 0 6px; break-inside:avoid;} #taskText{display:none !important;} }
 
 </style>
 </head>
@@ -232,7 +235,7 @@ function drawPairs(){
   $('simClock').classList.toggle('run', running);
   $('simStart').hidden = running || elapsed > 0;
   $('simDone').hidden = elapsed < SIM_SECONDS;
-  $('pairs').innerHTML = PAIRS.map(p => {
+  const html = PAIRS.map(p => {   // 21 Nov 2026: kept in a name, and written to the page only when it has changed (see below)
     const st = statusOf(p), opts = RESPONSES[st], pick = chosen[p.key];
     const label = elapsed === 0 ? 'On task' : st === 'fine' ? 'Working fine' : p.text;
     const cls = pick !== undefined ? (opts[pick][1] ? ' good' : ' bad') : (st === 'offtask' || st === 'dispute') ? ' urgent' : '';
@@ -242,6 +245,8 @@ function drawPairs(){
     else inner = '<button type="button" class="go" data-go="' + p.key + '">Go over to them</button>';
     return '<div class="pair' + cls + '"><div class="top"><span>Pair ' + p.key + '</span><span class="st ' + st + '">' + esc(label) + '</span></div>' + inner + '</div>';
   }).join('');
+  // 21 Nov 2026: while the task ran, the pairs were redrawn five times a second, so a button was replaced between the press and the release and most presses did nothing. They are now redrawn only when something in them has changed.
+  if (html !== drawPairs.shown) { $('pairs').innerHTML = html; drawPairs.shown = html; }
 }
 $('pairs').addEventListener('click', e => {
   const g = e.target.closest('[data-go]'), k = e.target.closest('[data-pick]');
@@ -292,6 +297,8 @@ function drawChecks(){
 $('taskPills').addEventListener('click', e => { const b = e.target.closest('[data-task]'); if (!b) return; task = +b.dataset.task; $('instr').value = ''; drawTask(); });
 $('instr').addEventListener('input', drawChecks);
 drawTask();
+// 21 Nov 2026: the four tasks as a list for the paper only (the screen shows one at a time, and printed whichever it was on)
+(function(){ const P = document.createElement('ol'); P.className = 'task-paper'; P.id = 'taskPaper'; P.innerHTML = TASKS.map(t => '<li>' + esc(t[0]) + '</li>').join(''); $('taskText').after(P); })();
 
 // ---------- 5. Stopping an activity ----------
 const STOPS = [

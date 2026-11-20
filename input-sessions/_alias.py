@@ -1002,3 +1002,22 @@ ALIAS['teaching-speaking'] = ALIAS.get('teaching-speaking', []) + [
     ('  @media print{ .reveal-box{display:none !important;} textarea.text-area{background:none; min-height:60px;} }',
      '  @media print{ .reveal-box{display:none !important;} textarea.text-area{background:none; min-height:60px;} }\n  /* 20 Nov 2026: a stage already clicked printed faded with its number, so an ordered task printed solved */\n  @media print{ .order-line{opacity:1 !important;} .order-line .num{visibility:hidden;} }'),
 ]
+
+
+# FOUND WALKING PPP (21 Nov 2026): the handout printed an answered task as solved (matched terms green with the count,
+# clicked stages faded), and a wrong match followed by a right one inside 0.3 s threw and left the term's red edge on.
+ALIAS['ppp'] = ALIAS.get('ppp', []) + [
+    ('  @media print{ .tf-feedback, .reveal-card .answer, .debrief-order, .debrief-status, .reset-btn{display:none !important;} .reveal-card.open .tap{display:block;} }',
+     '  @media print{ .tf-feedback, .reveal-card .answer, .debrief-order, .debrief-status, .reset-btn{display:none !important;} .reveal-card.open .tap{display:block;} }\n  /* 21 Nov 2026: the handout printed an answered task as solved: matched terms in green with "5 of 5 matched", and the stages already clicked faded. On paper every term, meaning and stage now prints the same, and the counter is left off. */\n  @media print{ .match-status{display:none !important;} .match-item{background:none !important; border-color:#999 !important; color:#000 !important; animation:none !important;} .debrief-chip.used{opacity:1 !important;} }'),
+    ("      selectedTerm.el.classList.add('wrong');",
+     "      selectedTerm.el.classList.add('wrong');\n      const shaken = selectedTerm.el;   // 21 Nov 2026: kept by name. A right match inside the 300ms empties selectedTerm, and the line below threw and left the term's red edge on."),
+    ("        selectedTerm.el.classList.remove('wrong');",
+     "        shaken.classList.remove('wrong');"),
+]
+
+
+# FOUND WALKING TEXT-BASED TEACHING (21 Nov 2026): a stage already clicked into the order printed faded on the handout.
+ALIAS['text-based-teaching'] = ALIAS.get('text-based-teaching', []) + [
+    ('  @media print{ .tf-feedback, .reveal-card .answer, .debrief-order, .debrief-status, .reset-btn{display:none !important;} .reveal-card.open .tap{display:block;} }',
+     '  @media print{ .tf-feedback, .reveal-card .answer, .debrief-order, .debrief-status, .reset-btn{display:none !important;} .reveal-card.open .tap{display:block;} }\n  /* 21 Nov 2026: a stage already clicked into the order printed faded on the handout, so the paper showed which had been placed. */\n  @media print{ .debrief-chip.used{opacity:1 !important;} }'),
+]
