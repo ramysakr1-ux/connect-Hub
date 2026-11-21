@@ -3529,6 +3529,23 @@ case 'inbox': {
        Tutors only, and it reads names alone: the folders directly inside the one linked, with their links. Never a
        file, never a file's contents, and nothing is copied or kept here -- Course admin matches the names to the
        roster and files each link in that trainee's staff file. Lite sees only what is shared with its account. */
+    /* THE CENTER'S DRIVE FOLDER (v271, 22 Nov 2026). Ramy: "there should be a drive somewhere there, a center drive ... we
+       can have this in the course admin when we're setting it up, and then everything will be just automatically
+       downloaded and will be stored in the G drive for them to access." The link is kept in settings.exportFolder (never
+       sent to a trainee: settingsFor_). This op only says whether the store can WRITE there, which the export will need:
+       it reads the folder, then puts one small text file in it and takes it out again. */
+    case 'exportFolderCheck': {
+      requireTutor_(tutor);
+      var efUrl = String(req.url || '');
+      var efId = (efUrl.match(/\/folders\/([A-Za-z0-9_-]{10,})/) || efUrl.match(/[?&]id=([A-Za-z0-9_-]{10,})/) || [])[1];
+      if (!efId) throw new Error('That is not a link to a Drive folder');
+      var efWho = ''; try { efWho = Session.getEffectiveUser().getEmail(); } catch (e) {}
+      var efFolder = null;
+      try { efFolder = DriveApp.getFolderById(efId); efFolder.getName(); } catch (e) { return { ok: false, seen: false, account: efWho }; }
+      var efWrote = false;
+      try { var efProbe = efFolder.createFile('Connect Lite can write here.txt', 'Connect Lite checked on ' + new Date().toISOString() + ' that it can save into this folder. This file can be deleted.', 'text/plain'); efWrote = true; try { efProbe.setTrashed(true); } catch (e2) {} } catch (e) {}
+      return { ok: efWrote, seen: true, folder: efFolder.getName(), account: efWho };
+    }
     case 'folderTrainees': {
       requireTutor_(tutor);
       var ftUrl = String(req.url || '');
@@ -4863,6 +4880,7 @@ function settingsFor_(course, s, reader, me) {
   var hide = hideTokens_(course.id, me), out = {};
   Object.keys(s).forEach(function (k) { out[k] = s[k]; });
   delete out.assessorVisit;
+  delete out.exportFolder;   /* the center's Drive folder is the tutors' to know (v271) */
   delete out.askCode;   /* the room's question page is the tutors' to hand out (28 Oct 2026) */
   if (out.slotOf && typeof out.slotOf === 'object') { var so = {}; Object.keys(out.slotOf).forEach(function (t) { so[hide(t)] = out.slotOf[t]; }); out.slotOf = so; }
   if (Array.isArray(out.letterOrder)) out.letterOrder = out.letterOrder.map(hide);

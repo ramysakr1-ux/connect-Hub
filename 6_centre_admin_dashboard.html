@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211109">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211122">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -703,7 +703,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211109">
+<link rel="stylesheet" href="hub-house.css?v=202611211122">
 </head>
 <body>
 <div class="board">
@@ -814,6 +814,18 @@
         <input type="date" id="courseEnd">
         <p class="hintline">Also when the assessor’s link expires: it stops at the end of this day.</p>
         <p class="hintline datewarn" id="dateWarn" hidden></p>
+      </div>
+      <!-- THE CENTER'S DRIVE FOLDER (Ramy, 22 Nov 2026: "I'll get the G drive from the center link, add it somewhere ...
+           in the course admin when we're setting it up"). Where each trainee's portfolio is saved as PDFs when the course
+           ends. Kept in the course's settings (exportFolder); the store never sends it to a trainee. -->
+      <div style="grid-column:1 / -1;">
+        <label for="exportFolder">The center’s Google Drive folder</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <input type="url" id="exportFolder" placeholder="Paste the folder’s link" style="flex:1 1 320px; min-width:0;">
+          <button type="button" class="btn btn-sand" id="exportFolderCheck">Check the folder</button>
+        </div>
+        <p class="hintline">When the course ends, each trainee’s portfolio is saved here as PDFs, one folder per trainee.</p>
+        <p class="hintline" id="exportFolderMsg" role="status" hidden></p>
       </div>
       <!-- The three things the final course report states that nothing else on
            the course records (Handbook 7.11: the report gives the course hours,
@@ -1313,20 +1325,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611211109"></script>
-<script src="hub-store.js?v=202611211109"></script>
-<script src="hub-xlsx.js?v=202611211109"></script>
-<script src="hub-say.js?v=202611211109"></script>
-<script src="agreement-defaults.js?v=202611211109"></script>
-<script src="observation-defaults.js?v=202611211109"></script>
-<script src="hub-shared.js?v=202611211109"></script>
+<script src="assignment-defaults.js?v=202611211122"></script>
+<script src="hub-store.js?v=202611211122"></script>
+<script src="hub-xlsx.js?v=202611211122"></script>
+<script src="hub-say.js?v=202611211122"></script>
+<script src="agreement-defaults.js?v=202611211122"></script>
+<script src="observation-defaults.js?v=202611211122"></script>
+<script src="hub-shared.js?v=202611211122"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611211109"></script>
-<script src="hub-due.js?v=202611211109"></script>
-<script src="hub-sync.js?v=202611211109"></script>
-<script src="hub-notebook.js?v=202611211109"></script>
-<script src="hub-hand.js?v=202611211109"></script>
-<script src="hub-ink.js?v=202611211109"></script>
+<script src="hub-rotation.js?v=202611211122"></script>
+<script src="hub-due.js?v=202611211122"></script>
+<script src="hub-sync.js?v=202611211122"></script>
+<script src="hub-notebook.js?v=202611211122"></script>
+<script src="hub-hand.js?v=202611211122"></script>
+<script src="hub-ink.js?v=202611211122"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1370,7 +1382,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211109'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211122'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -1651,6 +1663,26 @@ function paintDateWarn(){
   el.innerHTML = 'The timetable ends on ' + dm(days[days.length - 1]) + '. Changing the end date here does not move it: <a href="23_timetable.html">open the timetable</a> to move the days.';
 }
 ['courseStart', 'courseEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', paintDateWarn); });
+/* Check the folder: asks the store whether it can save into the center's folder, and says what to do if it cannot. */
+(function(){
+  const b = document.getElementById('exportFolderCheck'), box = document.getElementById('exportFolder'), msg = document.getElementById('exportFolderMsg');
+  if (!b || !box || !msg) return;
+  const say = (t, good) => { msg.hidden = false; msg.textContent = t; msg.style.color = good ? 'var(--fb-good, #4A6330)' : 'var(--brick, #8E2B1F)'; msg.style.fontWeight = '600'; };
+  b.addEventListener('click', async () => {
+    const url = box.value.trim();
+    if (!/\/folders\/[A-Za-z0-9_-]{10,}|[?&]id=[A-Za-z0-9_-]{10,}/.test(url)) { say('Paste the link to a Google Drive folder first.', false); return; }
+    if (!window.HubStore || !HubStore.call) { say('The store is not reachable from this page. Reload and try again.', false); return; }
+    b.disabled = true; say('Checking…', true);
+    try {
+      const r = await HubStore.call({ op: 'exportFolderCheck', url: url });
+      const who = r && r.account ? r.account : 'the Connect Lite account';
+      if (r && r.ok) say('Connect Lite can save into “' + r.folder + '”. Save the settings to keep this folder.', true);
+      else if (r && r.seen) say('Connect Lite can see “' + r.folder + '” but cannot save into it. Ask the center to share the folder with ' + who + ' as an editor, then check again.', false);
+      else say('Connect Lite cannot open that folder. Ask the center to share it with ' + who + ' as an editor, then check again.', false);
+    } catch (e) { say('Not checked: ' + (e && e.message || e), false); }
+    b.disabled = false;
+  });
+})();
 setTimeout(paintDateWarn, 800);
 function readyItems(nTrainees){
   let cs = {}, tt = null, P = null, w = null;
@@ -1729,6 +1761,7 @@ try {
   if (cs) {
     if(cs.start) document.getElementById('courseStart').value = cs.start;
     if(cs.end) document.getElementById('courseEnd').value = cs.end;
+    if(cs.exportFolder && document.getElementById('exportFolder')) document.getElementById('exportFolder').value = cs.exportFolder;
     if(cs.demoToday && !cs.presentToday) { document.getElementById('demoToday').value = cs.demoToday; document.getElementById('demoTodayRow').hidden = false; }
     if(cs.centreName) document.getElementById('centreName').value = cs.centreName;
     if(cs.centreNumber) document.getElementById('centreNumber').value = cs.centreNumber;
@@ -1884,6 +1917,7 @@ function saveSettings(how){
   localStorage.setItem('connect_course_settings', JSON.stringify(Object.assign(kept, {
     start: document.getElementById('courseStart').value,
     end: document.getElementById('courseEnd').value,
+    exportFolder: ((document.getElementById('exportFolder') || {}).value || '').trim(),
     demoToday: kept.presentToday ? '' : (document.getElementById('demoToday').value || ''),
     centreName: document.getElementById('centreName').value,
     centreNumber: document.getElementById('centreNumber').value,
@@ -3055,7 +3089,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211109'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211122'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();
