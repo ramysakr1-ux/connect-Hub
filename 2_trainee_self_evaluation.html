@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211502">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211541">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -218,6 +218,12 @@
   .se-yn button[aria-checked="true"]{background:var(--teal); color:var(--paper); border-color:var(--teal);}
   .se-yn button:disabled{cursor:default; opacity:.7;}
   .card h2.se-h{font-size:1rem; margin:4px 0 6px;}
+  /* the stage sheets (21 Nov 2026): this TP's focus, and the three-part boxes of TP5 to TP8 */
+  .se-why{margin:0 0 10px; font-size:0.92rem; line-height:1.5; color:var(--grey);}
+  .se-fix{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .se-fix .lab{font:700 0.66rem 'Inter',sans-serif; letter-spacing:.08em; text-transform:uppercase; margin:0 0 4px; color:var(--grey);}
+  .se-fix textarea{min-height:78px; width:100%; box-sizing:border-box;}
+  @media (max-width:640px){ .se-fix{grid-template-columns:1fr;} }
   .se-pill{display:inline-block; padding:4px 14px; border-radius:999px; font:700 1rem 'Newsreader',Georgia,serif; margin:0 0 12px;}
   .se-good{background:var(--fb-good-wash); color:var(--fb-good);} .se-act{background:var(--fb-act-wash); color:var(--fb-act);}
   .se-row{display:grid; grid-template-columns:22px 1fr 1fr 24px; gap:10px; margin:0 0 12px; align-items:start;}
@@ -233,7 +239,7 @@
   .prev-pill:hover{background:var(--fb-act-wash);} .prev-pill:disabled{opacity:.5; cursor:default;}
   @media print{ .prev-pill{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211502">
+<link rel="stylesheet" href="hub-house.css?v=202611211541">
 </head>
 <body>
 <div class="board">
@@ -262,6 +268,15 @@
        it lines up with the tutor's feedback. A self-evaluation already written in the first shape (the four boxes) keeps
        that shape, here and wherever it is shown; only one not yet started gets the second. hubSelfRows (hub-shared.js)
        is the one reader of both. -->
+  <!-- THIS TP'S FOCUS (21 Nov 2026). Ramy: the self-evaluations "should kind of relate to the peer observation that
+       they have and relate to the stage of the course". Each TP's peer observation has one focus; the sheet opens by
+       turning that focus on the trainee's own lesson. Shown on a sheet started from today, never on an older one. -->
+  <div class="card" id="focusCard" style="display:none;">
+    <h2 id="focusH">This TP's focus</h2>
+    <p class="se-why" id="focusWhy"></p>
+    <textarea id="nFocus" class="blt" rows="3"></textarea>
+  </div>
+
   <div id="shapeOld" style="display:none;">
   <div class="card good">
     <h2>What went to plan?</h2>
@@ -297,7 +312,36 @@
     <textarea id="nLearn" class="blt" rows="3" placeholder="What could the learners do at the end that they could not do at the start?"></textarea>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardLearner" style="display:none;">
+    <h2>One learner</h2>
+    <p class="se-why">Pick one learner from today's lesson.</p>
+    <textarea id="nLearner" class="blt" rows="3" placeholder="What could they do by the end? What did they still find hard?"></textarea>
+  </div>
+
+  <div class="card" id="cardErr" style="display:none;">
+    <h2>One error you heard</h2>
+    <div class="se-fix">
+      <div><p class="lab">What the learner said</p><textarea id="nErrSaid" rows="2" placeholder="e.g. &quot;I go to cinema yesterday&quot;"></textarea></div>
+      <div><p class="lab">What you did</p><textarea id="nErrDid" rows="2" placeholder="e.g. Nothing at the time. I put it on the board at the end"></textarea></div>
+      <div><p class="lab">What else you could have done</p><textarea id="nErrCould" rows="2" placeholder="e.g. Fingers, on the spot, so they corrected it themselves"></textarea></div>
+    </div>
+  </div>
+
+  <div class="card" id="cardChoices" style="display:none;">
+    <h2>Your choices</h2>
+    <div class="se-fix">
+      <div><p class="lab">What you chose or adapted for these learners</p><textarea id="nChWhat" rows="2" placeholder="e.g. I swapped the coursebook text for a local news story"></textarea></div>
+      <div><p class="lab">Why</p><textarea id="nChWhy" rows="2" placeholder="e.g. The coursebook topic meant nothing to this group"></textarea></div>
+      <div><p class="lab">Did it work?</p><textarea id="nChWorked" rows="2" placeholder="e.g. Yes: they had opinions, so the speaking ran itself"></textarea></div>
+    </div>
+  </div>
+
+  <div class="card" id="cardChanged" style="display:none;">
+    <h2>What you changed during the lesson</h2>
+    <textarea id="nChanged" class="blt" rows="3" placeholder="One moment you left your plan, and why."></textarea>
+  </div>
+
+  <div class="card" id="cardST">
     <span class="se-pill se-good">Strengths</span>
     <div id="stList"></div>
     <button class="btn-add" type="button" id="addST">+ Add another</button>
@@ -318,7 +362,7 @@
   </div>
 
   <div class="card next">
-    <h2>What do you want to work on in the next TP?</h2>
+    <h2 id="nextH">What do you want to work on in the next TP?</h2>
     <textarea id="sNext" class="blt" rows="3" placeholder="One or two things, in your own words."></textarea>
   </div>
 
@@ -337,12 +381,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611211502"></script>
-<script src="hub-shared.js?v=202611211502"></script>
-<script src="hub-store.js?v=202611211502"></script>
-<script src="hub-say.js?v=202611211502"></script>
-<script src="hub-sync.js?v=202611211502"></script>
-<script src="hub-notebook.js?v=202611211502"></script>
+<script src="hub-due.js?v=202611211541"></script>
+<script src="hub-shared.js?v=202611211541"></script>
+<script src="hub-store.js?v=202611211541"></script>
+<script src="hub-say.js?v=202611211541"></script>
+<script src="hub-sync.js?v=202611211541"></script>
+<script src="hub-notebook.js?v=202611211541"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -487,6 +531,36 @@ function showRecall(d){
 /* WHICH SHAPE. One already written in the first shape keeps it; anything else, and anything empty, takes the second. */
 let SHAPE='new';
 function setShape(x){ SHAPE=x; $('shapeOld').style.display = x==='old' ? '' : 'none'; $('shapeNew').style.display = x==='new' ? '' : 'none'; }
+/* THE SHEET BY STAGE (Ramy, 21 Nov 2026: "TP1 and 2, we had one, and now ... TP3 and 4. And then we'll have one for 5, 6,
+   and then a different one for 7, 8"; mock-up shown and agreed, Strengths dropped from the last two). STAGE is 0 for a
+   sheet started before today (it keeps exactly the boxes it had), else 1 to 4:
+     1  TP1-2  the first shape (four questions)                 + this TP's focus
+     2  TP3-4  the second shape (aim, strengths, to work on)    + this TP's focus
+     3  TP5-6  aim, one learner, one error, to work on          + this TP's focus
+     4  TP7-8  aim, your choices, what you changed, to work on  + this TP's focus; on TP8 "the next TP" is "after the course"
+   The focus is the one the trainee watched their classmates for in that TP's peer observation. */
+const FOCUS={
+  1:['Rapport','How was your rapport with the learners? Give one moment from the lesson that shows it.'],
+  2:['Teacher talk','How was your teacher talk: how much, how clear, how well graded? Give one example.'],
+  3:['Instructions','How were your instructions? Write one down as you said it. Could it be simpler?'],
+  4:['Lesson context','How did you set the context, and did you keep it through the lesson?'],
+  5:['Clarification, or skills work','In a language lesson: how did you make meaning, form and pronunciation clear? In a skills lesson: how did your tasks help the learners read or listen?'],
+  6:['Feedback and error correction','What feedback did you give after tasks: on what the learners said, on how they did the task, on their language?'],
+  7:['Task choice','Did your tasks have a clear outcome and the right level of challenge, and did they work toward your aim?'],
+  8:['Your own focus','Which area did you choose to work on in this lesson, and how did it go?'] };
+let STAGE=0, STAGE_TP=0;
+function tpNow(){ const m=String(((DOC&&DOC.meta)||{}).tp||'').match(/\d+/); const n=m ? +m[0] : 0; return n>=1 && n<=8 ? n : 0; }
+function stageOfTp(n){ return n>=7 ? 4 : n>=5 ? 3 : n>=3 ? 2 : n>=1 ? 1 : 2; }
+function setStage(st, tp){
+  STAGE=st; STAGE_TP=tp||0;
+  const f=FOCUS[STAGE_TP];
+  $('focusCard').style.display = st && f ? '' : 'none';
+  if(f){ $('focusH').textContent='This TP\u2019s focus: '+f[0]; $('focusWhy').textContent = STAGE_TP===8 ? 'In your last TP you choose the focus yourself.' : 'You watched your classmates for this in your peer observation. Now look at your own lesson.'; $('nFocus').placeholder=f[1]; }
+  $('cardLearner').style.display = $('cardErr').style.display = st===3 ? '' : 'none';
+  $('cardChoices').style.display = $('cardChanged').style.display = st===4 ? '' : 'none';
+  $('cardST').style.display = st>=3 ? 'none' : '';
+  $('nextH').textContent = st===4 && STAGE_TP===8 ? 'After the course: three things you will keep working on' : 'What do you want to work on in the next TP?';
+}
 function seRow(list, labs, vals, phs){
   const row=document.createElement('div'); row.className='se-row'+(labs.length===3?' three':'');
   row.innerHTML=`<span class="n">${list.children.length+1}</span>`+labs.map((l,i)=>`<div><p class="lab">${l}</p><textarea rows="2" placeholder="${esc(phs[i]||'')}">${esc(vals[i]||'')}</textarea></div>`).join('')+`<button class="del-btn" type="button" title="Remove">✕</button>`;
@@ -505,7 +579,16 @@ $('addWK').addEventListener('click',()=>{ addWK('','',''); dirty=true; });
 addST('',''); addST('',''); addWK('','',''); addWK('','','');   /* a page with nothing saved yet starts with two rows of each */
 function fillSelf(s){
   const first = s.v!==2 && ['well','not','learn','diff'].some(k=>String(s[k]||'').replace(/•/g,'').trim());
-  setShape(first ? 'old' : 'new');
+  /* a sheet with words in it keeps the stage it was written in (none, if it is older than the stages); an empty one takes its TP's */
+  const said = v => String(v||'').replace(/•/g,'').trim();
+  const begun = !!s.st || first || (s.v===2 && (s.aim || said(s.learn) || (s.strengths||[]).length || (s.work||[]).length)) || said(s.next) || (s.actions||[]).length;
+  const tpN = tpNow(), stage = begun ? (+s.st||0) : stageOfTp(tpN);
+  setShape(stage ? (stage===1 ? 'old' : 'new') : (first ? 'old' : 'new'));
+  setStage(stage, stage ? (+s.tp || tpN) : 0);
+  $('nFocus').value=procText(s.focus||''); $('nLearner').value=procText(s.learner||''); $('nChanged').value=procText(s.changed||'');
+  const er=s.err||{}, ch=s.choices||{};
+  $('nErrSaid').value=er.said||''; $('nErrDid').value=er.did||''; $('nErrCould').value=er.could||'';
+  $('nChWhat').value=ch.what||''; $('nChWhy').value=ch.why||''; $('nChWorked').value=ch.worked||'';
   $('sWell').value=procText(s.well||''); $('sNot').value=procText(s.not||'');
   $('sLearn').value=procText(s.learn||''); $('sDiff').value=procText(s.diff||''); $('sNext').value=procText(s.next||'');
   setAim(s.v===2 ? (s.aim||'') : ''); $('nLearn').value = s.v===2 ? procText(s.learn||'') : '';
@@ -518,7 +601,17 @@ function fillSelf(s){
   document.querySelectorAll('textarea').forEach(autoGrow);
 }
 
-function collectSelf(){
+function collectSelf(){ return stageFields(collectShape()); }
+/* what the stage adds to either shape: which stage and TP, the focus, and the stage's own boxes */
+function stageFields(o){
+  if(!STAGE) return o;
+  o.st=STAGE; o.tp=STAGE_TP; o.focusName=(FOCUS[STAGE_TP]||[''])[0]; o.focus=procText($('nFocus').value);
+  if(STAGE===3){ o.learner=procText($('nLearner').value); o.err={ said:$('nErrSaid').value.trim(), did:$('nErrDid').value.trim(), could:$('nErrCould').value.trim() }; }
+  if(STAGE===4){ o.choices={ what:$('nChWhat').value.trim(), why:$('nChWhy').value.trim(), worked:$('nChWorked').value.trim() }; o.changed=procText($('nChanged').value); }
+  if(STAGE>=3){ o.strengths=[]; o.well=''; }
+  return o;
+}
+function collectShape(){
   if(SHAPE==='new'){
     const vals=r=>[...r.querySelectorAll('textarea')].map(t=>t.value.trim());
     const strengths=[...$('stList').children].map(vals).filter(v=>v.some(Boolean)).map(v=>({s:v[0],where:v[1]}));
@@ -714,7 +807,7 @@ function renderTurnStatus(){
   // Connect's order: plan in, teach, reflect, then feedback. Without a turned-in
   // plan there is nothing to evaluate against, so the form waits (Ramy, 20 Sep 2026).
   const selfRec=loadSelfRecord();
-  if(selfRec&&selfRec.state) fillSelf(selfRec.state);
+  fillSelf((selfRec&&selfRec.state)||{});   /* with nothing saved, the sheet still takes its TP's stage (21 Nov 2026) */
   renderTurnStatus();
   // After renderTurnStatus, which sets the fields' own locked state.
   if (!(planRec && planRec.status==='turned_in')) {
@@ -924,9 +1017,17 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
   const hist = rec('chub:tpHistory') || {};
   const hadTP = Object.keys(hist).some(n => hist[n]);
   /* the six questions, in page order, each pointed at its card */
-  const STEPS = [
-    ['sWell', 'Went to plan'], ['sNot', 'Didn\u2019t'], ['sLearn', 'Evidence'], ['sDiff', 'Differently'], ['apList', 'Action points'], ['sNext', 'Next TP']
+  /* THE STEPS FOLLOW THE SHEET ON SCREEN (21 Nov 2026). They named the first shape's four boxes whatever the sheet was,
+     so on the second shape four steps pointed at boxes that were not there. Now each sheet lists its own boxes. */
+  const shown = id => { const el = document.getElementById(id); return !!(el && el.offsetParent); };
+  const anyIn = id => [...document.querySelectorAll('#' + id + ' textarea')].some(t => String(t.value || '').trim());
+  const TESTS = { aimYN: () => !!document.querySelector('#aimYN button[aria-checked="true"]') && !!v('nLearn'), stList: () => anyIn('stList'), wkList: () => anyIn('wkList') };
+  const ALL = [
+    ['nFocus', 'Focus'], ['sWell', 'Went to plan'], ['sNot', 'Didn\u2019t'], ['sLearn', 'Evidence'], ['sDiff', 'Differently'],
+    ['aimYN', 'Main aim'], ['nLearner', 'One learner'], ['nErrSaid', 'One error'], ['nChWhat', 'Your choices'], ['nChanged', 'Changed'],
+    ['stList', 'Strengths'], ['wkList', 'To work on'], ['apList', 'Action points'], ['sNext', 'Next TP']
   ];
+  let STEPS = ALL;
   function apDone(){
     const rows = [...document.querySelectorAll('#apList .ap-row')];
     let carried = 0, answered = 0;
@@ -941,7 +1042,8 @@ if (window.hubReserveForBar) hubReserveForBar('.actionbar');
   }
   let was = false;
   function paint(){
-    const done = STEPS.map(([id]) => id === 'apList' ? apDone() : !!v(id));
+    STEPS = ALL.filter(([id]) => shown(id)).map(([id, l]) => [id, id === 'sNext' && /After the course/.test((document.getElementById('nextH') || {}).textContent || '') ? 'After the course' : l]);
+    const done = STEPS.map(([id]) => id === 'apList' ? apDone() : TESTS[id] ? TESTS[id]() : !!v(id));
     host.innerHTML = STEPS.map(([id, l], i) => (i ? '<span class="sep"></span>' : '')
       + '<button type="button" class="' + (done[i] ? 'ok' : '') + '" data-to="' + id + '" title="' + l + '"><i>' + (done[i] ? '\u2713' : (i + 1)) + '</i><span>' + l + '</span></button>').join('');
     const ready = done.every(Boolean);

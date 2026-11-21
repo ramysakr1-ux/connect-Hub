@@ -1848,6 +1848,8 @@ window.hubFileDoc = function(give){
 window.hubSelfRows = function(s, short){
   s = s || {};
   var t = function(v){ return String(v == null ? '' : v).trim(); };
+  /* this TP's focus, first, on a sheet that has one (s.st: the sheet by stage, 21 Nov 2026) */
+  var focusRow = s.st && (s.focusName || t(s.focus)) ? [[(short ? 'Focus: ' : 'This TP\u2019s focus: ') + (s.focusName || ''), s.focus || '']] : [];
   if (s.v === 2) {
     var AIM = { yes: 'Yes', partly: 'Partly', no: 'No' };
     var one = function(v){ return t(v).replace(/^•\s*/, '').replace(/\s*\n\s*(•\s*)?/g, ' '); };   /* one item, one line */
@@ -1856,17 +1858,27 @@ window.hubSelfRows = function(s, short){
     var wk = (s.work || []).filter(function(x){ return x && (t(x.what) || t(x.why) || t(x.instead)); })
       .map(function(x){ var end = function(v){ return /[.!?]$/.test(v) ? v : v + '.'; };
         return '• ' + [one(x.what) && end(one(x.what)), one(x.why) && end('Why: ' + one(x.why)), one(x.instead) && end('Instead: ' + one(x.instead))].filter(Boolean).join(' '); }).join('\n');
-    return [
+    /* THE STAGE SHEETS (21 Nov 2026): s.st 3 (TP5-6) adds one learner and one error, s.st 4 (TP7-8) adds the trainee's
+       choices and what they changed, and neither has Strengths; on TP8 the last box is about after the course. */
+    var parts = function(pairs){ return pairs.filter(function(p){ return one(p[1]); }).map(function(p){ return '• ' + p[0] + ': ' + one(p[1]); }).join('\n'); };
+    var rows = focusRow.concat([
       [short ? 'Main aim achieved?' : 'Did you achieve your main aim?', AIM[s.aim] || ''],
-      [short ? 'How they know' : 'How do you know?', s.learn || ''],
-      ['Strengths', st],
-      ['To work on', wk],
-      [short ? 'Wants to work on next' : 'What I want to work on in the next TP', s.next || '']
-    ];
+      [short ? 'How they know' : 'How do you know?', s.learn || '']]);
+    if (s.st === 3) { var er = s.err || {};
+      rows.push(['One learner', s.learner || '']);
+      rows.push(['One error I heard', parts([['The learner said', er.said], ['What I did', er.did], ['What else I could have done', er.could]])]); }
+    if (s.st === 4) { var ch = s.choices || {};
+      rows.push([short ? 'Their choices' : 'My choices', parts([['What I chose or adapted', ch.what], ['Why', ch.why], ['Did it work', ch.worked]])]);
+      rows.push([short ? 'Changed during the lesson' : 'What I changed during the lesson', s.changed || '']); }
+    if (!(s.st >= 3)) rows.push(['Strengths', st]);
+    rows.push(['To work on', wk]);
+    rows.push(s.st === 4 && +s.tp === 8 ? [short ? 'After the course' : 'After the course: what I will keep working on', s.next || '']
+      : [short ? 'Wants to work on next' : 'What I want to work on in the next TP', s.next || '']);
+    return rows;
   }
-  return short
+  return focusRow.concat(short
     ? [['Went to plan', s.well], ["Didn't go as planned", s.not], ['Evidence of learning', s.learn], ['Would do differently', s.diff], ['Wants to work on next', s.next]]
-    : [['What went to plan?', s.well], ["What didn't go as planned, and why?", s.not], ['Evidence that the learners had learned', s.learn], ['What I would do differently', s.diff], ['What I want to work on in the next TP', s.next]];
+    : [['What went to plan?', s.well], ["What didn't go as planned, and why?", s.not], ['Evidence that the learners had learned', s.learn], ['What I would do differently', s.diff], ['What I want to work on in the next TP', s.next]]);
 };
 
 /* Reference material, not a question. True for a section the trainee reads
