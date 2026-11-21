@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211601">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211614">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -239,7 +239,7 @@
   .prev-pill:hover{background:var(--fb-act-wash);} .prev-pill:disabled{opacity:.5; cursor:default;}
   @media print{ .prev-pill{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211601">
+<link rel="stylesheet" href="hub-house.css?v=202611211614">
 </head>
 <body>
 <div class="board">
@@ -250,13 +250,15 @@
       <input id="fCentreName" class="hub-centre-name" type="text" placeholder="Center name" style="font-family:'Newsreader',Georgia,serif;font-size:18px;color:var(--teal);border:none;border-bottom:1px solid var(--sand-line);background:transparent;padding:2px 4px;text-align:center;min-width:220px;">
     </div>
     <h1>Self-evaluation</h1>
-    <p class="sub">Fill this in after you have taught, and before your tutor writes their feedback.
-    It saves itself as you go. When you're ready, click <strong>Turn in</strong>.</p>
+    <!-- The line of instructions is gone (Ramy, 21 Nov 2026: "the top part is useless ... who cares"). In its place, one
+         line saying which TP this is, with a door to the plan; the What you planned card below is no longer shown
+         ("do we need it? I thought they could just click and see the plan"). -->
+    <p class="sub" id="planLine" style="display:none;"></p>
     <div class="turnstatus" id="turnStatus"></div>
     <p class="loaded" id="loadedInfo" style="text-align:center;margin:6px 0 0;font-size:0.86rem;color:var(--teal);font-weight:600;"></p>
   </div>
 
-  <div class="card recall" id="recall" style="display:none;">
+  <div class="card recall" id="recall" hidden style="display:none !important;">
     <h2>What you planned</h2>
     <p class="meta" id="recallMeta"></p>
     <dl id="recallAims"></dl>
@@ -382,12 +384,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611211601"></script>
-<script src="hub-shared.js?v=202611211601"></script>
-<script src="hub-store.js?v=202611211601"></script>
-<script src="hub-say.js?v=202611211601"></script>
-<script src="hub-sync.js?v=202611211601"></script>
-<script src="hub-notebook.js?v=202611211601"></script>
+<script src="hub-due.js?v=202611211614"></script>
+<script src="hub-shared.js?v=202611211614"></script>
+<script src="hub-store.js?v=202611211614"></script>
+<script src="hub-say.js?v=202611211614"></script>
+<script src="hub-sync.js?v=202611211614"></script>
+<script src="hub-notebook.js?v=202611211614"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -517,6 +519,8 @@ function showRecall(d){
     .filter(Boolean).join(' &middot; ');
   /* bullet lines read as a list; anything else as it was written */
   const aim = t => { const lines = String(t||'').split('\n').map(x=>x.trim()).filter(Boolean); return lines.length > 1 && lines.every(x=>/^[•\-–*]/.test(x)) ? '<ul>' + lines.map(x=>'<li>'+esc(x.replace(/^[•\-–*]\s*/,''))+'</li>').join('') + '</ul>' : nl2br(t); };
+  { const pl=$('planLine'); if(pl){ pl.innerHTML=[tpWord && '<b>'+esc(tpWord)+'</b>', m.level && esc(window.hubLevelName ? hubLevelName(m.level) : m.level), niceDate(m.date) && esc(niceDate(m.date))].filter(Boolean).join(' &middot; ')
+      + ' &middot; <a href="1_trainee_plan_and_analysis.html" target="_blank" rel="noopener" style="color:var(--teal);font-style:normal;font-weight:600;">Open your plan</a>'; pl.style.display=''; } }
   $('recallAims').innerHTML=
     (p.main?`<dt>Main aim</dt><dd>${aim(p.main)}</dd>`:'')+
     (p.sub?`<dt>Subsidiary aim</dt><dd>${aim(p.sub)}</dd>`:'')+
