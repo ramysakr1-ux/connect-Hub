@@ -3256,11 +3256,25 @@ window.hubPoolMend = function(P){
 (function(){
   if (!/\/(1_trainee_plan_and_analysis|2_trainee_self_evaluation|3_tutor_feedback|9_assignment_submission|10_tutor_assignment_marking|18_observation_tasks)\.html$/.test(location.pathname)) return;
   try {
+    /* THE WORDS AT THE TOP, AN ARROW ONCE YOU SCROLL (Ramy, 21 Nov 2026: "When you get to the top, it will be back. When
+       you start scrolling down, it turns into an arrow"; the arrow is his own exception to no arrows on labels: "we can
+       violate the arrow rule"). At the top of the page the link is exactly as it always was. Scrolled, it stays at the
+       top left as a small pale pill holding an arrow; its words stay as its name for a screen reader and its tooltip. */
     var st = document.createElement('style');
-    st.textContent = '.back{position:sticky !important; top:var(--back-top, 8px) !important; z-index:40; padding:4px 11px; border-radius:999px; background:rgba(255,255,255,.86); border:1px solid var(--sand-line, #ddd6c8); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}'
+    st.textContent = '.back{position:sticky !important; top:var(--back-top, 8px) !important; z-index:40;}'
+      + ' .back .bk-a{display:none;}'
+      + ' html.back-stuck .back{padding:6px 8px; line-height:0; border-radius:999px; background:rgba(255,255,255,.86); border:1px solid var(--sand-line, #ddd6c8); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}'
+      + ' html.back-stuck .back .bk-w{display:none;} html.back-stuck .back .bk-a{display:block;}'
       + ' @media print{ .back{display:none !important;} }';
     document.head.appendChild(st);
-    var fit = function(){ var b = document.getElementById('hubTraineeView'); document.documentElement.style.setProperty('--back-top', ((b ? b.offsetHeight : 0) + 8) + 'px'); };
+    var ARROW = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>';
+    /* a page that rewrites the link's words later is dressed again, with the new words */
+    var dress = function(){ [].forEach.call(document.querySelectorAll('.back'), function(a){ if (a.querySelector('.bk-a')) return;
+      var words = (a.textContent || '').trim() || 'Back'; a.setAttribute('aria-label', words); a.title = words;
+      a.innerHTML = '<span class="bk-w"></span><span class="bk-a">' + ARROW + '</span>'; a.querySelector('.bk-w').textContent = words; }); };
+    var stuck = function(){ document.documentElement.classList.toggle('back-stuck', (window.scrollY || 0) > 70); };
+    var fit = function(){ dress(); stuck(); var b = document.getElementById('hubTraineeView'); document.documentElement.style.setProperty('--back-top', ((b ? b.offsetHeight : 0) + 8) + 'px'); };
+    window.addEventListener('scroll', stuck, { passive: true });
     fit(); document.addEventListener('DOMContentLoaded', fit); document.addEventListener('hub:ready', fit); window.addEventListener('resize', fit); setTimeout(fit, 1500);
   } catch (e) {}
 })();
