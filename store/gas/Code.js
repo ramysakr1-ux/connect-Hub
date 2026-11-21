@@ -3534,6 +3534,15 @@ case 'inbox': {
        downloaded and will be stored in the G drive for them to access." The link is kept in settings.exportFolder (never
        sent to a trainee: settingsFor_). This op only says whether the store can WRITE there, which the export will need:
        it reads the folder, then puts one small text file in it and takes it out again. */
+    /* A TRIAL OF THE EXPORT (v272, 22 Nov 2026), the owner's only. One or a few trainees of one course, into the course's
+       own center folder or, for a trial, a folder named here (folder: its link), so a rehearsal course can be exported
+       into a test folder without touching its settings. Writes PDFs into Drive; changes nothing in the store. */
+    case 'exportTrial': {
+      requireOwner_(owner);
+      var xtC = courseById_(String(req.id || ''));
+      if (!xtC) throw new Error('Which course?');
+      return exportTrainees_(xtC.id, { folder: String(req.folder || ''), only: String(req.only || ''), max: Math.max(1, Math.min(3, Number(req.max) || 1)) });
+    }
     case 'exportFolderCheck': {
       requireTutor_(tutor);
       var efUrl = String(req.url || '');
@@ -5705,6 +5714,46 @@ function registerEdit_(req) {
   COURSE_MEMO_ = null; BLOCK_MEMO_ = {};   // read what was just written, not this request's earlier copy
   return registerShow_(course);
 }
+/* THE END-OF-COURSE EXPORT, FIRST PART (v272, 22 Nov 2026). Ramy: "everything will be just automatically downloaded and
+   will be stored in the G drive for them to access, and each of them will get their own link to their portfolios ...
+   anyone with a link ... a view only link". One folder per trainee inside "Portfolios" in the center's folder
+   (settings.exportFolder), shared so anyone with ITS link can view; the folder above it is not touched. This part
+   writes the returned teaching practices: each is already one finished document in the store (the plan, the language
+   analysis, the self-evaluation and the tutor's feedback: tpHistory[n].docHTML), turned into a PDF as it stands. The
+   assignments, the CELTA 5, the report and the observation tasks come next. Running it twice replaces a trainee's
+   files by name; it never deletes anything else. */
+function driveFolderId_(url) { return (String(url || '').match(/\/folders\/([A-Za-z0-9_-]{10,})/) || String(url || '').match(/[?&]id=([A-Za-z0-9_-]{10,})/) || [])[1] || ''; }
+function childFolder_(parent, name) { var it = parent.getFoldersByName(name); return it.hasNext() ? it.next() : parent.createFolder(name); }
+function putPdf_(folder, name, html) {
+  var page = '<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#222;} table{border-collapse:collapse;width:100%;} img{max-width:100%;}</style></head><body>' + html + '</body></html>';
+  var pdf = Utilities.newBlob(page, 'text/html', name + '.html').getAs('application/pdf').setName(name + '.pdf');
+  var old = folder.getFilesByName(name + '.pdf'); while (old.hasNext()) old.next().setTrashed(true);
+  return folder.createFile(pdf);
+}
+function exportTrainees_(courseId, opt) {
+  opt = opt || {};
+  var set = courseRead_(courseId, 'settings') || {};
+  var fid = driveFolderId_(opt.folder || set.exportFolder);
+  if (!fid) throw new Error('This course has no center folder yet');
+  var root; try { root = DriveApp.getFolderById(fid); root.getName(); } catch (e) { throw new Error('The center folder could not be opened'); }
+  var top = childFolder_(root, 'Portfolios');
+  var people = rosterWithRecords_(courseId, { tpHistory: true });
+  if (opt.only) people = people.filter(function (t) { return t.token === opt.only; });
+  var out = [];
+  for (var i = 0; i < people.length && out.length < (opt.max || 1); i++) {
+    var t = people[i], hist = (t.records && t.records.tpHistory) || {};
+    var tps = Object.keys(hist).filter(function (n) { return /^\d+$/.test(n) && hist[n] && hist[n].docHTML; }).sort(function (a, b) { return a - b; });
+    if (!tps.length && !opt.only) continue;
+    var who = String(t.certName || t.name || 'Trainee').replace(/[\\/:*?"<>|]/g, ' ').trim();
+    var folder = childFolder_(top, who);
+    try { folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+    var made = [];
+    tps.forEach(function (n) { putPdf_(folder, 'TP' + n + ' - plan, self-evaluation and feedback', String(hist[n].docHTML)); made.push(Number(n)); });
+    out.push({ initials: who.split(/\s+/).map(function (w) { return w.charAt(0).toUpperCase(); }).join(''), tps: made, url: folder.getUrl() });
+  }
+  return { folder: root.getName(), exported: out, onRoster: people.length };
+}
+
 /* THE COURSE'S LINKS END WITH THE COURSE (v270, 22 Nov 2026). Ramy: "I want this link to stop working after the course ...
    any link associated with this course will also stop working"; then "trainees lose access ... when the course ends on the
    timetable ... the rest could be manually, or could be done when everything is exported"; "unless there's a reason for

@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211122">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211136">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -703,7 +703,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211122">
+<link rel="stylesheet" href="hub-house.css?v=202611211136">
 </head>
 <body>
 <div class="board">
@@ -1325,20 +1325,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611211122"></script>
-<script src="hub-store.js?v=202611211122"></script>
-<script src="hub-xlsx.js?v=202611211122"></script>
-<script src="hub-say.js?v=202611211122"></script>
-<script src="agreement-defaults.js?v=202611211122"></script>
-<script src="observation-defaults.js?v=202611211122"></script>
-<script src="hub-shared.js?v=202611211122"></script>
+<script src="assignment-defaults.js?v=202611211136"></script>
+<script src="hub-store.js?v=202611211136"></script>
+<script src="hub-xlsx.js?v=202611211136"></script>
+<script src="hub-say.js?v=202611211136"></script>
+<script src="agreement-defaults.js?v=202611211136"></script>
+<script src="observation-defaults.js?v=202611211136"></script>
+<script src="hub-shared.js?v=202611211136"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611211122"></script>
-<script src="hub-due.js?v=202611211122"></script>
-<script src="hub-sync.js?v=202611211122"></script>
-<script src="hub-notebook.js?v=202611211122"></script>
-<script src="hub-hand.js?v=202611211122"></script>
-<script src="hub-ink.js?v=202611211122"></script>
+<script src="hub-rotation.js?v=202611211136"></script>
+<script src="hub-due.js?v=202611211136"></script>
+<script src="hub-sync.js?v=202611211136"></script>
+<script src="hub-notebook.js?v=202611211136"></script>
+<script src="hub-hand.js?v=202611211136"></script>
+<script src="hub-ink.js?v=202611211136"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1382,7 +1382,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211122'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211136'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -1663,25 +1663,38 @@ function paintDateWarn(){
   el.innerHTML = 'The timetable ends on ' + dm(days[days.length - 1]) + '. Changing the end date here does not move it: <a href="23_timetable.html">open the timetable</a> to move the days.';
 }
 ['courseStart', 'courseEnd'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', paintDateWarn); });
-/* Check the folder: asks the store whether it can save into the center's folder, and says what to do if it cannot. */
+/* THE CENTER'S FOLDER IS CHECKED, AND SAYS SO IN RED WHEN IT IS NOT RIGHT (Ramy, 22 Nov 2026: "it should be an edit link.
+   And if it's not, or if it's not readable ... Lite should just say it clearly, even in red ... this is an important
+   step, and it needs to be made clear from the start"). Checked when the page opens with a link saved, when a link is
+   pasted or changed, and from the button. The store tries to save one small file into the folder and takes it out. */
 (function(){
   const b = document.getElementById('exportFolderCheck'), box = document.getElementById('exportFolder'), msg = document.getElementById('exportFolderMsg');
   if (!b || !box || !msg) return;
-  const say = (t, good) => { msg.hidden = false; msg.textContent = t; msg.style.color = good ? 'var(--fb-good, #4A6330)' : 'var(--brick, #8E2B1F)'; msg.style.fontWeight = '600'; };
-  b.addEventListener('click', async () => {
-    const url = box.value.trim();
-    if (!/\/folders\/[A-Za-z0-9_-]{10,}|[?&]id=[A-Za-z0-9_-]{10,}/.test(url)) { say('Paste the link to a Google Drive folder first.', false); return; }
-    if (!window.HubStore || !HubStore.call) { say('The store is not reachable from this page. Reload and try again.', false); return; }
-    b.disabled = true; say('Checking…', true);
+  const HOW = ' In Google Drive, open the folder’s Share box, set General access to “Anyone with the link”, and set the role to Editor. Then paste the link here again.';
+  const say = (t, kind) => { msg.hidden = false; msg.textContent = t; msg.style.fontWeight = '700';
+    msg.style.color = kind === 'good' ? 'var(--fb-good, #4A6330)' : kind === 'busy' ? 'var(--grey)' : 'var(--brick, #8E2B1F)';
+    box.style.borderColor = kind === 'bad' ? 'var(--brick, #8E2B1F)' : ''; box.style.boxShadow = kind === 'bad' ? '0 0 0 2px var(--brick, #8E2B1F)' : ''; };
+  let seq = 0;
+  async function check(){
+    const url = box.value.trim(), mine = ++seq;
+    if (!url) { say('No folder yet. Without one, the trainees’ portfolios cannot be saved for the center when the course ends.', 'bad'); return; }
+    if (!/\/folders\/[A-Za-z0-9_-]{10,}|[?&]id=[A-Za-z0-9_-]{10,}/.test(url)) { say('This is not a link to a Google Drive folder. Check the link again.', 'bad'); return; }
+    if (!window.HubStore || !HubStore.call) { say('The folder could not be checked from this page. Reload and try again.', 'bad'); return; }
+    b.disabled = true; say('Checking the folder…', 'busy');
     try {
       const r = await HubStore.call({ op: 'exportFolderCheck', url: url });
-      const who = r && r.account ? r.account : 'the Connect Lite account';
-      if (r && r.ok) say('Connect Lite can save into “' + r.folder + '”. Save the settings to keep this folder.', true);
-      else if (r && r.seen) say('Connect Lite can see “' + r.folder + '” but cannot save into it. Ask the center to share the folder with ' + who + ' as an editor, then check again.', false);
-      else say('Connect Lite cannot open that folder. Ask the center to share it with ' + who + ' as an editor, then check again.', false);
-    } catch (e) { say('Not checked: ' + (e && e.message || e), false); }
+      if (mine !== seq) return;
+      if (r && r.ok) say('Connect Lite can save into “' + r.folder + '”. Save the settings to keep this folder.', 'good');
+      else if (r && r.seen) say('Connect Lite can open “' + r.folder + '” but cannot save into it: the link is view only.' + HOW, 'bad');
+      else say('Connect Lite cannot read this folder.' + HOW, 'bad');
+    } catch (e) { if (mine === seq) say('The folder was not checked: ' + (e && e.message || e) + ' Try again.', 'bad'); }
     b.disabled = false;
-  });
+  }
+  b.addEventListener('click', check);
+  box.addEventListener('change', check);
+  box.addEventListener('paste', () => setTimeout(check, 60));
+  /* a link already saved is checked when the page opens; an empty box is flagged only on a real course, not a demo */
+  setTimeout(() => { let demo = false; try { demo = !!(JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).demoToday; } catch (e) {} if (box.value.trim() || !demo) check(); }, 1500);
 })();
 setTimeout(paintDateWarn, 800);
 function readyItems(nTrainees){
@@ -3089,7 +3102,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211122'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211136'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();
