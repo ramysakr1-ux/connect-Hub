@@ -226,9 +226,10 @@ function choices(id, list){
   box.addEventListener('click', e => {
     const b = e.target.closest('.opt'); if (!b) return;
     const d = b.closest('.scen'); if (d.classList.contains('done')) return;
-    const s = list[+d.dataset.k], v = +b.dataset.v, ok = v === s.correct;
+    // 22 Nov 2026 (Ramy: "fix that one"): s.also is another answer that counts too (Grading, item 3: its feedback says the third "is fine too, and often right", yet picking it was marked wrong). A right pick is the one marked; after a wrong pick every right answer is shown.
+    const s = list[+d.dataset.k], v = +b.dataset.v, also = s.also || [], ok = v === s.correct || also.includes(v);
     d.classList.add('done', ok ? 'right' : 'wrong');
-    d.querySelectorAll('.opt').forEach(o => { o.disabled = true; const ov = +o.dataset.v; o.classList.add(ov === s.correct ? 'good' : ov === v ? 'bad' : 'dim'); });
+    d.querySelectorAll('.opt').forEach(o => { o.disabled = true; const ov = +o.dataset.v; o.classList.add((ok ? ov === v : ov === s.correct || also.includes(ov)) ? 'good' : ov === v ? 'bad' : 'dim'); });
     d.querySelector('.why').textContent = (ok ? '✓ ' : '✗ ') + s.feedback;
   });
 }
@@ -293,7 +294,7 @@ choices('grading', [
     feedback: 'The second. The first is padded with hedges a pre-intermediate learner has to unpick before finding the instruction. The third is the trap: it is shorter, but it is not English. Grading your language means making it simpler AND keeping it natural, not speaking a broken version of it.' },
   { text: 'Explaining what “commute” means to an A2 class.', choices: ['“It’s the journey you make to work, usually every day.”', '“A commute is a regular journey undertaken between one’s residence and place of employment.”', '“Commute, you know, travel, go, work, every day, yes?”'], correct: 0,
     feedback: 'The first. The second is accurate and completely out of reach. The third is a string of words, not a sentence: the learner has to assemble the meaning themselves and has no model to copy.' },
-  { text: 'A learner says “I am agree with you.” You want to respond in the moment without stopping the discussion.', choices: ['“I agree with you. Good. Carry on.”', '“No, we don’t say ‘I am agree’, we say ‘I agree’, because agree is a verb, not an adjective.”', 'Say nothing and note it for delayed correction.'], correct: 0,
+  { text: 'A learner says “I am agree with you.” You want to respond in the moment without stopping the discussion.', choices: ['“I agree with you. Good. Carry on.”', '“No, we don’t say ‘I am agree’, we say ‘I agree’, because agree is a verb, not an adjective.”', 'Say nothing and note it for delayed correction.'], correct: 0, also: [2],   // 22 Nov 2026 (Ramy: "fix that one"): the third counts as right too, as the feedback says
     feedback: 'The first: a natural, accurate recast that models the form without a grammar lecture mid-discussion. The second stops the conversation dead. The third is fine too, and often right; but a recast costs nothing and keeps the floor with the learner.' }
 ]);
 

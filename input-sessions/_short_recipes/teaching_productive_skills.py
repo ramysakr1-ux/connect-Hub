@@ -29,7 +29,7 @@ BODY = r'''
     <div class="card" data-n="1">
       <div class="stage-title">Stage 1 · Lead-in <span class="badge">2 minutes</span></div>
       <div class="reveal-card hero" onclick="this.classList.toggle('open')"><div class="q">What is a productive skill?</div><div class="hint">Click to reveal</div><div class="a">A skill where the learner produces language rather than receives it: speaking and writing. Reading and listening are the receptive pair.</div></div>
-      <p class="quiet">Then ask the room about attitudes to writing, and whether anyone would say the same about speaking. A minute, no more.</p>
+      <p class="quiet">Then, with a partner: how do you feel about writing, and would you say the same about speaking?</p>   <!-- 22 Nov 2026 (Ramy): the tutor's voice comes off the trainee's page; this line was an instruction to the tutor -->
     </div>
   </section>
 
@@ -170,9 +170,16 @@ const revealCard = (q, a) => '<div class="reveal-card" onclick="this.classList.t
 
 // ---------- match each term to its meaning (Connect's MatchTermsExercise) ----------
 // Click a term, then its meaning, in either order. A right pair locks; a wrong pair flashes red and clears.
-// The meanings run in reverse order, as on Connect.
+// 22 Nov 2026 (Ramy: "just fix it"): the meanings stood in the exact reverse order of the terms, so the pairing could be read off. They are now mixed each time the page loads (Fisher-Yates on a copy) and never left in the terms' own order or its exact reverse. The terms keep their order; matching goes by data-l and data-r, not by place.
+function mixedOrder(n){
+  const base = Array.from({ length: n }, (_, i) => i), same = (a, b) => a.every((x, i) => x === b[i]);
+  let a;
+  do { a = base.slice(); for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } }
+  while (n > 2 && (same(a, base) || same(a, base.slice().reverse())));
+  return a;
+}
 function matchTerms(id, terms){
-  const box = $(id), right = terms.map((_, i) => i).reverse(), matched = new Set();
+  const box = $(id), right = mixedOrder(terms.length), matched = new Set();
   let selL = null, selR = null, bad = null;
   const cls = (i, sel, side) => 'pill' + (matched.has(i) ? ' matched' : bad && bad[side] === i ? ' wrong' : sel === i ? ' selected' : '');
   function draw(){

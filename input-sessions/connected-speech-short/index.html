@@ -227,11 +227,14 @@ const SECTIONS = [
     ['"friendship"', 'friendship', ['The /d/ is fully said', 'The /d/ disappears'], 1, 'The /d/ drops between /n/ and /ʃ/: "frien\'ship." Same crowded-consonant pattern as "next day."']]]
 ];
 const featPick = {};
+// 22 Nov 2026 (Ramy: "just fix it"): in all fifteen clips the right option was the second one. Each clip's two options are now put in a random order once when the page loads (Fisher-Yates on a copy), and mixed again if the right one would sit in the same place in every clip. Marking goes by the option's own number (data-o), not by its place.
+const mixed = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let OPT_ORDER; do { OPT_ORDER = SECTIONS.map(sec => sec[1].map(ex => mixed(ex[2].map((_, i) => i)))); } while (new Set(SECTIONS.flatMap((sec, f) => sec[1].map((ex, ei) => OPT_ORDER[f][ei].indexOf(ex[3])))).size === 1);
 function drawFeat(el){
   const f = +el.dataset.f, sec = SECTIONS[f];
   el.innerHTML = '<p class="def">' + esc(sec[0]) + '</p>' + sec[1].map((ex, ei) => {
     const k = f + ':' + ei, pick = featPick[k], show = pick !== undefined;
-    const opts = ex[2].map((o, oi) => '<button type="button" class="opt' + (show && oi === ex[3] ? ' right' : show && oi === pick ? ' miss' : '') + '" data-k="' + k + '" data-o="' + oi + '"' + (show ? ' disabled' : '') + '>' + esc(o) + '</button>').join('');
+    const opts = OPT_ORDER[f][ei].map(oi => [ex[2][oi], oi]).map(([o, oi]) => '<button type="button" class="opt' + (show && oi === ex[3] ? ' right' : show && oi === pick ? ' miss' : '') + '" data-k="' + k + '" data-o="' + oi + '"' + (show ? ' disabled' : '') + '>' + esc(o) + '</button>').join('');
     const fb = show ? '<p class="fb"><b class="' + (pick === ex[3] ? 'good">Correct.' : 'bad">Not this one.') + '</b> ' + esc(ex[4]) + '</p>' : '';
     return '<div class="box"><div class="ex-top"><button type="button" class="play" data-clip="' + k + '">Play</button><p>' + esc(ex[0]) + '</p></div><div class="opts">' + opts + '</div>' + fb + '</div>';
   }).join('');

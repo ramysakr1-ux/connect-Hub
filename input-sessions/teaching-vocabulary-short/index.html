@@ -64,6 +64,7 @@
   table.grid td:nth-child(2){white-space:nowrap;}
   /* 21 Nov 2026: "Print the handout" printed the whole answer key (the six terms of part 2 with their meanings) once it had been opened, and the example once it had been opened. The key now prints only from its own Print button (body.print-key, set in answerKey below) or in a tutor's print with the notes; the example prints for a tutor only. */
   @media print{ .keyblock{display:block;} body:not(.print-key):not(.tutor) .keyblock, html.hub-clean .keyblock{display:none !important;} .stagebox .btn{display:none;} body:not(.tutor) .stagebox h4, body:not(.tutor) .stagebox table, html.hub-clean .stagebox h4, html.hub-clean .stagebox table{display:none !important;} }
+  /* 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): that Print button is gone, so body.print-key is never set and no trainee print carries the key. The rule above stays as it is: a tutor's print and "Print with the answers" are untouched. */
   /* 21 Nov 2026: an answered task printed solved on the handout: matched meanings in a heavier weight with "6 of 6 matched"; the tick or cross and the explanation under each word of part 3; a tick or cross on every collocation clicked in part 4. On paper each prints as it did untouched, without the count. */
   @media print{
     .mhead span, .item .fb, .opts .tick{display:none !important;}
@@ -210,14 +211,17 @@ const EXAMPLE_ROWS = [
   ['Pronunciation', '/ˈteɪk ʌp/: stress on both words equally, linking across the phrasal verb.']
 ];
 
-// ---------- match each term to its meaning (Connect's MatchTermsExercise: right column reversed, a wrong pair flashes red and clears) ----------
+// ---------- match each term to its meaning (Connect's MatchTermsExercise; the right column is mixed at each load, 22 Nov 2026; a wrong pair flashes red and clears) ----------
 function matchTerms(el, terms){
   let selL = null, selR = null, matched = new Set(), shake = [];
+  // 22 Nov 2026 (Ramy: "just fix it"): the meanings stood in the terms' order reversed, so the pairs could be read off. They are now mixed afresh each time the page loads (a Fisher-Yates shuffle), never in the terms' order or its exact reverse. The terms keep their order, and a pair is still matched by its number (data-l, data-r), not by where it stands.
+  const right = terms.map((_, i) => i);
+  if (right.length > 2) do { for (let i = right.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [right[i], right[j]] = [right[j], right[i]]; } } while (right.every((v, i) => v === i) || right.every((v, i) => v === right.length - 1 - i));
   const cls = (i, sel, side) => matched.has(i) ? ' matched' : (shake[side] === i ? ' wrong' : sel === i ? ' selected' : '');
   function draw(){
     el.innerHTML = '<div class="mhead"><b>Match each term to its meaning</b><span>' + matched.size + ' of ' + terms.length + ' matched</span></div>'
       + '<div class="pill-match-wrap"><div class="pill-col">' + terms.map((t, i) => '<button type="button" class="pill term' + cls(i, selL, 0) + '" data-l="' + i + '">' + esc(t[0]) + '</button>').join('') + '</div>'
-      + '<div class="pill-col">' + terms.map((_, i) => terms.length - 1 - i).map(i => '<button type="button" class="pill' + cls(i, selR, 1) + '" data-r="' + i + '">' + esc(terms[i][1]) + '</button>').join('') + '</div></div>';
+      + '<div class="pill-col">' + right.map(i => '<button type="button" class="pill' + cls(i, selR, 1) + '" data-r="' + i + '">' + esc(terms[i][1]) + '</button>').join('') + '</div></div>';
   }
   function tryMatch(){
     if (selL === null || selR === null) return;
@@ -255,18 +259,17 @@ function orderEx(el, correct, shuffled, title, intro){
 function answerKey(el, terms, details){
   let open = false;
   function draw(){
-    if (!open) { el.innerHTML = '<div class="btn-row"><button type="button" class="btn" data-k="open">Reveal answer key: save or print to keep</button></div>'; return; }
-    el.innerHTML = '<div class="keyblock"><div class="keyhead"><span class="lbl">Answer key: handout, to keep</span><div class="btn-row"><button type="button" class="btn" data-k="hide">Hide</button><button type="button" class="btn" data-k="print">Print</button></div></div>'
+    if (!open) { el.innerHTML = '<div class="btn-row"><button type="button" class="btn" data-k="open">Reveal answer key</button></div>'; return; }   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the label no longer promises a print
+    el.innerHTML = '<div class="keyblock"><div class="keyhead"><span class="lbl">Answer key: handout, to keep</span><div class="btn-row"><button type="button" class="btn" data-k="hide">Hide</button></div></div>'   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): Hide is the only button here now
       + (terms.length ? '<div class="keypart"><h4>Terms</h4>' + terms.map(t => '<div class="krow"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>').join('') + '</div>' : '')
       + (details.length ? '<div class="keypart"><h4>True or false</h4>' + details.map(d => '<div class="krow tf"><b>' + esc(d[0]) + '</b><span>' + esc(d[1]) + '</span></div>').join('') + '</div>' : '')
       + '</div>';
   }
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if (!b) return;
-    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { document.body.classList.add('print-key'); window.print(); return; }   // 21 Nov 2026: the key prints from its own Print button only (see the print rule above)
+    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else return;   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key has no Print button, so nothing here prints
     draw();
   });
-  window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));   // 21 Nov 2026
   draw();
 }
 

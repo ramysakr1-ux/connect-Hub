@@ -177,6 +177,9 @@ const RESPONSES = {
     ['Smile, nod, move on without stopping them.', true, 'Acknowledges them without breaking their flow; they don’t need input right now.'],
     ['Sit down and start explaining anyway.', false, 'Unneeded input eats time you needed for a pair that actually has a problem.']]
 };
+// 22 Nov 2026 (Ramy: "just fix it"): the right reply was always the second of the three. Each state's three replies are now mixed once when the page loads (Fisher-Yates on a copy), and mixed again if the right one would sit in the same place for every state. Marking goes by the reply's own number (data-pick), not by its place.
+const mixed = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let REPLY_ORDER; do { REPLY_ORDER = {}; Object.keys(RESPONSES).forEach(k => { REPLY_ORDER[k] = mixed(RESPONSES[k].map((_, i) => i)); }); } while (new Set(Object.keys(RESPONSES).map(k => REPLY_ORDER[k].findIndex(i => RESPONSES[k][i][1]))).size === 1);
 let elapsed = 0, running = false, timer = null, openPair = null, chosen = {};
 function statusOf(p){ return p.changeAt === null ? 'fine' : (elapsed > 0 && elapsed >= p.changeAt) ? p.status : 'fine'; }
 function drawPairs(){
@@ -191,7 +194,7 @@ function drawPairs(){
     const cls = pick !== undefined ? (opts[pick][1] ? ' good' : ' bad') : (st === 'offtask' || st === 'dispute') ? ' urgent' : '';
     let inner = '';
     if (pick !== undefined) inner = '<p class="why">' + (opts[pick][1] ? '✓ ' : '✗ ') + esc(opts[pick][2]) + '</p>';
-    else if (openPair === p.key) inner = '<div class="opts">' + opts.map((o, i) => '<button type="button" data-pick="' + p.key + ':' + i + '">' + esc(o[0]) + '</button>').join('') + '</div>';
+    else if (openPair === p.key) inner = '<div class="opts">' + REPLY_ORDER[st].map(i => '<button type="button" data-pick="' + p.key + ':' + i + '">' + esc(opts[i][0]) + '</button>').join('') + '</div>';
     else inner = '<button type="button" class="go" data-go="' + p.key + '">Go over to them</button>';
     return '<div class="pair' + cls + '"><div class="top"><span>Pair ' + p.key + '</span><span class="st ' + st + '">' + esc(label) + '</span></div>' + inner + '</div>';
   }).join('');

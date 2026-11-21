@@ -81,9 +81,9 @@ BODY = r'''
   <section id="s8" data-n="8">
     <div class="card" data-n="8">
       <div class="stage-title">Answer key</div>
-      <button class="btn" type="button" id="keyOpen">Reveal answer key: save or print to keep</button>
+      <button class="btn" type="button" id="keyOpen">Reveal answer key</button><!-- 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key had its own Print button here, and its reveal button read "Reveal answer key: save or print to keep" -->
       <div class="akey" id="key" hidden>
-        <div class="akey-top"><span class="label">Answer key: handout, to keep</span><span class="btn-row"><button class="btn" type="button" id="keyHide">Hide</button><button class="btn" type="button" onclick="window.print()">Print</button></span></div>
+        <div class="akey-top"><span class="label">Answer key: handout, to keep</span><span class="btn-row"><button class="btn" type="button" id="keyHide">Hide</button></span></div>
         <div class="box"><p class="ctx">Good CCQ or bad CCQ?</p><div id="keyCcq"></div></div>
         <div class="box"><p class="ctx">Model CCQs</p><div id="keyModel"></div></div>
       </div>
@@ -136,6 +136,8 @@ STYLE = r'''
   .kv .kvr:last-child{border-bottom:0;} .kv .kvr b{font-weight:700;} .kv .kvr span{color:var(--grey);}
   @media(max-width:560px){ .kv .kvr{grid-template-columns:1fr; gap:2px;} }
   @media print{ #keyOpen, .akey-top .btn-row, #stgBtn, .model-btn{display:none !important;} }
+  /* 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key's own Print button is gone, and it was the only reason an opened key went to the paper. The plain handout now leaves the key out, open or shut; a tutor's print carries an opened key, as before. */
+  @media print{ body:not(.tutor) #key{display:none !important;} }
   /* 21 Nov 2026: an answered task printed solved on the handout: part 3 printed "Correct." or "Not this one." with the explanation in place of the two options, inside a green or red edge; part 4 printed "Bad CCQ" or "Actually fine" on each question with its color and the explanation box; part 5 printed every model CCQ left open; an opened card in part 6 lost its "When would you use this?". On paper each prints as it did untouched (.opts.paper is the two options of an answered moment, for the paper only). */
   .opts.paper{display:none;}
   @media print{ .opts.paper{display:flex !important;} #eot .res, .ccqb .st, #ccqWhy, .model{display:none !important;} #eot .box.good, #eot .box.bad{border-color:var(--sand-line);} .ccqb.good, .ccqb.bad{border-color:var(--sand-line); background:var(--paper);} .reveal-card.open .q .closed{display:inline !important;} body.tutor .model:not([hidden]){display:block !important;} }

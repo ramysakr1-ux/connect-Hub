@@ -81,10 +81,10 @@ BODY = r'''
       <div id="order"></div>
 
       <div class="akey-wrap">
-        <button type="button" class="btn" id="akeyOpen">Reveal answer key: save or print to keep</button>
+        <button type="button" class="btn" id="akeyOpen">Reveal answer key</button><!-- 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key had its own Print button here, and its reveal button read "Reveal answer key: save or print to keep" -->
         <div class="akey" id="akey" hidden>
           <div class="akey-head"><p class="label">Answer key: handout, to keep</p>
-            <div class="akey-acts"><button type="button" class="btn" id="akeyHide">Hide</button><button type="button" class="btn" id="akeyPrint">Print</button></div></div><!-- 21 Nov 2026: the key's own Print says it is the key that is wanted (see the script); it was onclick="window.print()" -->
+            <div class="akey-acts"><button type="button" class="btn" id="akeyHide">Hide</button></div></div>
           <div class="akey-box"><h3>Terms</h3><div id="akeyTerms"></div></div>
           <div class="akey-box"><h3>True or false</h3><div id="akeyTf"></div></div>
         </div>
@@ -180,9 +180,14 @@ const EXAMPLE_ROWS = [
 
 // ---------- 3. Match the terms (Connect's MatchTermsExercise) ----------
 // Click a term, then its meaning (either order). A right pair locks teal; a wrong pair flashes red, then both clear.
-// The meanings are the terms reversed, as on Connect.
+// 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): the meanings are mixed afresh each time the page loads (a Fisher-Yates shuffle), and never stand in the exact order or the exact reverse order of the terms. The terms keep their order; a pair is still matched by its number (data-l, data-r), not by where it stands.
+function mixed(n){
+  const a = [...Array(n).keys()], told = b => b.every((v, i) => v === i) || b.every((v, i) => v === n - 1 - i);
+  do { for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } } while (n > 2 && told(a));   // two meanings can only stand one way or the other: a coin toss
+  return a;
+}
 function matchEx(el, terms){
-  const right = terms.map((_, i) => i).reverse();
+  const right = mixed(terms.length);   // 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): it was the terms reversed
   let selL = null, selR = null, shakeL = null, shakeR = null; const matched = new Set();
   const cls = (id, sel, sh) => matched.has(id) ? ' matched' : sh === id ? ' wrong' : sel === id ? ' selected' : '';
   function draw(){
@@ -230,9 +235,7 @@ $('akeyTerms').innerHTML = TERMS.map(t => '<div class="krow"><b>' + esc(t[0]) + 
 $('akeyTf').innerHTML = DETAILS.map(d => '<div class="tfrow"><p>' + esc(d[0]) + '</p><p class="ans">' + esc(d[1]) + '</p></div>').join('');
 $('akeyOpen').onclick = () => { $('akey').hidden = false; $('akeyOpen').hidden = true; };
 $('akeyHide').onclick = () => { $('akey').hidden = true; $('akeyOpen').hidden = false; };
-// 21 Nov 2026: the key's own Print marks the print, so the key prints with it; any other print of the handout leaves the open key out
-$('akeyPrint').onclick = () => { document.body.classList.add('print-key'); window.print(); };
-window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));
+// 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key's Print button is gone, and its handler with it. Nothing sets print-key on the body any more, so the plain handout leaves the open key out (the print rule in the style above), and a tutor's print carries it, as before.
 
 // ---------- Staging example ----------
 $('exRows').innerHTML = EXAMPLE_ROWS.map(r => '<tr><td><b>' + esc(r[0]) + '</b></td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + '</td></tr>').join('');

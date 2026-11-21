@@ -313,10 +313,13 @@ drawClap();
 // ---------- 8. Dictation ----------
 const DICT = [['through', ['though', 'thorough', 'tough']], ['colonel', ['kernel', 'coronal', 'colonial']], ['debt', ['debit', 'deb', 'debate']]];
 const dPick = {};
+// 22 Nov 2026 (Ramy: "just fix it"): the right word was always the first button of its row. Each row's four words are now mixed once when the page loads (Fisher-Yates on a copy), and mixed again if the right word would sit in the same place in every row. Marking goes by the word itself (data-w), not by its place.
+const mixed = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let DICT_ORDER; do { DICT_ORDER = DICT.map(d => mixed([d[0]].concat(d[1]))); } while (new Set(DICT_ORDER.map((o, i) => o.indexOf(DICT[i][0]))).size === 1);
 function drawDict(){
   $('dict').innerHTML = DICT.map((d, di) => {
     const pick = dPick[di];
-    const opts = [d[0]].concat(d[1]).map(o => '<button type="button" class="opt' + (pick === o ? (o === d[0] ? ' right' : ' miss') : '') + '" data-d="' + di + '" data-w="' + o + '">' + o + '</button>').join('');
+    const opts = DICT_ORDER[di].map(o => '<button type="button" class="opt' + (pick === o ? (o === d[0] ? ' right' : ' miss') : '') + '" data-d="' + di + '" data-w="' + o + '">' + o + '</button>').join('');
     return '<div class="box dict"><button type="button" class="play" data-say-d="' + di + '">Play</button><div class="opts">' + opts + '</div>' + (pick ? '<span class="st ' + (pick === d[0] ? 'good">Correct' : 'bad">Try again') + '</span>' : '') + '</div>';
   }).join('');
 }

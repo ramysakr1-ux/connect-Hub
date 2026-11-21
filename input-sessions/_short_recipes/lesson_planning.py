@@ -6,7 +6,7 @@
 TITLE = 'Lesson planning, start to finish, in one input session'
 LONG = 'writing-the-lesson-plan'
 SUB = ('Warm up on why a lesson plan exists and who reads it, clear the jargon, then draft the real thing on the real TP2 point. '
-       'Everything a trainee needs for this session lives on this one page.')
+       'Everything you need for this session is on this one page.' + '''<!-- 22 Nov 2026 (Ramy): the tutor's voice comes off the trainee's page; it read "Everything a trainee needs for this session lives on this one page." -->''')
 NAV = [('s1', '1 · Why plan?'), ('s2', '2 · Jargon match'), ('s3', '3 · Your TP2 point'), ('s4', '4 · Aims'),
        ('s5', '5 · Problems and solutions'), ('s6', '6 · Procedure'), ('s7', '7 · What comes after')]
 
@@ -27,7 +27,7 @@ BODY = r'''
       <div class="stage-title">Warm-up: why plan? <span class="badge">5 minutes</span></div>
       <p class="sl">Lead-in · 2 minutes</p>
       <p class="lead">Quick show of hands: has anyone here ever taught, or tried to teach, without writing anything down first? How did it go?</p>
-      <p class="sl">Open with these two questions</p>
+      <p class="sl">Two questions to start</p><!-- 22 Nov 2026 (Ramy): the tutor's voice comes off the trainee's page; it read "Open with these two questions" -->
       <div class="two-col" id="questions"></div>
     </div>
   </section>
@@ -40,9 +40,9 @@ BODY = r'''
       <div id="match"></div>
       <div class="batchnav"><button class="btn" type="button" id="prev">Previous</button><span class="small" id="batchLbl"></span><button class="btn primary" type="button" id="next">Next</button></div>
 
-      <div class="btn-row"><button class="btn" type="button" id="keyOpen" disabled>Reveal answer key: save or print to keep</button></div>
+      <div class="btn-row"><button class="btn" type="button" id="keyOpen" disabled>Reveal answer key</button></div><!-- 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key had its own Print button here, and its reveal button read "Reveal answer key: save or print to keep" -->
       <div class="answer-key" id="key" hidden>
-        <div class="keyhead"><span class="keytitle" id="keyTitle">All matched: handout · answer key, to keep</span><span class="keybtns"><button class="btn" type="button" id="keyHide">Hide</button><button class="btn" type="button" onclick="window.print()">Print</button></span></div>
+        <div class="keyhead"><span class="keytitle" id="keyTitle">All matched: handout · answer key, to keep</span><span class="keybtns"><button class="btn" type="button" id="keyHide">Hide</button></span></div>
         <div class="two-col">
           <div class="box" id="boxAbbr"><h3>Abbreviations</h3><table class="grid"><tbody id="keyAbbr"></tbody></table></div>
           <div class="box" id="boxTerms"><h3>Terminology</h3><table class="grid"><tbody id="keyTerms"></tbody></table></div>
@@ -62,7 +62,7 @@ BODY = r'''
     <div class="card" data-n="3">
       <div class="stage-title">Your TP2 point <span class="badge">5 minutes</span></div>
       <p class="sl">TP2 · three points per teaching group, however many groups the cohort needs</p>
-      <p class="lead">A shared input session, not a per-group one. Each group runs ABC on Thursday and DEF on Friday from its own three points, at its own level and coursebook. The cards below are stand-ins to show the shape only: every trainee opens their own real point.</p>
+      <p class="lead">A shared input session, not a per-group one. Each group runs ABC on Thursday and DEF on Friday from its own three points, at its own level and coursebook. The cards below are stand-ins to show the shape only: you open your own real point.</p><!-- 22 Nov 2026 (Ramy): the tutor's voice comes off the trainee's page; it read "every trainee opens their own real point" -->
       <div id="groups"></div>
     </div>
   </section>
@@ -92,14 +92,14 @@ BODY = r'''
         <div class="prow phead"><span>Stage</span><span>Interaction</span><span>Time</span><span>Procedure</span></div>
         <div id="stages"></div>
       </div>
-      <p class="small">By minute 40 every trainee has stage names in, timings estimated, and one stage's procedure written in full as a model for the rest.</p>
+      <p class="small">By minute 40 you have your stage names in, your timings estimated, and one stage's procedure written in full as a model for the rest.</p><!-- 22 Nov 2026 (Ramy): the tutor's voice comes off the trainee's page; it read "By minute 40 every trainee has stage names in, timings estimated" -->
     </div>
   </section>
 
   <section id="s7" data-n="7">
     <div class="card" data-n="7">
       <div class="stage-title">What comes after <span class="badge">5 minutes</span></div>
-      <p class="lead">Two more questions before they leave: elicit first, then reveal.</p>
+      <p class="lead">Two more questions before you leave.</p><!-- 22 Nov 2026 (Ramy): the tutor's voice comes off the trainee's page; it read "before they leave: elicit first, then reveal" -->
       <div class="two-col" id="after"></div>
     </div>
   </section>
@@ -218,8 +218,16 @@ const SETS = { abbr: [ABBR, chunk(ABBR, 6)], terms: [TERMS, chunk(TERMS, 5)] };
 let cat = 'abbr', batch = 0, selL = null, selR = null, shake = null;
 const matched = new Set();
 function cls(i, sel){ return matched.has(cat + ':' + batch + ':' + i) ? ' matched' : sel === i ? (shake ? ' wrong' : ' selected') : ''; }
+// 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): the meanings are mixed afresh each time the page loads (a Fisher-Yates shuffle), and never stand in the exact order or the exact reverse order of the terms. The terms keep their order; a pair is still matched by its number (data-l, data-r), not by where it stands.
+function mixed(n){
+  const a = [...Array(n).keys()], told = b => b.every((v, i) => v === i) || b.every((v, i) => v === n - 1 - i);
+  do { for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } } while (n > 2 && told(a));   // two meanings can only stand one way or the other: a coin toss
+  return a;
+}
+const ORDER = {};   // the order of each batch's meanings, drawn once for this load, so a batch looks the same each time it is opened and on the paper
+const rightOf = (c, b) => ORDER[c + ':' + b] || (ORDER[c + ':' + b] = mixed(SETS[c][1][b].length));
 function drawMatch(){
-  const pairs = SETS[cat][1][batch], right = pairs.map((_, i) => i).reverse();
+  const pairs = SETS[cat][1][batch], right = rightOf(cat, batch);   // 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): it was the batch reversed
   $('cats').innerHTML = '<button type="button" class="btn' + (cat === 'abbr' ? ' on' : '') + '" data-cat="abbr">Abbreviations (' + ABBR.length + ')</button>'
     + '<button type="button" class="btn' + (cat === 'terms' ? ' on' : '') + '" data-cat="terms">Terminology (' + TERMS.length + ')</button>';
   $('matchCount').textContent = [...matched].filter(k => k.startsWith(cat + ':')).length + ' of ' + SETS[cat][0].length + ' matched';
@@ -239,7 +247,7 @@ function drawKey(){
   const n = left(cat), b = $('keyOpen');
   b.disabled = n > 0;
   b.textContent = n > 0 ? 'Answer key: match the last ' + (n === 1 ? NAMES[cat][0] : n + ' ' + NAMES[cat][1]) + ' to unlock it'
-                        : 'Reveal answer key: save or print to keep';
+                        : 'Reveal answer key';   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the label no longer promises a print
   $('boxAbbr').hidden = left('abbr') > 0; $('boxTerms').hidden = left('terms') > 0;
   if (n > 0 && !$('key').hidden && $('boxAbbr').hidden && $('boxTerms').hidden) $('key').hidden = true;
   if (!$('key').hidden) b.hidden = true; else b.hidden = false;
@@ -260,7 +268,7 @@ $('prev').onclick = () => { if (shake) return; batch = Math.max(0, batch - 1); s
 $('next').onclick = () => { if (shake) return; batch = Math.min(SETS[cat][1].length - 1, batch + 1); selL = selR = null; drawMatch(); };
 drawMatch();
 // 21 Nov 2026: for the paper only (see the print rule in the style above). The screen shows one batch of one set at a time, so the handout printed only that batch; this prints every batch of both sets, each with its meanings in the same order as its buttons. They are not buttons and carry no data-l or data-r, so nothing here can be clicked or matched.
-$('match').insertAdjacentHTML('afterend', '<div class="matchp" id="matchPaper">' + [['abbr', 'Abbreviations'], ['terms', 'Terminology']].map(s => '<p class="sl">' + s[1] + '</p>' + SETS[s[0]][1].map(pairs => '<div class="pill-match-wrap"><div class="pill-col">' + pairs.map(p => '<div class="pill term">' + esc(p[0]) + '</div>').join('') + '</div><div class="pill-col">' + pairs.slice().reverse().map(p => '<div class="pill">' + esc(p[1]) + '</div>').join('') + '</div></div>').join('')).join('') + '</div>');
+$('match').insertAdjacentHTML('afterend', '<div class="matchp" id="matchPaper">' + [['abbr', 'Abbreviations'], ['terms', 'Terminology']].map(s => '<p class="sl">' + s[1] + '</p>' + SETS[s[0]][1].map((pairs, b) => '<div class="pill-match-wrap"><div class="pill-col">' + pairs.map(p => '<div class="pill term">' + esc(p[0]) + '</div>').join('') + '</div><div class="pill-col">' + rightOf(s[0], b).map(i => '<div class="pill">' + esc(pairs[i][1]) + '</div>').join('') + '</div></div>').join('')).join('') + '</div>');   // 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): the paper carries each batch's meanings in the mixed order of this load, the same as its buttons
 
 // the answer key and the staging example
 $('keyAbbr').innerHTML = ABBR.map(r => '<tr><td class="t">' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('');

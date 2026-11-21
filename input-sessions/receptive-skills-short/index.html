@@ -213,14 +213,17 @@ const CORRECT_ORDER = ['lead-in', 'pre-teach', 'gist', 'peer1', 'detail', 'peer2
 const SHUFFLED = ['peer1', 'gist', 'detail', 'followup', 'pre-teach', 'lead-in', 'peer2'];
 const CORRECT_ORDER_LABEL = CORRECT_ORDER.map(k => ORDER_ITEMS[k]).join(' · ');
 
-// ---------- match each term to its meaning (Connect's MatchTermsExercise: right column reversed, a wrong pair flashes red and clears) ----------
+// ---------- match each term to its meaning (Connect's MatchTermsExercise; the right column is mixed at each load, 22 Nov 2026; a wrong pair flashes red and clears) ----------
 function matchTerms(el, terms){
   let selL = null, selR = null, matched = new Set(), shake = [];
+  // 22 Nov 2026 (Ramy: "just fix it"): the meanings stood in the terms' order reversed, so the pairs could be read off. They are now mixed afresh each time the page loads (a Fisher-Yates shuffle), never in the terms' order or its exact reverse. The terms keep their order, and a pair is still matched by its number (data-l, data-r), not by where it stands.
+  const right = terms.map((_, i) => i);
+  if (right.length > 2) do { for (let i = right.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [right[i], right[j]] = [right[j], right[i]]; } } while (right.every((v, i) => v === i) || right.every((v, i) => v === right.length - 1 - i));
   const cls = (i, sel, side) => matched.has(i) ? ' matched' : (shake[side] === i ? ' wrong' : sel === i ? ' selected' : '');
   function draw(){
     el.innerHTML = '<div class="mhead"><b>Match each term to its meaning</b><span>' + matched.size + ' of ' + terms.length + ' matched</span></div>'
       + '<div class="pill-match-wrap"><div class="pill-col">' + terms.map((t, i) => '<button type="button" class="pill term' + cls(i, selL, 0) + '" data-l="' + i + '">' + esc(t[0]) + '</button>').join('') + '</div>'
-      + '<div class="pill-col">' + terms.map((_, i) => terms.length - 1 - i).map(i => '<button type="button" class="pill' + cls(i, selR, 1) + '" data-r="' + i + '">' + esc(terms[i][1]) + '</button>').join('') + '</div></div>';
+      + '<div class="pill-col">' + right.map(i => '<button type="button" class="pill' + cls(i, selR, 1) + '" data-r="' + i + '">' + esc(terms[i][1]) + '</button>').join('') + '</div></div>';
   }
   function tryMatch(){
     if (selL === null || selR === null) return;
@@ -258,15 +261,15 @@ function orderEx(el, correct, shuffled, title, intro){
 function answerKey(el, terms, details){
   let open = false;
   function draw(){
-    if (!open) { el.innerHTML = '<div class="btn-row"><button type="button" class="btn" data-k="open">Reveal answer key: save or print to keep</button></div>'; return; }
-    el.innerHTML = '<div class="keyblock"><div class="keyhead"><span class="lbl">Answer key: handout, to keep</span><div class="btn-row"><button type="button" class="btn" data-k="hide">Hide</button><button type="button" class="btn" data-k="print">Print</button></div></div>'
+    if (!open) { el.innerHTML = '<div class="btn-row"><button type="button" class="btn" data-k="open">Reveal answer key</button></div>'; return; }   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the label no longer promises a print
+    el.innerHTML = '<div class="keyblock"><div class="keyhead"><span class="lbl">Answer key: handout, to keep</span><div class="btn-row"><button type="button" class="btn" data-k="hide">Hide</button></div></div>'   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): Hide is the only button here now
       + (terms.length ? '<div class="keypart"><h4>Terms</h4>' + terms.map(t => '<div class="krow"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>').join('') + '</div>' : '')
       + (details.length ? '<div class="keypart"><h4>True or false</h4>' + details.map(d => '<div class="krow tf"><b>' + esc(d[0]) + '</b><span>' + esc(d[1]) + '</span></div>').join('') + '</div>' : '')
       + '</div>';
   }
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if (!b) return;
-    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { window.print(); return; }
+    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else return;   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key has no Print button, so nothing here prints
     draw();
   });
   draw();
@@ -297,7 +300,9 @@ function drawOrder(){
 $('order').addEventListener('click', e => {
   const b = e.target.closest('[data-o]'); if (!b) return;
   const k = b.dataset.o;
-  if (picked.indexOf(k) === -1 && CORRECT_ORDER[picked.length] === k) { picked.push(k); drawOrder(); }
+  // 22 Nov 2026 (Ramy: "fix it"): two buttons read "Peer check" and only one of them was taken when the first peer check was due. A button is now taken when it is the stage due or carries the same label as it, so either "Peer check" goes in first (the one clicked is placed) and the other one when the second is due.
+  const due = CORRECT_ORDER[picked.length];
+  if (picked.indexOf(k) === -1 && (due === k || (due !== undefined && ORDER_ITEMS[k] === ORDER_ITEMS[due]))) { picked.push(k); drawOrder(); }
 });
 drawOrder();
 
@@ -305,14 +310,14 @@ drawOrder();
 let keyOpen = false;
 function drawKey(){
   if (!keyOpen) { $('key').innerHTML = '<div class="btn-row"><button type="button" class="btn" data-k="open">Reveal answer key: trainer only</button></div>'; return; }
-  $('key').innerHTML = '<div class="keyblock"><div class="keyhead"><span class="lbl">All done: handout · answer key, to keep</span><div class="btn-row"><button type="button" class="btn" data-k="hide">Hide</button><button type="button" class="btn" data-k="print">Print</button></div></div>'
+  $('key').innerHTML = '<div class="keyblock"><div class="keyhead"><span class="lbl">All done: handout · answer key, to keep</span><div class="btn-row"><button type="button" class="btn" data-k="hide">Hide</button></div></div>'   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): Hide is the only button here now
     + '<div class="keypart"><h4>Terminology</h4>' + TERMS.map(t => '<div class="krow"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>').join('') + '</div>'
     + '<div class="keypart"><h4>True or false</h4>' + DETAILS.map(d => '<div class="krow tf"><b>' + esc(d[0]) + '</b><span>' + esc(d[1]) + '</span></div>').join('') + '</div>'
     + '<div class="keypart"><h4>Correct stage order</h4><p class="korder">' + esc(CORRECT_ORDER_LABEL) + '</p></div></div>';
 }
 $('key').addEventListener('click', e => {
   const b = e.target.closest('[data-k]'); if (!b) return;
-  if (b.dataset.k === 'open') keyOpen = true; else if (b.dataset.k === 'hide') keyOpen = false; else { window.print(); return; }
+  if (b.dataset.k === 'open') keyOpen = true; else if (b.dataset.k === 'hide') keyOpen = false; else return;   // 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the trainer's key has no Print button either, so nothing here prints
   drawKey();
 });
 drawKey();

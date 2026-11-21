@@ -60,9 +60,9 @@ BODY = r'''
   <section id="s6" data-n="6">
     <div class="card" data-n="6">
       <div class="stage-title">Answer key</div>
-      <button class="btn" type="button" id="keyOpen">Reveal answer key: save or print to keep</button>
+      <button class="btn" type="button" id="keyOpen">Reveal answer key</button>   <!-- 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the label no longer promises a print -->
       <div class="akey" id="key" hidden>
-        <div class="akey-top"><span class="label">Answer key: handout, to keep</span><span class="btn-row"><button class="btn" type="button" id="keyHide">Hide</button><button class="btn" type="button" onclick="document.body.classList.add('print-key'); window.print()">Print</button></span></div>   <!-- 21 Nov 2026: this button marks the print as the key's own (body.print-key), the only trainee print that carries the key -->
+        <div class="akey-top"><span class="label">Answer key: handout, to keep</span><span class="btn-row"><button class="btn" type="button" id="keyHide">Hide</button></span></div>   <!-- 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key's own Print button is gone; Hide is the only button here -->
         <div class="box"><p class="ctx">Terms</p><div id="keyTerms"></div></div>
       </div>
       <div class="staging">
@@ -115,6 +115,7 @@ STYLE = r'''
   @media print{ #keyOpen, .akey-top .btn-row, #stgBtn{display:none !important;} }
   /* 21 Nov 2026: "Print the handout" printed the whole answer key once it had been opened (the answers to part 2), and the staging example once it had been opened. The key now prints only from its own Print button (body.print-key, set on that button) or in a tutor's print with the trainer notes; the example prints with the answers, or in that tutor's print if it is open. */
   @media print{ body:not(.print-key):not(.tutor) #key, html.hub-clean #key, body:not(.with-answers):not(.tutor) #stg, html.hub-clean #stg{display:none !important;} }
+  /* 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): that Print button is gone, so body.print-key is never set and no trainee print carries the key. The rule above stays as it is: a tutor's print and "Print with the answers" are untouched. */
   /* 21 Nov 2026: an answered task printed solved on the handout: matched meanings in a heavier weight; in part 3 the option picked in its right or wrong color, with "Correct." or "Not this one." and the explanation under it; in part 4 each sentence marked "Correct" or "Not this one" in its color. On paper each prints as it did untouched. */
   @media print{ .fb, .sbtn .st{display:none !important;} .pill.matched, .pill.selected, .pill.wrong{font-weight:500;} .opt.right, .opt.miss{background:var(--field); border-color:var(--sand-line); color:var(--ink);} }
 '''
@@ -134,7 +135,9 @@ const TERMS = [
 
 // ---------- 2. Match: click a term, then its meaning (either order); a wrong pair flashes, then clears ----------
 (function(){
-  const right = TERMS.map((_, i) => i).reverse();
+  // 22 Nov 2026 (Ramy: "just fix it"): the meanings stood in the terms' order reversed, so the pairs could be read off. They are now mixed afresh each time the page loads (a Fisher-Yates shuffle), never in the terms' order or its exact reverse. The terms keep their order, and a pair is still matched by its number (data-l, data-r), not by where it stands.
+  const right = TERMS.map((_, i) => i);
+  if (right.length > 2) do { for (let i = right.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [right[i], right[j]] = [right[j], right[i]]; } } while (right.every((v, i) => v === i) || right.every((v, i) => v === right.length - 1 - i));
   let selL = null, selR = null, shake = [], matched = new Set();
   function cls(i, sel){ return matched.has(i) ? ' matched' : sel === i ? ' selected' : shake.includes(i) ? ' wrong' : ''; }
   function draw(){
@@ -164,10 +167,13 @@ const CHOOSE = [
   ['By the time we got to the station, the last train ___ (leave).', 'had left', 'left', 'had left', 'Past perfect: one past action completed before a second, later past action.']
 ];
 const chosen = {};
+// 22 Nov 2026 (Ramy: "just fix it"): the right option was always the first of the two buttons. Each situation's two options are now put in a random order once, when the page loads, and never all four the same way round. Marking follows the option's own words (data-o), not where it stands.
+const CHOOSE_OPTS = CHOOSE.map(c => [c[1], c[2]]);
+do { CHOOSE_OPTS.forEach(o => { if (Math.random() < .5) o.reverse(); }); } while (CHOOSE_OPTS.every((o, i) => o[0] === CHOOSE[i][3]) || CHOOSE_OPTS.every((o, i) => o[1] === CHOOSE[i][3]));
 function drawChoose(){
   $('choose').innerHTML = CHOOSE.map((c, ci) => {
     const pick = chosen[ci];
-    const opts = [c[1], c[2]].map(o => '<button type="button" class="opt' + (pick === o ? (o === c[3] ? ' right' : ' miss') : '') + '" data-c="' + ci + '" data-o="' + esc(o) + '">' + esc(o) + '</button>').join('');
+    const opts = CHOOSE_OPTS[ci].map(o => '<button type="button" class="opt' + (pick === o ? (o === c[3] ? ' right' : ' miss') : '') + '" data-c="' + ci + '" data-o="' + esc(o) + '">' + esc(o) + '</button>').join('');
     const fb = pick ? '<p class="fb"><b class="' + (pick === c[3] ? 'good">Correct.' : 'bad">Not this one.') + '</b> ' + esc(c[4]) + '</p>' : '';
     return '<div class="box"><p class="ctx">' + esc(c[0]) + '</p><div class="opts">' + opts + '</div>' + fb + '</div>';
   }).join('');
@@ -215,7 +221,6 @@ $('pairs').innerHTML = PAIRS.map(p => '<div class="box"><p class="pairline">' + 
 $('keyTerms').innerHTML = TERMS.map(t => '<div class="krow"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>').join('');
 $('keyOpen').onclick = () => { $('key').hidden = false; $('keyOpen').hidden = true; };
 $('keyHide').onclick = () => { $('key').hidden = true; $('keyOpen').hidden = false; };
-window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));   // 21 Nov 2026: the key's own print is over (see the print rule above)
 const EXAMPLE = [
   ['Item', 'used to + infinitive, vs past simple'],
   ['Meaning', 'A past habit or state that is no longer true, contrasted with the present.'],

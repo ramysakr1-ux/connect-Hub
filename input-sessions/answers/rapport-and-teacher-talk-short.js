@@ -26,7 +26,8 @@
  *   them. So the right option and the explanation of each scenario are COPIED below, word for word, from
  *   choices('grading', [...]) and choices('rapport', [...]) in rapport-and-teacher-talk-short/index.html (and its
  *   recipe, _short_recipes/rapport_and_teacher_talk.py), under the scenario's own words: eight scenarios, each with
- *   its right option (choices[correct]) and its feedback. IF A SCENARIO, ITS RIGHT OPTION OR ITS EXPLANATION CHANGES
+ *   its right option (choices[correct]) and its feedback (and, for Grading item 3, the second option the page counts
+ *   as right too, its "also": 22 Nov 2026). IF A SCENARIO, ITS RIGHT OPTION OR ITS EXPLANATION CHANGES
  *   ON THE PAGE, CHANGE IT HERE TOO, and run the check again. A scenario whose words are not in the table gets no
  *   line, and neither does one whose copied answer is not on exactly one of its own buttons: nothing is ever guessed.
  *
@@ -72,7 +73,9 @@ SessionAnswers.register(function(A){
        'The first. The second is accurate and completely out of reach. The third is a string of words, not a sentence: the learner has to assemble the meaning themselves and has no model to copy.'],
       ['A learner says “I am agree with you.” You want to respond in the moment without stopping the discussion.',
        '“I agree with you. Good. Carry on.”',
-       'The first: a natural, accurate recast that models the form without a grammar lecture mid-discussion. The second stops the conversation dead. The third is fine too, and often right; but a recast costs nothing and keeps the floor with the learner.']
+       'The first: a natural, accurate recast that models the form without a grammar lecture mid-discussion. The second stops the conversation dead. The third is fine too, and often right; but a recast costs nothing and keeps the floor with the learner.',
+       /* 22 Nov 2026 (Ramy: "fix that one"): the page now counts the third option as right too (its "also"), so both are printed in bold */
+       ['Say nothing and note it for delayed correction.']]
     ],
     rapport: [
       ['You arrive five minutes early and chat to the two students already there about their journey in.',
@@ -102,6 +105,12 @@ SessionAnswers.register(function(A){
       var hit = list('.opt', scen).filter(function(b){ return b.textContent === it[0][1]; });
       if (hit.length !== 1) return;
       var label = hit[0].textContent, why = it[0][2], rest = why.slice(label.length);
+      /* 22 Nov 2026: a scenario with a second right option (the fourth entry, the page's "also") prints both in bold, then
+         the explanation. Each must be on exactly one of the scenario's own buttons, or the scenario gets no line. */
+      var more = it[0][3] || [], found = more.filter(function(m){ return list('.opt', scen).filter(function(b){ return b.textContent === m; }).length === 1; });
+      if (found.length !== more.length) return;
+      var dot = function(t){ return '<b>' + esc(t) + (/[.!?”]$/.test(t) ? '' : '.') + '</b>'; };
+      if (more.length) { A.line(scen, [label].concat(more).map(dot).join(' Or: ') + ' ' + esc(why)); return; }
       /* an explanation that opens with the name of its choice ("Just being liked, and it ...") is written as the page
          words it, with the choice in bold where it opens the sentence; otherwise the option, then the explanation */
       A.line(scen, why.indexOf(label) === 0 && /^[^A-Za-z]/.test(rest)

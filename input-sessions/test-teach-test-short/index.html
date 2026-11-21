@@ -185,9 +185,9 @@
       <div id="order"></div>
       <p class="status" id="orderStatus"></p>
 
-      <div class="btn-row"><button class="btn" type="button" id="keyOpen">Reveal answer key: save or print to keep</button></div>
+      <div class="btn-row"><button class="btn" type="button" id="keyOpen">Reveal answer key</button></div><!-- 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key had its own Print button here, and its reveal button read "Reveal answer key: save or print to keep" -->
       <div class="answer-key" id="key" hidden>
-        <div class="keyhead"><span class="keytitle">Answer key: handout, to keep</span><span class="keybtns"><button class="btn" type="button" id="keyHide">Hide</button><button class="btn" type="button" onclick="window.print()">Print</button></span></div>
+        <div class="keyhead"><span class="keytitle">Answer key: handout, to keep</span><span class="keybtns"><button class="btn" type="button" id="keyHide">Hide</button></span></div>
         <div class="box"><h3>Terms</h3><table class="grid stk"><tbody id="keyTerms"></tbody></table></div>
         <div class="box"><h3>True or false</h3><div id="keyTf"></div></div>
       </div>
@@ -225,8 +225,14 @@ const TERMS = [
   ['Retest', 'A second, similar task that checks whether the gap has closed.'],
   ['MFP', 'Meaning, form, pronunciation: the three things the teach stage still has to cover, just only where there’s a gap.']
 ];
+// 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): the meanings are mixed afresh each time the page loads (a Fisher-Yates shuffle), and never stand in the exact order or the exact reverse order of the terms. The terms keep their order; a pair is still matched by its number (data-l, data-r), not by where it stands.
+function mixed(n){
+  const a = [...Array(n).keys()], told = b => b.every((v, i) => v === i) || b.every((v, i) => v === n - 1 - i);
+  do { for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } } while (n > 2 && told(a));   // two meanings can only stand one way or the other: a coin toss
+  return a;
+}
 function matchTerms(el, countEl, terms){
-  const right = terms.map((_, i) => i).reverse();
+  const right = mixed(terms.length);   // 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): it was the terms reversed
   let selL = null, selR = null, shake = null;
   const matched = new Set();
   function cls(i, sel){ return matched.has(i) ? ' matched' : sel === i ? (shake ? ' wrong' : ' selected') : ''; }

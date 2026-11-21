@@ -185,10 +185,10 @@
       <p class="quiet" id="oStatus"></p>
 
       <div id="key">
-        <div class="btn-row"><button class="btn" id="keyOpen" type="button">Reveal answer key: save or print to keep</button></div>
+        <div class="btn-row"><button class="btn" id="keyOpen" type="button">Reveal answer key</button></div><!-- 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key had its own Print button here, and its reveal button read "Reveal answer key: save or print to keep" -->
         <div id="keyBody" hidden>
           <div class="keyhead"><span class="keylabel">Answer key: handout, to keep</span>
-            <span class="btn-row"><button class="btn" id="keyHide" type="button">Hide</button><button class="btn" id="keyPrint" type="button">Print</button></span></div>
+            <span class="btn-row"><button class="btn" id="keyHide" type="button">Hide</button></span></div>
           <div class="text-block"><h3 class="tb-h">Terms</h3><div id="keyTerms"></div></div>
           <div class="text-block"><h3 class="tb-h">True or false</h3><div id="keyTF"></div></div>
         </div>
@@ -245,12 +245,19 @@ const EXAMPLE_ROWS = [
   ['Delayed feedback', '5′', 'T addresses errors noted during production, as a whole class.']
 ];
 
-// ---------- 3. Match the terms: right column reversed, as on Connect ----------
+// ---------- 3. Match the terms: the meanings mixed at each load ----------
+// 22 Nov 2026 (Ramy, of the meanings standing as the terms in exact reverse order: "just fix it"): the meanings are mixed afresh each time the page loads (a Fisher-Yates shuffle), and never stand in the exact order or the exact reverse order of the terms. The terms keep their order; a pair is still matched by its number (data-l, data-r), not by where it stands.
+function mixed(n){
+  const a = [...Array(n).keys()], told = b => b.every((v, i) => v === i) || b.every((v, i) => v === n - 1 - i);
+  do { for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } } while (n > 2 && told(a));   // two meanings can only stand one way or the other: a coin toss
+  return a;
+}
+const RIGHT = mixed(TERMS.length);
 let selL = null, selR = null; const matched = new Set();
 function drawMatch(){
   $('mStatus').textContent = matched.size + ' of ' + TERMS.length + ' matched';
   $('mLeft').innerHTML = TERMS.map((t, i) => '<button type="button" class="pill term' + (matched.has(i) ? ' matched' : selL === i ? ' selected' : '') + '" data-l="' + i + '">' + esc(t[0]) + '</button>').join('');
-  $('mRight').innerHTML = TERMS.map((_, i) => TERMS.length - 1 - i).map(i => '<button type="button" class="pill' + (matched.has(i) ? ' matched' : selR === i ? ' selected' : '') + '" data-r="' + i + '">' + esc(TERMS[i][1]) + '</button>').join('');
+  $('mRight').innerHTML = RIGHT.map(i => '<button type="button" class="pill' + (matched.has(i) ? ' matched' : selR === i ? ' selected' : '') + '" data-r="' + i + '">' + esc(TERMS[i][1]) + '</button>').join('');
 }
 function tryMatch(){
   if (selL === null || selR === null) return;
@@ -291,8 +298,7 @@ $('keyTerms').innerHTML = TERMS.map(t => '<div class="krow"><b>' + esc(t[0]) + '
 $('keyTF').innerHTML = DETAILS.map(d => '<div class="ktf"><p>' + esc(d[0]) + '</p><p>' + esc(d[1]) + '</p></div>').join('');
 $('keyOpen').onclick = () => { $('keyBody').hidden = false; $('keyOpen').hidden = true; };
 $('keyHide').onclick = () => { $('keyBody').hidden = true; $('keyOpen').hidden = false; };
-$('keyPrint').onclick = () => { document.body.classList.add('print-key'); window.print(); };
-window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));
+// 22 Nov 2026 (Ramy: "Remove the print button from the answer key"): the key's Print button is gone, and its handler with it. Nothing sets print-key on the body any more, so the print-key rules in the style above never apply: the plain handout leaves the key out, and a tutor's print carries it, as before.
 
 // ---------- the staging example ----------
 $('exRows').innerHTML = EXAMPLE_ROWS.map(r => '<div class="exrow"><b>' + esc(r[0]) + '</b><span>' + esc(r[1]) + '</span><span>' + esc(r[2]) + '</span></div>').join('');
