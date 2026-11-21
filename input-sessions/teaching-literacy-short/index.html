@@ -57,6 +57,14 @@
   .trow.open{border-color:var(--teal); background:color-mix(in oklab, var(--teal) 6%, var(--paper));}
   .trow.open .tn{font-weight:400; font-size:.88rem; color:var(--teal);}
   @media(max-width:560px){ .trow{grid-template-columns:1fr; gap:4px;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: a moment in part 3 with its teal or red edge and fill and without its two options; the version picked in part 4 with its tick or cross and its explanation; an opened technique in part 5 with "Week one" or "Once basic decoding is established" and the note. And part 4 printed only the handout that was on the screen. On paper each now prints as it did untouched: .chips.paper is the two options of an answered moment and .h-paper is both handouts whole, both for the paper only (see the script). */
+  .chips.paper, .h-paper{display:none;}
+  @media print{
+    .scen.good, .scen.bad{border-color:var(--sand-line); background:var(--paper);} .chips.paper{display:flex;}
+    #s4 .card > .count, #s4 .card > .text-block, #hOpts{display:none !important;} .h-paper{display:block;}
+    .h-paper .hset{break-inside:avoid; margin:0 0 12px;} .h-paper .hopt{cursor:default; background:none; border:1px solid #999; color:#000;} #s4 > .card{break-inside:auto;}
+    .trow, .trow.open{grid-template-columns:1fr; border-color:var(--sand-line); background:var(--paper);} .trow .tn{display:none !important;}
+  }
 
 </style>
 </head>
@@ -182,7 +190,9 @@ function scenCards(host, list){
     host.innerHTML = list.map((s, i) => {
       const p = st[i], cls = p === null ? '' : p === s[2] ? ' good' : ' bad';
       const inner = p === null ? '<div class="chips">' + s[1].map((c, j) => '<button type="button" class="opt" data-s="' + i + ':' + j + '">' + esc(c) + '</button>').join('') + '</div>'
-        : '<p class="why">' + (p === s[2] ? '✓ ' : '✗ ') + esc(s[3]) + '</p>';
+        : '<p class="why">' + (p === s[2] ? '✓ ' : '✗ ') + esc(s[3]) + '</p>'
+          // 21 Nov 2026: the two options stay in an answered moment for the paper only (.chips.paper, never on the screen, no data-s so nothing can be picked again), so "Print the handout" prints it as the task it was.
+          + '<div class="chips paper">' + s[1].map(c => '<button type="button" class="opt">' + esc(c) + '</button>').join('') + '</div>';
       return '<div class="scen' + cls + '"><p>' + esc(s[0]) + '</p>' + inner + '</div>';
     }).join('');
   }
@@ -221,6 +231,12 @@ function drawHandout(){
 $('hOpts').addEventListener('click', e => { const b = e.target.closest('[data-h]'); if (!b) return; hChoice = +b.dataset.h; drawHandout(); });
 $('hNext').onclick = () => { hIdx++; hChoice = null; drawHandout(); };
 drawHandout();
+// 21 Nov 2026: both handouts whole, for the paper only (the screen shows one at a time, and printed whichever it was on, with the version picked marked). No buttons, so nothing here can be clicked.
+(function(){ const P = document.createElement('div'); P.className = 'h-paper'; P.id = 'hPaper';
+  P.innerHTML = ADAPT_OPTIONS.map((opts, h) => '<div class="hset"><p class="count">Handout ' + (h + 1) + ' of ' + ADAPT_OPTIONS.length + '</p>'
+    + '<div class="text-block"><span class="tb-l">Original handout</span><p>' + esc(ADAPT_ORIGINAL[h]) + '</p></div>'
+    + opts.map(o => '<div class="hopt">' + esc(o[0]) + '</div>').join('') + '</div>').join('');
+  $('hOpts').after(P); })();
 
 // ---------- 5. Techniques: week one, or once decoding is established ----------
 const TECHNIQUES = [

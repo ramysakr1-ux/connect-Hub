@@ -151,6 +151,17 @@ STYLE = r'''
     .cmp td{border:0; padding:4px 0;}
     .cmp td[data-l]::before{content:attr(data-l) ": "; font-weight:700; color:var(--grey);}
   }
+  /* 21 Nov 2026: an answered task printed solved on "Print the handout": the Stage 1 card, once opened, left-aligned; matched terms and meanings in a heavier weight (and, with the count, in their teal fill); a picked scenario with its teal or red edge and its other option faded; the ordered stages with their numbers and "3 of 5 placed" or "All 5 in order". On paper each now prints as it did untouched: the stages carry a blank circle to number in, and no count. */
+  @media print{
+    .reveal-card.open .hint{display:block;} .reveal-card.hero.open{text-align:center;}
+    .pill-match-wrap .pill.matched, .pill-match-wrap .pill.selected, .pill-match-wrap .pill.wrong{background:var(--field); border-color:var(--sand-line); color:var(--ink); font-weight:500;}
+    .pill-match-wrap .pill.term.matched, .pill-match-wrap .pill.term.selected, .pill-match-wrap .pill.term.wrong{font-weight:600;}
+    .mhead span, .status{display:none !important;}
+    .scen.done{border-color:var(--sand-line) !important;}
+    .scen .opt.good, .scen .opt.bad, .scen .opt.dim{background:var(--field); border-color:var(--sand-line); color:var(--ink); opacity:1;}
+    .order-line.done{border-color:var(--sand-line); color:var(--ink);}
+    .order-line .num{display:none !important;} button.order-line::after{content:""; flex:none; width:22px; height:22px; border:1px solid #999; border-radius:50%;}
+  }
 '''
 
 SCRIPT = r'''

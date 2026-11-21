@@ -1042,3 +1042,19 @@ ALIAS['guided-to-less-guided-practice'] = ALIAS.get('guided-to-less-guided-pract
     ('const drillDefs = drillTypes.map(d=>d.def);',
      "const drillDefs = drillTypes.map(d=>d.def);\n// 21 Nov 2026: the definitions are mixed once for the dropdowns. They were listed in the order of the terms, so the 1st term's answer was the 1st choice, the 2nd term's the 2nd, and so on down the 13.\nfor(let i=drillDefs.length-1;i>0;i--){ const j=Math.floor(__lr()*(i+1)); const t=drillDefs[i]; drillDefs[i]=drillDefs[j]; drillDefs[j]=t; }"),
 ]
+
+
+# FOUND WALKING TEACHING EXAM CLASSES (21 Nov 2026): the plain handout printed every CEFR rung open, and the rung text
+# names the level of each learner in part 1; matched acronym pills printed filled; three British spellings.
+ALIAS['teaching-exam-classes'] = ALIAS.get('teaching-exam-classes', []) + [
+    ('  @media print{ .rung .rdetail{display:block !important;} .exam-back{display:block !important;} .examiner-body{display:block !important;} }',
+     "  @media print{ .exam-back{display:block !important;} .examiner-body{display:block !important;} }\n  /* 21 Nov 2026: the handout printed every rung of the ladder open, and each rung's words name the level of a learner in\n     the task above it (part 1), so the paper gave the six answers away. The rungs now print shut, opened on screen or\n     not; the tutor's print with the notes and the answers print open them. */\n  @media print{ .rung .rdetail{display:none !important;} .rung.open{border-color:var(--sand-line) !important;} html:not(.hub-clean) body.tutor .rung .rdetail, body.with-answers .rung .rdetail{display:block !important;} }\n  /* 21 Nov 2026: acronyms matched on screen printed as filled pills, so a task already done printed as done. */\n  @media print{ .pill, .pill.matched, .pill.selected, .pill.wrong{background:none !important; border-color:#999 !important; color:#000 !important; font-weight:500 !important;} }"),
+    ('// ---------- 5. examiner panels ----------',
+     "// ---------- 5. examiner panels ----------\n/* 21 Nov 2026: American spelling in the first role's words: standardization, re-standardized, Cambridge-authorized. */"),
+    ('Cambridge-authorised',
+     'Cambridge-authorized'),
+    ('followed by standardisation',
+     'followed by standardization'),
+    ('re-standardised',
+     're-standardized'),
+]
