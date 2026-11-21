@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211136">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211216">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -703,7 +703,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211136">
+<link rel="stylesheet" href="hub-house.css?v=202611211216">
 </head>
 <body>
 <div class="board">
@@ -1325,20 +1325,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611211136"></script>
-<script src="hub-store.js?v=202611211136"></script>
-<script src="hub-xlsx.js?v=202611211136"></script>
-<script src="hub-say.js?v=202611211136"></script>
-<script src="agreement-defaults.js?v=202611211136"></script>
-<script src="observation-defaults.js?v=202611211136"></script>
-<script src="hub-shared.js?v=202611211136"></script>
+<script src="assignment-defaults.js?v=202611211216"></script>
+<script src="hub-store.js?v=202611211216"></script>
+<script src="hub-xlsx.js?v=202611211216"></script>
+<script src="hub-say.js?v=202611211216"></script>
+<script src="agreement-defaults.js?v=202611211216"></script>
+<script src="observation-defaults.js?v=202611211216"></script>
+<script src="hub-shared.js?v=202611211216"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611211136"></script>
-<script src="hub-due.js?v=202611211136"></script>
-<script src="hub-sync.js?v=202611211136"></script>
-<script src="hub-notebook.js?v=202611211136"></script>
-<script src="hub-hand.js?v=202611211136"></script>
-<script src="hub-ink.js?v=202611211136"></script>
+<script src="hub-rotation.js?v=202611211216"></script>
+<script src="hub-due.js?v=202611211216"></script>
+<script src="hub-sync.js?v=202611211216"></script>
+<script src="hub-notebook.js?v=202611211216"></script>
+<script src="hub-hand.js?v=202611211216"></script>
+<script src="hub-ink.js?v=202611211216"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1382,7 +1382,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211136'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211216'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -1670,7 +1670,9 @@ function paintDateWarn(){
 (function(){
   const b = document.getElementById('exportFolderCheck'), box = document.getElementById('exportFolder'), msg = document.getElementById('exportFolderMsg');
   if (!b || !box || !msg) return;
-  const HOW = ' In Google Drive, open the folder’s Share box, set General access to “Anyone with the link”, and set the role to Editor. Then paste the link here again.';
+  /* HOW THE CENTER SHARES IT (corrected 21 Nov 2026, after the first trial): with ONE account, as an Editor, and General
+     access left on Restricted. "Anyone with the link" on this folder would pass down to every trainee's own folder. */
+  const how = who => ' In Google Drive, open the folder’s Share box, add ' + (who || 'the Connect Lite account') + ' as an Editor, and leave General access on “Restricted”. Then check again.';
   const say = (t, kind) => { msg.hidden = false; msg.textContent = t; msg.style.fontWeight = '700';
     msg.style.color = kind === 'good' ? 'var(--fb-good, #4A6330)' : kind === 'busy' ? 'var(--grey)' : 'var(--brick, #8E2B1F)';
     box.style.borderColor = kind === 'bad' ? 'var(--brick, #8E2B1F)' : ''; box.style.boxShadow = kind === 'bad' ? '0 0 0 2px var(--brick, #8E2B1F)' : ''; };
@@ -1684,9 +1686,11 @@ function paintDateWarn(){
     try {
       const r = await HubStore.call({ op: 'exportFolderCheck', url: url });
       if (mine !== seq) return;
-      if (r && r.ok) say('Connect Lite can save into “' + r.folder + '”. Save the settings to keep this folder.', 'good');
-      else if (r && r.seen) say('Connect Lite can open “' + r.folder + '” but cannot save into it: the link is view only.' + HOW, 'bad');
-      else say('Connect Lite cannot read this folder.' + HOW, 'bad');
+      const who = r && r.account ? r.account : '';
+      if (r && r.ok && r.linkOpen) say('Connect Lite can save into “' + r.folder + '”, but the folder is open to anyone with the link' + (r.linkOpen === 'edit' ? ', as an editor' : '') + '. Each trainee’s own portfolio link would then open more than it should' + (r.linkOpen === 'edit' ? ', and let them change their files' : '') + '.' + how(who), 'bad');
+      else if (r && r.ok) say('Connect Lite can save into “' + r.folder + '”. This page keeps the folder by itself.', 'good');
+      else if (r && r.seen) say('Connect Lite can open “' + r.folder + '” but cannot save into it.' + how(who), 'bad');
+      else say('Connect Lite cannot read this folder.' + how(who), 'bad');
     } catch (e) { if (mine === seq) say('The folder was not checked: ' + (e && e.message || e) + ' Try again.', 'bad'); }
     b.disabled = false;
   }
@@ -3102,7 +3106,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211136'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611211216'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();

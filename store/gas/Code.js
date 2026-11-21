@@ -3545,17 +3545,63 @@ case 'inbox': {
       var xtR = exportTrainees_(xtC.id, { folder: String(req.folder || ''), only: String(req.only || ''), max: Math.max(1, Math.min(12, Number(req.max) || 4)), state: (req.state && typeof req.state === 'object') ? req.state : {} });
       return xtR;
     }
+    /* A FINISHED DOCUMENT, FILED WHEN IT IS FINISHED (v274, 21 Nov 2026). Ramy: "when assignments done and passed, they
+       also migrate". The page that finishes a document hands it over at that moment: an assignment's record when its
+       marking is final (HTML, turned into a PDF here), and later the CELTA 5 as Cambridge's own PDF (pdf, base64) and
+       the final report. A tutor's link only; into that trainee's folder in the course's center folder; replaces a file
+       of the same name. A course with no center folder, or a demo course, answers filed:false and nothing is written. */
+    case 'fileDoc': {
+      requireTutor_(tutor);
+      if (!course) throw new Error('This link is not on a course');
+      var fdSet = courseRead_(course.id, 'settings') || {};
+      /* the owner's trial: with the owner's key, a folder named in the request stands in for the course's own, a demo
+         course is allowed, and nothing is remembered. So the filing can be tried on invented trainees. */
+      var fdTrial = owner && driveFolderId_(req.folder) ? driveFolderId_(req.folder) : '';
+      var fdFid = fdTrial || driveFolderId_(fdSet.exportFolder);
+      if (!fdFid || (!fdTrial && (fdSet.demoToday || fdSet.presentToday))) return { filed: false, why: fdFid ? 'demo' : 'nofolder' };
+      var fdT = roster_(course.id).filter(function (t) { return t.token === String(req.token || ''); })[0];
+      if (!fdT) throw new Error('That trainee is not on this course');
+      var fdName = String(req.name || '').replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 90);
+      if (!fdName) throw new Error('A name for the document is needed');
+      var fdHtml = String(req.html || ''), fdPdf = String(req.pdf || '');
+      if (!fdHtml && !fdPdf) throw new Error('Nothing to file');
+      if (fdHtml.length > 1500000 || fdPdf.length > 6000000) throw new Error('That document is too big to file');
+      var fdRoot; try { fdRoot = DriveApp.getFolderById(fdFid); fdRoot.getName(); } catch (e) { return { filed: false, why: 'folder' }; }
+      var fdAg = (recordsFor_(course.id, fdT.token, { agreement: 1 }) || {}).agreement || {};
+      var fdWho = String(fdAg.certName || fdT.name || 'Trainee').replace(/[\\/:*?"<>|]/g, ' ').trim();
+      var fdFolder = childFolder_(childFolder_(fdRoot, 'Portfolios'), fdWho);
+      var fdState = fdTrial ? {} : (courseRead_(course.id, 'exported') || {});
+      if (fdState._folder !== fdFid) fdState = { _folder: fdFid };
+      var fdMine = fdState[fdT.token] || {};
+      if (!fdMine.folder) { try { fdFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {} fdMine.folder = fdFolder.getUrl(); }
+      if (fdPdf) {
+        var fdOld = fdFolder.getFilesByName(fdName + '.pdf'); while (fdOld.hasNext()) fdOld.next().setTrashed(true);
+        fdFolder.createFile(Utilities.newBlob(Utilities.base64Decode(fdPdf), 'application/pdf', fdName + '.pdf'));
+      } else putPdf_(fdFolder, fdName, fdHtml);
+      if (fdTrial) return { filed: true, name: fdName + '.pdf', trial: true, url: fdFolder.getUrl() };
+      fdMine['doc:' + fdName] = md5_(fdPdf || fdHtml);
+      fdState[fdT.token] = fdMine;
+      courseWrite_(course.id, 'exported', fdState);
+      return { filed: true, name: fdName + '.pdf' };
+    }
     case 'exportFolderCheck': {
       requireTutor_(tutor);
       var efUrl = String(req.url || '');
-      var efId = (efUrl.match(/\/folders\/([A-Za-z0-9_-]{10,})/) || efUrl.match(/[?&]id=([A-Za-z0-9_-]{10,})/) || [])[1];
+      var efId = driveFolderId_(efUrl);
       if (!efId) throw new Error('That is not a link to a Drive folder');
-      var efWho = ''; try { efWho = Session.getEffectiveUser().getEmail(); } catch (e) {}
+      /* v274: the account the center shares the folder with is the one this store runs as. Read from Drive itself
+         (the owner of this account's own My Drive), since the web app is not given the address any other way. */
+      var efWho = ''; try { efWho = DriveApp.getRootFolder().getOwner().getEmail(); } catch (e) {}
       var efFolder = null;
       try { efFolder = DriveApp.getFolderById(efId); efFolder.getName(); } catch (e) { return { ok: false, seen: false, account: efWho }; }
       var efWrote = false;
       try { var efProbe = efFolder.createFile('Connect Lite can write here.txt', 'Connect Lite checked on ' + new Date().toISOString() + ' that it can save into this folder. This file can be deleted.', 'text/plain'); efWrote = true; try { efProbe.setTrashed(true); } catch (e2) {} } catch (e) {}
-      return { ok: efWrote, seen: true, folder: efFolder.getName(), account: efWho };
+      /* OPEN TO ANYONE WITH THE LINK (v274, found 21 Nov 2026 on the first trial): a folder inside one that anyone with
+         the link can open inherits that, so a trainee's own folder could be opened, and with an Editor link changed,
+         through the link Lite gives them as view only. The page says so in red. */
+      var efOpen = '';
+      try { var efAcc = efFolder.getSharingAccess(); if (efAcc === DriveApp.Access.ANYONE_WITH_LINK || efAcc === DriveApp.Access.ANYONE) efOpen = (efFolder.getSharingPermission() === DriveApp.Permission.EDIT) ? 'edit' : 'view'; } catch (e) {}
+      return { ok: efWrote, seen: true, folder: efFolder.getName(), account: efWho, linkOpen: efOpen };
     }
     case 'folderTrainees': {
       requireTutor_(tutor);
@@ -5727,7 +5773,10 @@ function registerEdit_(req) {
 function driveFolderId_(url) { return (String(url || '').match(/\/folders\/([A-Za-z0-9_-]{10,})/) || String(url || '').match(/[?&]id=([A-Za-z0-9_-]{10,})/) || [])[1] || ''; }
 function childFolder_(parent, name) { var it = parent.getFoldersByName(name); return it.hasNext() ? it.next() : parent.createFolder(name); }
 function putPdf_(folder, name, html) {
-  var page = '<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#222;} table{border-collapse:collapse;width:100%;} img{max-width:100%;}</style></head><body>' + html + '</body></html>';
+  var page = '<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#222;} table{border-collapse:collapse;width:100%;} img{max-width:100%;}'
+    + ' h1{font-size:18pt;margin:0 0 8pt;} h2{font-size:12.5pt;margin:14pt 0 6pt;color:#1E3B2F;border-bottom:1px solid #bbb;padding-bottom:2pt;} .eyebrow{font-size:8pt;letter-spacing:1px;text-transform:uppercase;color:#666;margin:0 0 2pt;}'
+    + ' .outcome-badge{display:inline-block;padding:3pt 9pt;border:1px solid #666;font-weight:bold;margin:2pt 0 8pt;} .section{margin:0 0 10pt;} .roundlabel{font-weight:bold;margin:8pt 0 3pt;} .comment{border-left:3px solid #999;padding:3pt 0 3pt 8pt;margin:0 0 6pt;}'
+    + ' .readonly{white-space:pre-wrap;} td,th{border:1px solid #999;padding:4pt 6pt;vertical-align:top;text-align:left;} th{background:#eee;}</style></head><body>' + html + '</body></html>';
   var pdf = Utilities.newBlob(page, 'text/html', name + '.html').getAs('application/pdf').setName(name + '.pdf');
   var old = folder.getFilesByName(name + '.pdf'); while (old.hasNext()) old.next().setTrashed(true);
   return folder.createFile(pdf);

@@ -1823,6 +1823,20 @@ window.hubPickedItems = function(s, picked){
   return out;
 };
 
+/* ---- A FINISHED DOCUMENT GOES TO THE CENTER'S FOLDER (21 Nov 2026). Ramy: "when assignments done and passed, they also
+   migrate". The page that finishes a document hands it to the store, which files it as a PDF in that trainee's folder
+   (store op fileDoc). A tutor's link only. It never gets in the way: no folder on the course, a demo, or a failure
+   answers quietly, and the promise never rejects. give: { token, name, html } or { token, name, pdf: Uint8Array }. */
+window.hubFileDoc = function(give){
+  try {
+    if (!give || !give.token || !give.name || !window.HubStore || !HubStore.isTutor || !HubStore.isTutor()) return Promise.resolve({ filed: false });
+    var body = { op: 'fileDoc', token: give.token, name: give.name };
+    if (give.pdf) { var b = '', u = give.pdf; for (var i = 0; i < u.length; i += 0x8000) b += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); body.pdf = btoa(b); }
+    else body.html = String(give.html || '');
+    return HubStore.call(body, 120000).then(function(r){ return r || { filed: false }; }).catch(function(){ return { filed: false }; });
+  } catch (e) { return Promise.resolve({ filed: false }); }
+};
+
 /* ---- A SELF-EVALUATION AS ROWS (21 Nov 2026). The self-evaluation has two shapes. The first (to 21 Nov 2026) is five
    boxes: well, not, learn, diff, next. The second (Ramy, 21 Nov 2026: "should be a bit meatier", from the mock-up he chose)
    is v:2: aim ('yes' | 'partly' | 'no'), learn (how they know), strengths [{s, where}], work [{what, why, instead}], next.
