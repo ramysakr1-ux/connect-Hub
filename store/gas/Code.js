@@ -2931,26 +2931,36 @@ case 'inbox': {
       var hwLines = function (a) { return (Array.isArray(a) ? a : []).slice(0, 8).map(function (x) { return String(x || '').slice(0, 300); }).filter(Boolean); };
       var hwIn = { lessons: (Array.isArray(req.lessons) ? req.lessons : []).slice(0, 8).map(function (l) {
           return { tp: Number(l && l.tp) || 0, grade: String((l && l.grade) || '').slice(0, 40), strengths: hwLines(l && l.strengths), actions: hwLines(l && l.actions), overall: String((l && l.overall) || '').slice(0, 900) }; }),
-        assignments: hwLines(req.assignments), stage2: String(req.stage2 || '').slice(0, 40) };
+        assignments: hwLines(req.assignments), stage2: String(req.stage2 || '').slice(0, 40),
+        /* v287: the tutors' half of the CELTA 5 and what the record flags, beside the feedback (Ramy, 22 Nov 2026: "Lite can
+           get most of the information from the CELTA 5. Absences, stage 1 warnings, stage 2 warnings, fail letters, failed
+           assignments ... that's another source, not just feedback") */
+        stage1: (req.stage1 && typeof req.stage1 === 'object') ? { strengths: String(req.stage1.strengths || '').slice(0, 900), actionPlan: String(req.stage1.actionPlan || '').slice(0, 900) } : null,
+        stage2Notes: String(req.stage2Notes || '').slice(0, 1200),
+        record: (Array.isArray(req.record) ? req.record : []).slice(0, 12).map(function (x) { return String(x || '').slice(0, 200); }).filter(Boolean),
+        absences: (Array.isArray(req.absences) ? req.absences : []).slice(0, 10).map(function (x) { return String(x || '').slice(0, 200); }).filter(Boolean) };
       if (!hwIn.lessons.length) throw new Error('No returned feedback to draft from');
       var hwPro = ({ she: 'she', he: 'he', they: 'they' })[String(req.pronoun || '').toLowerCase()] || '';
-      var hwSys = 'You help a CELTA tutor hand a teaching practice group over to the tutor who takes it next. From the feedback on a trainee\'s lessons so far, write a short summary for that tutor. '
-        /* v285: the trainee's own pronouns, where they gave them (she, he or they); otherwise the name is repeated */
-        + 'Three or four plain sentences, 80 words at most, in the third person, calling the trainee NAME (write the word NAME exactly; never invent a name). '
+      /* v287, THE HANDOVER IS TWO SHORT PARAGRAPHS ON A CARD (Ramy, 22 Nov 2026: "an informal handover of things not
+         necessarily criteria related, but more like personality related ... not receptive to feedback ... being late,
+         warnings, lesson plan always late ... all this stuff appears in the feedback"; "a couple of paragraphs on the card").
+         "text" is the teaching; "person" is what the trainee is like to work with, and is empty when the sources show nothing. */
+      var hwSys = 'You help a CELTA tutor hand a teaching practice group over to the tutor who takes it next, the way tutors tell each other about a trainee across the table. '
+        + 'You are given the feedback on the trainee\'s lessons so far (grades, strengths, action points, the tutor\'s overall comment), and where they exist the tutors\' Stage 1 and Stage 2 notes from the CELTA 5, the absences and late arrivals recorded there, and "record": the lines the course record flags (lessons not to standard, warning letters, assignments failed or out for resubmission). '
+        + 'Write two short paragraphs, calling the trainee NAME (write the word NAME exactly; never invent a name). '
         + (hwPro ? 'The trainee\'s pronouns are ' + ({ she: 'she/her', he: 'he/him', they: 'they/them' })[hwPro] + ': use NAME the first time and wherever it reads better, and those pronouns after it, as a person would. '
                  : 'The trainee\'s pronouns are not known: never use a pronoun that assumes gender; repeat NAME or use "they". ')
-        + 'Say what is consistently strong, what keeps needing work across lessons, and how the lessons have gone: if a lesson was not to standard, say which and, only if the feedback says so, why. '
-        + 'If an action point from an earlier lesson no longer appears in a later one, you may say NAME has acted on it; otherwise say nothing about how they take feedback. '
-        + 'Use only what the feedback says. Do not add praise, problems, causes or advice that are not there; do not predict a result or a final grade; do not mention criteria codes. '
-        + 'Assignments and the Stage 2 result may be mentioned in a few words only if they matter (a resubmission out, a fail, a not-to-standard Stage 2). '
-        /* less stiff (Ramy, 21 Nov 2026, on the first one it wrote: "consistently builds ... has persisted across lessons ... the aim unmet") */
-        + 'Write the way one tutor tells another about a trainee across the table: plain, everyday words and short sentences, as you would say them aloud. '
-        + 'Say "is good at", "still", "keeps", "ran out of time", "did not get to"; not "consistently", "persisted", "recurring issue", "unmet", "pacing", "demonstrates", "exhibits", "requires attention", "remains an area". '
-        + 'Start with what the trainee is like in the classroom, not with a list. Contractions are fine. No report language, no management language, nothing you would not say to a colleague. '
-        + 'For example: "NAME is great with the students and they like being in the room. The plans are clear, but the instructions still run long and nobody checks them, so tasks start slowly. TP3 was not to standard: the clarification took half the lesson and they never got to the freer practice. Timing got better after TP1." '
-        + 'That example shows the voice only: never reuse its content. Write "students", never Ss. ' + celtaShorthand_()
+        + '"text": the teaching, three sentences, 60 words at most. Start with how many lessons and how they were graded in words ("Four lessons, all to standard"), then what NAME is good at, then the one or two things that still need work. If a lesson was not to standard, say which and, only if the feedback says so, why. '
+        + '"person": what NAME is like to work with, two or three sentences, 50 words at most. Look in the sources for: how NAME takes feedback and whether it is acted on (an action point that comes back lesson after lesson has not been acted on; one that disappears has), what NAME is like with the students and with the other trainees, confidence, nerves, attitude, organization, plans or work handed in late, lateness, absence, anything the tutors noted about the person rather than the technique. '
+        + 'Say only what the sources say or plainly show. Never guess at character, feelings, causes or relationships. If the sources show nothing about the person, "person" is an empty string: an empty paragraph is right, an invented one is a serious mistake. '
+        + 'Do not add praise, problems or advice that are not there; do not predict a result or a final grade; do not mention criteria codes; do not repeat the "record" lines word for word (the card lists them underneath), though you may refer to them. '
+        + 'Plain, everyday words and short sentences, as you would say them aloud. '
+        + 'Say "is good at", "still", "keeps", "ran out of time", "did not get to"; not "consistently", "persisted", "recurring issue", "unmet", "pacing", "demonstrates", "exhibits", "requires attention", "remains an area", "receptive". '
+        + 'Contractions are fine. No report language, no management language, nothing you would not say to a colleague. '
+        + 'For example: {"text":"Four lessons, three to standard and one not. NAME is great with the students and the plans are clear, but the instructions still run long, so tasks start slowly. TP3 was not to standard: the clarification took half the lesson.","person":"Takes feedback well in the room, but the same point about instructions has come back in every lesson. Handed in two plans late."} '
+        + 'That example shows the voice and the shape only: never reuse its content. Write "students", never Ss. ' + celtaShorthand_()
         + 'Write shorthand out in full, except TTT, STT, CCQs and ICQs. No lists, no headings, no arrows. American spelling. '
-        + 'Answer as JSON: {"text":"..."}.';
+        + 'Answer as JSON: {"text":"...","person":"..."}.';
       var hwResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + hwKey },
         payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
@@ -2958,7 +2968,8 @@ case 'inbox': {
       });
       if (hwResp.getResponseCode() !== 200) throw new Error('The summary could not be drafted (' + hwResp.getResponseCode() + ')');
       var hwOut = JSON.parse(JSON.parse(hwResp.getContentText()).choices[0].message.content || '{}');
-      return { text: String((hwOut && hwOut.text) || '').replace(/\s+/g, ' ').trim().slice(0, 900) };
+      var hwTidy = function (x) { return String(x || '').replace(/\s+/g, ' ').trim().slice(0, 700); };
+      return { text: hwTidy(hwOut && hwOut.text), person: hwTidy(hwOut && hwOut.person) };
     }
     case 'stage1Words': {
       requireTutor_(tutor);

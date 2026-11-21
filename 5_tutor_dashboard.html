@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611220058">
+<link rel="stylesheet" href="hub-tokens.css?v=202611220220">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -640,6 +640,7 @@
   .dv6-alt, .dv6-alt:visited{color:#fff !important; font-weight:700; font-size:.9rem; text-underline-offset:3px;} .dv6-alt[hidden]{display:none;}
   @media(max-width:560px){ .dv6-hero{padding:26px 20px 22px; border-radius:12px;} .dv6-hero .dv6-mark{width:420px; right:-170px; top:-50px;} }
   @media print{ .dv6-hero{display:none;} }
+  #handLine{margin:0 0 18px; padding:14px 18px; background:var(--paper); border-radius:var(--r-card); border-top:3px solid var(--gold); box-shadow:var(--nb-shadow); font-size:.98rem; line-height:1.6;} #handLine a{color:var(--teal); font-weight:700; white-space:nowrap;}
 
   .st .waited{display:block; font-size:0.74rem; font-weight:500; color:var(--grey); margin-top:2px;}
   .focusbar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 14px; font-size:.82rem;}
@@ -667,7 +668,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611220058">
+<link rel="stylesheet" href="hub-house.css?v=202611220220">
 </head>
 <body>
 <div class="board">
@@ -799,27 +800,27 @@
 
 </div>
 
-<script src="hub-due.js?v=202611220058"></script>
-<script src="observation-defaults.js?v=202611220058"></script>
-<script src="hub-rotation.js?v=202611220058"></script>
-<script src="hub-peers.js?v=202611220058"></script>
-<script src="hub-shared.js?v=202611220058"></script>
+<script src="hub-due.js?v=202611220220"></script>
+<script src="observation-defaults.js?v=202611220220"></script>
+<script src="hub-rotation.js?v=202611220220"></script>
+<script src="hub-peers.js?v=202611220220"></script>
+<script src="hub-shared.js?v=202611220220"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611220058"></script>
-<script src="hub-say.js?v=202611220058"></script>
-<script src="hub-hand.js?v=202611220058"></script>
-<script src="hub-ink.js?v=202611220058"></script>
-<script src="hub-shelf.js?v=202611220058"></script>
+<script src="hub-store.js?v=202611220220"></script>
+<script src="hub-say.js?v=202611220220"></script>
+<script src="hub-hand.js?v=202611220220"></script>
+<script src="hub-ink.js?v=202611220220"></script>
+<script src="hub-shelf.js?v=202611220220"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611220058"></script>
-<script src="hub-sync.js?v=202611220058"></script>
-<script src="hub-notebook.js?v=202611220058"></script>
-<script src="hub-tracker.js?v=202611220058"></script>
-<script src="hub-feedback.js?v=202611220058"></script>
+<script src="assignment-defaults.js?v=202611220220"></script>
+<script src="hub-sync.js?v=202611220220"></script>
+<script src="hub-notebook.js?v=202611220220"></script>
+<script src="hub-tracker.js?v=202611220220"></script>
+<script src="hub-feedback.js?v=202611220220"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -1615,6 +1616,39 @@ function paintBrief(){
      this tutor's initials on them (theirs alone, or Both tutors), in time order: today's, or once today's have all ended or
      there are none, the next course day's. The one running now is marked, the ones over are faded. A browser with no tutor
      name yet shows every tutor's, each with its initials. Teaching practice, breaks and lunch are not sessions a tutor runs. */
+  /* THE HANDOVER COMES TO THE TUTOR (Ramy, 22 Nov 2026: "it appears on your card or something when the time comes ... as soon
+     as you finish stage 2 tutorials"; "click share to share with the other trainer. And then it will appear on the other
+     trainer's card"). One line under the hero, for the tutor it concerns: the tutor handing a group over gets it when every
+     Stage 2 in that group is returned, until they share; the tutor taking the group gets it once it is shared, until a
+     week after the change of class. Nobody else sees a line. */
+  (function(){
+    try {
+      if (!window.HubStore || !HubStore.isTutor || !HubStore.isTutor() || !window.hubClassBlocks) return;
+      const set = rd('connect_course_settings') || {}, ros = Object.values((rd('connect_roster_v1') || {}).trainees || {}).filter(t => t && !(t.tracker || {}).withdrawn);
+      let me = ''; try { me = (localStorage.getItem('chub:tutorName') || '').trim().toLowerCase(); } catch (e) {}
+      if (!me || !ros.length) return;
+      const f1 = n => String(n || '').trim().split(/\s+/)[0] || '', isMe = n => { n = String(n || '').trim().toLowerCase(); return !!n && (n === me || f1(n) === f1(me)); };
+      const h = x => String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const lines = [];
+      [...new Set(ros.map(t => String(t.group || '')).filter(Boolean))].sort().forEach(g => {
+        const b = hubClassBlocks(set, g); if (!b || b.length < 2) return;
+        const starts = window.hubClassStarts ? hubClassStarts(set, g, tt) : [], list = ros.filter(t => String(t.group || '') === g);
+        for (let i = 1; i < b.length; i++) {
+          const from = b[i - 1].k.tutor || '', to = b[i].k.tutor || ''; if (from === to) continue;
+          const shared = list.some(t => ((t.staffLinks || []).find(x => x && x.handover) || {}).handed);
+          const s2done = list.length && list.every(t => (((t.celta5t || {}).stage2) || {}).returnedAt);
+          const href = '34_handover.html?group=' + encodeURIComponent(g);
+          if (isMe(from) && !isMe(to) && s2done && !shared) lines.push('The Stage 2 tutorials are done for Group ' + h(g) + '. The handover for ' + h(f1(to) || 'the next tutor') + ' is ready. <a href="' + href + '">Read it and share it</a>');
+          else if (isMe(to) && !isMe(from) && shared && (!starts[i] || between(starts[i], TODAY) <= 7)) lines.push(h(f1(from) || 'The tutor') + ' has shared the handover for Group ' + h(g) + ', yours from TP' + b[i].from + '. <a href="' + href + '">Read it</a>');
+          break;
+        }
+      });
+      const hero = document.getElementById('dv6Hero'); let box = document.getElementById('handLine');
+      if (!lines.length || !hero) { if (box) box.remove(); return; }
+      if (!box) { box = document.createElement('p'); box.id = 'handLine'; hero.insertAdjacentElement('afterend', box); }
+      box.innerHTML = lines.join('<br>');
+    } catch (e) {}
+  })();
   (function(){
     if (!window.HubStore || !HubStore.isTutor || !HubStore.isTutor() || !days.length) return;
     const set = rd('connect_course_settings') || {};
