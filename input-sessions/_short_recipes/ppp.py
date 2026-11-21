@@ -143,6 +143,19 @@ STYLE = r'''
     body.print-key #s7 .card{padding-left:0;} body.print-key #s7 .card::before{display:none;}
     body.print-key #keyOpen, body.print-key .keyhead .btn-row{display:none !important;}
   }
+  /* 21 Nov 2026: an answered task printed solved on the handout: matched terms and meanings filled, in a heavier weight, with "5 of 5 matched"; a term picked but not yet matched, with its gold edge; the ordered stages with their numbers, their fill and "All 4 in order"; the opened "What does PPP stand for?" card without its "Click to reveal". On paper each now prints as it did untouched, and the two counts (screen words) stay off the paper. */
+  @media print{
+    .mstatus, #oStatus{display:none !important;}
+    .pill.matched, .pill.selected, .pill.wrong{background:var(--field); border-color:var(--sand-line); color:var(--ink);} .pill.matched:not(.term){font-weight:500;}
+    .order-line.done{border-color:var(--sand-line); background:var(--paper); font-weight:500;}
+    .order-line.done .num{background:var(--box); color:var(--grey); font-size:0;} .order-line.done .num::after{content:"?"; font-size:.8rem;}
+    .reveal-card.hero.open .hint{display:block;}
+  }
+  /* 21 Nov 2026: the handout printed the whole answer key (every term with its meaning, every true or false) once "Reveal answer key" had been pressed, and the staging example once "See staging example" had been. The key prints from its own Print button and on the tutor's print, the example on the tutor's print and with the answers; the plain handout carries neither. */
+  @media print{
+    body:not(.print-key):not(.tutor) #keyBody{display:none !important;}
+    body:not(.tutor):not(.with-answers) #exBody{display:none !important;}
+  }
 '''
 
 SCRIPT = r'''

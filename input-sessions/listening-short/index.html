@@ -41,6 +41,7 @@
   button.pill{font-family:'Karla',sans-serif; text-align:left; width:100%;}
   button.pill.term{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:.98rem;}
   button.pill.matched{cursor:default;}
+  button.pill.opt{min-height:0;}   /* 21 Nov 2026: "opt" is on the meanings for the paper print only (see matchTerms below); on a phone they keep the height they had */
   button.order-line{width:100%; justify-content:flex-start; text-align:left; font-family:'Karla',sans-serif; color:var(--ink);}
   .order-line .num{min-width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; text-align:center; background:var(--box); color:var(--grey); font-size:.8rem; flex:none;}
   .order-line.done{border-color:var(--teal); background:color-mix(in oklab, var(--teal) 7%, var(--paper)); cursor:default;}
@@ -62,7 +63,16 @@
   .stagebox{margin-top:14px; border-top:1px solid var(--row-line); padding-top:12px;}
   .stagebox h4{margin:12px 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem;}
   table.grid td:nth-child(2){white-space:nowrap;}
-  @media print{ .keyblock{display:block;} .stagebox .btn{display:none;} }
+  /* 21 Nov 2026: "Print the handout" printed the whole answer key once it had been opened, and the staging example once it had been opened. The key now prints only from its own Print button (body.print-key, set in answerKey below) or in a tutor's print with the notes; the example prints for a tutor only. */
+  @media print{ .keyblock{display:block;} body:not(.print-key):not(.tutor) .keyblock, html.hub-clean .keyblock{display:none !important;} .stagebox .btn{display:none;} body:not(.tutor) .stagebox h4, body:not(.tutor) .stagebox table, html.hub-clean .stagebox h4, html.hub-clean .stagebox table{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: matched terms and meanings filled dark, in a heavier weight, with "7 of 7 matched"; the ordered stages with their numbers, their fill and "All 5 in order"; an opened card with its teal edge; "Played 1 time". On paper each prints as it did untouched, without the counts. */
+  @media print{
+    .mhead span, .ostatus, #played{display:none !important;}
+    .pill.matched, .pill.selected{background:var(--field); border-color:var(--sand-line); color:var(--ink);} .pill.matched:not(.term){font-weight:500;}
+    .order-line.done{border-color:var(--sand-line); background:var(--paper);}
+    .order-line.done .num{background:var(--box); color:var(--grey); font-size:0;} .order-line.done .num::after{content:"?"; font-size:.8rem;}
+    .reveal-card.open{border-color:var(--sand-line);}
+  }
   .player{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:14px 16px; display:flex; flex-direction:column; gap:10px; align-items:flex-start;}
   .phead{display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
   .ptitle{margin:0; font-weight:600; font-size:.92rem;} .pmeta{margin:2px 0 0; font-size:.84rem; color:var(--grey);}
@@ -238,9 +248,10 @@ function matchTerms(el, terms){
   let selL = null, selR = null, matched = new Set(), shake = [];
   const cls = (i, sel, side) => matched.has(i) ? ' matched' : (shake[side] === i ? ' wrong' : sel === i ? ' selected' : '');
   function draw(){
+    // 21 Nov 2026: each meaning carries "opt" (an answer option, which the paper print in library.js keeps). Without it "Print the handout" left out the meaning of Gist, "Listening once for the general idea, not the details.": it starts with "Listen", so it was taken for a button that works the page.
     el.innerHTML = '<div class="mhead"><b>Match each term to its meaning</b><span>' + matched.size + ' of ' + terms.length + ' matched</span></div>'
       + '<div class="pill-match-wrap"><div class="pill-col">' + terms.map((t, i) => '<button type="button" class="pill term' + cls(i, selL, 0) + '" data-l="' + i + '">' + esc(t[0]) + '</button>').join('') + '</div>'
-      + '<div class="pill-col">' + terms.map((_, i) => terms.length - 1 - i).map(i => '<button type="button" class="pill' + cls(i, selR, 1) + '" data-r="' + i + '">' + esc(terms[i][1]) + '</button>').join('') + '</div></div>';
+      + '<div class="pill-col">' + terms.map((_, i) => terms.length - 1 - i).map(i => '<button type="button" class="pill opt' + cls(i, selR, 1) + '" data-r="' + i + '">' + esc(terms[i][1]) + '</button>').join('') + '</div></div>';
   }
   function tryMatch(){
     if (selL === null || selR === null) return;
@@ -286,7 +297,7 @@ function answerKey(el, terms, details){
   }
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if (!b) return;
-    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { window.print(); return; }
+    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { document.body.classList.add('print-key'); window.print(); return; }   // 21 Nov 2026: the key prints from its own Print button only (see the print rule above)
     draw();
   });
   draw();
@@ -360,6 +371,7 @@ $('details').innerHTML = DETAILS.map(d => reveal(d[0], d[1])).join('');
 orderEx($('order'), CORRECT_ORDER, SHUFFLED, 'Debrief: put the stages back in order',
   'Click each stage in the order you just experienced it. This is a <b>loop input</b>: the session modeled the framework instead of only describing it.');
 answerKey($('key'), TERMS, DETAILS);
+window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));   // 21 Nov 2026
 stagingEx($('staging'), EXAMPLE_TITLE, EXAMPLE_ROWS);
 </script>
 <script src="../../hub-store.js"></script>

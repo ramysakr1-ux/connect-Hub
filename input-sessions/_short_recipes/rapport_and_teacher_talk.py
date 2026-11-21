@@ -134,6 +134,13 @@ STYLE = r'''
   .split p{margin:0; line-height:1.6;}
   :root{--c-red:oklch(45% 0.15 27);}
   @media print{ .ts{display:none;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: each transcript line with "Right" or "Wrong" and its teal or red edge and fill; the split itself (the teacher's share, the word counts and the comment), which is the answer; the number typed as a guess; a picked scenario with its teal or red edge and the other options faded. On paper each prints as it did untouched. The split still prints with the answers and on the tutor's print. */
+  @media print{
+    .tline.ok, .tline.no{border-color:var(--sand-line); background:var(--paper);} .tline .tag{display:none;}
+    body:not(.with-answers):not(.tutor) #split{display:none !important;}
+    .guessrow input.write-area{color:transparent !important;}
+    .scen.done.right, .scen.done.wrong{border-color:var(--sand-line);} .scen .opt.dim{opacity:1;}
+  }
 '''
 
 SCRIPT = r'''

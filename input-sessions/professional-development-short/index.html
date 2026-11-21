@@ -57,6 +57,9 @@
   .caution p{margin:0; font-size:.88rem; line-height:1.55;}
   .small{text-align:center; font-size:.78rem; color:var(--grey); margin:14px 0 0;}
   @media print{ #picks, #topic .btn-row{display:none !important;} }
+  /* 21 Nov 2026: the handout printed only the one card of the four that was on the screen. On paper all four are printed (#topicPaper, built from CARDS below) and the screen's one is left off. */
+  .topic-paper{display:none;}
+  @media print{ #topic{display:none !important;} .topic-paper{display:block;} .topic-paper .topic{margin:0 0 10px; break-inside:avoid;} #s1 > .card{break-inside:auto;} }
 
 </style>
 </head>
@@ -173,6 +176,13 @@ function draw(){
 $('picks').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; idx = +b.dataset.c; draw(); });
 $('topic').addEventListener('click', e => { const b = e.target.closest('[data-step]'); if (!b) return; idx = (idx + +b.dataset.step + CARDS.length) % CARDS.length; draw(); });
 draw();
+// 21 Nov 2026: the four cards whole, for the paper only (the screen shows one at a time, and printed whichever it was on). No buttons, so nothing here can be clicked.
+(function(){ const P = document.createElement('div'); P.className = 'topic-paper'; P.id = 'topicPaper';
+  P.innerHTML = CARDS.map((c, i) => '<div class="topic"><div class="th"><h3>' + esc(c[1]) + '</h3><span class="of">Card ' + (i + 1) + ' of 4</span></div>'
+    + '<p class="intro">' + esc(c[2]) + '</p>'
+    + c[3].map(it => '<div class="item"><b>' + esc(it[0]) + '</b><span>' + esc(it[1]) + '</span></div>').join('')
+    + '<div class="bring"><b>Bring back to the room</b>' + esc(c[4]) + '</div></div>').join('');
+  $('topic').after(P); })();
 
 $('sheet').innerHTML = CARDS.map(c => '<div class="sheetgroup"><h4>' + esc(c[1]) + '</h4>' + c[3].map(it => '<div class="srow"><b>' + esc(it[0]) + '</b><span>' + esc(it[1]) + '</span></div>').join('') + '</div>').join('');
 </script>
