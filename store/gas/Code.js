@@ -3539,6 +3539,25 @@ case 'inbox': {
     /* A TRIAL OF THE EXPORT (v272, 22 Nov 2026), the owner's only. One or a few trainees of one course, into the course's
        own center folder or, for a trial, a folder named here (folder: its link), so a rehearsal course can be exported
        into a test folder without touching its settings. Writes PDFs into Drive; changes nothing in the store. */
+    /* THE DIGITAL LIBRARY, FOR THE COURSE ONLY (v279, 21 Nov 2026). Ramy, 19 Nov: "I only want people on the course to
+       have access to my library. When the course is over, they no longer have access." The owner's tool, one step a
+       call, each on the owner's word; the folder's link lives in the course's settings (libraryFolder), never in code.
+         status   reads only: is the folder open to anyone with the link, who else it is shared with (groups by name,
+                  people as a count), and how far the sweep has got
+         share    the course's trainees (roster addresses) and tutors (Tutor contacts) become viewers of the folder,
+                  with no email sent to them; what was shared is remembered, as permission ids, not addresses
+         lock     the folder stops being open to anyone with the link; then, a few minutes a call until done:true,
+                  every file and folder inside that has a link of its own loses it. Nothing is moved or deleted.
+         drop     removes the named shares (ids from status) from the folder they are set on: an old course's group
+         unshare  takes this course's people off again, now
+       At the trainees' end of the course their shares are taken off by the half-hourly job; the tutors' when the
+       course closes (libraryEnd_). */
+    case 'libraryLock': {
+      requireOwner_(owner);
+      var llC = courseById_(String(req.id || ''));
+      if (!llC) throw new Error('Which course?');
+      return libraryLock_(llC, String(req.step || 'status'), req);
+    }
     case 'exportTrial': {
       requireOwner_(owner);
       var xtC = courseById_(String(req.id || ''));
@@ -4943,6 +4962,7 @@ function settingsFor_(course, s, reader, me) {
   Object.keys(s).forEach(function (k) { out[k] = s[k]; });
   delete out.assessorVisit;
   delete out.exportFolder;   /* the center's Drive folder is the tutors' to know (v271) */
+  delete out.libraryFolder;  /* the library's folder is the owner's to know (v279) */
   /* THEIR OWN PORTFOLIO'S LINK (v277, 21 Nov 2026). Ramy: "each of them will get their own link to their portfolios".
      In the course's last three days a trainee's own read carries the link to their own folder, once something has
      been filed in it. Never another trainee's, never the invented trainee's seat, never on a demo course. */
@@ -5910,6 +5930,119 @@ function portfolioMails_(courseId, set, state) {
   });
   return sent;
 }
+function driveApi_(method, path, body) {
+  var o = { method: method, headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true };
+  if (body) { o.contentType = 'application/json'; o.payload = JSON.stringify(body); }
+  var r = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/' + path, o), j = null;
+  try { j = JSON.parse(r.getContentText() || 'null'); } catch (e) {}
+  return { code: r.getResponseCode(), json: j || {} };
+}
+function libraryPerms_(fid) {
+  var r = driveApi_('get', 'files/' + fid + '/permissions?fields=permissions(id,type,role,displayName,emailAddress)&supportsAllDrives=true&pageSize=100');
+  if (r.code !== 200) throw new Error('The folder could not be read (' + r.code + ')');
+  return r.json.permissions || [];
+}
+function libraryLock_(course, step, req) {
+  var lock = LockService.getScriptLock(), props = PropertiesService.getScriptProperties();
+  var set = courseRead_(course.id, 'settings') || {};
+  /* a demo course is the trial ground: the folder named in the call is used and not remembered, and only status and
+     lock run there. Its trainees are invented, so nothing is ever shared with their addresses. */
+  var demo = !!(set.demoToday || set.presentToday);
+  if (demo) set = { libraryFolder: String(req.folder || ''), demoToday: true };
+  else if (req.folder != null && driveFolderId_(req.folder) && driveFolderId_(req.folder) !== driveFolderId_(set.libraryFolder)) {
+    lock.waitLock(10000);
+    try { COURSE_MEMO_ = null; BLOCK_MEMO_ = {}; set = courseRead_(course.id, 'settings') || {}; set.libraryFolder = String(req.folder); courseWriteRaw_(course.id, 'settings', set); markChanged_(course.id); } finally { lock.releaseLock(); }
+    COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+  }
+  var fid = driveFolderId_(set.libraryFolder);
+  if (!fid) throw new Error('This course has no library folder yet: send folder with the link');
+  var meta = driveApi_('get', 'files/' + fid + '?fields=id,name,mimeType,ownedByMe&supportsAllDrives=true');
+  if (meta.code !== 200 || meta.json.mimeType !== 'application/vnd.google-apps.folder') throw new Error('That is not a folder this account can open');
+  if (!meta.json.ownedByMe) throw new Error('That folder is not owned by this account, so its sharing is not ours to change');
+  var mine = demo ? {} : (courseRead_(course.id, 'libraryShares') || {});
+  if (mine.folder !== fid) mine = { folder: fid, shares: [] };
+  var qKey = 'LIB_SWEEP_' + fid;
+  var say = function (extra) {
+    var perms = libraryPerms_(fid), ours = {}; (mine.shares || []).forEach(function (x) { ours[x.id] = x.who; });
+    var out = { folder: meta.json.name, linkOpen: perms.some(function (p) { return p.type === 'anyone'; }),
+      groups: perms.filter(function (p) { return p.type === 'group' || p.type === 'domain'; }).map(function (p) { return { id: p.id, name: p.displayName || '', role: p.role }; }),
+      people: perms.filter(function (p) { return p.type === 'user' && p.role !== 'owner'; }).length,
+      thisCourse: { trainees: (mine.shares || []).filter(function (x) { return x.who === 'trainee'; }).length, tutors: (mine.shares || []).filter(function (x) { return x.who === 'tutor'; }).length },
+      sweep: props.getProperty(qKey) ? 'under way' : (mine.sweptAt ? 'finished ' + mine.sweptAt : 'not started') };
+    Object.keys(extra || {}).forEach(function (k) { out[k] = extra[k]; });
+    return out;
+  };
+  if (step === 'status') return say();
+  if (demo && step !== 'lock') throw new Error('Not on a demo course');
+  var okMail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (step === 'share') {
+    var want = [];
+    roster_(course.id).forEach(function (t) { if (okMail.test(String(t.email || '').trim())) want.push({ email: String(t.email).trim().toLowerCase(), who: 'trainee' }); });
+    (Array.isArray(set.tutorContacts) ? set.tutorContacts : []).forEach(function (c) { if (c && okMail.test(String(c.email || '').trim())) want.push({ email: String(c.email).trim().toLowerCase(), who: 'tutor' }); });
+    var have = {}; libraryPerms_(fid).forEach(function (p) { if (p.type === 'user' && p.emailAddress) have[String(p.emailAddress).toLowerCase()] = p; });
+    var added = 0, already = 0, failed = 0, seen = {}, known = {}; (mine.shares || []).forEach(function (x) { known[x.id] = 1; });
+    want.forEach(function (w) {
+      if (seen[w.email]) return; seen[w.email] = 1;
+      var p = have[w.email];
+      if (p) { already++; if (p.role !== 'owner' && !known[p.id] && req.adopt) { mine.shares.push({ id: p.id, who: w.who }); known[p.id] = 1; } return; }
+      var r = driveApi_('post', 'files/' + fid + '/permissions?sendNotificationEmail=false&supportsAllDrives=true&fields=id', { type: 'user', role: 'reader', emailAddress: w.email });
+      if (r.code === 200 && r.json.id) { mine.shares.push({ id: r.json.id, who: w.who }); added++; } else failed++;
+    });
+    mine.sharedAt = new Date().toISOString();
+    courseWrite_(course.id, 'libraryShares', mine);
+    return say({ added: added, alreadyHadAccess: already, failed: failed, noAddress: roster_(course.id).filter(function (t) { return !okMail.test(String(t.email || '').trim()); }).length });
+  }
+  if (step === 'unshare') { var gone = libraryTakeOff_(fid, mine, function () { return true; }); courseWrite_(course.id, 'libraryShares', mine); return say({ removed: gone }); }
+  if (step === 'drop') {
+    var on = driveFolderId_(req.on) || fid, ids = Array.isArray(req.ids) ? req.ids.map(String) : [], dropped = 0, notThere = 0;
+    var names = {}; libraryPerms_(on).forEach(function (p) { names[p.id] = p; });
+    ids.forEach(function (id) { var p = names[id]; if (!p || p.role === 'owner' || p.type === 'anyone') { notThere++; return; }
+      var r = driveApi_('delete', 'files/' + on + '/permissions/' + encodeURIComponent(id) + '?supportsAllDrives=true'); if (r.code === 204 || r.code === 200) dropped++; else notThere++; });
+    return say({ dropped: dropped, notDropped: notThere });
+  }
+  if (step === 'lock') {
+    var started = Date.now(), fixed = 0, looked = 0;
+    var raw = props.getProperty(qKey), queue = raw ? JSON.parse(raw) : null;
+    if (!queue) {
+      var top = driveApi_('delete', 'files/' + fid + '/permissions/anyoneWithLink?supportsAllDrives=true');
+      if (top.code !== 204 && top.code !== 200 && top.code !== 404) throw new Error('The folder\'s own link could not be closed (' + top.code + ')');
+      queue = [fid];
+    }
+    var list = function (q) { var out = [], tok = ''; do { var r = driveApi_('get', 'files?q=' + encodeURIComponent(q) + '&fields=nextPageToken,files(id)&pageSize=200&supportsAllDrives=true&includeItemsFromAllDrives=true' + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''));
+      if (r.code !== 200) throw new Error('Drive would not list a folder (' + r.code + ')'); (r.json.files || []).forEach(function (f) { out.push(f.id); }); tok = r.json.nextPageToken || ''; } while (tok); return out; };
+    while (queue.length && Date.now() - started < 200000) {
+      var f = queue[0];
+      /* after the top is closed, only what has a link of its OWN still answers to anyone with the link */
+      list("'" + f + "' in parents and trashed = false and visibility = 'anyoneWithLink'").forEach(function (id) {
+        var r = driveApi_('delete', 'files/' + id + '/permissions/anyoneWithLink?supportsAllDrives=true'); if (r.code === 204 || r.code === 200) fixed++; });
+      list("'" + f + "' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'").forEach(function (id) { queue.push(id); });
+      queue.shift(); looked++;
+      props.setProperty(qKey, JSON.stringify(queue));
+    }
+    if (!queue.length) { props.deleteProperty(qKey); mine.sweptAt = new Date().toISOString(); if (!demo) courseWrite_(course.id, 'libraryShares', mine); }
+    return say({ done: !queue.length, foldersLooked: looked, ownLinksClosed: fixed, foldersWaiting: queue.length });
+  }
+  throw new Error('No such step');
+}
+function libraryTakeOff_(fid, mine, which) {
+  var gone = 0, keep = [];
+  (mine.shares || []).forEach(function (x) {
+    if (!which(x)) { keep.push(x); return; }
+    var r = driveApi_('delete', 'files/' + fid + '/permissions/' + encodeURIComponent(x.id) + '?supportsAllDrives=true');
+    if (r.code === 204 || r.code === 200 || r.code === 404) gone++; else keep.push(x);
+  });
+  mine.shares = keep;
+  return gone;
+}
+/* the course is over: the trainees come off the library when their links end, the tutors when the course closes */
+function libraryEnd_(courseId, set) {
+  var fid = driveFolderId_(set.libraryFolder); if (!fid) return;
+  var mine = courseRead_(courseId, 'libraryShares'); if (!mine || mine.folder !== fid || !(mine.shares || []).length) return;
+  var at = courseEndsAt_(courseId, set, true), over = !!(at && new Date() > at), closed = !!set.courseClosed;
+  if (!over && !closed) return;
+  var gone = libraryTakeOff_(fid, mine, function (x) { return closed || x.who === 'trainee'; });
+  if (gone) courseWrite_(courseId, 'libraryShares', mine);
+}
 /* THE COURSE CLOSES FOR ITS TUTORS BY ITSELF (v278, 21 Nov 2026). Ramy: "as soon as they finish writing the final
    reports, they lose access. I can always reopen it"; "all automatic with an override". Lite has no mark for a
    finished report, so the course is taken as finished when ALL of these hold (put to him and agreed, 21 Nov):
@@ -5964,6 +6097,7 @@ function exportTick_() {
     if (Date.now() - started > 150000) return;   /* two and a half minutes a tick, whatever is left waits for the next */
     try {
       var set = courseRead_(c.id, 'settings') || {};
+      try { if (!set.demoToday && !set.presentToday) libraryEnd_(c.id, set); } catch (e9) {}   /* v279: the library is for the course only */
       try { if (autoClose_(c.id, set, props)) return; } catch (e0) {}   /* v278: finished, filed and quiet for two days */
       if (set.demoToday || set.presentToday || !driveFolderId_(set.exportFolder)) return;
       var ver = props.getProperty(verKey_(String(c.id))) || '', seenKey = 'EXPORT_SEEN_' + c.id;
