@@ -3246,3 +3246,21 @@ window.hubPoolMend = function(P){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
   document.addEventListener('hub:ready', function(){ setTimeout(add, 60); });
 })();
+
+/* ---- BACK STAYS WITH THE SCREEN ON THE LONG FORMS (Ramy, 21 Nov 2026: "with the long forms ... do you think Back should
+   sort of stay on top with the screen, the same way Dictate and Typing stay with the screen without obstructing
+   anything? ... make sure it's quiet"). On the lesson plan, the self-evaluation, the TP feedback, the assignment, the
+   marking screen and the observation sheet, the page's own Back link keeps its place at the top left as the page
+   scrolls: a small pale pill, no shadow, the same words and the same door. Short pages are left as they were. In the
+   Trainee view it sits under that view's strip. Not printed. */
+(function(){
+  if (!/\/(1_trainee_plan_and_analysis|2_trainee_self_evaluation|3_tutor_feedback|9_assignment_submission|10_tutor_assignment_marking|18_observation_tasks)\.html$/.test(location.pathname)) return;
+  try {
+    var st = document.createElement('style');
+    st.textContent = '.back{position:sticky !important; top:var(--back-top, 8px) !important; z-index:40; padding:4px 11px; border-radius:999px; background:rgba(255,255,255,.86); border:1px solid var(--sand-line, #ddd6c8); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);}'
+      + ' @media print{ .back{display:none !important;} }';
+    document.head.appendChild(st);
+    var fit = function(){ var b = document.getElementById('hubTraineeView'); document.documentElement.style.setProperty('--back-top', ((b ? b.offsetHeight : 0) + 8) + 'px'); };
+    fit(); document.addEventListener('DOMContentLoaded', fit); document.addEventListener('hub:ready', fit); window.addEventListener('resize', fit); setTimeout(fit, 1500);
+  } catch (e) {}
+})();
