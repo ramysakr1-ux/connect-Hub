@@ -3278,3 +3278,79 @@ window.hubPoolMend = function(P){
     fit(); document.addEventListener('DOMContentLoaded', fit); document.addEventListener('hub:ready', fit); window.addEventListener('resize', fit); setTimeout(fit, 1500);
   } catch (e) {}
 })();
+
+/* ---- A RETURNED TP, READ BY A TUTOR OR THE ASSESSOR, IN LABELLED PARTS (Ramy, 21 Nov 2026: the assessor's view "looks
+   nice, looks colorful, but I can't tell anything from it ... can we make it look a bit more organized or just easier
+   to tell what's what"; mock-up shown, "build it"). The stored document is one long run: the tutor's feedback, the
+   lesson plan and its procedure, the language analysis, the self-evaluation. On the screen it is laid out as numbered
+   parts, the feedback open and the rest a click away, under one line that says what this TP is: the grade, the TP,
+   the date, the tutor, how many strengths and action points, whether the self-evaluation is in. Everything in that
+   line is read from the document itself. THE RECORD IS NOT CHANGED: the stored document, the PDF in the portfolio
+   folder and what the trainee received are as they were, and on paper every part prints open, under its own heading,
+   exactly as before. hubTpParts(el) lays out one document element; calling it twice does nothing the second time. */
+window.hubTpParts = function(doc){
+  try {
+    if (!doc || doc.dataset.tpParts) return;
+    var h0 = doc.querySelector('h1'); if (!h0) return;
+    var root = h0.parentNode;
+    var heads = [].filter.call(root.children, function(x){ return x.tagName === 'H1'; });
+    if (heads.length < 2) return;   /* one part only: nothing to tell apart */
+    doc.dataset.tpParts = '1';
+    if (!document.getElementById('tpPartsCss')) {
+      var st = document.createElement('style'); st.id = 'tpPartsCss';
+      st.textContent = '.tp-part{border:1px solid var(--sand-line, #d9cfba); border-radius:12px; margin:0 0 12px; background:var(--paper, #fffdf8); overflow:hidden;}'
+        + ' .tp-part > summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; padding:12px 18px; font:700 1.05rem Newsreader,Georgia,serif; color:var(--a-forest, #1E3B2F); background:var(--sand-deep, #f3eadb);}'
+        + ' .tp-part > summary::-webkit-details-marker{display:none;}'
+        + ' .tp-part > summary .n{flex:none; width:26px; height:26px; border-radius:50%; background:var(--a-forest, #1E3B2F); color:#fff; font:700 .8rem Karla,sans-serif; display:inline-flex; align-items:center; justify-content:center;}'
+        + ' .tp-part > summary .oc{margin-left:auto; font:600 .78rem Karla,sans-serif; color:var(--grey, #6b6558);}'
+        + ' .tp-part[open] > summary .oc::after{content:"Hide";} .tp-part:not([open]) > summary .oc::after{content:"Open";}'
+        + ' .tp-part > summary:focus-visible{outline:2px solid var(--gold-lifted, #c9a227); outline-offset:-2px;}'
+        + ' .tp-part > .in{padding:14px 18px 18px; overflow-x:auto;} .tp-part > .in > h1{display:none;}'
+        + ' .tp-sum{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 14px;}'
+        + ' .tp-sum span{font:600 .84rem Karla,sans-serif; color:var(--ink, #3a362f); padding:5px 12px; border-radius:999px; background:#fff; border:1px solid var(--sand-line, #d9cfba);}'
+        + ' .tp-sum span.g{background:var(--a-forest, #1E3B2F); color:#fff; border-color:var(--a-forest, #1E3B2F);} .tp-sum span.g.wrong{background:#A33227; border-color:#A33227;}'
+        + ' @media (max-width:600px){ .tp-part > summary{padding:11px 13px; font-size:.98rem;} .tp-part > .in{padding:12px 12px 14px;} }'
+        + ' @media print{ .tp-sum, .tp-part > summary{display:none !important;} .tp-part{border:0; border-radius:0; margin:0; background:none; overflow:visible;} .tp-part > .in{padding:0; overflow:visible;} .tp-part > .in > h1{display:block;} }';
+      document.head.appendChild(st);
+      /* on paper every part is open, as the document always printed */
+      var was = [];
+      window.addEventListener('beforeprint', function(){ was = [].map.call(document.querySelectorAll('details.tp-part'), function(d){ var o = d.open; d.open = true; return [d, o]; }); });
+      window.addEventListener('afterprint', function(){ was.forEach(function(x){ x[0].open = x[1]; }); was = []; });
+    }
+    var NAMES = [[/tutor.s feedback/i, 'Tutor’s feedback'], [/^lesson plan/i, 'Lesson plan and procedure'], [/analysis/i, 'Language analysis'], [/self.?evaluation/i, 'Self-evaluation']];
+    var text = function(x){ return String((x && x.textContent) || '').replace(/\s+/g, ' ').trim(); };
+    /* the line on top, from the document's own words */
+    var bits = [], grade = '', fbEnd = heads[1];
+    var inFeedback = function(el){ return !!(el.compareDocumentPosition(fbEnd) & Node.DOCUMENT_POSITION_FOLLOWING); };
+    [].forEach.call(root.querySelectorAll('p'), function(p){ var m = text(p).match(/^Lesson grade at this stage of the course:\s*(.+)$/); if (m && inFeedback(p) && !/^[—-]$/.test(m[1])) grade = m[1]; });
+    var band = {}; var t0 = null;
+    [].some.call(root.querySelectorAll('table'), function(t){ if (inFeedback(t)) { t0 = t; return true; } return false; });
+    if (t0) [].forEach.call(t0.querySelectorAll('td, th'), function(c){ var kids = c.children; if (kids.length >= 2) band[text(kids[0]).toLowerCase()] = text(kids[kids.length - 1]); });
+    var count = function(re){ var n = 0; [].forEach.call(root.querySelectorAll('tr'), function(r){ var c = r.children; if (c.length < 2 || !inFeedback(r) || !re.test(text(c[0]))) return;
+      var li = c[1].querySelectorAll('li').length; n += li || (text(c[1]) ? 1 : 0); }); return n; };
+    var nS = count(/^Strengths in/i), nA = count(/^Action points in/i);
+    var hasSelf = heads.some(function(h){ return /self.?evaluation/i.test(text(h)); });
+    var esc = function(x){ return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    if (grade) bits.push('<span class="g' + (/^not/i.test(grade) ? ' wrong' : '') + '">' + esc(grade) + '</span>');
+    if (band.tp) bits.push('<span>' + esc(band.tp) + '</span>');
+    if (band.date) bits.push('<span>' + esc(band.date) + '</span>');
+    if (band.tutor) bits.push('<span>' + esc(band.tutor) + '</span>');
+    bits.push('<span>' + nS + (nS === 1 ? ' strength' : ' strengths') + '</span>');
+    bits.push('<span>' + nA + (nA === 1 ? ' action point' : ' action points') + '</span>');
+    bits.push('<span>' + (hasSelf ? 'Self-evaluation in' : 'No self-evaluation in this document') + '</span>');
+    var sum = document.createElement('div'); sum.className = 'tp-sum'; sum.innerHTML = bits.join('');
+    root.insertBefore(sum, heads[0]);
+    /* the parts: each heading and everything up to the next one */
+    var cur = null, n = 0;
+    [].slice.call(root.childNodes).forEach(function(k){
+      if (k === sum) return;
+      if (k.nodeType === 1 && k.tagName === 'H1') { n++;
+        var nm = (NAMES.filter(function(x){ return x[0].test(text(k)); })[0] || [0, text(k)])[1];
+        cur = document.createElement('details'); cur.className = 'tp-part'; if (n === 1) cur.open = true;
+        var sm = document.createElement('summary'); sm.innerHTML = '<span class="n">' + n + '</span><span class="nm"></span><span class="oc"></span>'; sm.querySelector('.nm').textContent = nm;
+        var inner = document.createElement('div'); inner.className = 'in';
+        cur.appendChild(sm); cur.appendChild(inner); root.insertBefore(cur, k); }
+      if (cur) cur.lastChild.appendChild(k);
+    });
+  } catch (e) {}
+};
