@@ -67,6 +67,10 @@
   .kv .krow b{font-family:'Karla',sans-serif; font-size:.86rem;}
   @media(max-width:560px){ .krow, .kv .krow{grid-template-columns:1fr; gap:2px;} }
   @media print{ #keyOpen, .akey-top .btn-row, #stgBtn{display:none !important;} }
+  /* 21 Nov 2026: "Print the handout" printed the whole answer key once it had been opened (the answers to part 2), and the staging example once it had been opened. The key now prints only from its own Print button (body.print-key, set on that button) or in a tutor's print with the trainer notes; the example prints with the answers, or in that tutor's print if it is open. */
+  @media print{ body:not(.print-key):not(.tutor) #key, html.hub-clean #key, body:not(.with-answers):not(.tutor) #stg, html.hub-clean #stg{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: matched meanings in a heavier weight; in part 3 the option picked in its right or wrong color, with "Correct." or "Not this one." and the explanation under it; in part 4 each sentence marked "Correct" or "Not this one" in its color. On paper each prints as it did untouched. */
+  @media print{ .fb, .sbtn .st{display:none !important;} .pill.matched, .pill.selected, .pill.wrong{font-weight:500;} .opt.right, .opt.miss{background:var(--field); border-color:var(--sand-line); color:var(--ink);} }
 
 </style>
 </head>
@@ -144,7 +148,7 @@
       <div class="stage-title">Answer key</div>
       <button class="btn" type="button" id="keyOpen">Reveal answer key: save or print to keep</button>
       <div class="akey" id="key" hidden>
-        <div class="akey-top"><span class="label">Answer key: handout, to keep</span><span class="btn-row"><button class="btn" type="button" id="keyHide">Hide</button><button class="btn" type="button" onclick="window.print()">Print</button></span></div>
+        <div class="akey-top"><span class="label">Answer key: handout, to keep</span><span class="btn-row"><button class="btn" type="button" id="keyHide">Hide</button><button class="btn" type="button" onclick="document.body.classList.add('print-key'); window.print()">Print</button></span></div>   <!-- 21 Nov 2026: this button marks the print as the key's own (body.print-key), the only trainee print that carries the key -->
         <div class="box"><p class="ctx">Terms</p><div id="keyTerms"></div></div>
       </div>
       <div class="staging">
@@ -266,6 +270,7 @@ $('pairs').innerHTML = PAIRS.map(p => '<div class="box"><p class="pairline">' + 
 $('keyTerms').innerHTML = TERMS.map(t => '<div class="krow"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>').join('');
 $('keyOpen').onclick = () => { $('key').hidden = false; $('keyOpen').hidden = true; };
 $('keyHide').onclick = () => { $('key').hidden = true; $('keyOpen').hidden = false; };
+window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));   // 21 Nov 2026: the key's own print is over (see the print rule above)
 const EXAMPLE = [
   ['Item', 'used to + infinitive, vs past simple'],
   ['Meaning', 'A past habit or state that is no longer true, contrasted with the present.'],

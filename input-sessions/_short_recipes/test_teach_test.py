@@ -148,6 +148,13 @@ STYLE = r'''
     table.stk td{border:0; padding:2px 0;}
   }
   @media print{ .answer-key, .example{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: "5 of 5 matched" beside the terms, with the matched meanings in a heavier weight; the ordered stages with their numbers, their fill and "All 4 in order". On paper each prints as it did untouched: a blank circle to number in, no counts. */
+  @media print{
+    .count, .status{display:none !important;}
+    .pill.matched{background:var(--field); border-color:var(--sand-line); color:var(--ink);} .pill.matched:not(.term){font-weight:500;}
+    .order-line.done{border-color:var(--sand-line); background:var(--paper);}
+    .order-line.done .num{background:var(--box); color:var(--grey); font-size:0;} .order-line.done .num::after{content:"?"; font-size:.74rem;}
+  }
 '''
 
 SCRIPT = r'''

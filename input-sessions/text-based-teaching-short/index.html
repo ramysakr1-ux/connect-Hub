@@ -58,6 +58,18 @@
   table.grid.ex td:nth-child(2){white-space:nowrap; color:var(--grey);}
   @media(max-width:560px){ .krow{grid-template-columns:1fr; gap:2px;} table.grid.ex th, table.grid.ex td{padding:6px 7px;} }
   @media print{ #akeyOpen, .akey-acts, #exBtn{display:none !important;} .akey-head .label{color:#000;} }
+  /* 21 Nov 2026: an answered task printed solved on "Print the handout": matched meanings in a heavier weight (and, with their terms, in their teal fill when the print was not made from the button); a term picked but not yet matched, with its gold edge; the ordered stages with their numbers in teal circles and "All 5 in order". On paper each now prints as it did untouched: every stage carries its "?" circle to number in, and the two counts (screen words: "click the one that comes next") stay off the paper. */
+  @media print{
+    .pill.matched, .pill.selected, .pill.wrong{background:var(--field); border-color:var(--sand-line); color:var(--ink); font-weight:500;} .pill.term.matched, .pill.term.selected, .pill.term.wrong{font-weight:600;}
+    .mcount, .ostat{display:none !important;}
+    .ox .order-line.done{border-color:var(--sand-line); background:var(--paper);}
+    .ox .order-line.done .num{background:var(--box); color:var(--grey); font-size:0;} .ox .order-line.done .num::after{content:"?"; font-size:.78rem;}
+  }
+  /* 21 Nov 2026: the handout printed the whole answer key (every term with its meaning, every true or false) once "Reveal answer key" had been pressed, and the staging example once "See staging example" had been. The key still prints from its own Print button and on the tutor's print, the example on the tutor's print and with the answers; the plain handout carries neither. */
+  @media print{
+    body:not(.print-key):not(.tutor) #akey, html.hub-clean body:not(.print-key) #akey{display:none !important;}
+    body:not(.tutor):not(.with-answers) #ex, html.hub-clean body #ex{display:none !important;}
+  }
 
 </style>
 </head>
@@ -160,7 +172,7 @@
         <button type="button" class="btn" id="akeyOpen">Reveal answer key: save or print to keep</button>
         <div class="akey" id="akey" hidden>
           <div class="akey-head"><p class="label">Answer key: handout, to keep</p>
-            <div class="akey-acts"><button type="button" class="btn" id="akeyHide">Hide</button><button type="button" class="btn" onclick="window.print()">Print</button></div></div>
+            <div class="akey-acts"><button type="button" class="btn" id="akeyHide">Hide</button><button type="button" class="btn" id="akeyPrint">Print</button></div></div><!-- 21 Nov 2026: the key's own Print says it is the key that is wanted (see the script); it was onclick="window.print()" -->
           <div class="akey-box"><h3>Terms</h3><div id="akeyTerms"></div></div>
           <div class="akey-box"><h3>True or false</h3><div id="akeyTf"></div></div>
         </div>
@@ -276,6 +288,9 @@ $('akeyTerms').innerHTML = TERMS.map(t => '<div class="krow"><b>' + esc(t[0]) + 
 $('akeyTf').innerHTML = DETAILS.map(d => '<div class="tfrow"><p>' + esc(d[0]) + '</p><p class="ans">' + esc(d[1]) + '</p></div>').join('');
 $('akeyOpen').onclick = () => { $('akey').hidden = false; $('akeyOpen').hidden = true; };
 $('akeyHide').onclick = () => { $('akey').hidden = true; $('akeyOpen').hidden = false; };
+// 21 Nov 2026: the key's own Print marks the print, so the key prints with it; any other print of the handout leaves the open key out
+$('akeyPrint').onclick = () => { document.body.classList.add('print-key'); window.print(); };
+window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));
 
 // ---------- Staging example ----------
 $('exRows').innerHTML = EXAMPLE_ROWS.map(r => '<tr><td><b>' + esc(r[0]) + '</b></td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + '</td></tr>').join('');

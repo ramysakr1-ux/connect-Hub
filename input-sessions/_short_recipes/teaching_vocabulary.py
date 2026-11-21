@@ -92,7 +92,14 @@ STYLE = r'''  .quiet{font-size:.88rem; font-style:italic; color:var(--grey); mar
   .stagebox{margin-top:14px; border-top:1px solid var(--row-line); padding-top:12px;}
   .stagebox h4{margin:12px 0 4px; font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.1rem;}
   table.grid td:nth-child(2){white-space:nowrap;}
-  @media print{ .keyblock{display:block;} .stagebox .btn{display:none;} }
+  /* 21 Nov 2026: "Print the handout" printed the whole answer key (the six terms of part 2 with their meanings) once it had been opened, and the example once it had been opened. The key now prints only from its own Print button (body.print-key, set in answerKey below) or in a tutor's print with the notes; the example prints for a tutor only. */
+  @media print{ .keyblock{display:block;} body:not(.print-key):not(.tutor) .keyblock, html.hub-clean .keyblock{display:none !important;} .stagebox .btn{display:none;} body:not(.tutor) .stagebox h4, body:not(.tutor) .stagebox table, html.hub-clean .stagebox h4, html.hub-clean .stagebox table{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: matched meanings in a heavier weight with "6 of 6 matched"; the tick or cross and the explanation under each word of part 3; a tick or cross on every collocation clicked in part 4. On paper each prints as it did untouched, without the count. */
+  @media print{
+    .mhead span, .item .fb, .opts .tick{display:none !important;}
+    .pill.matched, .pill.selected{background:var(--field); border-color:var(--sand-line); color:var(--ink);} .pill.matched:not(.term){font-weight:500;}
+    .opts button.ok, .opts button.no{border-color:var(--sand-line); background:var(--paper); color:var(--ink);}
+  }
   .sl{font-weight:700; font-size:.92rem; color:var(--ink); margin:4px 0 6px;}
   .item{background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 16px; margin-top:10px;}
   .item .w, .collo .w{font-family:'Newsreader',Georgia,serif; font-weight:600; font-size:1.08rem; margin:0 0 8px;}
@@ -202,9 +209,10 @@ function answerKey(el, terms, details){
   }
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if (!b) return;
-    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { window.print(); return; }
+    if (b.dataset.k === 'open') open = true; else if (b.dataset.k === 'hide') open = false; else { document.body.classList.add('print-key'); window.print(); return; }   // 21 Nov 2026: the key prints from its own Print button only (see the print rule above)
     draw();
   });
+  window.addEventListener('afterprint', () => document.body.classList.remove('print-key'));   // 21 Nov 2026
   draw();
 }
 
@@ -262,7 +270,8 @@ const GROUPS = [
 function drawCollos(){
   $('collos').innerHTML = GROUPS.map((g, gi) => '<div class="collo"><p class="w">' + g.verb + ' ___</p><div class="opts">'
     + g.options.map(w => { const p = g.picked.has(w), ok = g.correct.indexOf(w) !== -1;
-        return '<button type="button" data-g="' + gi + '" data-w="' + esc(w) + '" class="' + (p ? (ok ? 'ok' : 'no') : '') + '">' + (p ? (ok ? '✓ ' : '✗ ') : '') + esc(w) + '</button>'; }).join('')
+        // 21 Nov 2026: the tick or cross sits in a span of its own (.tick), which the print rule above leaves off the paper; on the screen nothing changes.
+        return '<button type="button" data-g="' + gi + '" data-w="' + esc(w) + '" class="' + (p ? (ok ? 'ok' : 'no') : '') + '">' + (p ? '<span class="tick">' + (ok ? '✓ ' : '✗ ') + '</span>' : '') + esc(w) + '</button>'; }).join('')
     + '</div></div>').join('');
 }
 $('collos').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; GROUPS[+b.dataset.g].picked.add(b.dataset.w); drawCollos(); });
