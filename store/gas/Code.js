@@ -333,6 +333,7 @@ function sendAs_(msg) {
   GmailApp.sendEmail(msg.to, msg.subject, msg.body || '', opt);
 }
 function sendVolunteerReminders() {
+  try { exportTick_(); } catch (e) {}   /* v273: the export, in installments */
   notifyFeedback_();
   notifyReports_();
   var now = new Date();
@@ -3541,7 +3542,8 @@ case 'inbox': {
       requireOwner_(owner);
       var xtC = courseById_(String(req.id || ''));
       if (!xtC) throw new Error('Which course?');
-      return exportTrainees_(xtC.id, { folder: String(req.folder || ''), only: String(req.only || ''), max: Math.max(1, Math.min(3, Number(req.max) || 1)) });
+      var xtR = exportTrainees_(xtC.id, { folder: String(req.folder || ''), only: String(req.only || ''), max: Math.max(1, Math.min(12, Number(req.max) || 4)), state: (req.state && typeof req.state === 'object') ? req.state : {} });
+      return xtR;
     }
     case 'exportFolderCheck': {
       requireTutor_(tutor);
@@ -5730,6 +5732,11 @@ function putPdf_(folder, name, html) {
   var old = folder.getFilesByName(name + '.pdf'); while (old.hasNext()) old.next().setTrashed(true);
   return folder.createFile(pdf);
 }
+function md5_(t) { return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, String(t), Utilities.Charset.UTF_8).map(function (b) { return ('0' + (b & 255).toString(16)).slice(-2); }).join(''); }
+/* opt.folder: a trial's folder in place of the course's own. opt.only: one trainee's token. opt.max: how many DOCUMENTS to
+   write in this call (the store has a few minutes at a time). opt.state: what has been filed already, by trainee and
+   document, as { token: { folder: url, tp3: fingerprint } }; a document whose fingerprint has not changed is left alone,
+   so the job can run again and again and only ever writes what is new or was changed. Returns the state moved on. */
 function exportTrainees_(courseId, opt) {
   opt = opt || {};
   var set = courseRead_(courseId, 'settings') || {};
@@ -5739,19 +5746,49 @@ function exportTrainees_(courseId, opt) {
   var top = childFolder_(root, 'Portfolios');
   var people = rosterWithRecords_(courseId, { tpHistory: true });
   if (opt.only) people = people.filter(function (t) { return t.token === opt.only; });
-  var out = [];
-  for (var i = 0; i < people.length && out.length < (opt.max || 1); i++) {
+  var state = opt.state || {}, left = opt.max || 1, out = [], waiting = 0;
+  /* A NEW FOLDER STARTS AGAIN (22 Nov 2026): the state remembers which folder it describes. When the course's folder is
+     changed (a test folder first, the center's own later), everything is filed afresh into the new one. */
+  if (state._folder !== fid) { state = { _folder: fid }; }
+  for (var i = 0; i < people.length; i++) {
     var t = people[i], hist = (t.records && t.records.tpHistory) || {};
-    var tps = Object.keys(hist).filter(function (n) { return /^\d+$/.test(n) && hist[n] && hist[n].docHTML; }).sort(function (a, b) { return a - b; });
-    if (!tps.length && !opt.only) continue;
+    var mine = state[t.token] || {};
+    var due = Object.keys(hist).filter(function (n) { return /^\d+$/.test(n) && hist[n] && hist[n].docHTML; }).sort(function (a, b) { return a - b; })
+      .map(function (n) { return { key: 'tp' + n, n: n, html: String(hist[n].docHTML), print: md5_(hist[n].docHTML) }; })
+      .filter(function (d) { return mine[d.key] !== d.print; });
+    if (!due.length) continue;
+    if (left <= 0) { waiting += due.length; continue; }
     var who = String(t.certName || t.name || 'Trainee').replace(/[\\/:*?"<>|]/g, ' ').trim();
     var folder = childFolder_(top, who);
-    try { folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+    if (!mine.folder) { try { folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {} mine.folder = folder.getUrl(); }
     var made = [];
-    tps.forEach(function (n) { putPdf_(folder, 'TP' + n + ' - plan, self-evaluation and feedback', String(hist[n].docHTML)); made.push(Number(n)); });
-    out.push({ initials: who.split(/\s+/).map(function (w) { return w.charAt(0).toUpperCase(); }).join(''), tps: made, url: folder.getUrl() });
+    due.forEach(function (d) { if (left <= 0) { waiting++; return; } putPdf_(folder, 'TP' + d.n + ' - plan, self-evaluation and feedback', d.html); mine[d.key] = d.print; made.push(d.key); left--; });
+    state[t.token] = mine;
+    out.push({ initials: who.split(/\s+/).map(function (w) { return w.charAt(0).toUpperCase(); }).join(''), made: made, url: mine.folder });
   }
-  return { folder: root.getName(), exported: out, onRoster: people.length };
+  return { folder: root.getName(), exported: out, waiting: waiting, onRoster: people.length, state: state };
+}
+/* THE EXPORT, IN INSTALLMENTS (v273, 22 Nov 2026). Ramy: "maybe we can make that migration in installments ... when TPs are
+   finished, done, and passed, they can sort of migrate ... so by the end of the course it will just be the last two TPs
+   and final assignments and CELTA 5." Every half hour (it rides on the volunteers' reminder trigger): for each real
+   course that has a center folder, if anything on the course has changed since the last look, file what is newly
+   finished, a few documents at a time. What has been filed is remembered per course (kind 'exported'). A demo course
+   is never exported by the job. A folder that cannot be opened is skipped quietly: Course admin shows that in red. */
+function exportTick_() {
+  var started = Date.now(), props = PropertiesService.getScriptProperties();
+  courses_().forEach(function (c) {
+    if (Date.now() - started > 150000) return;   /* two and a half minutes a tick, whatever is left waits for the next */
+    try {
+      var set = courseRead_(c.id, 'settings') || {};
+      if (set.demoToday || set.presentToday || !driveFolderId_(set.exportFolder)) return;
+      var ver = props.getProperty(verKey_(String(c.id))) || '', seenKey = 'EXPORT_SEEN_' + c.id;
+      if (ver && props.getProperty(seenKey) === ver) return;
+      var state = courseRead_(c.id, 'exported') || {};
+      var r = exportTrainees_(c.id, { state: state, max: 8 });
+      if (r.exported.length) courseWrite_(c.id, 'exported', r.state);
+      if (!r.waiting) props.setProperty(seenKey, props.getProperty(verKey_(String(c.id))) || ver);   /* all filed: nothing to do until the course moves again */
+    } catch (e) {}
+  });
 }
 
 /* THE COURSE'S LINKS END WITH THE COURSE (v270, 22 Nov 2026). Ramy: "I want this link to stop working after the course ...
