@@ -2919,6 +2919,38 @@ case 'inbox': {
       courseUpdateObj_(course.id, 'settings', function (st) { st.gtkyBingoAuto = bfList.join('\n'); st.gtkyBingoAutoAt = new Date().toISOString(); return st; });
       return { prompts: bfList };
     }
+    /* THE HANDOVER'S "IN SHORT" (v283, 21 Nov 2026). Ramy: the handover should be "a summary of how they did", not the
+       feedback's own lines. A few sentences for the tutor who takes the group next, from what the returned feedback
+       says and nothing else: each lesson's grade, strengths, action points and overall comment, as the page sends
+       them. No name is sent: the trainee is NAME, and the page puts the first name in. Tutors only; nothing is saved
+       here (the page keeps the text with the tutor's own handover line, which a trainee is never handed). */
+    case 'handoverWords': {
+      requireTutor_(tutor);
+      var hwKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
+      if (!hwKey) throw new Error('Drafting is not switched on');
+      var hwLines = function (a) { return (Array.isArray(a) ? a : []).slice(0, 8).map(function (x) { return String(x || '').slice(0, 300); }).filter(Boolean); };
+      var hwIn = { lessons: (Array.isArray(req.lessons) ? req.lessons : []).slice(0, 8).map(function (l) {
+          return { tp: Number(l && l.tp) || 0, grade: String((l && l.grade) || '').slice(0, 40), strengths: hwLines(l && l.strengths), actions: hwLines(l && l.actions), overall: String((l && l.overall) || '').slice(0, 900) }; }),
+        assignments: hwLines(req.assignments), stage2: String(req.stage2 || '').slice(0, 40) };
+      if (!hwIn.lessons.length) throw new Error('No returned feedback to draft from');
+      var hwSys = 'You help a CELTA tutor hand a teaching practice group over to the tutor who takes it next. From the feedback on a trainee\'s lessons so far, write a short summary for that tutor. '
+        + 'Three or four plain sentences, 80 words at most, in the third person, calling the trainee NAME (write the word NAME exactly; never invent a name or a pronoun that assumes gender: use "they" or repeat NAME). '
+        + 'Say what is consistently strong, what keeps needing work across lessons, and how the lessons have gone: if a lesson was not to standard, say which and, only if the feedback says so, why. '
+        + 'If an action point from an earlier lesson no longer appears in a later one, you may say NAME has acted on it; otherwise say nothing about how they take feedback. '
+        + 'Use only what the feedback says. Do not add praise, problems, causes or advice that are not there; do not predict a result or a final grade; do not mention criteria codes. '
+        + 'Assignments and the Stage 2 result may be mentioned in a few words only if they matter (a resubmission out, a fail, a not-to-standard Stage 2). '
+        + 'The clear, professional register of one colleague briefing another: natural and readable, never chatty, never stiff. Write "students", never Ss. ' + celtaShorthand_()
+        + 'Write shorthand out in full, except TTT, STT, CCQs and ICQs. No lists, no headings, no arrows. American spelling. '
+        + 'Answer as JSON: {"text":"..."}.';
+      var hwResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + hwKey },
+        payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
+          messages: [{ role: 'system', content: hwSys }, { role: 'user', content: JSON.stringify(hwIn) }] })
+      });
+      if (hwResp.getResponseCode() !== 200) throw new Error('The summary could not be drafted (' + hwResp.getResponseCode() + ')');
+      var hwOut = JSON.parse(JSON.parse(hwResp.getContentText()).choices[0].message.content || '{}');
+      return { text: String((hwOut && hwOut.text) || '').replace(/\s+/g, ' ').trim().slice(0, 900) };
+    }
     case 'stage1Words': {
       requireTutor_(tutor);
       var swKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');

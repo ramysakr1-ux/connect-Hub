@@ -12,8 +12,9 @@
   Everything on a card is read from the record — the grade of every lesson, the
   open action points in the leaving tutor's own words from the last feedback,
   the Stage 1 and Stage 2 results, the assignments, the fail letter, special
-  needs — except the last line, which the leaving tutor writes. Nothing is
-  generated.
+  needs — except the last line, which the leaving tutor writes. Until 21 Nov
+  2026 nothing was generated; from then "In short" is drafted by Lite from the
+  returned feedback when the tutor asks (see A REAL HANDOVER below).
 
   WHERE THE LINE IS KEPT. In the trainee's staffLinks record, as an entry
   { handover: true, text, by, at }: the one kind the store never hands to a
@@ -33,7 +34,7 @@
 <title>Handover</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611212354">
+<link rel="stylesheet" href="hub-tokens.css?v=202611220038">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -71,6 +72,12 @@
   .tr .k{margin:14px 0 4px; font-size:10.5px; letter-spacing:.2em;}
   ul{margin:0; padding-left:18px; font-size:14px; line-height:1.5;}
   ul.plain{list-style:none; padding:0; color:var(--grey);}
+  .sum{margin:0; font-size:14.5px; line-height:1.55; color:var(--ink);} .sum.empty{color:var(--grey);}
+  .tps{font-size:11.5px; font-weight:600; color:var(--grey); white-space:nowrap;}
+  .st.due{border-color:var(--amber-edge, #c9962a); color:var(--ink);}
+  .flag{margin:0 0 5px; padding:2px 0 2px 10px; border-left:3px solid var(--amber-edge, #c9962a); font-size:14px; line-height:1.45; color:var(--ink);}
+  .flag.red{border-left-color:var(--brick); color:var(--brick); font-weight:600;}
+  .tr.red{border-top-color:var(--brick);} .tr.amber{border-top-color:var(--amber-edge, #c9962a);}
   .note{margin:0; font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:16.5px; line-height:1.4; color:var(--ink);}
   .note.empty{color:var(--grey);}
   textarea{width:100%; min-height:64px; font:inherit; font-family:'Instrument Serif',Georgia,serif; font-style:italic; font-size:16px; line-height:1.4; color:var(--ink); background:var(--field); border:1px solid var(--sand-line); border-radius:var(--r-control); padding:8px 10px; resize:vertical;}
@@ -90,19 +97,19 @@
     .note.empty{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611212354">
+<link rel="stylesheet" href="hub-house.css?v=202611220038">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"><p class="lede">Loading the course…</p></div>
 </div>
-<script src="hub-shared.js?v=202611212354"></script>
-<script src="hub-store.js?v=202611212354"></script>
-<script src="hub-say.js?v=202611212354"></script>
-<script src="hub-rotation.js?v=202611212354"></script>
-<script src="hub-sync.js?v=202611212354"></script>
-<script src="hub-notebook.js?v=202611212354"></script>
+<script src="hub-shared.js?v=202611220038"></script>
+<script src="hub-store.js?v=202611220038"></script>
+<script src="hub-say.js?v=202611220038"></script>
+<script src="hub-rotation.js?v=202611220038"></script>
+<script src="hub-sync.js?v=202611220038"></script>
+<script src="hub-notebook.js?v=202611220038"></script>
 <script>
 /* Whose room this is: the tutors'. hub-sync.js sets HubMode, which the gate reads;
    without it the room opened for a trainee (the pre-push check caught it, 25 Oct 2026). */
@@ -134,45 +141,110 @@ else (async function(){
   const fmtDay = s => { try { s = String(s || ''); return /T/.test(s) ? new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: tz }).format(new Date(s)) : new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(hubDateOf(s)); } catch (e) { return s; } };
   const AS = { lsrt: 'LSRT', lrt: 'LRT', fol: 'FOL', lfc: 'LFC', a5: 'Assignment 5' };
 
+  /* A REAL HANDOVER (Ramy, 21 Nov 2026: "it's like cards for the trainees with criteria ... I thought it would be a summary
+     of how they did ... assignments they passed or failed ... stage 2, standard, not to standard ... flagging any
+     problems. A real handover, not just some criteria from the feedback"). The card had copied the last feedback's action
+     points as written, and since the form puts the codes first each line began "5f 5h" and ran on. It now says, in
+     words: how each lesson was graded, Stage 1 and Stage 2, a few sentences on how the trainee is doing (drafted by
+     Lite from the returned feedback when the tutor asks, theirs to change, kept with the tutor's own line and never
+     shown to a trainee), what keeps coming up, what to build on, where each assignment stands, and what is flagged.
+     Only RETURNED feedback is read: a feedback still being written is not the last lesson. */
+  const codesOf = h => { const c = []; String(h || '').replace(/data-c="([^"]+)"/g, (m, x) => { c.push(String(x).toLowerCase()); return m; }); return c; };
+  const wordsOf = h => String(h || '').replace(/<span[^>]*class="tag"[^>]*>[\s\S]*?<\/span>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&[a-z]+;/g, ' ').replace(/^[\s•\-]+/, '').replace(/\s+/g, ' ').trim();
+  const brief = t => { t = String(t || ''); const m = t.match(/^(.{20,150}?[.!?])(\s|$)/); let o = m ? m[1] : t; if (o.length > 150) o = o.slice(0, 147).replace(/\s+\S*$/, '') + '…'; return o; };
+  const firstOf = t => String(t.name || '').trim().split(/\s+/)[0] || 'The trainee';
+  function lessonsOf(t){
+    const R = t.records || {}, H = Object.assign({}, R.tpHistory || {});
+    if (R.feedback && R.feedback.status === 'returned' && R.feedback.state) { const n = String((R.feedback.state.f || {}).fTP || '').replace(/\D/g, ''); if (n && !H[n]) H[n] = R.feedback; }
+    return Object.keys(H).filter(k => /^\d+$/.test(k) && H[k] && H[k].state && H[k].state.f).sort((a, b) => a - b).map(k => { const st = H[k].state, L = st.lists || {};
+      const pts = ids => ids.reduce((a, id) => a.concat((L[id] || []).map(x => ({ text: wordsOf(x && (x.html || x.t || x.text || '')), codes: codesOf(x && x.html), star: !!(x && x.star) })).filter(x => x.text)), []);
+      return { n: +k, grade: String(st.f.fGrade || '').trim(), S: pts(['lSP', 'lST']), A: pts(['lAP', 'lAT']), overall: String(st.f.tOverall || '').trim() }; });
+  }
+  /* what comes up in more than one lesson, by criterion; the newest wording stands for it */
+  function recurring(lessons, key){
+    const by = {};
+    lessons.forEach(l => l[key].forEach(p => (p.codes.length ? p.codes : ['~' + p.text.slice(0, 24).toLowerCase()]).forEach(c => { const e = by[c] || (by[c] = { tps: [], text: '' }); if (e.tps.indexOf(l.n) < 0) e.tps.push(l.n); e.text = p.text; })));
+    const seen = {}, out = [];
+    Object.keys(by).map(c => by[c]).filter(e => e.tps.length > 1).sort((a, b) => b.tps.length - a.tps.length || b.tps[b.tps.length - 1] - a.tps[a.tps.length - 1])
+      .forEach(e => { if (seen[e.text]) return; seen[e.text] = 1; out.push(e); });
+    return out.slice(0, 3);
+  }
+  const A_WORD = a => { if (!a) return ['', 'Not in yet']; const out = (a.feedback && a.feedback.outcome) || '', st = a.stage || '';
+    if (st === 'closed' && out) return [/^Fail/.test(out) ? 'not' : 'ok', out];
+    if (st === 'resubmission_needed') return ['amber', 'Resubmission out'];
+    if (st === 'submitted' || st === 'resubmitted') return ['', 'In, to be marked'];
+    if (st === 'returned_unmarked') return ['amber', 'Returned unmarked'];
+    return ['', 'Not in yet']; };
+  const handOf = t => (((t.records || {}).staffLinks || []).find(x => x && x.handover)) || null;
+  /* one writer for the handover's entry in staffLinks: the tutor's line, Lite's draft and the hand-over stamp live together */
+  async function saveHand(t, patch){
+    const links = ((t.records || {}).staffLinks || []), cur = links.find(x => x && x.handover) || { handover: true, text: '', by: leaving || tutors[0] || 'Tutor' };
+    const next0 = Object.assign({}, cur, patch);
+    const keep = !!(String(next0.text || '').trim() || (next0.summary && String(next0.summary.text || '').trim()) || next0.handed);
+    const next = links.filter(x => x && !x.handover).concat(keep ? [next0] : []);
+    const r = await S.put('staffLinks', next, t.token);
+    t.records = t.records || {}; t.records.staffLinks = next;
+    if (r && r.demo && window.hubDemoSay) hubDemoSay('This is a demo course. It stays on this device.');
+  }
+  function factsFor(t){
+    const lessons = lessonsOf(t), A = (t.records || {}).assignments || {}, c5t = (t.records || {}).celta5t || {}, s2 = c5t.stage2 || {};
+    return { lessons: lessons.map(l => ({ tp: l.n, grade: l.grade, strengths: l.S.map(p => p.text.slice(0, 300)).slice(0, 8), actions: l.A.map(p => p.text.slice(0, 300)).slice(0, 8), overall: l.overall.slice(0, 900) })),
+      assignments: Object.keys(AS).filter(k => A[k]).map(k => AS[k] + ': ' + A_WORD(A[k])[1]), stage2: (s2.returnedAt && STAGE[s2.overall]) ? STAGE[s2.overall][1] : '' };
+  }
+  async function draftOne(t){
+    const f = factsFor(t); if (!f.lessons.length) return false;
+    const r = await S.call({ op: 'handoverWords', lessons: f.lessons, assignments: f.assignments, stage2: f.stage2 });
+    const text = String((r && r.text) || '').replace(/\bNAME\b/g, firstOf(t)).replace(/\s+/g, ' ').trim();
+    if (!text) return false;
+    await saveHand(t, { summary: { text, at: new Date().toISOString(), by: 'Lite' } });
+    return true;
+  }
+
   function card(t, i){
-    const R = t.records || {};
-    const H = Object.assign({}, R.tpHistory || {}); if (R.feedback && R.feedback.state) H[String((R.feedback.state.f || {}).fTP || '').replace(/\D/g, '') || 'x'] = R.feedback;
-    const keys = Object.keys(H).filter(k => H[k] && H[k].state && H[k].state.f).sort((a, b) => a - b);
-    const grades = keys.map(k => [k, (H[k].state.f.fGrade || '').trim()]);
-    const chips = grades.map(([k, g]) => { const m = GRADE[g] || ['', g || '?']; return `<span class="g ${m[0]}">TP${esc(k)} · ${esc(m[1])}</span>`; }).join('') || '<span class="g">No lesson yet</span>';
-    const last = keys.length ? H[keys[keys.length - 1]].state : null;
-    const L = (last && last.lists) || {};
-    const watch = [...(L.lAT || []), ...(L.lAP || [])].map(x => bare(x && (x.html || x.t || x.text || ''))).filter(Boolean).slice(0, 3);
+    const R = t.records || {}, lessons = lessonsOf(t);
+    const chips = lessons.map(l => { const m = GRADE[l.grade] || ['', l.grade || 'no grade']; return `<span class="g ${m[0]}">TP${l.n} · ${esc(m[1] === 'Above' ? 'Above standard' : m[1] === 'To' ? 'To standard' : m[1] === 'Not to' ? 'Not to standard' : m[1])}</span>`; }).join('') || '<span class="g">No lesson returned yet</span>';
     const c5t = R.celta5t || {};
     /* Stage 1 is a progress check and carries no grade: done or pending. Stage 2 carries the
        tutor's overall: above, to or not to standard, or pending until it is returned. */
     const stage = n => { const st = c5t['stage' + n] || {}; if (n === 1) return st.returnedAt ? `<span class="st">Stage 1 · done ${esc(fmtDay(st.returnedAt))}</span>` : '<span class="st pending">Stage 1 · pending</span>';
       if (st.returnedAt && STAGE[st.overall]) { const m = STAGE[st.overall]; return `<span class="st ${m[0]}">Stage 2 · ${m[1]}</span>`; } return '<span class="st pending">Stage 2 · pending</span>'; };
-    const standing = [];
+    const last = lessons[lessons.length - 1] || null;
+    let comes = recurring(lessons, 'A'), comesHead = 'Keeps coming up';
+    if (!comes.length && last) { const pick = last.A.filter(p => p.star); comes = (pick.length ? pick : last.A).slice(0, 2).map(p => ({ text: p.text, tps: [last.n] })); comesHead = lessons.length > 1 ? 'From the last lesson' : 'Action points so far'; }
+    let build = recurring(lessons, 'S');
+    if (!build.length && last) build = last.S.slice(0, 2).map(p => ({ text: p.text, tps: [last.n] }));
+    const li = (e, many) => '<li>' + esc(brief(e.text)) + (many && e.tps.length > 1 ? ' <span class="tps">' + e.tps.map(n => 'TP' + n).join(', ') + '</span>' : '') + '</li>';
     const A = R.assignments || {};
-    Object.keys(AS).forEach(k => { const a = A[k]; if (!a) return; const out = (a.feedback && a.feedback.outcome) || ''; const st = a.stage || '';
-      if (st === 'closed' && out) standing.push(AS[k] + ': ' + out);
-      else if (st === 'resubmission_needed') standing.push(AS[k] + ': resubmission out');
-      else if (st === 'submitted' || st === 'resubmitted') standing.push(AS[k] + ': in, waiting to be marked');
-      else if (st === 'returned_unmarked') standing.push(AS[k] + ': returned unmarked');
-    });
-    const tr = R.tracker || {};
-    if (tr.failLetter) standing.push('Fail warning letter issued ' + tr.failLetter + ((R.celta5 || {}).failLetterSigned ? ', signed' : ', not yet signed'));
-    if (tr.malpracticeLetter) standing.push('Malpractice warning issued ' + tr.malpracticeLetter + ((R.celta5 || {}).malpracticeLetterSigned ? ', signed' : ', not yet signed'));
+    const asg = ['fol', 'lrt', 'lsrt', 'lfc', 'a5'].filter(k => AS[k] && (k !== 'a5' || A[k])).map(k => { const w = A_WORD(A[k]); return `<span class="st ${w[0] === 'ok' ? 'above' : w[0] === 'not' ? 'not' : w[0] === 'amber' ? 'due' : 'pending'}">${AS[k]} · ${esc(w[1])}</span>`; }).join('');
+    const tr = R.tracker || {}, s2 = c5t.stage2 || {};
+    const flags = [];
+    const notTo = lessons.filter(l => /^(Not to|Below) standard$/.test(l.grade)).map(l => 'TP' + l.n);
+    if (notTo.length) flags.push(['red', (notTo.length === 1 ? 'One lesson' : notTo.length + ' lessons') + ' not to standard: ' + notTo.join(', ')]);
+    if (s2.returnedAt && (s2.overall === 'below' || s2.overall === 'not')) flags.push(['red', 'Stage 2: not to standard']);
+    if (tr.failLetter) flags.push(['red', 'Fail warning letter issued ' + tr.failLetter + ((R.celta5 || {}).failLetterSigned ? ', signed' : ', not yet signed')]);
+    if (tr.malpracticeLetter) flags.push(['red', 'Malpractice warning issued ' + tr.malpracticeLetter + ((R.celta5 || {}).malpracticeLetterSigned ? ', signed' : ', not yet signed')]);
+    Object.keys(AS).forEach(k => { const a = A[k]; if (!a) return; if (a.stage === 'resubmission_needed') flags.push(['amber', AS[k] + ': resubmission out']); else if (a.stage === 'closed' && /^Fail/.test((a.feedback && a.feedback.outcome) || '')) flags.push(['red', AS[k] + ': ' + a.feedback.outcome]); });
     const sp = ((R.agreement || {}).special) || {};
-    if (sp.needs) standing.push('Special needs on the agreement: ' + bare(sp.text));
-    const hand = ((R.staffLinks || []).find(x => x && x.handover)) || null;
-    const lastTwo = grades.slice(-2).map(x => x[1]);
-    const flag = tr.failLetter ? 'red' : ((lastTwo.includes('Not to standard') || lastTwo.includes('Below standard') || Object.values(A).some(a => a && a.stage === 'resubmission_needed')) ? 'amber' : '');
+    if (sp.needs) flags.push(['amber', 'Special needs on the agreement: ' + bare(sp.text)]);
+    const hand = handOf(t), sum = hand && hand.summary && String(hand.summary.text || '').trim();
+    const flag = flags.some(f => f[0] === 'red') ? 'red' : flags.length ? 'amber' : '';
     return `<article class="tr ${flag}" data-token="${esc(t.token)}">
       <header><h2>${esc(t.name)}</h2><span class="letter">${esc(letterOf(t, i))}</span></header>
       <div class="grades">${chips}</div>
       <div class="stages">${stage(1)}${stage(2)}</div>
-      <p class="k">Watch</p>
-      ${watch.length ? '<ul>' + watch.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' : '<ul class="plain"><li>No action points yet.</li></ul>'}
-      <p class="k">Standing</p>
-      <ul class="plain">${standing.length ? standing.map(s => '<li>' + esc(s) + '</li>').join('') : '<li>Nothing outstanding.</li>'}</ul>
-      <p class="k">From ${esc((hand && hand.by) || leaving || 'the tutor')}</p>
+      <p class="k">In short</p>
+      <div class="sumbox">${sum ? `<p class="sum">${esc(sum)}</p><div class="row"><button type="button" class="quiet" data-sumedit="${esc(t.token)}">Change</button><button type="button" class="quiet" data-sumdraft="${esc(t.token)}">Draft it again</button><span class="saved">${hand.summary.by === 'Lite' ? 'Drafted by Lite from the returned feedback' : esc(hand.summary.by || '')}${hand.summary.at ? ', ' + fmtDay(hand.summary.at) : ''}</span></div>`
+        : lessons.length ? `<p class="sum empty">Not written yet.</p><div class="row"><button type="button" class="quiet" data-sumdraft="${esc(t.token)}">Draft it from the feedback</button><button type="button" class="quiet" data-sumedit="${esc(t.token)}">Write it myself</button><span class="saved"></span></div>`
+        : '<p class="sum empty">Nothing to go on until a lesson’s feedback is returned.</p>'}</div>
+      <p class="k">${comesHead}</p>
+      ${comes.length ? '<ul>' + comes.map(e => li(e, true)).join('') + '</ul>' : '<ul class="plain"><li>No action points yet.</li></ul>'}
+      <p class="k">Strengths to build on</p>
+      ${build.length ? '<ul>' + build.map(e => li(e, true)).join('') + '</ul>' : '<ul class="plain"><li>None recorded yet.</li></ul>'}
+      <p class="k">Assignments</p>
+      <div class="stages asg">${asg}</div>
+      <p class="k">Flags</p>
+      ${flags.length ? flags.map(f => `<p class="flag ${f[0]}">${esc(f[1])}</p>`).join('') : '<ul class="plain"><li>Nothing flagged.</li></ul>'}
+      <p class="k">From ${esc((hand && hand.text && hand.by) || leaving || 'the tutor')}</p>
       <div class="handbox">${hand && hand.text ? `<p class="note">${esc(hand.text)}</p><div class="row"><button type="button" class="quiet" data-edit="${esc(t.token)}">Change</button><span class="saved">${esc(hand.by || '')}${hand.at ? ', ' + fmtDay(hand.at) : ''}</span></div>`
         : `<p class="note empty">The one line only you can write: what the record does not know.</p><div class="row"><button type="button" class="quiet" data-edit="${esc(t.token)}">Write it</button></div>`}</div>
     </article>`;
@@ -194,14 +266,26 @@ else (async function(){
     $('app').innerHTML = `
       <p class="k">Teaching practice · ${esc(cs.courseName || '')}</p>
       <h1>Handover${group ? ': Group ' + esc(group) : ''}</h1>
-      <p class="lede">${list.length} trainee${list.length === 1 ? '' : 's'}${swapDay ? ', changing tutor at the change of class on ' + esc(swapDay) : ''}. Everything here is from the record except the last line of each card, which the leaving tutor writes.</p>
+      <p class="lede">${list.length} trainee${list.length === 1 ? '' : 's'}${swapDay ? ', changing tutor at the change of class on ' + esc(swapDay) : ''}. Grades, stages, assignments and flags are read from the record. "In short" is drafted by Lite from the returned feedback when you ask, and is yours to change; the last line of each card is yours alone. Trainees never see this page.</p>
       ${groups.length > 1 ? '<div class="tabs">' + groups.map(g => `<button type="button" data-group="${esc(g)}" aria-pressed="${g === group}">Group ${esc(g)}</button>`).join('') + '</div>' : ''}
       <div class="hand"><div class="who">From <select id="from">${opts(leaving)}</select> to <select id="to">${opts(receiving)}</select></div>
-        <span class="acts"><button type="button" class="print" id="print">Print</button><button type="button" class="print go" id="hand">${handed ? 'Hand over again' : 'Hand over'}</button></span>
+        <span class="acts"><button type="button" class="print" id="draftAll">Draft the summaries</button><button type="button" class="print" id="print">Print</button><button type="button" class="print go" id="hand">${handed ? 'Hand over again' : 'Hand over'}</button></span>
         <span class="when">TP1 to TP${half - 1} with the first tutor, from TP${half} with the next${swapDay ? ' · ' + esc(swapDay) : ''}${handed ? ' · <b>Handed over by ' + esc(handed.by) + ' to ' + esc(handed.to) + ', ' + esc(fmtDay(handed.at)) + '</b>' : ''}</span>
         <div class="check" id="check" hidden></div></div>
       <div class="grid">${list.length ? list.map(card).join('') : '<p class="empty-group">Nobody is on this group yet.</p>'}</div>`;
     $('print').onclick = () => window.print();
+    /* every card that has feedback and no summary yet, one after another; a card already written is left alone */
+    $('draftAll').onclick = async () => {
+      const todo = list.filter(t => lessonsOf(t).length && !(handOf(t) && handOf(t).summary && String(handOf(t).summary.text || '').trim()));
+      const b = $('draftAll'); if (!todo.length) { b.textContent = 'All written'; setTimeout(draw, 1400); return; }
+      b.disabled = true; let n = 0, failed = 0;
+      for (const t of todo) { b.textContent = 'Drafting ' + (n + failed + 1) + ' of ' + todo.length + '…'; try { if (await draftOne(t)) n++; else failed++; } catch (e) { failed++; } }
+      draw(); if (failed) { const w = document.querySelector('.hand .when'); if (w) w.insertAdjacentHTML('beforeend', ' · <b>' + failed + ' could not be drafted just now</b>'); }
+    };
+    document.querySelectorAll('[data-sumdraft]').forEach(b => b.onclick = async () => { const t = roster.find(x => x.token === b.dataset.sumdraft); if (!t) return;
+      const msg = b.parentElement.querySelector('.saved'); b.disabled = true; if (msg) msg.textContent = 'Lite is reading the feedback…';
+      try { if (await draftOne(t)) draw(); else if (msg) { msg.textContent = 'Could not be drafted just now.'; b.disabled = false; } } catch (e) { if (msg) msg.textContent = /demo/.test(String(e)) ? 'Drafting needs a real course.' : 'Could not be drafted just now.'; b.disabled = false; } });
+    document.querySelectorAll('[data-sumedit]').forEach(b => b.onclick = () => editSum(b.dataset.sumedit));
     $('from').onchange = $('to').onchange = () => { chosen[group] = { from: $('from').value, to: $('to').value }; draw(); };
     $('hand').onclick = () => {
       const from = $('from').value, to = $('to').value, ck = $('check');
@@ -213,12 +297,7 @@ else (async function(){
         const at = new Date().toISOString(), msg = $('handmsg'); msg.textContent = 'Handing over…'; $('yes').disabled = true;
         try {
           for (const t of list) {
-            const links = ((t.records || {}).staffLinks || []);
-            const cur = links.find(x => x && x.handover) || { handover: true, text: '', by: from };
-            const next = links.filter(x => x && !x.handover).concat([Object.assign({}, cur, { handed: { by: from, to, at } })]);
-            const r = await S.put('staffLinks', next, t.token);
-            t.records = t.records || {}; t.records.staffLinks = next;
-            if (r && r.demo && window.hubDemoSay) hubDemoSay('This is a demo course. The handover stays on this device.');
+            await saveHand(t, { handed: { by: from, to, at } });
           }
           const line = 'From ' + (swapDay || 'TP' + half) + ', Group ' + group + ' is with ' + to + '. ' + from + ' has handed over.';
           await S.call({ op: 'post', text: line, by: from, to: group });
@@ -241,16 +320,21 @@ else (async function(){
     art.querySelector('[data-save]').onclick = async () => {
       const text = art.querySelector('textarea').value.replace(/\s+/g, ' ').trim();
       const by = leaving || tutors[0] || 'Tutor';
-      const links = ((t.records || {}).staffLinks || []).filter(x => x && !x.handover);
-      const entry = { handover: true, text, by, at: new Date().toISOString() };
-      const next = text ? links.concat([entry]) : links;
-      const msg = art.querySelector('.saved'); msg.textContent = 'Saving…';
-      try {
-        const r = await S.put('staffLinks', next, token);
-        if (r && r.demo) { if (window.hubDemoSay) hubDemoSay('This is a demo course. The line stays on this device.'); }
-        t.records = t.records || {}; t.records.staffLinks = next;
-        draw();
-      } catch (e) { msg.textContent = 'Not saved: ' + e.message; }
+      const msg = art.querySelector('.saved'); msg.textContent = 'Saving\u2026';
+      try { await saveHand(t, { text, by, at: new Date().toISOString() }); draw(); } catch (e) { msg.textContent = 'Not saved: ' + e.message; }
+    };
+  }
+  function editSum(token){
+    const t = roster.find(x => x.token === token); if (!t) return;
+    const box = document.querySelector('.tr[data-token="' + token + '"] .sumbox'); if (!box) return;
+    const cur = (handOf(t) || {}).summary || {};
+    box.innerHTML = `<textarea style="font-family:'Karla',sans-serif;font-style:normal;font-size:14.5px;min-height:120px;" placeholder="A few sentences for the next tutor: how the lessons have gone, what is strong, what keeps coming up.">${esc(cur.text || '')}</textarea>
+      <div class="row"><button type="button" data-sumsave="1">Save</button><button type="button" class="quiet" data-cancel="1">Cancel</button><span class="saved"></span></div>`;
+    box.querySelector('textarea').focus();
+    box.querySelector('[data-cancel]').onclick = draw;
+    box.querySelector('[data-sumsave]').onclick = async () => {
+      const text = box.querySelector('textarea').value.replace(/\s+/g, ' ').trim(), msg = box.querySelector('.saved'); msg.textContent = 'Saving\u2026';
+      try { await saveHand(t, { summary: text ? { text, at: new Date().toISOString(), by: leaving || tutors[0] || 'Tutor' } : null }); draw(); } catch (e) { msg.textContent = 'Not saved: ' + e.message; }
     };
   }
   draw();
