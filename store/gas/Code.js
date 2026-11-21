@@ -1978,7 +1978,10 @@ case 'inbox': {
       var MAX_UPLOAD_MB = byTutor ? 9 : 2;
       if (bytes.length > MAX_UPLOAD_MB * 1024 * 1024) throw new Error('That file is over ' + MAX_UPLOAD_MB + 'MB. Put it on your own Drive and paste the materials link instead.');
       var folder = materialsFolder_(course);
+      /* v280: a program is not a handout (a trainee attached POWERPNT.EXE where their slides should have been) */
+      if (/\.(exe|msi|dmg|pkg|app|bat|cmd|com|scr|vbs|jar|sh)$/i.test(mName)) throw new Error('That is a program, not a document. Attach the file you made, for example the .pptx or .pdf.');
       var file = folder.createFile(Utilities.newBlob(bytes, mType, mName));
+      if (byTutor) { try { file.setDescription('{"by":"tutor"}'); } catch (eD) {} }   /* v280: so the handouts copy can leave a tutor's pages out */
       // Ramy, 23 Sep 2026: "anyone with the link". A tutor opening a
       // candidate's worksheet is often not signed into the center's Workspace,
       // and an assessor never is.
@@ -5880,8 +5883,23 @@ function exportHandouts_(courseId, root, state, max, from) {
   if (!id) return { copied: 0, waiting: 0 };
   var src; try { src = DriveApp.getFolderById(id); src.getName(); } catch (e) { return { copied: 0, waiting: 0 }; }
   var done = state._mats || {}, copied = 0, waiting = 0, dest = null, it = src.getFiles(), started = Date.now();
+  /* ONLY WHAT THE TRAINEES UPLOADED (v280, 21 Nov 2026). The first runs on C/21 copied 90 files and 76 of them were the
+     coursebook pages the tutors attach to the TP points; Ramy: "leave out the coursebook pages". A file a tutor
+     uploaded is left out: one marked so at upload (from v280), or one the course's TP points, timetable or stream
+     point at. A program is left out too (a trainee had attached POWERPNT.EXE for their slides). One of these copied
+     by an earlier run is taken back out of Handouts: our own copy, found by its name and size, goes to the bin. */
+  var tutorIds = {};
+  if (!from) ['tppoints', 'timetable', 'stream'].forEach(function (kind) { try { (JSON.stringify(courseRead_(courseId, kind) || '').match(/[A-Za-z0-9_-]{25,}/g) || []).forEach(function (x) { tutorIds[x] = 1; }); } catch (e) {} });
+  var PROGRAM = /\.(exe|msi|dmg|pkg|app|bat|cmd|com|scr|vbs|jar|sh)$/i, removed = 0;
   while (it.hasNext()) {
     var f = it.next(), fid = f.getId();
+    if (done[fid] === 'x') continue;
+    var leaveOut = false;
+    try { leaveOut = PROGRAM.test(f.getName()) || !!tutorIds[fid] || /"by":"tutor"/.test(String(f.getDescription() || '')); } catch (e) {}
+    if (leaveOut) {
+      if (done[fid]) { try { if (!dest) dest = childFolder_(root, 'Handouts'); var mine = dest.getFilesByName(f.getName()), sz = f.getSize(); while (mine.hasNext()) { var c = mine.next(); if (c.getSize() === sz) { c.setTrashed(true); removed++; } } } catch (e) {} }
+      done[fid] = 'x'; continue;
+    }
     if (done[fid]) continue;
     if (copied >= max || Date.now() - started > 60000) { waiting++; continue; }
     try {
@@ -5894,7 +5912,7 @@ function exportHandouts_(courseId, root, state, max, from) {
     } catch (e) { waiting++; }
   }
   state._mats = done;
-  return { copied: copied, waiting: waiting };
+  return { copied: copied + removed, waiting: waiting, removed: removed };
 }
 /* THE END-OF-COURSE EMAIL (v277, 21 Nov 2026; SWITCHED OFF). Ramy: an email at the end with the link to their portfolio,
    open for six months. Built so the wording can be read as the real thing; nothing is sent until the course's settings
