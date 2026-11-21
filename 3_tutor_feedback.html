@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211911">
+<link rel="stylesheet" href="hub-tokens.css?v=202611212244">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -633,7 +633,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211911">
+<link rel="stylesheet" href="hub-house.css?v=202611212244">
 </head>
 <body>
 <div class="board">
@@ -823,14 +823,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611211911"></script>
-<script src="hub-shared.js?v=202611211911"></script>
-<script src="hub-store.js?v=202611211911"></script>
-<script src="hub-say.js?v=202611211911"></script>
-<script src="hub-crit-learn.js?v=202611211911"></script>
-<script src="hub-crit-vocab.js?v=202611211911"></script>
-<script src="hub-sync.js?v=202611211911"></script>
-<script src="hub-notebook.js?v=202611211911"></script>
+<script src="hub-exchange.js?v=202611212244"></script>
+<script src="hub-shared.js?v=202611212244"></script>
+<script src="hub-store.js?v=202611212244"></script>
+<script src="hub-say.js?v=202611212244"></script>
+<script src="hub-crit-learn.js?v=202611212244"></script>
+<script src="hub-crit-vocab.js?v=202611212244"></script>
+<script src="hub-sync.js?v=202611212244"></script>
+<script src="hub-notebook.js?v=202611212244"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2785,6 +2785,13 @@ askSay();
    (overallFromNotes). Both run at once; whichever answers is placed; one Undo
    takes both back. Nothing is saved to the course until the tutor saves or returns. */
 let ASK_ADDED=[], ASK_OVERALL_WAS=null, ASK_DONE=false;
+/* THE LINES LEAVE THE BOX ONCE THEY ARE SORTED (Ramy, 21 Nov 2026: "when you click on Ask Connect ... it's just all there
+   sorted into action points, strengths, and overall comment. Why is it still there? ... it looks more like a bug"). Once
+   Ask Connect has placed something, the While you watch box is emptied. The lines are kept with Ask Connect's own note
+   in this browser (never in the feedback), so Undo puts them back in the box and Redraft still has them to work from. */
+let ASK_NOTES='';
+function askNotes(){ return (($('tNotes')||{}).value||'').trim() || ASK_NOTES; }
+function askNotesBack(){ const ta=$('tNotes'); if(ta && ASK_NOTES && !(ta.value||'').trim()){ ta.value=ASK_NOTES; ta.dispatchEvent(new Event('input',{bubbles:true})); } ASK_NOTES=''; }
 /* HOW MANY POINTS (Ramy, 17 Nov 2026: "like 5 strengths and 3 action points ... depends on the stage ... or the length of the
    comments ... a ratio"). By the TP: TP 1 and 2 up to five strengths and three action points, TP 3 and 4 up to five and
    four, from TP 5 up to six and four. Short notes give fewer: about six strengths and four action points for every ten
@@ -2838,6 +2845,7 @@ async function askConnect(){
     return;
   }
   ASK_DONE=true; dirty=true; $('askUndo').hidden=false;
+  ASK_NOTES=notes; ta.value=''; ta.dispatchEvent(new Event('input',{bubbles:true}));   /* sorted: out of the box */
   askRemember(text);
   const line=said.join(', and '); msg.textContent=line.charAt(0).toUpperCase()+line.slice(1)+'. Read it through'+(sort?', click a suggested code to tag a point':'')+(draft?', and make the comment yours':'')+'.';
 }
@@ -2851,9 +2859,9 @@ $('askBtn').addEventListener('click',askConnect);
 /* THE VOICE, CHANGED AFTERWARDS (Ramy, 17 Nov 2026: "if I choose my own words and then write something, I cannot change my
    mind and use direct or supportive"). The comment is drafted once, in the voice chosen at the time. This redrafts the
    comment alone from the same lines in the voice chosen now; the boxes are not touched, and Undo puts the comment back. */
-function askRedraftShow(){ const b=$('askRedraft'); if(!b) return; b.hidden = !(($('tNotes').value||'').trim() && ($('tOverall').value||'').trim() && $('optDraft').checked); }
+function askRedraftShow(){ const b=$('askRedraft'); if(!b) return; b.hidden = !(askNotes() && ($('tOverall').value||'').trim() && $('optDraft').checked); }
 $('askRedraft').addEventListener('click', async ()=>{
-  const notes=($('tNotes').value||'').trim(), out=$('tOverall'), msg=$('askMsg'), b=$('askRedraft');
+  const notes=askNotes(), out=$('tOverall'), msg=$('askMsg'), b=$('askRedraft');
   if(!notes) return;
   b.disabled=true; msg.textContent='Connect is redrafting the comment\u2026';
   const token=(window.HubStore && HubStore.token && HubStore.token())||'';
@@ -2883,7 +2891,7 @@ let ASK_BACK=null;   // { rows:[{row, created}], overallWas } found on opening t
 function askRemember(overall){
   try{ localStorage.setItem(ASK_KEY, JSON.stringify({ tp:notesTP(), at:Date.now(),
     rows:ASK_ADDED.map(({row, created})=>({ list:row.parentElement ? row.parentElement.id : '', html:row.querySelector('.pt-text').innerHTML, created:!!created })),
-    overall:overall||null, overallWas:ASK_OVERALL_WAS })); }catch(e){}
+    overall:overall||null, overallWas:ASK_OVERALL_WAS, notes:ASK_NOTES||'' })); }catch(e){}
 }
 function askForget(){ try{ localStorage.removeItem(ASK_KEY); }catch(e){} ASK_BACK=null; }
 function askFind(){
@@ -2896,8 +2904,9 @@ function askFind(){
     const row=[...host.querySelectorAll('.pt')].find(x=>!taken.has(x) && x.querySelector('.pt-text').innerHTML===r.html);
     if(row){ taken.add(row); rows.push({ row, created:r.created }); } });
   const out=$('tOverall'), comment = m.overall!=null && out && out.value===m.overall;
-  if(!rows.length && !comment){ askForget(); return; }
+  if(!rows.length && !comment){ if(m.notes) { ASK_NOTES=m.notes; askNotesBack(); } askForget(); return; }
   ASK_BACK={ rows, overallWas: comment ? (m.overallWas||'') : null };
+  if(m.notes && !(($('tNotes')||{}).value||'').trim()) { ASK_NOTES=m.notes; askRedraftShow(); }
   $('askUndo').hidden=false;
   const bits=[]; if(rows.length) bits.push(rows.length+(rows.length===1?' point':' points')+' from Ask Connect '+(rows.length===1?'is':'are')+' still as it placed '+(rows.length===1?'it':'them'));
   if(comment) bits.push((rows.length?'and ':'')+'the overall comment is still its draft');
@@ -2916,7 +2925,7 @@ $('askUndo').addEventListener('click',async ()=>{
     const what=[n ? 'take out the '+n+(n===1?' point':' points')+' Ask Connect placed' : '', c ? 'put the overall comment back to what it was before' : ''].filter(Boolean).join(' and ');
     if(window.confirmModal && !(await confirmModal(what.replace(/^./, x=>x.toUpperCase())+'? Anything you have changed since stays as you wrote it.','Undo'))) return;
     askTakeOut(ASK_BACK.rows, ASK_BACK.overallWas);
-    askForget(); $('askUndo').hidden=true; $('askMsg').textContent='Taken back out. Your lines are still here.'; dirty=true;
+    askNotesBack(); askForget(); $('askUndo').hidden=true; $('askMsg').textContent='Taken back out. Your lines are back in the box.'; dirty=true; askRedraftShow();
     return;
   }
   askForget();
@@ -2925,7 +2934,8 @@ $('askUndo').addEventListener('click',async ()=>{
     else { row.querySelector('.pt-text').innerHTML=''; delete row.dataset.tidied; delete row.dataset.ai; row.dispatchEvent(new Event('ai-suggest')); }
   });
   if(ASK_OVERALL_WAS!==null){ const out=$('tOverall'); out.value=ASK_OVERALL_WAS; autoGrow(out); out.dispatchEvent(new Event('input',{bubbles:true})); }
-  ASK_ADDED=[]; ASK_OVERALL_WAS=null; ASK_DONE=false; $('askUndo').hidden=true; $('askMsg').textContent='Taken back out. Your lines are still here.'; dirty=true;
+  askNotesBack();
+  ASK_ADDED=[]; ASK_OVERALL_WAS=null; ASK_DONE=false; $('askUndo').hidden=true; $('askMsg').textContent='Taken back out. Your lines are back in the box.'; dirty=true; askRedraftShow();
 });
 
 /* once the saved feedback is on the form (and again when the course's copy arrives), look for what Ask Connect left */
