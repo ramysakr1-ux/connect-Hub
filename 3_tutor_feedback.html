@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211718">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211816">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -633,7 +633,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211718">
+<link rel="stylesheet" href="hub-house.css?v=202611211816">
 </head>
 <body>
 <div class="board">
@@ -823,14 +823,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611211718"></script>
-<script src="hub-shared.js?v=202611211718"></script>
-<script src="hub-store.js?v=202611211718"></script>
-<script src="hub-say.js?v=202611211718"></script>
-<script src="hub-crit-learn.js?v=202611211718"></script>
-<script src="hub-crit-vocab.js?v=202611211718"></script>
-<script src="hub-sync.js?v=202611211718"></script>
-<script src="hub-notebook.js?v=202611211718"></script>
+<script src="hub-exchange.js?v=202611211816"></script>
+<script src="hub-shared.js?v=202611211816"></script>
+<script src="hub-store.js?v=202611211816"></script>
+<script src="hub-say.js?v=202611211816"></script>
+<script src="hub-crit-learn.js?v=202611211816"></script>
+<script src="hub-crit-vocab.js?v=202611211816"></script>
+<script src="hub-sync.js?v=202611211816"></script>
+<script src="hub-notebook.js?v=202611211816"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2233,6 +2233,12 @@ function renderTurnStatus(){
       if(!(await confirmModal('Reopening takes this feedback back: until you return it again, '+traineeLabel('the trainee')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
       saveFeedbackRecord({status:'draft'});
       renderTurnStatus();
+      /* THE PAGE IS DRAWN AGAIN WITH THE TRAINEE'S PAGES AS THEY ARE NOW (Ramy, 21 Nov 2026: after Reopen for edits the
+         self-evaluation that had come in since "I have to reload to see it"). A returned feedback shows the copy it was
+         returned with; reopened, it should show what the trainee has turned in since. The reopening is sent to the
+         store first, then the page reloads in the same place. */
+      const go=()=>{ try{ sessionStorage.setItem('hub:glanceY:'+location.pathname, String(window.scrollY||0)); }catch(e){} location.reload(); };
+      try{ (window.HubSync&&HubSync.flushNow?HubSync.flushNow(true):Promise.resolve()).then(go, go); }catch(e){ go(); }
     });
   } else {
     setLock(false);
@@ -2341,6 +2347,33 @@ window.HUB_REDRAW=function(){
       const card=$('seen'), h=card.querySelector('h2'); if(h) h.textContent='What was returned, with your comments';
       $('seenBody').innerHTML='<div class="returned-doc" style="background:var(--paper);border:1px solid var(--sand-line);border-radius:8px;padding:14px 16px;overflow-x:auto;">'+rec.docHTML+'</div>';
       card.style.display='';
+    }
+    /* THE SELF-EVALUATION THAT CAME IN AFTER THE FEEDBACK WENT BACK (Ramy, 21 Nov 2026: he returned a feedback before
+       the self-evaluation was in, the trainee then turned it in, and "can't see it. So I have to claim the plan back
+       so I can read it"). A returned feedback keeps the copy it was returned with, and that copy has no
+       self-evaluation in it. It is shown here to read, under what was returned; nothing is taken back and the
+       returned record is not changed. Commenting on it is still Reopen for edits. Opening this page is what the
+       dashboard counts as having read it. */
+    if(rec.status==='returned' && selfRec && selfRec.status==='turned_in' && selfRec.state){
+      const sAt=+new Date(selfRec.turnedInAt||0), rAt=+new Date(rec.returnedAt||0);
+      const tpOf=x=>{ const m=String(x||'').match(/\d+/); return m?+m[0]:0; };
+      const sTp=tpOf(((selfRec.state.doc||{}).meta||{}).tp||selfRec.label), fTp=tpOf(((rec.state||{}).f||{}).fTP||rec.label);
+      if(sAt>rAt && (!sTp || !fTp || sTp===fTp)){
+        const sv=selfRec.state.self||selfRec.state;
+        const rows=(window.hubSelfRows ? hubSelfRows(sv, true) : []).filter(([,v])=>(v||'').trim())
+          .map(([k,v])=>`<tr><td width="28%"><b>${k}</b></td><td>${bulletsHTML(v)}</td></tr>`).join('')
+          + (sv.actions||[]).filter(a=>(a.prev||'').trim()||(a.did||'').trim()).map(a=>`<tr><td width="28%"><b>Last TP: ${nl2br(a.prev)}</b></td><td>${bulletsHTML(a.did)}</td></tr>`).join('');
+        /* not twice: where the form's own plan card already shows their self-evaluation, that is the one to read */
+        const shownAlready = $('seen').style.display!=='none' && /Their self-evaluation/.test(($('seenBody')||{}).innerText||'');
+        if(rows && $('seen') && !$('selfLate') && !shownAlready){
+          const box=document.createElement('div'); box.className='card seen'; box.id='selfLate';
+          box.innerHTML=`<div class="seen-head"><h2>Their self-evaluation</h2></div>
+            <p style="margin:0 0 10px;font-size:0.88rem;color:var(--grey);">Turned in ${esc(fmtDate(sAt))}, after you returned this feedback. They can read your feedback now. To comment on this, use Reopen for edits.</p>
+            <div class="seen-body"><table><tr><th width="28%">Section</th><th>What they wrote</th></tr>${rows}</table></div>`;
+          $('seen').insertAdjacentElement('afterend', box);
+        }
+        if(TRAINEE_ID){ try{ localStorage.setItem('chub:selfRead:'+TRAINEE_ID, String(sAt)); }catch(e){} }
+      }
     }
   }catch(e){} }
   renderTurnStatus();
