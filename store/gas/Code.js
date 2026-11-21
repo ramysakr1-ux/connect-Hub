@@ -2939,7 +2939,12 @@ case 'inbox': {
         + 'If an action point from an earlier lesson no longer appears in a later one, you may say NAME has acted on it; otherwise say nothing about how they take feedback. '
         + 'Use only what the feedback says. Do not add praise, problems, causes or advice that are not there; do not predict a result or a final grade; do not mention criteria codes. '
         + 'Assignments and the Stage 2 result may be mentioned in a few words only if they matter (a resubmission out, a fail, a not-to-standard Stage 2). '
-        + 'The clear, professional register of one colleague briefing another: natural and readable, never chatty, never stiff. Write "students", never Ss. ' + celtaShorthand_()
+        /* less stiff (Ramy, 21 Nov 2026, on the first one it wrote: "consistently builds ... has persisted across lessons ... the aim unmet") */
+        + 'Write the way one tutor tells another about a trainee across the table: plain, everyday words and short sentences, as you would say them aloud. '
+        + 'Say "is good at", "still", "keeps", "ran out of time", "did not get to"; not "consistently", "persisted", "recurring issue", "unmet", "pacing", "demonstrates", "exhibits", "requires attention", "remains an area". '
+        + 'Start with what the trainee is like in the classroom, not with a list. Contractions are fine. No report language, no management language, nothing you would not say to a colleague. '
+        + 'For example: "NAME is great with the students and they like being in the room. The plans are clear, but the instructions still run long and nobody checks them, so tasks start slowly. TP3 was not to standard: the clarification took half the lesson and they never got to the freer practice. Timing got better after TP1." '
+        + 'That example shows the voice only: never reuse its content. Write "students", never Ss. ' + celtaShorthand_()
         + 'Write shorthand out in full, except TTT, STT, CCQs and ICQs. No lists, no headings, no arrows. American spelling. '
         + 'Answer as JSON: {"text":"..."}.';
       var hwResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
