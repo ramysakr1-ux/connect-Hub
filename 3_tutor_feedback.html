@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211342">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211350">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -633,7 +633,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211342">
+<link rel="stylesheet" href="hub-house.css?v=202611211350">
 </head>
 <body>
 <div class="board">
@@ -823,14 +823,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611211342"></script>
-<script src="hub-shared.js?v=202611211342"></script>
-<script src="hub-store.js?v=202611211342"></script>
-<script src="hub-say.js?v=202611211342"></script>
-<script src="hub-crit-learn.js?v=202611211342"></script>
-<script src="hub-crit-vocab.js?v=202611211342"></script>
-<script src="hub-sync.js?v=202611211342"></script>
-<script src="hub-notebook.js?v=202611211342"></script>
+<script src="hub-exchange.js?v=202611211350"></script>
+<script src="hub-shared.js?v=202611211350"></script>
+<script src="hub-store.js?v=202611211350"></script>
+<script src="hub-say.js?v=202611211350"></script>
+<script src="hub-crit-learn.js?v=202611211350"></script>
+<script src="hub-crit-vocab.js?v=202611211350"></script>
+<script src="hub-sync.js?v=202611211350"></script>
+<script src="hub-notebook.js?v=202611211350"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2333,6 +2333,15 @@ window.HUB_REDRAW=function(){
     const st=Object.assign({}, rec.state);
     if(planRec&&planRec.state&&rec.status!=='returned') delete st.doc;
     draftApply(st);
+    /* A RETURNED TP WITH NO PLAN TO SHOW STILL SHOWS WHAT WAS RETURNED (21 Nov 2026). A long returned record drops the
+       form's working copy of the plan to stay inside the record's size (17 Nov), and the tutor's comments beside the
+       stages were drawn on that copy, so on reopening there was no plan and no comments to see: Belma took it that her
+       comments had not been saved. They were, in the finished document. That document is shown here in the plan's place. */
+    if(rec.status==='returned' && rec.docHTML && $('seen') && $('seen').style.display==='none'){
+      const card=$('seen'), h=card.querySelector('h2'); if(h) h.textContent='What was returned, with your comments';
+      $('seenBody').innerHTML='<div class="returned-doc" style="background:var(--paper);border:1px solid var(--sand-line);border-radius:8px;padding:14px 16px;overflow-x:auto;">'+rec.docHTML+'</div>';
+      card.style.display='';
+    }
   }catch(e){} }
   renderTurnStatus();
 })();
