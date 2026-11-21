@@ -1189,7 +1189,8 @@ case 'inbox': {
       } finally { caLock.releaseLock(); }
       COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
       var caAt = courseEndsAt_(caC.id, caSet, true);
-      return { id: caC.id, end: caSet.end || '', accessUntil: caSet.accessUntil || '', courseClosed: !!caSet.courseClosed, traineesEndAt: caAt ? caAt.toISOString() : '', traineesOpen: !caSet.courseClosed && (!caAt || new Date() <= caAt), tutorsOpen: !caSet.courseClosed };
+      var caWhy = []; try { caWhy = autoClose_(caC.id, caSet, PropertiesService.getScriptProperties(), true) || []; } catch (e) {}
+      return { closesWhen: caWhy, autoClosedAt: caSet.autoClosedAt || '', id: caC.id, end: caSet.end || '', accessUntil: caSet.accessUntil || '', courseClosed: !!caSet.courseClosed, traineesEndAt: caAt ? caAt.toISOString() : '', traineesOpen: !caSet.courseClosed && (!caAt || new Date() <= caAt), tutorsOpen: !caSet.courseClosed };
     }
     /* THE COURSE CACHE's switch (5 Nov 2026): set: "all", "" (off) or course ids "c1,c9"; without set, says what it is. */
     case 'courseCache': {
@@ -5909,6 +5910,48 @@ function portfolioMails_(courseId, set, state) {
   });
   return sent;
 }
+/* THE COURSE CLOSES FOR ITS TUTORS BY ITSELF (v278, 21 Nov 2026). Ramy: "as soon as they finish writing the final
+   reports, they lose access. I can always reopen it"; "all automatic with an override". Lite has no mark for a
+   finished report, so the course is taken as finished when ALL of these hold (put to him and agreed, 21 Nov):
+     the trainees' links have ended (the course is over on its timetable);
+     every trainee on the course has a final grade (or was withdrawn);
+     the grade meeting is recorded (Grades and report > Record the grade meeting);
+     nothing on the course has changed for two days (so nobody is shut out in the middle of a report);
+     and, where the course has a center folder, nothing is waiting to be filed in it.
+   Then settings.courseClosed is set, once: autoClosedAt remembers it, so a course the owner opens again (the owner's
+   page, "When its links end") stays open until the owner closes it. A demo course never closes; a course that ended
+   before this was built is not looked at (courseEndsAt_ answers nothing for it). why: true answers what is still
+   missing, and changes nothing. */
+function autoClose_(courseId, set, props, why) {
+  var miss = [];
+  if (set.demoToday || set.presentToday) return why ? ['a demo course never closes'] : false;
+  if (set.courseClosed) return why ? ['already closed'] : false;
+  if (set.autoClosedAt) return why ? ['closed by itself once, then opened again by the owner: it stays open until the owner closes it'] : false;
+  var at = courseEndsAt_(courseId, set, true);
+  if (!at || new Date() < at) miss.push('the course has not ended');
+  if (!(String(set.end || '') >= ACCESS_ENDS_FROM_)) miss.push('a course that ended before this was built is never closed by itself');
+  var meetings = (set.gradeForm && set.gradeForm.meetings) || [];
+  if (!meetings.length) miss.push('the grade meeting is not recorded');
+  var people = rosterWithRecords_(courseId, { tracker: true }), ungraded = 0;
+  people.forEach(function (t) { var tr = (t.records || {}).tracker || {}; if (!tr.withdrawn && !String((tr.grades || {}).final || '').trim()) ungraded++; });
+  if (!people.length) miss.push('no trainees on the course');
+  if (ungraded) miss.push(ungraded + ' without a final grade');
+  var ver = props.getProperty(verKey_(String(courseId))) || '', last = parseInt(ver.slice(0, -4), 36);
+  if (!(last > 0) || Date.now() - last < 2 * 864e5) miss.push('something changed in the last two days');
+  if (driveFolderId_(set.exportFolder) && props.getProperty('EXPORT_SEEN_' + courseId) !== ver + '|2') miss.push('something is waiting to be filed');
+  if (why) return miss;
+  if (miss.length) return false;
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try {
+    COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+    var now = courseRead_(courseId, 'settings') || {};
+    if (now.courseClosed || now.autoClosedAt) return false;
+    now.courseClosed = true; now.autoClosedAt = new Date().toISOString();
+    courseWriteRaw_(courseId, 'settings', now);
+  } finally { lock.releaseLock(); }
+  COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+  return true;
+}
 /* THE EXPORT, IN INSTALLMENTS (v273, 22 Nov 2026). Ramy: "maybe we can make that migration in installments ... when TPs are
    finished, done, and passed, they can sort of migrate ... so by the end of the course it will just be the last two TPs
    and final assignments and CELTA 5." Every half hour (it rides on the volunteers' reminder trigger): for each real
@@ -5921,6 +5964,7 @@ function exportTick_() {
     if (Date.now() - started > 150000) return;   /* two and a half minutes a tick, whatever is left waits for the next */
     try {
       var set = courseRead_(c.id, 'settings') || {};
+      try { if (autoClose_(c.id, set, props)) return; } catch (e0) {}   /* v278: finished, filed and quiet for two days */
       if (set.demoToday || set.presentToday || !driveFolderId_(set.exportFolder)) return;
       var ver = props.getProperty(verKey_(String(c.id))) || '', seenKey = 'EXPORT_SEEN_' + c.id;
       if (ver && props.getProperty(seenKey) === ver + '|2') return;
