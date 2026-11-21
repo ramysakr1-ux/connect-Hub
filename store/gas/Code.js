@@ -3542,7 +3542,9 @@ case 'inbox': {
       requireOwner_(owner);
       var xtC = courseById_(String(req.id || ''));
       if (!xtC) throw new Error('Which course?');
-      var xtR = exportTrainees_(xtC.id, { folder: String(req.folder || ''), only: String(req.only || ''), max: Math.max(1, Math.min(12, Number(req.max) || 4)), state: (req.state && typeof req.state === 'object') ? req.state : {} });
+      var xtR = exportTrainees_(xtC.id, { folder: String(req.folder || ''), only: String(req.only || ''), max: Math.max(1, Math.min(12, Number(req.max) || 4)), state: (req.state && typeof req.state === 'object') ? req.state : {},
+        handouts: Math.max(0, Math.min(10, Number(req.handouts) || 0)), handoutsFrom: driveFolderId_(req.handoutsFrom) });
+      if (req.mail) { var xtS = courseRead_(xtC.id, 'settings') || {}, xtT = roster_(xtC.id).filter(function (t) { return !req.only || t.token === String(req.only); })[0]; xtR.mail = portfolioMailFor_(xtS, xtT ? xtT.name : '', 'https://drive.google.com/drive/folders/EXAMPLE'); }
       return xtR;
     }
     /* A FINISHED DOCUMENT, FILED WHEN IT IS FINISHED (v274, 21 Nov 2026). Ramy: "when assignments done and passed, they
@@ -4940,6 +4942,18 @@ function settingsFor_(course, s, reader, me) {
   Object.keys(s).forEach(function (k) { out[k] = s[k]; });
   delete out.assessorVisit;
   delete out.exportFolder;   /* the center's Drive folder is the tutors' to know (v271) */
+  /* THEIR OWN PORTFOLIO'S LINK (v277, 21 Nov 2026). Ramy: "each of them will get their own link to their portfolios".
+     In the course's last three days a trainee's own read carries the link to their own folder, once something has
+     been filed in it. Never another trainee's, never the invented trainee's seat, never on a demo course. */
+  try {
+    if (me && me.token && !me.template && !s.demoToday && !s.presentToday && driveFolderId_(s.exportFolder)) {
+      var pfEnd = courseEndsAt_(course.id, s), pfNow = Date.now();
+      if (pfEnd && pfNow < pfEnd.getTime() && pfEnd.getTime() - pfNow <= 3 * 864e5) {
+        var pfSt = courseRead_(course.id, 'exported') || {};
+        if (pfSt._folder === driveFolderId_(s.exportFolder) && pfSt[me.token] && pfSt[me.token].folder) out.portfolio = String(pfSt[me.token].folder);
+      }
+    }
+  } catch (e) {}
   delete out.askCode;   /* the room's question page is the tutors' to hand out (28 Oct 2026) */
   if (out.slotOf && typeof out.slotOf === 'object') { var so = {}; Object.keys(out.slotOf).forEach(function (t) { so[hide(t)] = out.slotOf[t]; }); out.slotOf = so; }
   if (Array.isArray(out.letterOrder)) out.letterOrder = out.letterOrder.map(hide);
@@ -5829,7 +5843,71 @@ function exportTrainees_(courseId, opt) {
     state[t.token] = mine;
     out.push({ initials: who.split(/\s+/).map(function (w) { return w.charAt(0).toUpperCase(); }).join(''), made: made, url: mine.folder });
   }
-  return { folder: root.getName(), exported: out, waiting: waiting, onRoster: people.length, state: state };
+  var hand = { copied: 0, waiting: 0 };
+  if (opt.handouts) { try { hand = exportHandouts_(courseId, root, state, opt.handouts, opt.handoutsFrom); } catch (e) {} }
+  return { folder: root.getName(), exported: out, waiting: waiting + hand.waiting, handouts: hand.copied, onRoster: people.length, state: state };
+}
+/* THE COURSE'S UPLOADED FILES, COPIED BESIDE THE PORTFOLIOS (v277, 21 Nov 2026). Ramy: handouts are "separate" from the
+   portfolios; Lite keeps its own files and the center's folder gets a copy. Every file uploaded on the course (the
+   materials trainees attach to a TP, the pages tutors attach to a TP point) sits in the course's own folder in Lite's
+   Drive; each is copied once into "Handouts" in the center's folder, which is not shared with anyone by Lite: it is
+   the center's to open. The private folders inside (notebook and interview recordings) are folders, and only files
+   are copied, so they never travel. Nothing in Lite's own folder is moved, renamed or deleted. state._mats remembers
+   what has been copied, by file id; opt.from names the folder to read (the trial), else the course's own. */
+function exportHandouts_(courseId, root, state, max, from) {
+  var id = from || PropertiesService.getScriptProperties().getProperty('MATS_FOLDER_' + courseId);   /* read the id, never make the folder */
+  if (!id) return { copied: 0, waiting: 0 };
+  var src; try { src = DriveApp.getFolderById(id); src.getName(); } catch (e) { return { copied: 0, waiting: 0 }; }
+  var done = state._mats || {}, copied = 0, waiting = 0, dest = null, it = src.getFiles(), started = Date.now();
+  while (it.hasNext()) {
+    var f = it.next(), fid = f.getId();
+    if (done[fid]) continue;
+    if (copied >= max || Date.now() - started > 60000) { waiting++; continue; }
+    try {
+      if (!dest) dest = childFolder_(root, 'Handouts');
+      /* already there under this name and at this size (a copy made by a run whose note of it was lost): not twice */
+      var had = false, same = dest.getFilesByName(f.getName()), size = f.getSize();
+      while (same.hasNext()) { if (same.next().getSize() === size) had = true; }
+      if (!had) { f.makeCopy(f.getName(), dest); copied++; }
+      done[fid] = 1;
+    } catch (e) { waiting++; }
+  }
+  state._mats = done;
+  return { copied: copied, waiting: waiting };
+}
+/* THE END-OF-COURSE EMAIL (v277, 21 Nov 2026; SWITCHED OFF). Ramy: an email at the end with the link to their portfolio,
+   open for six months. Built so the wording can be read as the real thing; nothing is sent until the course's settings
+   carry portfolioMail: true, which no page sets yet: the wording is Ramy's to approve first. When it is on: once the
+   trainees' links have ended and nothing is waiting to be filed, each trainee who has a folder and an address gets one
+   email, once (remembered on their line of the 'exported' record). It says nothing about Lite's links. */
+function portfolioMailFor_(set, name, url) {
+  var esc = function (x) { return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var first = String(name || '').trim().split(/\s+/)[0] || 'there';
+  var tutors = String(set.tutorNames || '').split(/[,\n;]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+  var from = tutors.length > 1 ? tutors.slice(0, -1).join(', ') + ' and ' + tutors[tutors.length - 1] : (tutors[0] || set.centreName || '');
+  return { subject: 'Your CELTA portfolio',
+    html: '<div style="font:16px/1.55 Arial,sans-serif;color:#222">'
+      + '<p>Dear ' + esc(first) + ',</p>'
+      + '<p>Congratulations on finishing the course!</p>'
+      + '<p>Your portfolio is saved for you here:</p>'
+      + '<p><a href="' + esc(url) + '" style="display:inline-block;padding:12px 20px;background:#1f5f5b;color:#fff;text-decoration:none;border-radius:8px;font:bold 15px Arial">Open your portfolio</a></p>'
+      + '<p>It holds your teaching practice, with your plans, self-evaluations and feedback, and your assignments, as PDFs. The link is yours. It will stay open for six months, so download anything you want to keep.</p>'
+      + (from ? '<p>' + esc(from) + '</p>' : '') + '</div>' };
+}
+function portfolioMails_(courseId, set, state) {
+  if (set.portfolioMail !== true) return 0;
+  var at = courseEndsAt_(courseId, set, true);
+  if (!at || new Date() < at) return 0;
+  var sent = 0;
+  rosterWithRecords_(courseId, { tracker: true }).forEach(function (t) {
+    var mine = t && state[t.token];
+    if (((t.records || {}).tracker || {}).withdrawn) return;   /* someone who left the course is not congratulated on finishing it */
+    if (!mine || !mine.folder || mine.mailed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(t.email || ''))) return;
+    var m = portfolioMailFor_(set, t.name, mine.folder);
+    sendAs_({ to: String(t.email), subject: m.subject, htmlBody: m.html, name: set.centreName || 'Connect Lite' });
+    mine.mailed = new Date().toISOString(); sent++;
+  });
+  return sent;
 }
 /* THE EXPORT, IN INSTALLMENTS (v273, 22 Nov 2026). Ramy: "maybe we can make that migration in installments ... when TPs are
    finished, done, and passed, they can sort of migrate ... so by the end of the course it will just be the last two TPs
@@ -5847,8 +5925,9 @@ function exportTick_() {
       var ver = props.getProperty(verKey_(String(c.id))) || '', seenKey = 'EXPORT_SEEN_' + c.id;
       if (ver && props.getProperty(seenKey) === ver + '|2') return;
       var state = courseRead_(c.id, 'exported') || {};
-      var r = exportTrainees_(c.id, { state: state, max: 8 });
-      if (r.exported.length) courseWrite_(c.id, 'exported', r.state);
+      var r = exportTrainees_(c.id, { state: state, max: 8, handouts: 15 });
+      var mailed = 0; if (!r.waiting) { try { mailed = portfolioMails_(c.id, set, r.state); } catch (e2) {} }
+      if (r.exported.length || r.handouts || mailed) courseWrite_(c.id, 'exported', r.state);
       if (!r.waiting) props.setProperty(seenKey, (props.getProperty(verKey_(String(c.id))) || ver) + '|2');   /* all filed: nothing to do until the course moves again */
     } catch (e) {}
   });
