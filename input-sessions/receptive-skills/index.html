@@ -102,7 +102,14 @@
   .key table{margin:8px 0 14px; font-size:.88rem;}
   .key td:first-child{font-weight:600; width:32%;}
   @media(max-width:780px){ .match, .types{grid-template-columns:1fr;} }
-  @media print{ .timer, .count{display:none;} .reveal .ans, .why, .key.hidden, .ob, .mt{display:none !important;} }
+  @media print{ .timer, .count{display:none;} .reveal .ans, .why, .key.hidden{display:none !important;}
+    /* 21 Nov 2026: the terms and the stages print as tasks on the handout (they were left off it, so the paper said "Match each term" over an empty box), always as untouched ones: no color, no number in the circle. */
+    .ob, .mt, .opt{background:none !important; border-color:#999 !important; color:#000 !important; break-inside:avoid;}
+    .ob .n{background:none !important; border:1px solid #999; color:transparent !important;}
+    /* 21 Nov 2026: an answered True or false printed its other option faded, and an opened reveal kept its teal edge. */
+    .opt.dim{opacity:1 !important;} .reveal{border-color:#bbb !important;}
+    /* 21 Nov 2026: the bank behind "Reveal answer" and an opened answer key printed on the plain handout. The key prints from its own Print button only. */
+    body:not(.with-answers) #typesBox{display:none !important;} body:not(.key-print) #keyBody{display:none !important;} }
 </style>
 </head>
 <body>
@@ -182,7 +189,7 @@
   </div>
   <div class="card">
     <h3 style="margin-top:0">Staging a receptive skills lesson</h3>
-    <p>A receptive skills lesson never starts cold. It opens by creating interest in the topic: visuals, personalisation, brainstorming what the class already knows. Background knowledge is part of how anyone understands a text, not a shortcut around it. Only then does the lesson pre-teach vocabulary, and only the words essential to understanding.</p>
+    <p>A receptive skills lesson never starts cold. It opens by creating interest in the topic: visuals, personalization, brainstorming what the class already knows. Background knowledge is part of how anyone understands a text, not a shortcut around it. Only then does the lesson pre-teach vocabulary, and only the words essential to understanding.</p><!-- 21 Nov 2026: American spelling (was personalisation) -->
     <p>The gist task comes next, testing global understanding only. For reading, students read silently under a time limit, so they read quickly and concentrate on the gist rather than the detail; for listening, the recording plays once. Only once gist is secure does the lesson set a specific information or detail task, prompting closer reading or listening.</p>
     <p>Peer checking before whole-class feedback plays a major role in a receptive skills lesson. It increases involvement, builds confidence by making correction feel safer than the teacher stepping in first, deepens understanding as students explain answers to each other, and builds the teamwork and communication skills that matter beyond the classroom.</p>
     <p>The lesson closes with a follow-up task based on something related to the text: a language focus, a discussion, a role play or a written task.</p>
@@ -429,7 +436,9 @@ var __lrS = 14197; function __lr(){ __lrS = (__lrS * 16807) % 2147483647; return
   TF.forEach(function(q, i){ var r = el('tr'); r.appendChild(el('td', null, (i + 1) + '. ' + q[0])); r.appendChild(el('td', null, (q[1] ? 'True. ' : 'False. ') + q[2])); kf.appendChild(r); });
   document.getElementById('keyOrder').textContent = CORRECT.map(function(k){ return label[k]; }).join(' → ');
   document.getElementById('keyShow').addEventListener('click', function(){ keyBody.classList.remove('hidden'); keyPrint.classList.remove('hidden'); this.classList.add('hidden'); });
-  keyPrint.addEventListener('click', function(){ window.print(); });
+  /* 21 Nov 2026: the key's own Print marks its print, so "Print the handout" can leave an opened key out. */
+  keyPrint.addEventListener('click', function(){ document.body.classList.add('key-print'); window.print(); });
+  window.addEventListener('afterprint', function(){ document.body.classList.remove('key-print'); });
 })();
 </script>
 <script>

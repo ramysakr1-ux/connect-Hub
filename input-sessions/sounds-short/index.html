@@ -61,7 +61,7 @@
   .chart small{font-size:.74rem; color:var(--grey);}
   .art{display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--paper); border:1px solid var(--sand-line); border-radius:var(--r-strip); padding:12px 14px; margin:8px 0; cursor:pointer; font:inherit; color:var(--ink);}
   .art:hover{border-color:var(--gold);}
-  .art .play{pointer-events:none;}
+  .art .play{pointer-events:none; order:-1;}   /* 21 Nov 2026: "Play" is last in the row's markup (see the script) and first on the screen, as before */
   .art .sym{width:46px; flex:none; font-size:1.3rem;}
   .art .how{flex:1; font-size:.88rem; line-height:1.5; color:var(--grey);}
   .strug .top{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
@@ -78,6 +78,8 @@
   .dict{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
   .dict .opts{flex:1 1 220px;}
   @media print{ .play{display:none !important;} }
+  /* 21 Nov 2026: an answered task printed solved on the handout: "Correct", "Not quite" and "Try again" beside a clapped pair or a chosen word, and matched definitions in a heavier weight. On paper each row prints as it did untouched. */
+  @media print{ .st{display:none !important;} .pill.matched:not(.term){font-weight:500;} }
   .vbar .lite-voices{margin:0;}
   .opt .eg{font-style:italic; margin-left:4px;}
   .art .sym small{display:block; font-family:'Karla',sans-serif; font-size:.74rem; font-weight:600; color:var(--grey);}
@@ -259,7 +261,8 @@ const ARTIC = [
   ['θ', 'think', 'Tongue tip between the teeth, air pushed through: voiceless, so no vocal cord buzz. Compare with /ð/, same position, voiced.'],
   ['ð', 'this', 'Same tongue position as /θ/, tongue tip between the teeth, but voiced, so the vocal cords buzz. Put a hand on your throat to feel the difference.']
 ];
-$('artic').innerHTML = ARTIC.map((a, i) => '<button type="button" class="art" data-a="' + i + '"><span class="play">Play</span><span class="sym">/' + a[0] + '/<small>' + a[1] + '</small></span><span class="how">' + esc(a[2]) + '</span></button>').join('');
+// 21 Nov 2026: each row is one button, and with "Play" as its first word the print took the whole row for a control and left it off the handout: part 5 printed without its four sounds and their summaries. "Play" now comes last in the row's markup and is put back first on the screen by the stylesheet (.art .play{order:-1}).
+$('artic').innerHTML = ARTIC.map((a, i) => '<button type="button" class="art" data-a="' + i + '"><span class="sym">/' + a[0] + '/<small>' + a[1] + '</small></span><span class="how">' + esc(a[2]) + '</span><span class="play">Play</span></button>').join('');
 $('artic').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; say(ARTIC[b.dataset.a][1]); });
 
 // ---------- 6. Struggles ----------
