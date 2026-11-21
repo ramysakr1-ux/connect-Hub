@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211216">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211323">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -236,7 +236,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211216">
+<link rel="stylesheet" href="hub-house.css?v=202611211323">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -249,20 +249,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611211216"></script>
-<script src="hub-hand.js?v=202611211216"></script>
-<script src="hub-ink.js?v=202611211216"></script>
-<script src="assignment-defaults.js?v=202611211216"></script>
-<script src="celta5-text.js?v=202611211216"></script>
-<script src="celta5-appendix.js?v=202611211216"></script>
-<script src="celta5-criteria.js?v=202611211216"></script>
-<script src="hub-tracker.js?v=202611211216"></script>
-<script src="observation-defaults.js?v=202611211216"></script>
-<script src="hub-shared.js?v=202611211216"></script>
-<script src="hub-store.js?v=202611211216"></script>
-<script src="hub-say.js?v=202611211216"></script>
-<script src="hub-sync.js?v=202611211216"></script>
-<script src="hub-notebook.js?v=202611211216"></script>
+<script src="celta5-pdf.js?v=202611211323"></script>
+<script src="hub-hand.js?v=202611211323"></script>
+<script src="hub-ink.js?v=202611211323"></script>
+<script src="assignment-defaults.js?v=202611211323"></script>
+<script src="celta5-text.js?v=202611211323"></script>
+<script src="celta5-appendix.js?v=202611211323"></script>
+<script src="celta5-criteria.js?v=202611211323"></script>
+<script src="hub-tracker.js?v=202611211323"></script>
+<script src="observation-defaults.js?v=202611211323"></script>
+<script src="hub-shared.js?v=202611211323"></script>
+<script src="hub-store.js?v=202611211323"></script>
+<script src="hub-say.js?v=202611211323"></script>
+<script src="hub-sync.js?v=202611211323"></script>
+<script src="hub-notebook.js?v=202611211323"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -1034,12 +1034,15 @@ const FINAL_LINES = [
 const RATE = { above: 'above_standard', to: 'to_standard', not: 'not_to_standard' };
 const sigName = s => (s && s.at) ? s.name : null, sigAt = s => (s && s.at) ? s.at : null, sigInk = s => (s && s.at && s.ink) ? s.ink : null;
 const shortDate = iso => iso ? (window.hubDateOf ? hubDateOf(iso) : new Date(iso)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-function bookletInput(){
+function bookletInput(asTrainee){
+  /* asTrainee: the booklet as the trainee is allowed to see it, whoever is looking. The copy filed in the trainee's own
+     folder is made this way, so a stage a tutor has not returned, or a final page not yet signed, never reaches it. */
+  const HOLD = IS_TRAINEE || !!asTrainee;
   /* A STAGE IS THE TRAINEE'S TO READ ONCE IT IS RETURNED (Ramy, 18 Nov 2026: "how do we know that the trainees will not look at
      stage 1 while the tutor is writing it?"). They could: the tutors' half reached the trainee whole, draft and all. The
      store now holds an unreturned stage back (traineeCelta5t_), and this page shows a trainee nothing of one either. */
-  const ret = x => (IS_TRAINEE && !(x && x.returnedAt)) ? {} : (x || {});
-  const s1 = ret(TT.stage1), s2c = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (IS_TRAINEE && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
+  const ret = x => (HOLD && !(x && x.returnedAt)) ? {} : (x || {});
+  const s1 = ret(TT.stage1), s2c = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (HOLD && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
   const hist = T.tpHistory(who.tr), flat = T.recordFor(who.tr);
   const assessedTp = Object.keys(hist).sort((a, b) => a - b).map(n => { const f = (hist[n].state && hist[n].state.f) || {};
     /* 9.1.2: "The type of lesson must be recorded in the CELTA 5." The tutor's
@@ -1127,12 +1130,13 @@ window.hubCelta5Debug = { input: bookletInput, withC: (c, t) => { Object.assign(
    downloads Cambridge's PDF, the same PDF is handed to the store, which files it in this trainee's folder as "CELTA 5",
    over the last one. So the folder always holds the booklet as it last stood, and after Stage 3 the finished one.
    Quiet: a course with no center folder, or a demo, files nothing; a failure never gets in the tutor's way. */
-async function fileBooklet(bytes){
+async function fileBooklet(){
+  let bytes = null;
   try {
     if (!IS_TUTOR || !who || !who.token || !window.hubFileDoc || !window.hubCelta5Pdf) return;
     if (!bytes) {
       if (!ASSETS) { const a = await window.HubStore.call({ op: 'celta5Assets' }); const b = window.hubCelta5Pdf.fromBase64; ASSETS = { master: b(a['celta5-master-july-2023.pdf']), regular: b(a['Arimo-Regular.ttf']), bold: b(a['Arimo-Bold.ttf']) }; }
-      bytes = await window.hubCelta5Pdf.render(bookletInput(), ASSETS);
+      bytes = await window.hubCelta5Pdf.render(bookletInput(true), ASSETS);
     }
     await hubFileDoc({ token: who.token, name: 'CELTA 5', pdf: bytes });
   } catch (e) {}
@@ -1146,7 +1150,7 @@ async function cambridgeBooklet(){
     const bytes = await window.hubCelta5Pdf.render(bookletInput(), ASSETS);
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
     const a = document.createElement('a'); a.href = url; a.download = 'CELTA 5 \u2014 ' + who.name + '.pdf'; document.body.appendChild(a); a.click(); a.remove();
-    fileBooklet(bytes);
+    fileBooklet();
     /* A text too long for Cambridge's box is set smaller before anything is left out; if it still does not fit, the
        end is missing in the PDF and this says where, so it is never cut without a word (20 Nov 2026). */
     const over = window.hubCelta5Pdf.lastOverflow ? window.hubCelta5Pdf.lastOverflow() : [];

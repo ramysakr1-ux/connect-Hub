@@ -3551,7 +3551,9 @@ case 'inbox': {
        the final report. A tutor's link only; into that trainee's folder in the course's center folder; replaces a file
        of the same name. A course with no center folder, or a demo course, answers filed:false and nothing is written. */
     case 'fileDoc': {
-      requireTutor_(tutor);
+      /* a trainee files one thing by themselves: their own observation sheet, when they turn it in */
+      var fdOwn = !tutor && !assessor && me && !me.template && String(req.token || '') === me.token && /^Observation - /.test(String(req.name || '')) && !req.pdf;
+      if (!tutor && !fdOwn) throw new Error('Only a tutor can file this');
       if (!course) throw new Error('This link is not on a course');
       var fdSet = courseRead_(course.id, 'settings') || {};
       /* the owner's trial: with the owner's key, a folder named in the request stands in for the course's own, a demo
@@ -5801,14 +5803,18 @@ function exportTrainees_(courseId, opt) {
   if (!fid) throw new Error('This course has no center folder yet');
   var root; try { root = DriveApp.getFolderById(fid); root.getName(); } catch (e) { throw new Error('The center folder could not be opened'); }
   var top = childFolder_(root, 'Portfolios');
-  var people = rosterWithRecords_(courseId, { tpHistory: true });
+  var people = rosterWithRecords_(courseId, { agreement: true });   /* the names; each trainee's documents are read below, as they may see them */
   if (opt.only) people = people.filter(function (t) { return t.token === opt.only; });
   var state = opt.state || {}, left = opt.max || 1, out = [], waiting = 0;
   /* A NEW FOLDER STARTS AGAIN (22 Nov 2026): the state remembers which folder it describes. When the course's folder is
      changed (a test folder first, the center's own later), everything is filed afresh into the new one. */
   if (state._folder !== fid || state._v !== 2) { state = { _folder: fid, _v: 2 }; }
   for (var i = 0; i < people.length; i++) {
-    var t = people[i], hist = (t.records && t.records.tpHistory) || {};
+    /* ONLY WHAT THE TRAINEE MAY ALREADY READ (v276, 21 Nov 2026). The folder is the trainee's own, so a document goes
+       into it on the same terms Lite hands it to them: recordsFor_ with TRAINEE_READS applies the hold on a feedback
+       whose self-evaluation is not in yet (traineeHold_). A returned TP they cannot open in Lite is not filed yet. */
+    var t = people[i], hist = {};
+    try { hist = (recordsFor_(courseId, t.token, TRAINEE_READS) || {}).tpHistory || {}; } catch (e) { hist = {}; }
     var mine = state[t.token] || {};
     var due = Object.keys(hist).filter(function (n) { return /^\d+$/.test(n) && hist[n] && hist[n].docHTML; }).sort(function (a, b) { return a - b; })
       .map(function (n) { return { key: 'tp' + n, n: n, html: String(hist[n].docHTML), print: md5_(hist[n].docHTML) }; })

@@ -1829,7 +1829,9 @@ window.hubPickedItems = function(s, picked){
    answers quietly, and the promise never rejects. give: { token, name, html } or { token, name, pdf: Uint8Array }. */
 window.hubFileDoc = function(give){
   try {
-    if (!give || !give.token || !give.name || !window.HubStore || !HubStore.isTutor || !HubStore.isTutor()) return Promise.resolve({ filed: false });
+    /* a tutor files a trainee's documents; a trainee files one thing by themselves, their own observation sheet (give.own) */
+    var mayFile = window.HubStore && ((HubStore.isTutor && HubStore.isTutor()) || (give && give.own && HubStore.isTrainee && HubStore.isTrainee() && !(HubStore.isTemplate && HubStore.isTemplate())));
+    if (!give || !give.token || !give.name || !mayFile) return Promise.resolve({ filed: false });
     var body = { op: 'fileDoc', token: give.token, name: give.name };
     if (give.pdf) { var b = '', u = give.pdf; for (var i = 0; i < u.length; i += 0x8000) b += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); body.pdf = btoa(b); }
     else body.html = String(give.html || '');

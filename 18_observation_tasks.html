@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211216">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211323">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -213,21 +213,21 @@
   .aud{font-size:.74rem; color:var(--grey); margin-left:8px;}
   .aud.now{font-size:.84rem; color:inherit; font-weight:600; flex:1 1 220px; line-height:1.45;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211216">
+<link rel="stylesheet" href="hub-house.css?v=202611211323">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202611211216"></script>
-<script src="hub-shared.js?v=202611211216"></script>
-<script src="hub-store.js?v=202611211216"></script>
-<script src="hub-say.js?v=202611211216"></script>
-<script src="hub-rotation.js?v=202611211216"></script>
-<script src="hub-peers.js?v=202611211216"></script>
-<script src="hub-sync.js?v=202611211216"></script>
-<script src="hub-notebook.js?v=202611211216"></script>
+<script src="observation-defaults.js?v=202611211323"></script>
+<script src="hub-shared.js?v=202611211323"></script>
+<script src="hub-store.js?v=202611211323"></script>
+<script src="hub-say.js?v=202611211323"></script>
+<script src="hub-rotation.js?v=202611211323"></script>
+<script src="hub-peers.js?v=202611211323"></script>
+<script src="hub-sync.js?v=202611211323"></script>
+<script src="hub-notebook.js?v=202611211323"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -277,6 +277,25 @@ const recKey = (id, sit) => sit ? id + '#' + sit : id;
 const posOf = t => { const g = t.id.startsWith('filmed') ? TASKS.filmed : t.id.startsWith('live') ? TASKS.live : null; const i = g ? g.findIndex(x => x.id === t.id) : -1; return i >= 0 ? i + 1 : null; };
 const subOf = t => { if (t.id.startsWith('live')) return 'Demonstration class led by a tutor with the TP students \u00b7 two 45-minute lessons' + (t.sub ? ' \u00b7 ' + t.sub : ''); if (t.sub) return t.sub; if (!t.id.startsWith('filmed')) return t.recording || ''; const n = posOf(t); return (n ? 'Recording: observation ' + n : (t.recording || '')) + (t.film ? ' \u00b7 ' + t.film : ''); };
 const rec = k => (WORK[k] = WORK[k] || { a:{}, turnedInAt:null });
+/* A SHEET TURNED IN GOES TO THE TRAINEE'S FOLDER (21 Nov 2026), as a PDF of the sheet as it stands on the screen: the
+   questions as printed, each box replaced by what was written in it. The trainee's own page hands it to the store
+   (hubFileDoc, own: true), which files it in their folder. Quiet when the course has no center folder. */
+function fileSheet(t, sit){
+  try {
+    if (READONLY || !window.hubFileDoc || !window.HubStore || !HubStore.token || !HubStore.token()) return;
+    const card = document.querySelector('#app .obscard'); if (!card) return;
+    const copy = card.cloneNode(true), live = card.querySelectorAll('textarea, input, select'), dead = copy.querySelectorAll('textarea, input, select');
+    dead.forEach((el, i) => { const src = live[i]; let out;
+      if (src && (src.type === 'radio' || src.type === 'checkbox')) { out = document.createElement('span'); out.textContent = src.checked ? '\u2611 ' : '\u2610 '; }
+      else if (src && src.tagName === 'INPUT') { out = document.createElement('span'); out.textContent = ': ' + (src.value || ''); }   /* a one-line fact (Lesson, Level, Date) sits beside its label */
+      else { out = document.createElement('div'); out.style.whiteSpace = 'pre-wrap'; out.textContent = (src && src.value) || ''; }
+      el.replaceWith(out); });
+    copy.querySelectorAll('button, script, .ipa-bar, [data-share], [data-unshare]').forEach(x => x.remove());
+    const kind = t.tp ? 'Peer observation \u00b7 TP' + t.tp + (sit || '') : (String(t.id).indexOf('filmed') === 0 ? 'Filmed observation' : 'Live observation of experienced teachers');
+    const html = '<p class="eyebrow">' + esc(kind) + '</p><h1>' + esc(t.title) + '</h1>' + (t.brief ? '<p>' + esc(t.brief) + '</p>' : '') + copy.innerHTML;
+    hubFileDoc({ own: true, token: HubStore.token(), name: 'Observation - ' + (t.tp ? 'TP' + t.tp + (sit ? ' ' + String(sit).trim() : '') + ' ' : '') + t.title, html: html });
+  } catch (e) {}
+}
 /* How much of a sheet is done. A parts sheet counts PARTS with anything in
    them, not fields -- its stage map alone is twenty-eight cells, which would
    have read as "Complete" on its own. Every other shape counts filled boxes. */
@@ -697,6 +716,7 @@ function sheet(t, sit){
   if ($('turnIn')) $('turnIn').addEventListener('click', () => {
     /* Handbook 12.1.2 asks for the tutor's name and date on feedback and progress records; dating a turned-in sheet is the center's own practice. */
     WORK[k].turnedInAt = new Date().toISOString(); save(); sheet(t, sit);
+    fileSheet(t, sit);
   });
 }
 
