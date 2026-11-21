@@ -5890,12 +5890,22 @@ function exportHandouts_(courseId, root, state, max, from) {
      by an earlier run is taken back out of Handouts: our own copy, found by its name and size, goes to the bin. */
   var tutorIds = {};
   if (!from) ['tppoints', 'timetable', 'stream'].forEach(function (kind) { try { (JSON.stringify(courseRead_(courseId, kind) || '').match(/[A-Za-z0-9_-]{25,}/g) || []).forEach(function (x) { tutorIds[x] = 1; }); } catch (e) {} });
+  /* ONLY WHAT A TRAINEE'S OWN RECORD POINTS AT (v282, 21 Nov 2026). Four coursebook pages stayed in Handouts after v280:
+     each had been uploaded twice, the TP points now point at the replacement, and nothing pointed at the first copy any
+     more, so it could not be told from a trainee's file. The rule is turned round: a file is copied only if one of the
+     trainees' records links to it. A file nobody links to (a replaced upload, a tutor's or a trainee's) is left out.
+     If the records cannot be read, or name no file at all, this rule is not applied, so a bad read never empties the
+     folder. */
+  var traineeIds = null;
+  if (!from) { try { var found = {}, any = 0;
+      rosterWithRecords_(courseId, TUTOR_WRITES).forEach(function (t) { (JSON.stringify(t.records || '').match(/[A-Za-z0-9_-]{25,}/g) || []).forEach(function (x) { found[x] = 1; any++; }); });
+      if (any) traineeIds = found; } catch (e) { traineeIds = null; } }
   var PROGRAM = /\.(exe|msi|dmg|pkg|app|bat|cmd|com|scr|vbs|jar|sh)$/i, removed = 0;
   while (it.hasNext()) {
     var f = it.next(), fid = f.getId();
     if (done[fid] === 'x') continue;
     var leaveOut = false;
-    try { leaveOut = PROGRAM.test(f.getName()) || !!tutorIds[fid] || /"by":"tutor"/.test(String(f.getDescription() || '')); } catch (e) {}
+    try { leaveOut = PROGRAM.test(f.getName()) || !!tutorIds[fid] || /"by":"tutor"/.test(String(f.getDescription() || '')) || (!!traineeIds && !traineeIds[fid]); } catch (e) {}
     if (leaveOut) {
       if (done[fid]) { try { if (!dest) dest = childFolder_(root, 'Handouts'); var mine = dest.getFilesByName(f.getName()), sz = f.getSize(); while (mine.hasNext()) { var c = mine.next(); if (c.getSize() === sz) { c.setTrashed(true); removed++; } } } catch (e) {} }
       done[fid] = 'x'; continue;
