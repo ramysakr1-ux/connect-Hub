@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611212303">
+<link rel="stylesheet" href="hub-tokens.css?v=202611212314">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -633,7 +633,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611212303">
+<link rel="stylesheet" href="hub-house.css?v=202611212314">
 </head>
 <body>
 <div class="board">
@@ -823,14 +823,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611212303"></script>
-<script src="hub-shared.js?v=202611212303"></script>
-<script src="hub-store.js?v=202611212303"></script>
-<script src="hub-say.js?v=202611212303"></script>
-<script src="hub-crit-learn.js?v=202611212303"></script>
-<script src="hub-crit-vocab.js?v=202611212303"></script>
-<script src="hub-sync.js?v=202611212303"></script>
-<script src="hub-notebook.js?v=202611212303"></script>
+<script src="hub-exchange.js?v=202611212314"></script>
+<script src="hub-shared.js?v=202611212314"></script>
+<script src="hub-store.js?v=202611212314"></script>
+<script src="hub-say.js?v=202611212314"></script>
+<script src="hub-crit-learn.js?v=202611212314"></script>
+<script src="hub-crit-vocab.js?v=202611212314"></script>
+<script src="hub-sync.js?v=202611212314"></script>
+<script src="hub-notebook.js?v=202611212314"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2947,6 +2947,22 @@ $('askUndo').addEventListener('click',async ()=>{
   ASK_ADDED=[]; ASK_OVERALL_WAS=null; ASK_DONE=false; $('askUndo').hidden=true; $('askMsg').textContent='Taken back out. Your lines are back in the box.'; dirty=true; askRedraftShow();
 });
 
+/* NO BOX FOR A COMMENT ON A SELF-EVALUATION THAT IS NOT IN (Ramy, 21 Nov 2026: "should it just not be there? ... so
+   accidentally no one would write in it"). "Your comment on their self-evaluation" is shown once the trainee has turned
+   their self-evaluation in, or where the form already holds one (a returned copy), or where the box already has words
+   in it, so nothing written is ever hidden. Otherwise the card is not on the form. */
+function selfBoxShow(){
+  const ta=$('tSelf'), card=ta && ta.closest('.card'); if(!card) return;
+  let turned=false;
+  try{
+    const sr = TRAINEE_ID ? (((loadRoster().trainees[TRAINEE_ID]||{}).tp||{}).selfeval||null) : JSON.parse(localStorage.getItem(SELF_KEY)||'null');
+    turned = !!(sr && sr.status==='turned_in');
+  }catch(e){}
+  const held = !!(DOC && DOC.self && (window.hubSelfRows ? hubSelfRows(DOC.self, true) : []).some(r=>String(r[1]||'').replace(/•/g,'').trim()));
+  card.style.display = (turned || held || (ta.value||'').trim()) ? '' : 'none';
+}
+selfBoxShow(); [700, 2000, 4500].forEach(ms=>setTimeout(selfBoxShow, ms));
+window.addEventListener('hub:ready', function(){ setTimeout(selfBoxShow, 300); });
 /* once the saved feedback is on the form (and again when the course's copy arrives), look for what Ask Connect left */
 setTimeout(askFind, 600);
 window.addEventListener('hub:ready', function(){ setTimeout(askFind, 600); });
