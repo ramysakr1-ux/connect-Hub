@@ -597,6 +597,9 @@ function handle_(req) {
       throw new Error('This demo link expired on ' + new Date(dxs.demoExpires + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) + '.');
     }
   }
+  /* v270: the course's links end with the course (assertCourseOpen_). Not the owner, not a volunteer student's own link,
+     and never a ping. The trainee view (Maya) is a tutor's tool and follows the tutors' rule. */
+  if (course && !owner && !vol && op !== 'ping') assertCourseOpen_(course, tutor || !!(me && me.template));
 
   /* A DATED PASS (v132, 25 Oct 2026; Ramy: "a dated pass per person... I like this idea"). A link sent to a
      named person from the console carries a pass (&p=), minted for a number of days; the browser sends it
@@ -1158,6 +1161,34 @@ case 'inbox': {
     case 'ownerCourses': {
       requireOwner_(owner);
       return { courses: ownerList_() };
+    }
+    /* v270 (22 Nov 2026): the owner's override on when a course's links end (see assertCourseOpen_). id: the course.
+       accessUntil: 'YYYY-MM-DD' keeps the trainees' links open to the end of that day, '' takes the override off (the
+       timetable's own end applies again). courseClosed: true closes the tutors' links too, false opens them again.
+       Sent with neither, it only says how the course stands. */
+    case 'courseAccess': {
+      requireOwner_(owner);
+      var caC = courseById_(String(req.id || ''));
+      if (!caC) throw new Error('Which course?');
+      var caLock = LockService.getScriptLock();
+      caLock.waitLock(10000);
+      var caSet;
+      try {
+        COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+        caSet = courseRead_(caC.id, 'settings') || {};
+        var caTouched = false;
+        if (req.accessUntil != null) {
+          var cau = String(req.accessUntil).trim();
+          if (cau && !/^\d{4}-\d{2}-\d{2}$/.test(cau)) throw new Error('A date, as YYYY-MM-DD, or nothing');
+          if (cau) caSet.accessUntil = cau; else delete caSet.accessUntil;
+          caTouched = true;
+        }
+        if (req.courseClosed != null) { if (req.courseClosed) caSet.courseClosed = true; else delete caSet.courseClosed; caTouched = true; }
+        if (caTouched) { courseWriteRaw_(caC.id, 'settings', caSet); markChanged_(caC.id); }
+      } finally { caLock.releaseLock(); }
+      COURSE_MEMO_ = null; BLOCK_MEMO_ = {};
+      var caAt = courseEndsAt_(caC.id, caSet, true);
+      return { id: caC.id, end: caSet.end || '', accessUntil: caSet.accessUntil || '', courseClosed: !!caSet.courseClosed, traineesEndAt: caAt ? caAt.toISOString() : '', traineesOpen: !caSet.courseClosed && (!caAt || new Date() <= caAt), tutorsOpen: !caSet.courseClosed };
     }
     /* THE COURSE CACHE's switch (5 Nov 2026): set: "all", "" (off) or course ids "c1,c9"; without set, says what it is. */
     case 'courseCache': {
@@ -5655,6 +5686,49 @@ function registerEdit_(req) {
   } else throw new Error('Not something this page can change');
   COURSE_MEMO_ = null; BLOCK_MEMO_ = {};   // read what was just written, not this request's earlier copy
   return registerShow_(course);
+}
+/* THE COURSE'S LINKS END WITH THE COURSE (v270, 22 Nov 2026). Ramy: "I want this link to stop working after the course ...
+   any link associated with this course will also stop working"; then "trainees lose access ... when the course ends on the
+   timetable ... the rest could be manually, or could be done when everything is exported"; "unless there's a reason for
+   extension, but then the course date also will be pushed".
+     trainee, assessor   refused once the last session of the course's last day is over (the timetable's own end time on
+                         settings.end, in the course's time zone; midnight if the day has no timed session).
+     tutor               not on a timer: refused only once the course is closed (settings.courseClosed, set by the owner,
+                         and by the end-of-course export when it has finished).
+     the owner           always passes. A volunteer student's own link and the center's register link have their own rules.
+   The owner's override: settings.accessUntil = 'YYYY-MM-DD' keeps the trainees' links open to the end of that day (or, set
+   to a day already gone, closes them now). A demo course never ages. A course that ended before this was built (end before
+   ACCESS_ENDS_FROM_) is left as it was unless the owner sets accessUntil or courseClosed on it: the TP point library and
+   the old courses still open. */
+var ACCESS_ENDS_FROM_ = '2026-11-22';
+function courseEndsAt_(courseId, set, exact) {
+  set = set || courseRead_(courseId, 'settings') || {};
+  if (set.demoToday) return null;
+  var ymd = function (v) { return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : ''; };
+  var tz = set.timeZone || 'Europe/London';
+  var until = ymd(set.accessUntil);
+  if (until) return new Date(localInstant_(until, '23:59', tz).getTime() + 60000);
+  var end = ymd(set.end);
+  if (!end || end < ACCESS_ENDS_FROM_) return null;
+  if (!exact && new Date() < localInstant_(end, '00:00', tz)) return new Date(localInstant_(end, '23:59', tz).getTime() + 60000);   /* before the last day: no need to read the timetable yet */
+  var last = '';
+  try {
+    var tt = courseRead_(courseId, 'timetable') || {};
+    (tt.days || []).forEach(function (d) {
+      if (!d || d.date !== end || d.closed) return;
+      (d.sessions || []).forEach(function (x) { var e = String((x && x.e) || ''); if (/^\d{1,2}:\d{2}$/.test(e)) { if (e.length === 4) e = '0' + e; if (e > last) last = e; } });
+    });
+  } catch (e) {}
+  if (last) return localInstant_(end, last, tz);
+  return new Date(localInstant_(end, '23:59', tz).getTime() + 60000);
+}
+function assertCourseOpen_(course, tutor) {
+  var set = courseRead_(course.id, 'settings') || {};
+  if (set.demoToday) return;
+  if (set.courseClosed) throw new Error('This course has ended and is closed.');
+  if (tutor) return;
+  var at = courseEndsAt_(course.id, set);
+  if (at && new Date() > at) throw new Error('This course has ended. Its links stopped working when the course finished.');
 }
 function assertAssessorInDate_(course) {
   var exp = assessorExpiry_(course.id);

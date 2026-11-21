@@ -38,7 +38,7 @@
 <title>Connect Lite — Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211008">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211109">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 70px;}
@@ -263,7 +263,7 @@
   @media (max-width:520px){ .demo .doors{grid-template-columns:1fr;} .title h1{font-size:1.8rem;} body{padding:0 14px 60px;} .card{padding:16px;} .row-course .acts .btn{flex:1 1 auto; justify-content:center;} }
   .offerstate{font:inherit; font-size:.78rem; padding:5px 8px; border:1px solid var(--sand-line); border-radius:8px; background:var(--paper); color:var(--ink);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211008">
+<link rel="stylesheet" href="hub-house.css?v=202611211109">
 </head>
 <body data-say-pill="off">
 <div class="board">
@@ -286,10 +286,10 @@
 
 </div>
 
-<script src="hub-shared.js?v=202611211008"></script>
-<script src="hub-store.js?v=202611211008"></script>
-<script src="hub-say.js?v=202611211008"></script>
-<script src="hub-card-mail.js?v=202611211008"></script>
+<script src="hub-shared.js?v=202611211109"></script>
+<script src="hub-store.js?v=202611211109"></script>
+<script src="hub-say.js?v=202611211109"></script>
+<script src="hub-card-mail.js?v=202611211109"></script>
 <script>
 /* The owner key rides in ?o= the first time and is kept in this browser after. */
 const OWNER_STORE = 'hub:o';
@@ -305,6 +305,35 @@ const call = body => HubStore.call(Object.assign({ owner: ownerKey() }, body));
 
 /* A date, read as written: `created` is a timestamp, and reading it as an instant moves
    it a day east of the store. */
+function accessSay(r){
+  const tz = undefined, when = r.traineesEndAt ? new Date(r.traineesEndAt) : null;
+  const at = when ? new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(when) + ' (your time)' : '';
+  const tr = r.courseClosed ? 'closed' : !when ? 'open, with no end set' : r.traineesOpen ? 'open until ' + at : 'ended on ' + at;
+  return `<p><b>Trainees and the assessor:</b> ${esc(tr)}.${r.accessUntil ? ' You set this by hand.' : ''}</p><p><b>Tutors:</b> ${r.tutorsOpen ? 'open' : 'closed'}.</p>`;
+}
+async function accessOpen(id, label){
+  let dlg = $('accessDlg');
+  if (!dlg) { dlg = document.createElement('dialog'); dlg.id = 'accessDlg'; dlg.style.cssText = 'max-width:460px;width:calc(100vw - 32px);border:0;border-radius:14px;padding:22px 24px;font:inherit;box-shadow:0 20px 60px rgba(0,0,0,.25);'; document.body.appendChild(dlg); }
+  const draw = r => { dlg.innerHTML = `<h3 style="margin:0 0 8px;font-family:Newsreader,Georgia,serif;font-size:1.25rem;">When ${esc(label)}\u2019s links end</h3>
+    <div id="acState" style="font-size:.92rem;line-height:1.5;">${r ? accessSay(r) : '<p>Reading\u2026</p>'}</div>
+    <p style="margin:14px 0 4px;font-weight:700;font-size:.86rem;">Keep the trainees\u2019 links open until the end of</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><input type="date" id="acUntil" value="${r && r.accessUntil ? esc(r.accessUntil) : ''}" style="font:inherit;padding:7px 10px;border:1px solid #ccc;border-radius:8px;">
+      <button type="button" class="btn small" data-ac="until">Save this date</button>${r && r.accessUntil ? '<button type="button" class="btn small" data-ac="auto">Go back to the timetable\u2019s end</button>' : ''}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;"><button type="button" class="btn small danger" data-ac="now">Close the trainees\u2019 links now</button>
+      <button type="button" class="btn small${r && r.courseClosed ? '' : ' danger'}" data-ac="${r && r.courseClosed ? 'opentutors' : 'closeall'}">${r && r.courseClosed ? 'Reopen the course' : 'Close the course for the tutors too'}</button></div>
+    <p id="acMsg" role="status" style="margin:12px 0 0;font-size:.86rem;min-height:1.2em;"></p>
+    <div style="text-align:right;margin-top:6px;"><button type="button" class="btn small" data-ac="done">Done</button></div>`; };
+  draw(null); if (!dlg.open) dlg.showModal();
+  const send = async extra => { const m = $('acMsg'); if (m) m.textContent = 'Saving\u2026'; try { const r = await call(Object.assign({ op: 'courseAccess', id: id }, extra || {})); draw(r); if (extra) { const m2 = $('acMsg'); if (m2) m2.textContent = 'Saved.'; } } catch (err) { const m3 = $('acMsg'); if (m3) m3.textContent = 'Not saved: ' + (err && err.message || err); } };
+  dlg.onclick = e => { const b = e.target.closest('[data-ac]'); if (!b) return; const k = b.dataset.ac;
+    if (k === 'done') { dlg.close(); return; }
+    if (k === 'until') { const v = $('acUntil').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { $('acMsg').textContent = 'Pick a date first.'; return; } send({ accessUntil: v }); return; }
+    if (k === 'auto') { send({ accessUntil: '' }); return; }
+    if (k === 'now') { const y = new Date(Date.now() - 864e5 * 2).toISOString().slice(0, 10); send({ accessUntil: y }); return; }
+    if (k === 'closeall') { send({ courseClosed: true }); return; }
+    if (k === 'opentutors') { send({ courseClosed: false }); return; } };
+  send(null);
+}
 function niceDate(iso){
   const s = String(iso == null ? '' : iso), m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   const d = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(s);
@@ -662,6 +691,7 @@ function liveRow(c){
           <span class="more"><button type="button" class="moretog" aria-label="More for this course">⋯</button>
             <span class="menu"><button type="button" data-clone="${esc(c.id)}" data-label="${esc(label(c))}">Start the next course from this</button>
               <button type="button" data-clearpin="${esc(c.id)}" data-label="${esc(label(c))}">Clear a forgotten Course admin PIN</button>
+              <button type="button" data-access="${esc(c.id)}" data-label="${esc(label(c))}">When its links end</button>
               ${(c.trainees && c.end && c.end >= TODAY()) ? '' : `<button type="button" class="danger" data-delete="${esc(c.id)}" data-label="${esc(label(c))}" data-trainees="${c.trainees || 0}">Delete this course</button>`}</span></span></span>
         ${SHOW_URLS ? `<span class="addr">Tutor: ${esc(tutor)}<br>Assessor: ${esc(assessor)}</span>` : ''}
       </div>
@@ -1110,6 +1140,12 @@ $('app').addEventListener('click', async e => {
     if (!ok) return; BUSY = true; status('Starting the next course from ' + cl.dataset.label + '…');
     try { const made = await call({ op: 'cloneCourse', from: cl.dataset.clone }); NEW_ID = made.id; render(made.courses, 'Made ' + made.id + ' from ' + cl.dataset.label + '. Open its Course admin, set the dates, then send the message to the center.'); const card = $('course-' + made.id); if (card) hubScrollIntoView(card, 'start'); } catch (err) { status(err.message); }
     BUSY = false; return; }
+  /* WHEN A COURSE'S LINKS END (22 Nov 2026). Ramy: "all automatic with an override ... the only thing by hand is an
+     override or an extension". The trainees' links end when the course ends on its timetable, and the tutors' when the
+     course is closed; here the owner keeps the trainees open to a later day, closes them now, or closes and reopens
+     the tutors. The store's courseAccess op does it and says how the course stands. */
+  const ac = T('[data-access]');
+  if (ac) { if (BUSY) return; accessOpen(ac.dataset.access, ac.dataset.label); return; }
   const d = T('[data-delete]');
   if (d) { if (BUSY) return; const n = Number(d.dataset.trainees || 0);
     const carries = n ? `Its ${n} trainee${n === 1 ? '' : 's'} and every plan, self-evaluation, feedback and assignment on it go with it.` : 'It has no trainees; anything recorded on it goes with it.';

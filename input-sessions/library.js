@@ -184,6 +184,29 @@ window.InputLib = (function(){
   }
   function homeLinkOk(l, tt, cs){ return !isInputLink(l) || (ownOn(cs) && linkOpen(l, tt, cs)); }
 
+  /* WHEN THE COURSE ENDS (22 Nov 2026), the same rule as the store's courseEndsAt_: the end of the last timed session on
+     the course's last day, in the course's own time zone; midnight if that day has none; settings.accessUntil, the
+     owner's extension, to the end of that day. null when the course has no end, is a demo, or ended before this rule. */
+  function zoneInstant(ymd, hm, tz){
+    var guess = new Date(ymd + 'T' + hm + ':00Z'), shown;
+    try { var p = {}; new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(guess).forEach(function(x){ p[x.type] = x.value; });
+      shown = Date.parse(p.year + '-' + p.month + '-' + p.day + 'T' + p.hour + ':' + p.minute + ':00Z'); } catch (e) { shown = guess.getTime(); }
+    return new Date(guess.getTime() + (guess.getTime() - shown));
+  }
+  function courseEnd(tt, cs){
+    cs = cs || {}; if (cs.demoToday) return null;
+    var ymd = function(v){ return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : ''; };
+    var tz = cs.timeZone || 'Europe/London';
+    var until = ymd(cs.accessUntil);
+    if (until) return new Date(zoneInstant(until, '23:59', tz).getTime() + 60000);
+    var end = ymd(cs.end);
+    if (!end || end < '2026-11-22') return null;
+    var last = '';
+    ((tt && tt.days) || []).forEach(function(d){ if (!d || d.date !== end || d.closed) return;
+      (d.sessions || []).forEach(function(x){ var e = String((x && x.e) || ''); if (/^\d{1,2}:\d{2}$/.test(e)) { if (e.length === 4) e = '0' + e; if (e > last) last = e; } }); });
+    return last ? zoneInstant(end, last, tz) : new Date(zoneInstant(end, '23:59', tz).getTime() + 60000);
+  }
+
   /* ---- the gate on a session page ---- */
   var root = document.documentElement;
   function reveal(){ root.classList.remove('gating'); root.classList.remove('sealed'); }
@@ -195,7 +218,13 @@ window.InputLib = (function(){
       var after = wrap.querySelector('a.back') || wrap.querySelector('.chrome');
       if (after && after.parentNode === wrap) wrap.insertBefore(n, after.nextSibling); else wrap.insertBefore(n, wrap.firstChild);
     }
-    n.innerHTML = kind === 'own'
+    n.innerHTML = kind === 'nolink'
+      ? '<div class="stage-title">Open this from your course</div><p class="lead" style="margin:0">Input sessions open from a course\u2019s own link. Open your course link first, then come back to this session.</p>'
+      : kind === 'ended'
+      ? '<div class="stage-title">This course has ended</div><p class="lead" style="margin:0">Its input sessions closed when the course finished.</p>'
+      : kind === 'check'
+      ? '<div class="stage-title">Your course link could not be checked</div><p class="lead" style="margin:0">Connect to the internet and reload this page.</p>'
+      : kind === 'own'
       ? '<div class="stage-title">Your course has its own</div><p class="lead" style="margin:0">Your center teaches this session from its own material. Its link is on your Input sessions page on the day the timetable gives it.</p>'
       : kind === 'later'
       ? '<div class="stage-title">Not open yet</div><p class="lead" style="margin:0">This session comes later on your course. It opens here once it has been given.</p>'
@@ -263,20 +292,53 @@ window.InputLib = (function(){
     }
     if (!slug) { reveal(); return; }
     var demoCs = rd('connect_course_settings') || {};
-    if (!demoCs.demoToday && (!H || H.isTutor() || H.isAssessor() || !H.token())) { reveal(); return; }
-    var tt = rd('connect_timetable_v1'), cs = rd('connect_course_settings');
-    var haveLocal = !!(tt && tt.days && tt.days.length);
-    if (haveLocal) decide(tt, cs || {});
-    if (!H || !H.course) { if (!haveLocal) reveal(); return; }
-    H.course().then(function(c){
-      if (c && c.timetable && c.timetable.days && c.timetable.days.length) decide(c.timetable, c.settings || cs || {});
-      else if (!haveLocal) reveal();
-    }).catch(function(){ if (!haveLocal) reveal(); });
+    /* A SESSION OPENS ONLY FROM A LIVE COURSE LINK (22 Nov 2026). Ramy: "the input session as a link, as an interactive
+       input session, that's where I want people to stop from having ... those links will stop working when the course
+       link stops working". Until today a session's own address opened for anyone who held no course link at all, and
+       for any browser that remembered a tutor's key, whether or not that course was still running: so the address
+       outlived the course. Now: no link, no session; and the link is checked with the store, which refuses it once
+       the course has ended (assertCourseOpen_ there). A link that was good in the last week keeps a session open
+       when the store cannot be reached, so a bad connection in the classroom strands nobody; the course's own end
+       date still closes it. On this computer's own test address the old rule stands, for the checks. */
+    var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    var hasLink = !!(H && (H.isTutor() || H.isAssessor() || H.token() || (H.isVolunteer && H.isVolunteer())));   /* a volunteer student opens a lesson page the tutors shared with the class */
+    function go(){
+      if (!demoCs.demoToday && (!H || H.isTutor() || H.isAssessor() || !H.token())) { reveal(); return; }
+      var tt = rd('connect_timetable_v1'), cs = rd('connect_course_settings');
+      var haveLocal = !!(tt && tt.days && tt.days.length);
+      if (haveLocal) decide(tt, cs || {});
+      if (!H || !H.course) { if (!haveLocal) reveal(); return; }
+      H.course().then(function(c){
+        if (c && c.timetable && c.timetable.days && c.timetable.days.length) decide(c.timetable, c.settings || cs || {});
+        else if (!haveLocal) reveal();
+      }).catch(function(e){ if (ended(e)) { unstamp(); seal('ended'); } else if (!haveLocal) reveal(); });
+    }
+    if (local || demoCs.demoToday) { go(); return; }
+    if (!hasLink) { seal('nolink'); return; }
+    var WEEK = 7 * 864e5;
+    function mark(){ var c = ''; try { c = String(H.cred ? JSON.stringify(H.cred()) : (H.token() || '')); } catch (e) {} var n = 0; for (var i = 0; i < c.length; i++) n = (n * 31 + c.charCodeAt(i)) >>> 0; return String(n); }
+    function stamped(){ try { var v = JSON.parse(localStorage.getItem('hub:live') || 'null'); return !!(v && v.m === mark() && (Date.now() - v.t) < WEEK); } catch (e) { return false; } }
+    function stamp(){ try { localStorage.setItem('hub:live', JSON.stringify({ m: mark(), t: Date.now() })); } catch (e) {} }
+    function unstamp(){ try { localStorage.removeItem('hub:live'); } catch (e) {} }
+    function ended(e){ return !!(e && e.refused && !e.pin && !e.adminPin && /has ended|is closed|expired|not on the course|no longer|not valid/i.test(String(e.message || ''))); }
+    /* the course's own end, as this browser last saw it: a session does not open after it even with no connection */
+    function pastEnd(){ try { var cs = rd('connect_course_settings') || {}, tt = rd('connect_timetable_v1'); var at = courseEnd(tt, cs); return !!(at && Date.now() > at.getTime() && !H.isTutor()); } catch (e) { return false; } }
+    var ran = false;
+    function open(){ if (ran) return; ran = true; go(); }
+    if (pastEnd()) seal('ended');
+    else if (stamped()) open();
+    var ask = H.version ? H.version() : H.course();
+    ask.then(function(){ stamp(); open(); })   /* the store says the link is live: that decides it, whatever this browser last knew */
+       .catch(function(e){
+         if (ended(e)) { unstamp(); seal('ended'); return; }
+         if (e && e.refused) { stamp(); open(); return; }   /* a PIN is asked for: the link itself is good */
+         if (!ran && !root.classList.contains('sealed')) seal('check');
+       });
   }
-  /* If anything goes wrong the page opens: a gate that can strand a trainee
-     on a blank page is worse than no gate. */
-  setTimeout(function(){ if (root.classList.contains('gating')) root.classList.remove('gating'); }, 8000);
-  return { shorts: SHORTS, matchesFor: matchesFor, hasInputs: function(tt){ return rawInputs(tt).length > 0; }, openMode: openMode, opensOn: opensOn, isOpen: isOpen, whenText: whenText, mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
+  /* If the store never answers: a link that was good this week opens the page (go() ran above); one that was never
+     checked gets the "could not be checked" card, not a blank page. */
+  setTimeout(function(){ if (root.classList.contains('gating')) { if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) root.classList.remove('gating'); else seal('check'); } }, 8000);
+  return { courseEnd: courseEnd, shorts: SHORTS, matchesFor: matchesFor, hasInputs: function(tt){ return rawInputs(tt).length > 0; }, openMode: openMode, opensOn: opensOn, isOpen: isOpen, whenText: whenText, mode: mode, connectOn: connectOn, ownOn: ownOn, linkOpen: linkOpen, homeLinkOk: homeLinkOk, isInputLink: isInputLink, slugsFor: slugsFor, inputsOf: inputsOf, today: today, rd: rd, iso: iso, dateOf: dateOf, gate: gate };
 })();
 
 /* The demo is view only (Ramy, 24 Oct 2026): a session's "Print the handout"
