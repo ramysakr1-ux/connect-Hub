@@ -5927,10 +5927,12 @@ function portfolioMailFor_(set, name, url) {
   return { subject: 'Your CELTA portfolio',
     html: '<div style="font:16px/1.55 Arial,sans-serif;color:#222">'
       + '<p>Dear ' + esc(first) + ',</p>'
-      + '<p>Congratulations on finishing the course!</p>'
-      + '<p>Your portfolio is saved for you here:</p>'
+      /* warmer (Ramy, 21 Nov 2026: "make it a little bit warmer and then keep it on") */
+      + '<p>Congratulations on finishing the course! It was an intense few weeks of planning, teaching and reflecting, and you saw it through. We hope you are proud of how far you have come.</p>'
+      + '<p>Everything you made on the course is saved for you here:</p>'
       + '<p><a href="' + esc(url) + '" style="display:inline-block;padding:12px 20px;background:#1f5f5b;color:#fff;text-decoration:none;border-radius:8px;font:bold 15px Arial">Open your portfolio</a></p>'
-      + '<p>It holds your teaching practice, with your plans, self-evaluations and feedback, and your assignments, as PDFs. The link is yours. It will stay open for six months, so download anything you want to keep.</p>'
+      + '<p>Inside are your teaching practices, with your plans, self-evaluations and feedback, and your assignments, all as PDFs. The link is yours. It will stay open for six months, so download anything you want to keep.</p>'
+      + '<p>It was a real pleasure working with you. We wish you all the best with your teaching, and we would love to hear how you get on.</p>'
       + (from ? '<p>' + esc(from) + '</p>' : '') + '</div>' };
 }
 function portfolioMails_(courseId, set, state) {
