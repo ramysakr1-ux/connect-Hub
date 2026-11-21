@@ -2933,8 +2933,12 @@ case 'inbox': {
           return { tp: Number(l && l.tp) || 0, grade: String((l && l.grade) || '').slice(0, 40), strengths: hwLines(l && l.strengths), actions: hwLines(l && l.actions), overall: String((l && l.overall) || '').slice(0, 900) }; }),
         assignments: hwLines(req.assignments), stage2: String(req.stage2 || '').slice(0, 40) };
       if (!hwIn.lessons.length) throw new Error('No returned feedback to draft from');
+      var hwPro = ({ she: 'she', he: 'he', they: 'they' })[String(req.pronoun || '').toLowerCase()] || '';
       var hwSys = 'You help a CELTA tutor hand a teaching practice group over to the tutor who takes it next. From the feedback on a trainee\'s lessons so far, write a short summary for that tutor. '
-        + 'Three or four plain sentences, 80 words at most, in the third person, calling the trainee NAME (write the word NAME exactly; never invent a name or a pronoun that assumes gender: use "they" or repeat NAME). '
+        /* v285: the trainee's own pronouns, where they gave them (she, he or they); otherwise the name is repeated */
+        + 'Three or four plain sentences, 80 words at most, in the third person, calling the trainee NAME (write the word NAME exactly; never invent a name). '
+        + (hwPro ? 'The trainee\'s pronouns are ' + ({ she: 'she/her', he: 'he/him', they: 'they/them' })[hwPro] + ': use NAME the first time and wherever it reads better, and those pronouns after it, as a person would. '
+                 : 'The trainee\'s pronouns are not known: never use a pronoun that assumes gender; repeat NAME or use "they". ')
         + 'Say what is consistently strong, what keeps needing work across lessons, and how the lessons have gone: if a lesson was not to standard, say which and, only if the feedback says so, why. '
         + 'If an action point from an earlier lesson no longer appears in a later one, you may say NAME has acted on it; otherwise say nothing about how they take feedback. '
         + 'Use only what the feedback says. Do not add praise, problems, causes or advice that are not there; do not predict a result or a final grade; do not mention criteria codes. '

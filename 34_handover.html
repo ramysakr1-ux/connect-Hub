@@ -34,7 +34,7 @@
 <title>Handover</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611220038">
+<link rel="stylesheet" href="hub-tokens.css?v=202611220058">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -97,19 +97,19 @@
     .note.empty{display:none;}
   }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611220038">
+<link rel="stylesheet" href="hub-house.css?v=202611220058">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"><p class="lede">Loading the course…</p></div>
 </div>
-<script src="hub-shared.js?v=202611220038"></script>
-<script src="hub-store.js?v=202611220038"></script>
-<script src="hub-say.js?v=202611220038"></script>
-<script src="hub-rotation.js?v=202611220038"></script>
-<script src="hub-sync.js?v=202611220038"></script>
-<script src="hub-notebook.js?v=202611220038"></script>
+<script src="hub-shared.js?v=202611220058"></script>
+<script src="hub-store.js?v=202611220058"></script>
+<script src="hub-say.js?v=202611220058"></script>
+<script src="hub-rotation.js?v=202611220058"></script>
+<script src="hub-sync.js?v=202611220058"></script>
+<script src="hub-notebook.js?v=202611220058"></script>
 <script>
 /* Whose room this is: the tutors'. hub-sync.js sets HubMode, which the gate reads;
    without it the room opened for a trainee (the pre-push check caught it, 25 Oct 2026). */
@@ -186,6 +186,15 @@ else (async function(){
     t.records = t.records || {}; t.records.staffLinks = next;
     if (r && r.demo && window.hubDemoSay) hubDemoSay('This is a demo course. It stays on this device.');
   }
+  /* THE TRAINEE'S OWN PRONOUNS (Ramy, 21 Nov 2026: "use their pronouns"). The summary repeated the name where a person
+     would say she or he, because Lite does not guess. Where the trainee wrote their pronouns in About you, the draft
+     uses them; where they left it empty, the name is repeated as before. Only the word she, he or they is sent. */
+  const pronounOf = t => { const p = String((((t.records || {}).about || {}).pronouns) || '').trim().toLowerCase();
+    if (/^she\b/.test(p)) return 'she'; if (/^he\b/.test(p)) return 'he'; if (/^they\b/.test(p)) return 'they';
+    /* nobody on C/21 had written pronouns, and seven of eight had answered the gender question beside it: where the
+       pronouns are empty, the trainee's own answer there stands in (woman: she, man: he); anything else, the name */
+    const g = String((((t.records || {}).about || {}).gender) || '').toLowerCase();
+    return g === 'woman' ? 'she' : g === 'man' ? 'he' : ''; };
   function factsFor(t){
     const lessons = lessonsOf(t), A = (t.records || {}).assignments || {}, c5t = (t.records || {}).celta5t || {}, s2 = c5t.stage2 || {};
     return { lessons: lessons.map(l => ({ tp: l.n, grade: l.grade, strengths: l.S.map(p => p.text.slice(0, 300)).slice(0, 8), actions: l.A.map(p => p.text.slice(0, 300)).slice(0, 8), overall: l.overall.slice(0, 900) })),
@@ -193,7 +202,7 @@ else (async function(){
   }
   async function draftOne(t){
     const f = factsFor(t); if (!f.lessons.length) return false;
-    const r = await S.call({ op: 'handoverWords', lessons: f.lessons, assignments: f.assignments, stage2: f.stage2 });
+    const r = await S.call({ op: 'handoverWords', lessons: f.lessons, assignments: f.assignments, stage2: f.stage2, pronoun: pronounOf(t) });
     const text = String((r && r.text) || '').replace(/\bNAME\b/g, firstOf(t)).replace(/\s+/g, ' ').trim();
     if (!text) return false;
     await saveHand(t, { summary: { text, at: new Date().toISOString(), by: 'Lite' } });
