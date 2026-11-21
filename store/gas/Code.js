@@ -1981,7 +1981,7 @@ case 'inbox': {
       /* v280: a program is not a handout (a trainee attached POWERPNT.EXE where their slides should have been) */
       if (/\.(exe|msi|dmg|pkg|app|bat|cmd|com|scr|vbs|jar|sh)$/i.test(mName)) throw new Error('That is a program, not a document. Attach the file you made, for example the .pptx or .pdf.');
       var file = folder.createFile(Utilities.newBlob(bytes, mType, mName));
-      if (byTutor) { try { file.setDescription('{"by":"tutor"}'); } catch (eD) {} }   /* v280: so the handouts copy can leave a tutor's pages out */
+      try { file.setDescription(byTutor ? '{"by":"tutor"}' : '{"by":"trainee"}'); } catch (eD) {}   /* v280, v286: who uploaded it, so the handouts copy takes the trainees' files and leaves the tutors' */
       // Ramy, 23 Sep 2026: "anyone with the link". A tutor opening a
       // candidate's worksheet is often not signed into the center's Workspace,
       // and an assessor never is.
@@ -5931,22 +5931,22 @@ function exportHandouts_(courseId, root, state, max, from) {
      by an earlier run is taken back out of Handouts: our own copy, found by its name and size, goes to the bin. */
   var tutorIds = {};
   if (!from) ['tppoints', 'timetable', 'stream'].forEach(function (kind) { try { (JSON.stringify(courseRead_(courseId, kind) || '').match(/[A-Za-z0-9_-]{25,}/g) || []).forEach(function (x) { tutorIds[x] = 1; }); } catch (e) {} });
-  /* ONLY WHAT A TRAINEE'S OWN RECORD POINTS AT (v282, 21 Nov 2026). Four coursebook pages stayed in Handouts after v280:
-     each had been uploaded twice, the TP points now point at the replacement, and nothing pointed at the first copy any
-     more, so it could not be told from a trainee's file. The rule is turned round: a file is copied only if one of the
-     trainees' records links to it. A file nobody links to (a replaced upload, a tutor's or a trainee's) is left out.
-     If the records cannot be read, or name no file at all, this rule is not applied, so a bad read never empties the
-     folder. */
-  var traineeIds = null;
-  if (!from) { try { var found = {}, any = 0;
-      rosterWithRecords_(courseId, TUTOR_WRITES).forEach(function (t) { (JSON.stringify(t.records || '').match(/[A-Za-z0-9_-]{25,}/g) || []).forEach(function (x) { found[x] = 1; any++; }); });
-      if (any) traineeIds = found; } catch (e) { traineeIds = null; } }
+  /* v282's RULE WAS WRONG AND IS GONE (v286, 22 Nov 2026). v282 copied a file only if a trainee's record linked to it. But
+     a trainee's plan record holds the CURRENT lesson only: once the next plan starts, nothing links to the handouts
+     of the lesson before, so the rule took nine real handouts back out of the test folder with the four scans it was
+     written for. What tells a tutor's file from a trainee's is who uploaded it, so from v286 every upload is marked
+     with that (putMaterial). For the files uploaded before the mark existed: left out if the TP points, timetable or
+     stream point at them (v280), or if they are named as a scanned coursebook page ("... p. 19.jpg"), which is how
+     the four that started this were named. Everything else is taken as a trainee's. */
+  var SCAN = /\bp\.\s*\d+[a-z]?\.(jpe?g|png)$/i;
   var PROGRAM = /\.(exe|msi|dmg|pkg|app|bat|cmd|com|scr|vbs|jar|sh)$/i, removed = 0;
   while (it.hasNext()) {
     var f = it.next(), fid = f.getId();
-    if (done[fid] === 'x') continue;
     var leaveOut = false;
-    try { leaveOut = PROGRAM.test(f.getName()) || !!tutorIds[fid] || /"by":"tutor"/.test(String(f.getDescription() || '')) || (!!traineeIds && !traineeIds[fid]); } catch (e) {}
+    try { var fName = f.getName(), fBy = String(f.getDescription() || '');
+      leaveOut = PROGRAM.test(fName) || /"by":"tutor"/.test(fBy) || (!/"by":"trainee"/.test(fBy) && (!!tutorIds[fid] || SCAN.test(fName))); } catch (e) {}
+    /* a file left out by a rule since put right is copied again: the mark is only kept while the rule still says so */
+    if (done[fid] === 'x') { if (leaveOut) continue; delete done[fid]; }
     if (leaveOut) {
       if (done[fid]) { try { if (!dest) dest = childFolder_(root, 'Handouts'); var mine = dest.getFilesByName(f.getName()), sz = f.getSize(); while (mine.hasNext()) { var c = mine.next(); if (c.getSize() === sz) { c.setTrashed(true); removed++; } } } catch (e) {} }
       done[fid] = 'x'; continue;
