@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611211323">
+<link rel="stylesheet" href="hub-tokens.css?v=202611211342">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -633,7 +633,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611211323">
+<link rel="stylesheet" href="hub-house.css?v=202611211342">
 </head>
 <body>
 <div class="board">
@@ -823,14 +823,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611211323"></script>
-<script src="hub-shared.js?v=202611211323"></script>
-<script src="hub-store.js?v=202611211323"></script>
-<script src="hub-say.js?v=202611211323"></script>
-<script src="hub-crit-learn.js?v=202611211323"></script>
-<script src="hub-crit-vocab.js?v=202611211323"></script>
-<script src="hub-sync.js?v=202611211323"></script>
-<script src="hub-notebook.js?v=202611211323"></script>
+<script src="hub-exchange.js?v=202611211342"></script>
+<script src="hub-shared.js?v=202611211342"></script>
+<script src="hub-store.js?v=202611211342"></script>
+<script src="hub-say.js?v=202611211342"></script>
+<script src="hub-crit-learn.js?v=202611211342"></script>
+<script src="hub-crit-vocab.js?v=202611211342"></script>
+<script src="hub-sync.js?v=202611211342"></script>
+<script src="hub-notebook.js?v=202611211342"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2688,16 +2688,29 @@ if (window.hubIPA) hubIPA.bar('#tNotes, #tOverall, #tSelf, #tLA, .pt-text, texta
 /* a course whose admin switched Ask Connect off has no While you watch card at all */
 (function(){ let cs={}; try{ cs=JSON.parse(localStorage.getItem('connect_course_settings')||'{}')||{}; }catch(e){}
   if(cs.askConnect===false){ const card=$('notesCard'); if(card) card.style.display='none'; const ia=$('introAsk'); if(ia) ia.hidden=true; } })();
-/* What the tutor writes lives in this browser only, one note per trainee and TP;
-   it is not part of the feedback record, so the trainee cannot read it. */
+/* What the tutor writes lives in this browser only; it is not part of the feedback record, so the trainee cannot read it.
+   EACH TP KEEPS ITS OWN NOTES (Ramy, 21 Nov 2026: "make that box keep each TP's notes"; Belma had looked for her TP1 and
+   TP2 running commentary and found it gone). It used to hold one note per trainee, so the next TP's notes replaced the
+   last one's. Now the notes are kept by TP: change the TP number at the top and that TP's notes come back. Still this
+   browser only. A note saved the old way is kept, under the TP it was written for. */
 const NOTES_KEY='chub:fbNotes:'+(TRAINEE_ID||'x');
 function notesTP(){ return (($('fTP')||{}).value||'').trim(); }
+function notesAll(){ let n=null; try{ n=JSON.parse(localStorage.getItem(NOTES_KEY)||'null'); }catch(e){}
+  if(n && n.byTp && typeof n.byTp==='object') return n.byTp;
+  if(n && n.text) { const o={}; o[n.tp||'']=n.text; return o; }   /* the old shape: one note, with the TP it was for */
+  return {}; }
 (function(){
   const ta=$('tNotes'); if(!ta) return;
-  try{ const n=JSON.parse(localStorage.getItem(NOTES_KEY)||'null'); if(n && n.text && (!n.tp || !notesTP() || n.tp===notesTP())) ta.value=n.text; }catch(e){}
-  ta.addEventListener('input',()=>{ try{ localStorage.setItem(NOTES_KEY, JSON.stringify({ tp:notesTP(), text:ta.value })); }catch(e){} });
+  let shown=null;
+  const show=()=>{ const tp=notesTP(); if(tp===shown) return; shown=tp; const all=notesAll(); ta.value = all[tp] != null ? all[tp] : (tp ? '' : (all['']||'')); grow(); try{ if(typeof askRedraftShow==='function') askRedraftShow(); }catch(e){} };
+  const keep=()=>{ try{ const all=notesAll(), tp=notesTP(); if(ta.value.trim()) all[tp]=ta.value; else delete all[tp]; localStorage.setItem(NOTES_KEY, JSON.stringify({ byTp:all })); }catch(e){} };
   /* it starts at three lines and grows as you write, so no line is ever cut off (20 Nov 2026) */
-  const grow=()=>{ if(ta.offsetParent) autoGrow(ta); }; ta.addEventListener('input', grow); grow(); window.addEventListener('load', grow);
+  const grow=()=>{ if(ta.offsetParent) autoGrow(ta); };
+  ta.addEventListener('input',()=>{ shown=notesTP(); keep(); grow(); });
+  const tpBox=$('fTP'); if(tpBox) ['input','change'].forEach(ev=>tpBox.addEventListener(ev, show));
+  show(); window.addEventListener('load', ()=>{ shown=null; show(); });
+  /* the form fills its TP number a moment after it opens (the trainee's plan, a saved draft): look again then */
+  [600,1800,4000].forEach(ms=>setTimeout(()=>{ if(document.activeElement!==ta) { shown=null; show(); } }, ms));
 })();
 /* the voice of the overall comment, remembered on this device (as Connect's tone toggle is per tutor):
    supportive, direct, or the tutor's own words (their lines joined into prose, only spelling and grammar fixed) */
