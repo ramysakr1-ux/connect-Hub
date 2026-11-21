@@ -3568,10 +3568,10 @@ case 'inbox': {
       if (fdHtml.length > 1500000 || fdPdf.length > 6000000) throw new Error('That document is too big to file');
       var fdRoot; try { fdRoot = DriveApp.getFolderById(fdFid); fdRoot.getName(); } catch (e) { return { filed: false, why: 'folder' }; }
       var fdAg = (recordsFor_(course.id, fdT.token, { agreement: 1 }) || {}).agreement || {};
-      var fdWho = String(fdAg.certName || fdT.name || 'Trainee').replace(/[\\/:*?"<>|]/g, ' ').trim();
+      var fdWho = folderNameOf_(fdAg.certName, fdT.name);
       var fdFolder = childFolder_(childFolder_(fdRoot, 'Portfolios'), fdWho);
       var fdState = fdTrial ? {} : (courseRead_(course.id, 'exported') || {});
-      if (fdState._folder !== fdFid) fdState = { _folder: fdFid };
+      if (fdState._folder !== fdFid || fdState._v !== 2) fdState = { _folder: fdFid, _v: 2 };
       var fdMine = fdState[fdT.token] || {};
       if (!fdMine.folder) { try { fdFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {} fdMine.folder = fdFolder.getUrl(); }
       if (fdPdf) {
@@ -5771,6 +5771,14 @@ function registerEdit_(req) {
    assignments, the CELTA 5, the report and the observation tasks come next. Running it twice replaces a trainee's
    files by name; it never deletes anything else. */
 function driveFolderId_(url) { return (String(url || '').match(/\/folders\/([A-Za-z0-9_-]{10,})/) || String(url || '').match(/[?&]id=([A-Za-z0-9_-]{10,})/) || [])[1] || ''; }
+/* A TRAINEE'S FOLDER NAME (fixed 21 Nov 2026, an hour after the first run). The confirmed certificate name is kept as
+   { name, at, by }, not as words; the first run on a real course wrote String() of that, "[object Object]", so every
+   trainee would have shared one folder. Found on the first look at the folder, before anyone had its link. */
+function folderNameOf_(certName, name) {
+  var n = (certName && typeof certName === 'object') ? certName.name : certName;
+  n = String((typeof n === 'string' && n.trim()) ? n : (name || 'Trainee')).replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
+  return n || 'Trainee';
+}
 function childFolder_(parent, name) { var it = parent.getFoldersByName(name); return it.hasNext() ? it.next() : parent.createFolder(name); }
 function putPdf_(folder, name, html) {
   var page = '<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,Helvetica,sans-serif;font-size:10.5pt;color:#222;} table{border-collapse:collapse;width:100%;} img{max-width:100%;}'
@@ -5798,7 +5806,7 @@ function exportTrainees_(courseId, opt) {
   var state = opt.state || {}, left = opt.max || 1, out = [], waiting = 0;
   /* A NEW FOLDER STARTS AGAIN (22 Nov 2026): the state remembers which folder it describes. When the course's folder is
      changed (a test folder first, the center's own later), everything is filed afresh into the new one. */
-  if (state._folder !== fid) { state = { _folder: fid }; }
+  if (state._folder !== fid || state._v !== 2) { state = { _folder: fid, _v: 2 }; }
   for (var i = 0; i < people.length; i++) {
     var t = people[i], hist = (t.records && t.records.tpHistory) || {};
     var mine = state[t.token] || {};
@@ -5807,7 +5815,7 @@ function exportTrainees_(courseId, opt) {
       .filter(function (d) { return mine[d.key] !== d.print; });
     if (!due.length) continue;
     if (left <= 0) { waiting += due.length; continue; }
-    var who = String(t.certName || t.name || 'Trainee').replace(/[\\/:*?"<>|]/g, ' ').trim();
+    var who = folderNameOf_(t.certName, t.name);
     var folder = childFolder_(top, who);
     if (!mine.folder) { try { folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {} mine.folder = folder.getUrl(); }
     var made = [];
@@ -5831,11 +5839,11 @@ function exportTick_() {
       var set = courseRead_(c.id, 'settings') || {};
       if (set.demoToday || set.presentToday || !driveFolderId_(set.exportFolder)) return;
       var ver = props.getProperty(verKey_(String(c.id))) || '', seenKey = 'EXPORT_SEEN_' + c.id;
-      if (ver && props.getProperty(seenKey) === ver) return;
+      if (ver && props.getProperty(seenKey) === ver + '|2') return;
       var state = courseRead_(c.id, 'exported') || {};
       var r = exportTrainees_(c.id, { state: state, max: 8 });
       if (r.exported.length) courseWrite_(c.id, 'exported', r.state);
-      if (!r.waiting) props.setProperty(seenKey, props.getProperty(verKey_(String(c.id))) || ver);   /* all filed: nothing to do until the course moves again */
+      if (!r.waiting) props.setProperty(seenKey, (props.getProperty(verKey_(String(c.id))) || ver) + '|2');   /* all filed: nothing to do until the course moves again */
     } catch (e) {}
   });
 }
