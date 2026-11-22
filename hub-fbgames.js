@@ -207,7 +207,7 @@
   }
   const style2 = document.createElement('style'); style2.textContent = `
   .die{width:190px; height:190px; margin:10px auto 0;} .die svg{width:100%; height:100%; filter:drop-shadow(0 10px 14px rgba(0,0,0,.22));}
-  .die-b{fill:var(--paper); stroke:var(--ink); stroke-width:4;} .die-p{fill:var(--brick, #7A2E2E);}
+  .die-b{fill:var(--paper); stroke:var(--ink); stroke-width:4;} .die-p{fill:var(--brick);}
   .die.rolling{animation:dieroll .22s linear infinite;} @keyframes dieroll{0%{transform:rotate(-9deg) translateY(0)}50%{transform:rotate(9deg) translateY(-12px)}100%{transform:rotate(-9deg) translateY(0)}}
   .wh-card .about{margin:10px 0 0; font-size:15px;} .faces{margin:16px 0 0; padding:0; list-style:none; counter-reset:f; display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; font-size:13.5px; color:var(--grey);}
   .faces li{counter-increment:f;} .faces li::before{content:counter(f); display:inline-grid; place-items:center; width:18px; height:18px; border-radius:5px; border:1.5px solid currentColor; font-size:11px; font-weight:700; margin-right:7px;} .faces li.on{color:var(--ink); font-weight:700;}
@@ -215,7 +215,7 @@
   .fc-in{position:relative; display:block; width:100%; height:100%; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.7,.2,1);} .fc.up .fc-in{transform:rotateY(180deg);}
   .fc-f, .fc-b{position:absolute; inset:0; border-radius:14px; display:flex; align-items:center; justify-content:center; text-align:center; -webkit-backface-visibility:hidden; backface-visibility:hidden; padding:10px;}
   .fc-f{background:var(--teal); color:var(--paper); box-shadow:0 4px 0 rgba(0,0,0,.18);} .fc-f i{font-style:normal; font-family:Newsreader,Georgia,serif; font-size:44px; font-weight:700; opacity:.9;}
-  .fc:hover .fc-f{filter:brightness(1.12);} .fc-b{transform:rotateY(180deg); font-size:14.5px; line-height:1.3; font-weight:600; color:var(--ink); background:var(--fb-good-wash, #EDF1E2);} .fc.n .fc-b{background:var(--fb-act-wash, #F7E9E1);}
+  .fc:hover .fc-f{filter:brightness(1.12);} .fc-b{transform:rotateY(180deg); font-size:14.5px; line-height:1.3; font-weight:600; color:var(--ink); background:var(--fb-good-wash);} .fc.n .fc-b{background:var(--fb-act-wash);}
   .fc.at .fc-b{box-shadow:0 0 0 3px var(--ink);}
   @media (max-width:560px){ .die{width:140px; height:140px;} .fc-b{font-size:12px; padding:6px;} .fc-f i{font-size:32px;} .faces{grid-template-columns:1fr;} }
   @media (prefers-reduced-motion:reduce){ .die.rolling{animation:none;} .fc-in{transition:none;} }`;
