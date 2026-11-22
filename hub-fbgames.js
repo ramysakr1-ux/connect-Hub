@@ -64,7 +64,7 @@
   let SPIN = null;   /* { codes, used, at, rot } while the wheel is open */
   function openWheel(day, list){ list = list || [];
     const codes = focusOn(day.date);
-    if (!codes.length) { if (window.hubSay) hubSay('No input sessions on the timetable yet, so there are no criteria to spin.'); return; }
+    if (!codes.length) { if (window.hubDemoSay) hubDemoSay('No input sessions on the timetable yet, so there are no criteria to spin.'); return; }
     SPIN = { codes, used: [], at: -1, rot: 0, list };
     let back = document.querySelector('.wheel-back');
     if (!back) { back = document.createElement('div'); back.className = 'wheel-back'; document.body.appendChild(back); }
@@ -115,7 +115,7 @@
   let GAME = null;
   function openGame(kind, day, list){ list = list || [];
     const codes = nineFor(day.date);
-    if (codes.length < 9) { if (window.hubSay) hubSay('Not enough criteria on the timetable yet for a 3 by 3.'); return; }
+    if (codes.length < 9) { if (window.hubDemoSay) hubDemoSay('Not enough criteria on the timetable yet for a 3 by 3.'); return; }
     GAME = { kind, codes, cells: Array(9).fill(''), at: -1, turn: 'X', win: null, list };
     let back = document.querySelector('.wheel-back');
     if (!back) { back = document.createElement('div'); back.className = 'wheel-back'; document.body.appendChild(back); }
