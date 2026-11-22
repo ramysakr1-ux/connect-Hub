@@ -288,6 +288,10 @@ window.InputLib = (function(){
       }
       if (!connectOn(cs)) { seal('own'); return; }
       var now = today(cs), mine = inputsOf(tt).filter(function(x){ return x.slug === slug; });
+      /* a session a tutor teaches from her own material (x.own) names no Lite page, so it is not in `mine`; its page says so,
+         not "Not on your course" (23 Nov 2026, walking TP3 day) */
+      var ownHere = !mine.length && ((tt && tt.days) || []).some(function(d){ return d && (d.sessions || []).some(function(x){ return x && x.own && String(x.lib || '') === slug; }); });
+      if (ownHere) { seal('own'); return; }
       if (mine.some(function(x){ return isOpen(x, cs); })) reveal(); else seal(mine.length ? 'later' : 'never');
     }
     if (!slug) { reveal(); return; }

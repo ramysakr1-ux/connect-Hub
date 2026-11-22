@@ -34,7 +34,7 @@
 <title>Oral feedback</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611230041">
+<link rel="stylesheet" href="hub-tokens.css?v=202611230156">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -139,6 +139,9 @@
   .top{display:flex; justify-content:space-between; align-items:flex-end; gap:14px; flex-wrap:wrap; margin:0 0 16px;}
   .top h1{margin:0;} .top small{display:block; color:var(--grey); font-size:14.5px; margin-top:4px;}
   .top .tabs{margin:0;} .tabs:empty{display:none;}
+  /* the days and the groups each keep their own line on a phone (23 Nov 2026: Group 2 had wrapped under the dates) */
+  .tset{display:flex; gap:8px; flex-wrap:wrap;} .tabs .tset + .tset{margin-left:10px;}
+  @media (max-width:560px){ .tabs{flex-direction:column; align-items:flex-start;} .tabs .tset + .tset{margin-left:0;} }
   .tl{display:flex; align-items:flex-start; margin:0 0 20px;}
   .tl button{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; font:inherit; font-size:12px; font-weight:700; color:var(--grey); background:none; border:0; padding:0; cursor:pointer; position:relative;}
   .tl button::before{content:''; position:absolute; top:13px; left:-50%; right:50%; height:2px; background:var(--sand-line);} .tl button:first-child::before{display:none;}
@@ -192,21 +195,21 @@
   @media print{ .tl, .act details.other, .games, .top .tabs, .box b.h em{display:none !important;} .grid.n2, .grid.n3{grid-template-columns:1fr 1fr;} .box{border:0;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611230041">
+<link rel="stylesheet" href="hub-house.css?v=202611230156">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="23_timetable.html">Back</a>
   <div id="app"><p class="lede">Loading the course…</p></div>
 </div>
-<script src="celta5-criteria.js?v=202611230041"></script>
+<script src="celta5-criteria.js?v=202611230156"></script>
 <script src="hub-fbgames.js?v=202610300038"></script>
-<script src="hub-shared.js?v=202611230041"></script>
-<script src="hub-store.js?v=202611230041"></script>
-<script src="hub-say.js?v=202611230041"></script>
-<script src="hub-rotation.js?v=202611230041"></script>
-<script src="hub-sync.js?v=202611230041"></script>
-<script src="hub-notebook.js?v=202611230041"></script>
+<script src="hub-shared.js?v=202611230156"></script>
+<script src="hub-store.js?v=202611230156"></script>
+<script src="hub-say.js?v=202611230156"></script>
+<script src="hub-rotation.js?v=202611230156"></script>
+<script src="hub-sync.js?v=202611230156"></script>
+<script src="hub-notebook.js?v=202611230156"></script>
 <script>
 if (window.hubTutorRoomOnly && hubTutorRoomOnly()) { /* refused; hubTutorRoomOnly drew the room */ }
 else (async function(){
@@ -244,7 +247,16 @@ else (async function(){
   /* who taught on the day: the day's teaching set in this group, in the order they taught */
   function taughtOn(day){
     const people = roster.filter(t => String(t.group || '') === group).map(t => ({ token: t.token, name: t.name, group }));
-    const sets = R ? R.setsFor(people) : [people];
+    /* WHO TEACHES IN WHICH SET comes from the places the tutors chose (settings.slotOf), read from the course this page
+       has just fetched (23 Nov 2026, walking a TP day: on a fresh phone the rotation helper read this browser's copy of the
+       settings before the sync had written it, fell back on name order, and one group's card named the other set as
+       the trainees who taught). The helper is the fallback for a group nobody has placed. */
+    const slot = (cs && cs.slotOf) || {}, PL = 'ABCDEF';
+    let sets;
+    if (people.length && people.every(p => PL.indexOf(String(slot[p.token] || '')) !== -1)) {
+      const lettered = people.map(p => Object.assign({}, p, { letter: String(slot[p.token]), idx: PL.indexOf(String(slot[p.token])) })).sort((a, b) => a.idx - b.idx);
+      sets = [lettered.filter(p => p.idx < 3), lettered.filter(p => p.idx >= 3)];
+    } else sets = R ? R.setsFor(people) : [people];
     const set = sets[day.setIndex || 0] || [];
     const rows = (tpsPoints.groups && tpsPoints.groups[group]) || tpsPoints.points || {};
     const order = R && R.orderDealt ? R.orderDealt(set, day.tp, (tok, tp) => (rows[tok] || {})['tp' + tp]) : set;
@@ -383,7 +395,7 @@ else (async function(){
       <div class="top"><div><p class="k">Teaching practice · ${esc(cs.courseName || '')}</p>
         <h1>Oral feedback · TP${esc(day.tp)}${group ? ' · Group ' + esc(group) : ''}</h1>
         <small>${[fmtDay(day.date), when, list.length ? list.length + ' taught' : ''].filter(Boolean).map(esc).join(' · ')}</small></div>
-        <div class="tabs">${sameTp.length > 1 ? sameTp.map(d => `<button type="button" data-day="${esc(d.date)}" aria-pressed="${d.date === date}">${esc(fmtDay(d.date))}</button>`).join('') : ''}${groups.length > 1 ? groups.map(g => `<button type="button" data-group="${esc(g)}" aria-pressed="${g === group}">Group ${esc(g)}</button>`).join('') : ''}</div></div>
+        <div class="tabs">${sameTp.length > 1 ? '<span class="tset">' + sameTp.map(d => `<button type="button" data-day="${esc(d.date)}" aria-pressed="${d.date === date}">${esc(fmtDay(d.date))}</button>`).join('') + '</span>' : ''}${groups.length > 1 ? '<span class="tset">' + groups.map(g => `<button type="button" data-group="${esc(g)}" aria-pressed="${g === group}">Group ${esc(g)}</button>`).join('') + '</span>' : ''}</div></div>
       <div class="tl" aria-label="Teaching practice ${curTp}">${tps.map(n => `<button type="button" data-tp="${n}" class="${n === curTp ? 'today' : n < curTp ? 'done' : ''}"${n === curTp ? ' aria-current="true"' : ''}><i>${n}</i>TP${n}</button>`).join('')}</div>
       ${list.length ? actHTML(day) : ''}
       ${list.length ? `<p class="step two"><b>2</b>Then each trainee who taught <small>${esc(and(list.map(first)))}.${watched.length ? ' ' + esc(and(watched.map(first))) + ' observed.' : ''}</small></p>` : ''}
