@@ -34,7 +34,7 @@
 <title>TP feedback</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611221634">
+<link rel="stylesheet" href="hub-tokens.css?v=202611221646">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);}
@@ -179,7 +179,12 @@
   .again{margin:10px 0 0; font-size:14px; line-height:1.5;} .again .rep{margin:0 6px 0 0;}
   .tf .swap{margin:0; padding:0; border:0;} .tf .hbc{margin:0; border:0; padding:0;}
   .games{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:22px 0 0; padding:14px 18px; background:var(--paper); border-radius:14px;}
-  .games .lab{margin:0 6px 0 0;} .games button{font:inherit; font-weight:700; font-size:13.5px; padding:7px 14px; border-radius:999px; border:1px solid var(--sand-line); background:var(--paper); color:var(--teal); cursor:pointer;} .games button:hover{border-color:var(--teal);}
+  /* THE GAMES LOOK LIKE GAMES (Ramy, 22 Nov 2026: "make it look like it's a game"): three bright tiles, each with its own picture */
+  .games{background:none; padding:0; gap:12px; align-items:stretch;} .games .lab{flex-basis:100%; margin:0;}
+  .games .gm{flex:1 1 180px; display:grid; grid-template-columns:44px 1fr; column-gap:12px; align-items:center; text-align:left; font:inherit; border:0; border-radius:16px; padding:14px 16px; cursor:pointer; color:var(--paper); box-shadow:0 4px 0 rgba(0,0,0,.18); transition:transform .12s ease, box-shadow .12s ease;}
+  .games .gm svg{grid-row:1 / 3; width:44px; height:44px;} .games .gm b{font-family:'Newsreader',Georgia,serif; font-size:19px; line-height:1.1;} .games .gm small{font-size:13px; opacity:.85;}
+  .games .gm.g1{background:var(--teal);} .games .gm.g2{background:var(--a-mustard); color:var(--ink);} .games .gm.g3{background:var(--brick);}
+  .games .gm:hover{transform:translateY(-2px); box-shadow:0 6px 0 rgba(0,0,0,.18);} .games .gm:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.18);}
   .foot-note{color:var(--grey); font-size:13px; margin:18px 0 0;}
   @media (max-width:900px){ .grid.n3{grid-template-columns:1fr;} }
   @media (max-width:760px){ .grid.n2{grid-template-columns:1fr;} #activity .steps{grid-template-columns:1fr; gap:6px;} .step{font-size:19px;} .step small{flex-basis:100%; margin:-6px 0 0 40px;}
@@ -187,21 +192,21 @@
   @media print{ .tl, .act details.other, .games, .top .tabs, .box b.h em{display:none !important;} .grid.n2, .grid.n3{grid-template-columns:1fr 1fr;} .box{border:0;} }
 
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611221634">
+<link rel="stylesheet" href="hub-house.css?v=202611221646">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="23_timetable.html">Back</a>
   <div id="app"><p class="lede">Loading the course…</p></div>
 </div>
-<script src="celta5-criteria.js?v=202611221634"></script>
+<script src="celta5-criteria.js?v=202611221646"></script>
 <script src="hub-fbgames.js?v=202610300038"></script>
-<script src="hub-shared.js?v=202611221634"></script>
-<script src="hub-store.js?v=202611221634"></script>
-<script src="hub-say.js?v=202611221634"></script>
-<script src="hub-rotation.js?v=202611221634"></script>
-<script src="hub-sync.js?v=202611221634"></script>
-<script src="hub-notebook.js?v=202611221634"></script>
+<script src="hub-shared.js?v=202611221646"></script>
+<script src="hub-store.js?v=202611221646"></script>
+<script src="hub-say.js?v=202611221646"></script>
+<script src="hub-rotation.js?v=202611221646"></script>
+<script src="hub-sync.js?v=202611221646"></script>
+<script src="hub-notebook.js?v=202611221646"></script>
 <script>
 if (window.hubTutorRoomOnly && hubTutorRoomOnly()) { /* refused; hubTutorRoomOnly drew the room */ }
 else (async function(){
@@ -276,7 +281,7 @@ else (async function(){
     const box = (k, title, written, none) => { const own = typeof say[k] === 'string'; const ps = own ? lines(say[k]).map(t => ({ t })) : written;
       return `<div class="box ${k}" data-box="${k}" data-tp="${tp}" tabindex="0" role="button" aria-label="${title}: click to edit" data-text="${esc((own ? lines(say[k]) : written.map(x => x.t)).join('\n'))}" data-own="${own ? 1 : ''}"><b class="h">${title}<em>${own ? 'your wording' : ''}</em></b>${ps.length ? ps.map(li).join('') : '<p class="none">' + none + '</p>'}</div>`; };
     const sub = [(f.fMain || '').trim(), f.fTutor && swap ? 'from ' + String(f.fTutor).trim().split(/\s+/)[0] : ''].filter(Boolean).map(esc).join(' · ');
-    const before = `${last.length ? `<p class="lab">Set before: ask how it went</p>${last.slice().reverse().filter((a, i, all) => all.findIndex(x => x.t === a.t) === i).map(a => `<div class="ap">${esc(a.t)}<small>TP${a.tp}</small></div>`).join('')}` : ''}${reps.length ? `<p class="lab" style="margin-top:12px">Keeps coming back</p>${reps.slice(0, 3).map(c => `<div class="ap">${esc(count[c].t || c)}<span class="rep" style="margin:0 0 0 8px">${count[c].n === 2 ? 'twice' : count[c].n + ' times'}</span></div>`).join('')}` : ''}`;
+    const before = `${last.length ? `<p class="lab">Action points from earlier TPs: better today?</p>${last.slice().reverse().filter((a, i, all) => all.findIndex(x => x.t === a.t) === i).map(a => `<div class="ap">${esc(a.t)}<small>TP${a.tp}</small></div>`).join('')}` : ''}${reps.length ? `<p class="lab" style="margin-top:12px">Keeps coming back</p>${reps.slice(0, 3).map(c => `<div class="ap">${esc(count[c].t || c)}<span class="rep" style="margin:0 0 0 8px">${count[c].n === 2 ? 'twice' : count[c].n + ' times'}</span></div>`).join('')}` : ''}`;
     const fold = window.hubBeforeFold ? hubBeforeFold(t) : '';
     return `<article class="tr tf${gm && gm[0] === 'not' ? ' red' : ''}" data-token="${esc(t.token)}">
       <div class="tf-head"><div><h2>${esc(t.name)}</h2>${sub ? '<small>' + sub + '</small>' : ''}</div>${gNow ? `<span class="tf-grade ${gm ? gm[0] : ''}">${esc(gNow)}</span>` : ''}</div>
@@ -383,7 +388,10 @@ else (async function(){
       ${list.length ? actHTML(day) : ''}
       ${list.length ? `<p class="step two"><b>2</b>Then each trainee who taught <small>${esc(and(list.map(first)))}.${watched.length ? ' ' + esc(and(watched.map(first))) + ' observed.' : ''}</small></p>` : ''}
       <div class="grid n${Math.min(3, Math.max(1, list.length))}" id="each">${list.length ? list.map(t => card(t, day)).join('') : '<p class="empty-group">Nobody in this group teaches on this day.</p>'}</div>
-      ${list.length ? '<div class="games"><p class="lab">Games, any day</p><button type="button" id="wheel">Spin the criteria</button><button type="button" id="bingo">Criteria bingo</button><button type="button" id="xo">XO</button></div>' : ''}
+      ${list.length ? '<div class="games"><p class="lab">Or play a game</p>'
+        + '<button type="button" id="wheel" class="gm g1"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="3"/><path d="M20 4v32M4 20h32M8.7 8.7l22.6 22.6M31.3 8.7 8.7 31.3" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="20" r="3.5" fill="currentColor"/></svg><b>Spin the criteria</b><small>The wheel picks one</small></button>'
+        + '<button type="button" id="bingo" class="gm g2"><svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="5" width="30" height="30" rx="4"/><path d="M15 5v30M25 5v30M5 15h30M5 25h30"/></g><circle cx="10" cy="10" r="3" fill="currentColor"/><circle cx="20" cy="20" r="3" fill="currentColor"/><circle cx="30" cy="30" r="3" fill="currentColor"/></svg><b>Criteria bingo</b><small>Three in a row</small></button>'
+        + '<button type="button" id="xo" class="gm g3"><svg viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M6 6l11 11M17 6 6 17"/><circle cx="29" cy="28" r="6.5"/></g></svg><b>XO</b><small>Two teams</small></button></div>' : ''}
       <p class="foot-note">Everything on the cards comes from the written TP feedback. Click a box to change the wording for your talk. Trainees never see this page.</p>`;
     document.querySelectorAll('.box[data-box]').forEach(b => { b.onclick = () => editBox(b); b.onkeydown = e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === b) { e.preventDefault(); editBox(b); } }; });
     document.querySelectorAll('.tl button').forEach(b => b.onclick = () => { const n = +b.dataset.tp, ds = days.filter(d => +d.tp === n); const d = ds.filter(x => x.date <= today).pop() || ds[0]; if (d) { date = d.date; history2(); draw(); } });
