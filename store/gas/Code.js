@@ -2982,6 +2982,15 @@ case 'inbox': {
          request Stage 2's Overall comment in his voice (Ramy, 22 Nov 2026: "Strengths, action points, overall comment") */
       var swNum = function(v, d){ v = parseInt(v, 10); return v >= 1 && v <= 15 ? v : d; };
       var swMostS = swNum(req.mostS, 10), swMostA = swNum(req.mostA, 7);
+      /* v296: the Overall comment's voice, for both the first pass and the lengthening pass (the lengthening pass had
+         drifted into report words and filler: "demonstrating", "foster deeper learning", "a solid foundation") */
+      var swOvVoice = 'VOICE OF THE OVERALL COMMENT: an experienced CELTA tutor talking to the trainee, plain and brisk, short sentences, the way these real ones read: '
+        + '"Good level of reduced TTT and language grading. You usually set a clear context at the start of the lesson and you stage your lessons according to one of the ways you have learned on the course." '
+        + '"Great rapport from the start, good level of TTT and graded language to the level. You are taking the lesson shapes on board and gradually learning to use the teaching techniques that you have learned on the course." '
+        + '"For the next stage of the course, continue to work on reducing your TTT and make sure you include more pair work and group work. Keep a low profile and slow down your own pace." '
+        + 'Fragments like "Good level of ..." and "Great rapport ..." are fine. Every sentence says something about this trainee from the points: no filler, no general praise, nothing about foundations, journeys, growth or potential. '
+        + 'Never add advice or praise that is not in the points. Never use: demonstrate, demonstrating, foster, ownership, thoughtfully, effectively, facilitate, showcase, commendable, solid foundation, '
+        + 'it is clear that, deeper learning, autonomy, strategies, ensure, utilize. ';
       var swOverall = !!req.overall, swName = String(req.name || '').replace(/[^\p{L}' -]/gu, '').trim().slice(0, 40);
       /* v291 (22 Nov 2026). Ramy: Stage 1 "just really copies the feedback"; and how a stage must read: "more general,
          like criteria reference, not referring to like a particular incident inside a TP or ... to students' names ...
@@ -3010,7 +3019,7 @@ case 'inbox': {
         + (swOverall ? 'Also write the Overall comment for Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of 180 to 230 words (his own ran 560 to 1,100 characters): never shorter than 160 words; count them before you answer, in the tutor\'s own voice. '
           + 'Open with how the trainee has progressed over the first stage of the course and their first name at the end of that sentence, e.g. "You have shown steady progress over the first stage of the course, ' + (swName || 'NAME') + '." '
           + 'Then two or three sentences on what is working, in general, criteria-referenced terms. Then "For the next stage of the course, ..." and what to focus on, as instructions. End with "Best of luck!". '
-          + 'The same rules as the points: no single lessons, no TP numbers, no students\' names, no grade, nothing that is not in the points. Write "students", never Ss. ' : '')
+          + 'The same rules as the points: no single lessons, no TP numbers, no students\' names, no grade, nothing that is not in the points. Write "students", never Ss. ' + swOvVoice : '')
         + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]' + (swOverall ? ',"overall":"..."' : '') + '}.';
       var swResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
@@ -3035,7 +3044,7 @@ case 'inbox': {
               payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
                 messages: [{ role: 'system', content: 'You lengthen a CELTA tutor\'s Stage 2 Overall comment to between 180 and 230 words, in the same voice and the same order: '
                   + 'the progress sentence with the trainee\'s first name, then what is working, then "For the next stage of the course, ...", then "Best of luck!". '
-                  + 'Say more about each point that is already there, using only the points given: nothing new, no single lessons, no TP numbers, no students\' names, no grade. '
+                  + 'Lengthen it by saying more about the points given, one by one, in concrete terms (what the trainee does, what it gives the students, what to do next): nothing new, no single lessons, no TP numbers, no students\' names, no grade. ' + swOvVoice
                   + 'Write "students", never Ss. American spelling. Answer as JSON: {"overall":"..."}.' },
                   { role: 'user', content: JSON.stringify({ overall: swRes.overall, strengths: swRes.strengths, actions: swRes.actions }) }] })
             });
