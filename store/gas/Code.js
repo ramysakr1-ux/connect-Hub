@@ -3007,7 +3007,7 @@ case 'inbox': {
         + 'Write "students", never Ss. ' + celtaShorthand_()
         + 'In the points, write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
         + 'No praise that is not in the original, no grades, no names, no arrows. American spelling. '
-        + (swOverall ? 'Also write the Overall comment for Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of AT LEAST 150 words and at most 200 (his own ran 560 to 1,100 characters): never shorter than 150 words, in the tutor\'s own voice. '
+        + (swOverall ? 'Also write the Overall comment for Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of 180 to 230 words (his own ran 560 to 1,100 characters): never shorter than 160 words; count them before you answer, in the tutor\'s own voice. '
           + 'Open with how the trainee has progressed over the first stage of the course and their first name at the end of that sentence, e.g. "You have shown steady progress over the first stage of the course, ' + (swName || 'NAME') + '." '
           + 'Then two or three sentences on what is working, in general, criteria-referenced terms. Then "For the next stage of the course, ..." and what to focus on, as instructions. End with "Best of luck!". '
           + 'The same rules as the points: no single lessons, no TP numbers, no students\' names, no grade, nothing that is not in the points. Write "students", never Ss. ' : '')
@@ -3023,7 +3023,27 @@ case 'inbox': {
       var swClean = function(a){ return (Array.isArray(a) ? a : []).map(function(x){
         return { text: String((x && x.text) || '').trim().slice(0, 400), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).filter(function(c){ return swAllowed[c]; }) }; }).filter(function(x){ return x.text; }); };
       var swRes = { strengths: swClean(swOut.strengths), actions: swClean(swOut.actions) };
-      if (swOverall) swRes.overall = String(swOut.overall || '').trim().slice(0, 1600);
+      if (swOverall) {
+        swRes.overall = String(swOut.overall || '').trim();
+        /* v295: the model writes short whatever the prompt says (114 to 152 words against "180 to 230"). Under 150 words,
+           it is asked once more to say the same at his length, from the same points and nothing else. */
+        var swWords = function(t){ return String(t || '').split(/\s+/).filter(Boolean).length; };
+        if (swWords(swRes.overall) < 150) {
+          try {
+            var swLong = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
+              payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
+                messages: [{ role: 'system', content: 'You lengthen a CELTA tutor\'s Stage 2 Overall comment to between 180 and 230 words, in the same voice and the same order: '
+                  + 'the progress sentence with the trainee\'s first name, then what is working, then "For the next stage of the course, ...", then "Best of luck!". '
+                  + 'Say more about each point that is already there, using only the points given: nothing new, no single lessons, no TP numbers, no students\' names, no grade. '
+                  + 'Write "students", never Ss. American spelling. Answer as JSON: {"overall":"..."}.' },
+                  { role: 'user', content: JSON.stringify({ overall: swRes.overall, strengths: swRes.strengths, actions: swRes.actions }) }] })
+            });
+            if (swLong.getResponseCode() === 200) { var swL = String((JSON.parse(JSON.parse(swLong.getContentText()).choices[0].message.content || '{}')).overall || '').trim(); if (swWords(swL) > swWords(swRes.overall)) swRes.overall = swL; }
+          } catch (swLe) {}
+        }
+        swRes.overall = swRes.overall.slice(0, 2000);
+      }
       return swRes;
     }
     /* ---- IS IT THEIR OWN WORK? (25 Oct 2026) ------------------------------
