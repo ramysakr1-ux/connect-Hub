@@ -25,7 +25,7 @@
 <title>Connect Lite — Assessor pack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611221543">
+<link rel="stylesheet" href="hub-tokens.css?v=202611221557">
 <style>
   :root{
     /* the control fill, for the shared confirm modal's Cancel button */
@@ -210,6 +210,8 @@
   .pf-bar button{font-family:'Karla',sans-serif; font-size:.82rem; font-weight:700; color:var(--paper); background:none; padding:6px 12px; border-radius:999px; border:1.5px solid color-mix(in oklch, var(--paper) 45%, transparent); white-space:nowrap; cursor:pointer;}
   .pf-bar button:hover{border-color:var(--paper);}
   .pf-sheet .doc{margin:18px 20px 20px; background:var(--paper);}
+  .pf-sheet .doc.framed{background:none; padding:0; border:0; box-shadow:none;}
+  .pf-frame{display:block; width:100%; border:0; min-height:200px; background:transparent;}
   .pf-sheet .doc h1, .pf-sheet .doc h2, .pf-sheet .doc h3{scroll-margin-top:68px;}   /* a jump lands below the bar, not under it */
   .pf-sec .otl{padding:8px 20px;}
   @media (prefers-reduced-motion:reduce){ .pf-jump a, .pf-btn, button.pf-tp{transition:none;} .pf-jump a:hover, .pf-btn:hover, button.pf-tp:hover{transform:none;} }
@@ -424,7 +426,7 @@
   @media (max-width:560px){ .vcheck li{grid-template-columns:1fr auto;} .vcheck .rk{grid-column:1 / -1;} }
   @media print{ .vcheck{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611221543">
+<link rel="stylesheet" href="hub-house.css?v=202611221557">
 </head>
 <body data-signout="float">
 <div class="board">
@@ -456,17 +458,17 @@
 
 </div>
 
-<script src="observation-defaults.js?v=202611221543"></script>
-<script src="hub-shared.js?v=202611221543"></script>
-<script src="fol-interview.js?v=202611221543"></script>
-<script src="gtky-bank.js?v=202611221543"></script>
-<script src="assignment-defaults.js?v=202611221543"></script>
-<script src="hub-tracker.js?v=202611221543"></script>
-<script src="hub-rotation.js?v=202611221543"></script>
-<script src="hub-attendance.js?v=202611221543"></script>
-<script src="hub-store.js?v=202611221543"></script>
-<script src="hub-say.js?v=202611221543"></script>
-<script src="hub-sync.js?v=202611221543"></script>
+<script src="observation-defaults.js?v=202611221557"></script>
+<script src="hub-shared.js?v=202611221557"></script>
+<script src="fol-interview.js?v=202611221557"></script>
+<script src="gtky-bank.js?v=202611221557"></script>
+<script src="assignment-defaults.js?v=202611221557"></script>
+<script src="hub-tracker.js?v=202611221557"></script>
+<script src="hub-rotation.js?v=202611221557"></script>
+<script src="hub-attendance.js?v=202611221557"></script>
+<script src="hub-store.js?v=202611221557"></script>
+<script src="hub-say.js?v=202611221557"></script>
+<script src="hub-sync.js?v=202611221557"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const $ = id => document.getElementById(id);
@@ -1112,7 +1114,10 @@ function tpTile(tr, n, c){
     const g = G_WORD[c['tp'+n]]; pill = g ? [g.cls, g.t] : ['fine', 'Returned']; live = true;
     aim = c['tp'+n+'_aim'] || (f && f.fMain) || '';
     sub = [f && f.fDate ? niceDate(f.fDate) : '', (f && f.fTutor) || ''].filter(Boolean).join(' · ');
-    if (fb.docHTML) { go = 'Read the feedback'; key = 'tp' + n; doc = `<div class="doc" id="doc-tp${n}" data-title="TP${n} · the document ${first} received" hidden>${String(fb.docHTML).replace(/(<(?:li|br)[^>]*>(?:\s*<strong style="color:#1e6b63;">[^<]*<\/strong>)+)[\s\u00A0]*\u2022[\s\u00A0]*/g, '$1 ')}</div>`; }
+    /* THE TRAINEE'S OWN PAGE (Ramy, 22 Nov 2026: "Everything they see is what we are actually producing on the course.
+       Same format, same layout, the same content"). The pack no longer copies the document into its own look: the TP
+       opens the trainee's feedback page itself, in a frame, drawn by that page's code (4_feedback_returned.html, tp=N). */
+    if (fb.docHTML) { go = 'Read the feedback'; key = 'tp' + n; doc = `<div class="doc framed" id="doc-tp${n}" data-title="TP${n} · as ${first} sees it" data-src="4_feedback_returned.html?trainee=${encodeURIComponent(tr.id)}&tp=${n}&in=pack" hidden></div>`; }
     else sub = [sub, 'no document stored'].filter(Boolean).join(' · ');
   } else {
     const turned = plan && planN === n && plan.status === 'turned_in';
@@ -1376,9 +1381,17 @@ function renderOne(tr){
   const pfClose = () => { const sheet = $('pfSheet'); if (!sheet) return;
     sheet.querySelectorAll('.doc').forEach(x => { x.hidden = true; }); sheet.hidden = true;
     document.querySelectorAll('.pf-tp.on').forEach(x => { x.classList.remove('on'); x.setAttribute('aria-expanded', 'false'); const g = x.querySelector('.go'); if (g) g.textContent = g.dataset.t; }); };
+  /* the frame takes the height of the page inside it, so the pack scrolls as one page */
+  const pfFrame = d => { let f = d.querySelector('iframe');
+    if (!f) { f = document.createElement('iframe'); f.className = 'pf-frame'; f.title = d.dataset.title || 'The feedback'; f.src = d.dataset.src; d.appendChild(f);
+      const fit = () => { try { const b = f.contentDocument && f.contentDocument.querySelector('.board'); if (b) f.style.height = Math.max(200, Math.ceil(b.getBoundingClientRect().height) + 4) + 'px'; } catch (e) {} };
+      f.addEventListener('load', () => { fit(); try { new ResizeObserver(fit).observe(f.contentDocument.querySelector('.board')); } catch (e) {} setTimeout(fit, 800); setTimeout(fit, 2500); }); }
+    return f; };
   const pfOpen = (tile, d) => { const sheet = $('pfSheet'); pfClose();
     d.hidden = false; sheet.hidden = false; tile.classList.add('on'); tile.setAttribute('aria-expanded', 'true');
     const g = tile.querySelector('.go'); if (g) g.textContent = 'Close the document';
+    if (d.dataset.src) { pfFrame(d); pfHeads = [];
+      $('pfBar').innerHTML = `<span class="t">${esc(d.dataset.title || 'The document')}</span><button type="button" data-pfprint="1">Print this document</button><button type="button" data-pfclose="1">Close</button>`; return; }
     /* THE DOCUMENT AS THE TRAINEE GOT IT (Ramy, 22 Nov 2026: "the TP feedback that the trainees get in the envelope ...
        is very clear. I think that's the one that we should use in the assessor pack and the portfolio ... use it exactly
        as it is"). The labelled fold-out parts of 21 Nov (hubTpParts) are no longer laid over it. */
@@ -1391,6 +1404,9 @@ function renderOne(tr){
     if (part) { const h = pfHeads[+part.dataset.pfpart]; if (h) { const det = h[1].closest('details.tp-part'); if (det) det.open = true; hubScrollIntoView(h[1].offsetParent ? h[1] : (det || h[1]), 'start'); } return; }
     if (e.target.closest('[data-pfclose]')) { const on = document.querySelector('.pf-tp.on'); pfClose(); if (on) on.focus(); return; }
     if (e.target.closest('[data-pfprint]')) {
+      /* the trainee's page prints itself, with its own print rules */
+      const fr = document.querySelector('#pfSheet .doc:not([hidden]) iframe');
+      if (fr) { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (err) {} return; }
       /* this document alone, on its landscape pages: everything else on the page stays out of the print */
       document.body.classList.add('pf-printone');
       const done = () => document.body.classList.remove('pf-printone');
