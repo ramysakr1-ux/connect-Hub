@@ -565,7 +565,7 @@ function handle_(req) {
   /* v223 (12 Nov 2026): a volunteer may also play the input library's own files (LIBRARY_AUDIO_), so a demo lesson a tutor
      shares with the class plays its recordings on the students' phones. Those files and nothing else. */
   var volLib = op === 'audio' && LIBRARY_AUDIO_.indexOf(String(req.id || '').replace(/[^\w-]/g, '')) !== -1;
-  if (vol && !volLib && op !== 'boot' && op !== 'version' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards') throw new Error('This link only opens your own page');
+  if (vol && !volLib && op !== 'boot' && op !== 'version' && op !== 'ping' && op !== 'volunteerAgree' && op !== 'volunteerReply' && op !== 'volunteerNotify' && op !== 'volunteerCards' && op !== 'volunteerStudy') throw new Error('This link only opens your own page');
   // A trainee's token names their course, and it must agree with any key sent.
   var me = null;
   /* THE TRAINEE VIEW (v224, 12 Nov 2026). Ramy: "I want to show the trainees things from their perspective ... the
@@ -3273,6 +3273,19 @@ case 'inbox': {
       var tpp = courseRead_(course.id, 'tppoints') || {};
       var ttb = courseRead_(course.id, 'timetable') || {};
       var libs = (tpp.set && tpp.set.library) || {}, setFor = (tpp.set && tpp.set.setFor) || {};
+      /* v289, THE BOOK FOLLOWS THE CLASS (found 22 Nov 2026 on C/21: its B2 volunteers had no Self-study and no vocab all
+         week). With classes on Course admin a group teaches one class's book for some TPs and another's after the change;
+         setFor holds one set per group and C/21's had only group 2's. So the set comes from the class that group teaches
+         at that TP (settings.classes: plan blocks, or the old two halves), and setFor only where there are no classes. */
+      var vcCls = (vcSet.classes && Array.isArray(vcSet.classes.list)) ? vcSet.classes : null;
+      var vcSetAt = function (g, tp) {
+        if (!vcCls) return setFor[g];
+        var byId = {}; vcCls.list.forEach(function (k) { if (k && k.id) byId[k.id] = k; });
+        var plan = vcCls.plan && vcCls.plan[String(g)], k = null;
+        if (Array.isArray(plan) && plan.length) { var from = 1; for (var i = 0; i < plan.length; i++) { var to = i === plan.length - 1 ? 99 : (+plan[i].to || 99); if (tp >= from && tp <= to) { k = byId[plan[i].k]; break; } from = to + 1; } }
+        else { var row = (vcCls.groups || {})[String(g)]; if (Array.isArray(row)) { var half = Math.floor((+vcSet.tpCount || 8) / 2) + 1; k = byId[tp < half ? row[0] : row[1]] || byId[row[0]] || byId[row[1]]; } }
+        return (k && k.set && libs[k.set]) ? k.set : setFor[g];
+      };
       var firsts = {}; roster_(course.id).forEach(function (t) { firsts[t.token] = String(t.name || '').split(/\s+/)[0]; });
       var hwMaps = {}, vbMaps = {}, vbByDay = {};
       Object.keys(tpp.groups || {}).forEach(function (g) {
@@ -3285,7 +3298,7 @@ case 'inbox': {
             if (!m || !x || !x.from) return;
             /* The group's set, unless the trainee planned this lesson at another level (a class can change level
                partway through a course): then the set that has this lesson, of this kind, at that level. */
-            var sid = setFor[g], want = lvlOf[tok + '|' + m[1]];
+            var sid = vcSetAt(g, +m[1]), want = lvlOf[tok + '|' + m[1]];
             if (want && !(libs[sid] && cefr(libs[sid].level) === want)) {
               var par = String(x.from).split('\u00b7');
               var alt = Object.keys(libs).filter(function (id) {
@@ -3332,7 +3345,7 @@ case 'inbox': {
       return { today: vcToday, classes: vcDays.map(function (d) {
         var hws = (hwByDay[d] || []).sort(function (a, b) { return a.from < b.from ? -1 : 1; });
         return { date: d, vocab: vbDay(d), homework: hws };
-      }) };
+      }), answers: ((courseRead_(course.id, 'volStudy') || {})[vol.token] || {})._hw || {} };   /* v290: their own answers, kept with the course */
     }
     case 'volunteerAgree': {
       if (!vol) throw new Error('Only a volunteer student can agree for themselves');
@@ -3363,6 +3376,56 @@ case 'inbox': {
       });
       var rRow = (rReg.students || []).filter(function (s) { return s && s.token === rTok; })[0] || {};
       return { replies: rRow.replies || {}, coming: comingFor_(course.id) };
+    }
+    /* THE SELF-STUDY COUNT (v289, Ramy, 22 Nov 2026: "how many of them actually have been using it?" ... "add the self-study
+       count"). Until now a volunteer's answers lived on their own phone and the course saw nothing. The page now says, once
+       each, that a student started a day's Self-study ('tried'), checked their answers ('checked', with how many were right)
+       and finished Build up your vocab ('vocab', with the score). Kept in a kind of its own, 'volStudy' (token -> day -> what),
+       so a tutor's register, written whole, can never undo it. Never the answers themselves. A demo writes nothing. */
+    case 'volunteerStudy': {
+      if (!vol) throw new Error('Volunteer students only');
+      var vsSet = courseRead_(course.id, 'settings') || {};
+      if (vsSet.demoToday || vsSet.presentToday) return { saved: false };
+      var vsDay = String(req.day || ''), vsWhat = String(req.what || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(vsDay)) throw new Error('Which day?');
+      /* v290 (Ramy, 22 Nov 2026: a volunteer said "it doesn't save"; "keep their answers with the course"): the answers a
+         student types are kept too, one lesson at a time ('answers', key = day|lesson), so they are there on any phone. */
+      if (vsWhat === 'answers') {
+        var vsKey = String(req.key || '').slice(0, 40), vsA = req.a && typeof req.a === 'object' ? req.a : {}, vsClean = {};
+        if (!/^\d{4}-\d{2}-\d{2}\|/.test(vsKey)) throw new Error('Which lesson?');
+        Object.keys(vsA).slice(0, 40).forEach(function (i) { if (/^\d{1,2}$/.test(i)) vsClean[i] = String(vsA[i] == null ? '' : vsA[i]).slice(0, 200); });
+        var vsAt2 = new Date().toISOString(), vsT2 = vol.token;
+        courseUpdateObj_(course.id, 'volStudy', function (r) { var me = r[vsT2] = r[vsT2] || {}, hw = me._hw = me._hw || {}; hw[vsKey] = { a: vsClean, checked: !!req.checked, at: vsAt2 }; return r; });
+        return { saved: true, at: vsAt2 };
+      }
+      if (['tried', 'checked', 'vocab'].indexOf(vsWhat) < 0) throw new Error('Which part?');
+      var vsN = Math.max(0, Math.min(99, parseInt(req.n, 10) || 0)), vsOf = Math.max(0, Math.min(99, parseInt(req.of, 10) || 0));
+      var vsTok = vol.token, vsAt = new Date().toISOString();
+      courseUpdateObj_(course.id, 'volStudy', function (r) {
+        var me = r[vsTok] = r[vsTok] || {}, d = me[vsDay] = me[vsDay] || {};
+        if (vsWhat === 'tried') { if (!d.tried) d.tried = vsAt; }
+        else { var was = d[vsWhat]; if (!was || vsN >= (was.n || 0)) d[vsWhat] = { n: vsN, of: vsOf, at: vsAt }; if (!d.tried) d.tried = vsAt; }
+        return r;
+      });
+      return { saved: true };
+    }
+    /* what the register shows: for each class day, how many students started that day's Self-study, checked it, got it
+       all right, and finished the vocab game; and how many different students have used it at all. Tutors only. */
+    case 'volunteerStudyCounts': {
+      requireTutor_(tutor);
+      var vcR = courseRead_(course.id, 'volStudy') || {}, vcDays = {}, vcUsers = 0;
+      Object.keys(vcR).forEach(function (tok) {
+        var any = false;
+        Object.keys(vcR[tok] || {}).forEach(function (day) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;   // _hw: the answers themselves, not a day
+          var d = vcR[tok][day] || {}, o = vcDays[day] = vcDays[day] || { tried: 0, checked: 0, allRight: 0, vocab: 0 };
+          if (d.tried) { o.tried++; any = true; }
+          if (d.checked) { o.checked++; if (d.checked.of && d.checked.n === d.checked.of) o.allRight++; }
+          if (d.vocab) o.vocab++;
+        });
+        if (any) vcUsers++;
+      });
+      return { days: vcDays, users: vcUsers };
     }
     case 'volunteerNotify': {
       if (!vol) throw new Error('Only a volunteer student can say this for themselves');

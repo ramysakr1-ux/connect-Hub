@@ -39,7 +39,7 @@
 <title>Connect Lite — Volunteer register</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611221355">
+<link rel="stylesheet" href="hub-tokens.css?v=202611221437">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -80,6 +80,12 @@
   .who{display:grid; grid-template-columns:1.1fr auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--sand-line);}
   .mailrow{margin:6px 0 2px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px;} .mailrow small.invited{flex-basis:100%; color:var(--ink-soft, #55524c);} .mailrow .email{font:0.82rem 'Karla',sans-serif; width:min(100%, 280px); padding:5px 8px; border:1px solid var(--sand-line); border-radius:6px; background:var(--field); color:var(--ink);} .mailrow small{margin-left:8px; color:var(--grey); font-size:0.74rem;}
   .legend.coming{font-weight:500; color:var(--ink);}
+  .vstudy{margin:16px 0 0; padding:14px 18px; border-radius:12px; background:var(--paper); border:1px solid var(--row-line);}
+  .vstudy:empty{display:none;}
+  .vs-h{margin:0 0 6px; font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.05rem;} .vs-h small{font-family:'Karla',sans-serif; font-weight:400; font-size:.8rem; color:var(--grey); margin-left:6px;}
+  .vs-none{margin:0; font-size:.86rem; color:var(--grey);}
+  .vs-rows{display:grid; gap:4px;} .vs-row{display:flex; flex-wrap:wrap; gap:4px 16px; font-size:.88rem; padding:4px 0; border-top:1px solid var(--row-line);} .vs-row:first-child{border-top:0;} .vs-row b{min-width:64px;}
+  @media print{ .vstudy{display:none;} }
   .who:first-child{border-top:0;}
   .nm{font-weight:700; font-size:0.94rem;}
   .nm small{display:block; font-weight:500; font-size:0.76rem; color:var(--grey); margin-top:2px;}
@@ -159,21 +165,21 @@
   @media(max-width:560px){ .vr9-coming{grid-template-columns:1fr auto;} .vr9-coming .split{grid-column:1 / -1;} .vr9-coming .num{border:0; padding:0;} .vr9-now small{margin-left:0; flex-basis:100%;} }
   @media print{ .vr9-now{display:none;} .seg.vr9-today{box-shadow:none;} .vr9-coming{border:1px solid #bbb;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611221355">
+<link rel="stylesheet" href="hub-house.css?v=202611221437">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="5_tutor_dashboard.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611221355"></script>
-<script src="hub-shared.js?v=202611221355"></script>
-<script src="hub-timetable-parse.js?v=202611221355"></script>
-<script src="hub-xlsx.js?v=202611221355"></script>
-<script src="hub-attendance.js?v=202611221355"></script>
-<script src="hub-store.js?v=202611221355"></script>
-<script src="hub-say.js?v=202611221355"></script>
-<script src="hub-sync.js?v=202611221355"></script>
+<script src="hub-due.js?v=202611221437"></script>
+<script src="hub-shared.js?v=202611221437"></script>
+<script src="hub-timetable-parse.js?v=202611221437"></script>
+<script src="hub-xlsx.js?v=202611221437"></script>
+<script src="hub-attendance.js?v=202611221437"></script>
+<script src="hub-store.js?v=202611221437"></script>
+<script src="hub-say.js?v=202611221437"></script>
+<script src="hub-sync.js?v=202611221437"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* The register is the tutors' room and the assessor reads it (Handbook 14.1
@@ -423,6 +429,7 @@ function render(){
       + (out.length ? `<div class="grp">Not joined yet<small>${out.length}</small></div>` + out.map(x => rowOf(x.st, x.i)).join('') : ''); })();
   app.innerHTML = head + bar + consent + tabs + `<div class="reg">${rowsHTML}</div>
   ${COMING ? `<div class="vr9-coming"><div class="lead"><span class="k">Next class</span><b>${esc(dm(COMING.day))}</b><small>${COMING.tp ? 'TP ' + esc(COMING.tp) : esc(COMING.label || 'Class')} at ${esc(hubClock(COMING.from))}</small></div><div class="num"><b>${COMING.yes + COMING.noAnswer}</b><small>likely</small></div><div class="split"><span class="bar" aria-hidden="true"><i class="y" style="flex:${COMING.yes}"></i><i class="q" style="flex:${COMING.noAnswer}"></i><i class="n" style="flex:${COMING.no}"></i></span><span class="keys"><span><i class="y"></i>${COMING.yes} said yes</span><span><i class="q"></i>${COMING.noAnswer} no reply yet</span><span><i class="n"></i>${COMING.no} said no</span></span></div></div>` : ''}
+  ${IS_TUTOR ? '<div class="vstudy" id="vstudy"></div>' : ''}
   <p class="legend">
     <span><span class="seg here"></span>in the room</span>
     <span><span class="seg part"></span>came for part of it</span>
@@ -555,7 +562,25 @@ async function inviteStudent(st, email, btn){
   }
 }
 
+/* THE SELF-STUDY COUNT (22 Nov 2026, Ramy: "how many of them actually have been using it? ... add the self-study count").
+   Tutors only. For each class day: how many students started that day's Self-study, checked their answers (and how many
+   got them all right), and finished Build up your vocab. Counted from 22 November 2026; before that nothing was recorded. */
+let STUDY = null, STUDY_ASKED = false;
+function paintStudy(){
+  const box = document.getElementById('vstudy'); if (!box) return;
+  if (!STUDY) { box.innerHTML = '<p class="vs-h">Self-study</p><p class="vs-none">Loading…</p>'; return; }
+  const days = Object.keys(STUDY.days || {}).sort().reverse().slice(0, 10);
+  box.innerHTML = '<p class="vs-h">Self-study <small>' + (STUDY.users ? STUDY.users + ' student' + (STUDY.users === 1 ? '' : 's') + ' have used it' : 'nobody has used it yet') + ' · counted from 22 November</small></p>'
+    + (days.length ? '<div class="vs-rows">' + days.map(d => { const o = STUDY.days[d];
+      return '<div class="vs-row"><b>' + esc(dm(d)) + '</b><span>' + o.tried + ' started</span><span>' + o.checked + ' checked' + (o.checked ? ' (' + o.allRight + ' all right)' : '') + '</span><span>' + o.vocab + ' played the vocab game</span></div>'; }).join('') + '</div>' : '');
+}
+async function loadStudy(){
+  if (STUDY_ASKED || !IS_TUTOR || !window.HubStore || !HubStore.call) return; STUDY_ASKED = true;
+  try { STUDY = await HubStore.call({ op: 'volunteerStudyCounts' }); } catch (e) { STUDY = null; const box = document.getElementById('vstudy'); if (box) box.innerHTML = ''; return; }
+  paintStudy();
+}
 function wire(){
+  if (IS_TUTOR) { if (STUDY) paintStudy(); else { paintStudy(); loadStudy(); } }
   if (!IS_TUTOR) return;
   if ($('addOpen')) $('addOpen').addEventListener('click', () => { ADD_OPEN = !ADD_OPEN; LAST_SENT = ''; render(); });
   if ($('sendAllNow')) $('sendAllNow').addEventListener('click', async () => {

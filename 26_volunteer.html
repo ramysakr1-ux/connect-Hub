@@ -43,7 +43,7 @@
 <title>Connect Lite — My classes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611221355">
+<link rel="stylesheet" href="hub-tokens.css?v=202611221437">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:720px; margin:0 auto; padding:22px 20px 60px;}
@@ -275,17 +275,17 @@
   @keyframes v4-sheen{from{left:-50%;}to{left:120%;}}
   @media(prefers-reduced-motion:reduce){ .next.v4 *, .cert.earned::after, .track i{animation:none !important; transition:none !important;} .cert.earned::after{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611221355">
+<link rel="stylesheet" href="hub-house.css?v=202611221437">
 </head>
 <body class="hub-grid hub-paper" data-signout="float">
 <div class="board" id="app"></div>
 <div id="consent"></div>
-<script src="hub-shared.js?v=202611221355"></script>
-<script src="hub-attendance.js?v=202611221355"></script>
-<script src="hub-volunteer-i18n.js?v=202611221355"></script>
-<script src="hub-store.js?v=202611221355"></script>
-<script src="hub-say.js?v=202611221355"></script>
-<script src="hub-sync.js?v=202611221355"></script>
+<script src="hub-shared.js?v=202611221437"></script>
+<script src="hub-attendance.js?v=202611221437"></script>
+<script src="hub-volunteer-i18n.js?v=202611221437"></script>
+<script src="hub-store.js?v=202611221437"></script>
+<script src="hub-say.js?v=202611221437"></script>
+<script src="hub-sync.js?v=202611221437"></script>
 <script type="text/x-hub-app">
 const $ = id => document.getElementById(id);
 const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -506,6 +506,7 @@ function cardsBlock(){
   let body;
   if (VB.over) {
     const firstOk = Object.keys(VB.first).filter(k => VB.first[k]).length;
+    studySay(cls.date, 'vocab', firstOk, n);
     body = `<div class="vb-end"><p class="vb-score" role="status">${firstOk} of ${n} ${VB.mode === 'spell' ? 'spelled right' : 'right'} first time.${firstOk === n ? ' Excellent.' : ''}</p>
       <div class="hw-bar">${VB.mode === 'choose' ? '<button type="button" class="hw-b" id="vbSpell">Now spell them</button>' : ''}<button type="button" class="hw-b q" id="vbAgain">Play again</button></div>
       <ol class="vb-list">${words.map(w => `<li><b>${esc(w.w)}</b> ${esc(w.def)}${w.ex ? `<i>${esc(w.ex)}</i>` : ''}</li>`).join('')}</ol></div>`;
@@ -557,6 +558,35 @@ const HWKEY = 'chub:volHw:' + VTOK, NBKEY = 'chub:volNotes:' + VTOK;
 const loadJ = k => { try { return JSON.parse(localStorage.getItem(k) || 'null') || {}; } catch (e) { return {}; } };
 const saveJ = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 const HWS = loadJ(HWKEY), NOTES = loadJ(NBKEY);
+/* THE SELF-STUDY COUNT (22 Nov 2026, Ramy: "how many of them actually have been using it?"). The course is told, once
+   each, that this student started a day's Self-study, checked it (how many right) and finished the vocab game (the score).
+   Never the answers. Quiet: nothing on the page changes and a failure is ignored. */
+const STUDY_SENT = {};
+/* THE ANSWERS GO TO THE COURSE TOO (22 Nov 2026: a student said "it doesn't save"; it did, but only on that phone). Each
+   lesson's answers are sent a moment after the last change, so they are there on any phone with this link. The course's
+   copy is taken on the next load where this phone has none, or an older one. */
+const ANS_T = {};
+function answersSay(key){
+  const st = HWS[key]; if (!st || !window.HubStore || !HubStore.call) return;
+  clearTimeout(ANS_T[key]);
+  ANS_T[key] = setTimeout(() => { try { HubStore.call({ op: 'volunteerStudy', what: 'answers', day: key.slice(0, 10), key, a: st.a || {}, checked: !!st.checked })
+    .then(r => { if (r && r.at) { st.at = r.at; saveJ(HWKEY, HWS); } }).catch(() => {}); } catch (e) {} }, 1500);
+}
+function answersTake(server){
+  let took = 0;
+  Object.keys(server || {}).forEach(k => { const sv = server[k], mine = HWS[k];
+    if (!sv || !sv.a) return;
+    if (!mine || !mine.a || !Object.keys(mine.a).length || (mine.at && sv.at && sv.at > mine.at)) { HWS[k] = { a: sv.a, checked: !!sv.checked, at: sv.at }; took++; } });
+  if (took) saveJ(HWKEY, HWS);
+  return took;
+}
+function studySay(day, what, n, of){
+  if (!day || !window.HubStore || !HubStore.call) return;
+  const k = day + '|' + what + '|' + (n == null ? '' : n);
+  if (STUDY_SENT[k] || (what === 'tried' && STUDY_SENT[day + '|tried'])) return;
+  STUDY_SENT[k] = 1; if (what === 'tried') STUDY_SENT[day + '|tried'] = 1;
+  try { HubStore.call({ op: 'volunteerStudy', day, what, n: n || 0, of: of || 0 }).catch(() => {}); } catch (e) {}
+}
 let hwDay = '', hwIdx = 0, nbDay = '';
 const BLANK = '___';
 /* An answer is compared without capitals, full stops or apostrophes: "dont watch" is "don't watch". */
@@ -662,6 +692,8 @@ function bindHw(){
   const setAns = (i, val, repaint) => {
     const c = cur(); if (!c) return; const st = HWS[c.key] = HWS[c.key] || {};
     (st.a = st.a || {})[i] = val; st.checked = false; saveJ(HWKEY, HWS);
+    if (String(val || '').trim()) studySay(c.cls.date, 'tried');
+    answersSay(c.key);
     if (repaint) return paintHw();
     card.querySelectorAll('.hw-it').forEach(li => li.classList.remove('ok', 'bad')); const sc = card.querySelector('.hw-score'); if (sc) sc.remove();
   };
@@ -674,8 +706,9 @@ function bindHw(){
     stopHw(); };
   $('hwFlip').addEventListener('click', () => flipTo(true));
   $('hwBack').addEventListener('click', () => flipTo(false));
-  $('hwCheck').addEventListener('click', () => { const c = cur(); if (!c) return; const st = HWS[c.key] = HWS[c.key] || {}; st.checked = true; saveJ(HWKEY, HWS); paintHw(); });
-  $('hwClear').addEventListener('click', () => { const c = cur(); if (!c) return; delete HWS[c.key]; saveJ(HWKEY, HWS); paintHw(); });
+  $('hwCheck').addEventListener('click', () => { const c = cur(); if (!c) return; const st = HWS[c.key] = HWS[c.key] || {}; st.checked = true; saveJ(HWKEY, HWS);
+    const items = (c.h && c.h.items) || [], nOk = items.filter((it, i) => hwOk(it, (st.a || {})[i])).length; studySay(c.cls.date, 'checked', nOk, items.length); answersSay(c.key); paintHw(); });
+  $('hwClear').addEventListener('click', () => { const c = cur(); if (!c) return; HWS[c.key] = { a: {}, checked: false }; saveJ(HWKEY, HWS); answersSay(c.key); paintHw(); });
   if ($('hwPlay')) $('hwPlay').addEventListener('click', () => { const c = cur(); if (c) playHw(c.h); });
   document.querySelectorAll('[data-hwi]').forEach(b => b.addEventListener('click', () => { hwIdx = +b.getAttribute('data-hwi'); paintHw(); }));
   document.querySelectorAll('[data-hwday]').forEach(b => b.addEventListener('click', () => { hwDay = b.getAttribute('data-hwday'); hwIdx = 0; if (hwDay <= TODAY) nbDay = hwDay; paintHw(); paintNb(); }));
@@ -707,6 +740,7 @@ function loadCards(){
   HubStore.call({ op: 'volunteerCards' }).then(r => {
     if (!r || !Array.isArray(r.classes)) return;
     VC = { classes: r.classes };
+    answersTake(r.answers);
     try { localStorage.setItem('chub:volCards', JSON.stringify(VC)); } catch (e) {}
     render();
   }).catch(() => {});
