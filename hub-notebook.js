@@ -291,8 +291,8 @@
      many steps"; mock-up docs/mockups/notebook-and-feedback-2026-11-22/notebook.html). The arc opens a sheet over the
      page: write, tap who it is for, press one button, and the button says what it will do. A note that goes to someone
      does not close the sheet: it turns into the conversation with them, so a word back can go straight away.
-     No new store op: a trainee's note to a tutor is the store's askQuestion (it lands in that tutor's notebook and on the
-     question wall), a tutor's is tutorConnectNote, a trainee's word back on a tutor's note is replyNote, sharing is
+     No new store op: a trainee never starts a note to a tutor (they answer one, with replyNote; see peers below); the
+     tutor's note to a trainee is tutorConnectNote, sharing with the TP group or the course is
      shareNote, tutor to tutor is the shared flag.
      TAKEN OFF THE SHEET: the date as a heading, the box of action points from the TP before, "Email it to my tutor" (a
      note now reaches the tutor inside Lite; the email link stays on the notebook page), "Earlier in this thread", and
@@ -305,11 +305,10 @@
   /* who a note can be for, as the chips of the sheet */
   function peers(th){
     if (MODE === 'trainee') {
-      var cs = settings(), me = rd('hub:me') || {}, names = tutorNames(), today1 = '';
-      try { if (window.hubClassPlan && hubClassPlan(cs, me.group) && window.hubTutorOn) today1 = hubTutorOn(cs, me.group) || ''; } catch (e) {}
-      if (today1) names = [today1].concat(names.filter(function(n){ return !same(n, today1); }));
-      return [{ k: '', label: 'Only me' }, { k: 'group', label: 'My TP group' }, { k: 'course', label: 'Whole course' }]
-        .concat(names.length ? names.map(function(n){ return { k: 'tutor', name: n, label: first(n) }; }) : [{ k: 'tutor', name: '', label: 'My tutor' }]);
+      /* A TRAINEE DOES NOT START A NOTE TO A TUTOR (Ramy, 25 Oct 2026, and again 22 Nov 2026: "I don't want him messaging
+         the tutor. They can message each other ... within the TP group. But the tutor can message them, and they can
+         reply"). The tutor names were on this row for an hour on 22 Nov; they are off. */
+      return [{ k: '', label: 'Only me' }, { k: 'group', label: 'My TP group' }, { k: 'course', label: 'Whole course' }];
     }
     var out = [{ k: '', label: 'Only me' }], others = otherTutorNames();
     out.push({ k: 'tutors', name: others.join(' and '), label: others.length ? others.map(first).join(' and ') : 'The other tutors' });
@@ -349,13 +348,9 @@
   function deliver(note, p, voice){
     if (MODE === 'trainee') {
       if (p.k === 'group' || p.k === 'course') note.shared = p.k;
-      if (p.k === 'tutor') { note.sent = { scope: 'tutor', name: p.name || '' }; if (voice && !note.text) note.text = 'Voice note, ' + secs(voice.seconds); }
       var nb = load(); nb.notes.push(note);
       return save(nb).then(function(){
         if (p.k === 'group' || p.k === 'course') return S.call({ op: 'shareNote', token: S.token(), item: note, scope: p.k }).then(function(r){ if (r && r.notes) { try { localStorage.setItem('connect_notes_v1', JSON.stringify(r.notes)); } catch (e) {} } return r || {}; });
-        if (p.k === 'tutor') { var th = note.thread || {}, body = { op: 'askQuestion', token: S.token(), text: voice ? String(note.text || '').replace(/^Voice note, [\d:]+$/, '') : note.text, to: p.name || '', session: { k: th.k || 'day', id: th.id || '', title: th.k === 'day' ? 'A note' : (th.t || ''), date: note.day } };
-          if (voice) { body.bytes = voice.bytes; body.type = voice.type; body.seconds = voice.seconds; }
-          return S.call(body, voice ? 120000 : undefined).then(function(r){ return r || {}; }); }
         return {};
       });
     }
@@ -368,11 +363,12 @@
       return {};
     });
   }
-  /* a trainee's word back on the tutor's last note goes under that note; anything else is a new note to them */
+  /* a trainee's word back goes under the tutor's latest note to them; with no note from that tutor there is nothing to answer */
   function replyTarget(p){
     if (MODE !== 'trainee' || p.k !== 'tutor') return null;
-    var ms = messages(p), last = ms[ms.length - 1];
-    return (last && !last.me && last.note && last.note.fromTutor) ? last.note : null;
+    var got = (rd('connect_notes_v1') || []).filter(function(n){ return n && n.fromTutor && n.scope === 'trainee' && (!p.name || same(n.by, p.name)); });
+    got.sort(function(a, b){ return String(a.at).localeCompare(String(b.at)); });
+    return got[got.length - 1] || null;
   }
 
   var sheet = null, back = null, rec = null, recBlob = null, recSecs = 0, recTimer = null, recStream = null;
@@ -447,7 +443,7 @@
       if (go.disabled) return;
       if (nm) { try { localStorage.setItem('chub:tutorName', nm.value.trim()); } catch (e) {} }
       var p = cur, label = go.textContent; go.disabled = true; go.textContent = p.k ? 'Sending…' : 'Saving…';
-      var note = noteFor(th, ta.value.trim()), toTutor = MODE === 'trainee' && p.k === 'tutor';
+      var note = noteFor(th, ta.value.trim()), toTutor = false;
       /* a voice note to a tutor travels with the note itself (the store keeps it with the question); any other is filed first */
       var prep = !recBlob ? Promise.resolve(null) : toTutor ? b64(recBlob).then(function(bytes){ return { bytes: bytes, type: recBlob.type, seconds: recSecs }; }) : upload(recBlob, recSecs).then(function(a){ note.audio = a; return null; });
       prep.then(function(voice){ return deliver(note, p, voice); }).then(function(r){
@@ -469,18 +465,21 @@
         + '<div class="nbk-body nbk-talk"><div class="nbk-thread">' + (ms.length ? ms.map(function(m, i){
             return '<div class="nbk-m ' + (m.me ? 'me' : 'them') + '">' + esc(m.text || '') + (m.audio ? '<button type="button" class="nbk-hear" data-i="' + i + '">Listen</button><span class="slot"></span>' : '')
               + '<i>' + esc((m.me ? 'You' : first(m.by) || 'Them') + ' · ' + (m.note && m.note.day !== today() ? dayLabel(String(m.at).slice(0, 10)) + ' ' : '') + timeLabel(m.at)) + '</i></div>'; }).join('') : '<p class="nbk-none">Nothing yet.</p>') + '</div></div>'
-        + '<div class="nbk-reply"><textarea rows="2" placeholder="Reply…" aria-label="Reply"' + (short ? ' maxlength="400"' : '') + '></textarea><button type="button" class="nbk-btn go" disabled>Send</button></div><p class="nbk-msg" aria-live="polite">' + esc(note || '') + '</p>';
+        + (short && !replyTarget(p) ? '' : '<div class="nbk-reply"><textarea rows="2" placeholder="Reply…" aria-label="Reply"' + (short ? ' maxlength="300"' : '') + '></textarea><button type="button" class="nbk-btn go" disabled>Send</button></div>') + '<p class="nbk-msg" aria-live="polite">' + esc(note || '') + '</p>';
       el.querySelector('.nbk-x').addEventListener('click', close);
       var box = el.querySelector('.nbk-thread'); box.scrollTop = box.scrollHeight; var body = el.querySelector('.nbk-talk'); body.scrollTop = body.scrollHeight;
       Array.prototype.forEach.call(el.querySelectorAll('.nbk-hear'), function(b){ b.addEventListener('click', function(){ var m = ms[+b.getAttribute('data-i')]; play(m.note, b.parentNode.querySelector('.slot'), b); }); });
-      var ta = el.querySelector('textarea'), go = el.querySelector('.nbk-btn.go'), msg = el.querySelector('.nbk-msg');
+      var ta = el.querySelector('textarea'), go = el.querySelector('.nbk-btn.go'), msg = el.querySelector('.nbk-msg'); if (!ta) return;
       ta.addEventListener('input', function(){ go.disabled = !ta.value.trim(); });
       go.addEventListener('click', function(){
         var text = ta.value.trim(); if (!text) return; go.disabled = true; go.textContent = 'Sending…';
         var under = replyTarget(p), job;
-        if (under) job = S.call({ op: 'replyNote', token: S.token(), id: under.id, text: text }).then(function(r){
+        if (MODE === 'trainee' && p.k === 'tutor' && !under) return;
+        /* the store keeps one reply from a trainee on a note: a second word back is added under the first, not put in its place */
+        var before = under ? ((under.replies || [])[0] || {}).text || '' : '', whole = before ? (before + '\n' + text).slice(0, 400) : text;
+        if (under) job = S.call({ op: 'replyNote', token: S.token(), id: under.id, text: whole }).then(function(r){
           var got = (r && r.notes) || null;
-          if (!got) { got = rd('connect_notes_v1') || []; var n = got.filter(function(x){ return x.id === under.id; })[0]; if (n) n.replies = (n.replies || []).concat([{ by: 'You', at: nowISO(), text: text }]); }
+          if (!got) { got = rd('connect_notes_v1') || []; var n = got.filter(function(x){ return x.id === under.id; })[0]; if (n) n.replies = [{ by: 'You', at: nowISO(), text: whole }]; }
           try { localStorage.setItem('connect_notes_v1', JSON.stringify(got)); } catch (e) {} return r || {}; });
         else job = deliver(noteFor(th, text), p, null);
         job.then(function(r){ paintCount(); paint((r && r.demo) ? (S.isTemplate && S.isTemplate() ? 'Trainee view: nothing reaches the course.' : 'Demo: kept on this device only.') : ''); },
