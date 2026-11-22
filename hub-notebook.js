@@ -243,6 +243,21 @@
     + '.nbk-foot{padding:12px 22px 18px;border-top:1px solid var(--row-line);font-size:.84rem;color:var(--grey);display:flex;justify-content:space-between;gap:12px;align-items:center;}'
     + '.nbk-foot a{color:var(--a-forest);font-weight:700;text-decoration:none;} .nbk-foot a:hover{text-decoration:underline;}'
     + '.nbk-saved{color:var(--a-forest);font-weight:700;}'
+    /* the one sheet (22 Nov 2026) */
+    + '.nbk-sheet .nbk-head{align-items:center;padding:16px 20px 8px;} .nbk-ctx{margin:0;font-size:.9rem;color:var(--grey);flex:1;min-width:0;} .nbk-ctx b{color:var(--a-forest);}'
+    + '.nbk-book{font:700 .8rem Karla,sans-serif;color:var(--a-forest);text-decoration:none;white-space:nowrap;} .nbk-book:hover{text-decoration:underline;}'
+    + '.nbk-sheet .nbk-body{padding:4px 20px 16px;} .nbk-sheet .nbk-body > textarea{min-height:120px;border:0;background:var(--sand);border-radius:12px;}'
+    + '.nbk-who{margin-top:12px;gap:6px;} .nbk-who button{padding:9px 13px;} .nbk-pick{font:600 .86rem Karla,sans-serif;padding:8px 10px;border-radius:999px;border:1.5px solid var(--sand-line);background:var(--paper);color:var(--ink);max-width:100%;}'
+    + '.nbk-row{flex-wrap:nowrap;} .nbk-row .nbk-btn.go{flex:1;border-radius:999px;background:var(--a-lemon);color:var(--ink);background-image:none;padding:13px 18px;font-size:.95rem;} .nbk-row .nbk-btn.go:hover{background:var(--a-lemon);color:var(--ink);filter:brightness(.97);}'
+    + '.nbk-row .nbk-btn.rec{border-radius:999px;border:1.5px solid var(--sand-line);box-shadow:none;padding:11px 14px;}'
+    + '.nbk-msg{margin:10px 0 0;font-size:.84rem;color:var(--grey);min-height:1em;} .nbk-msg:empty{display:none;}'
+    + '.nbk-talk{display:flex;flex-direction:column;} .nbk-thread{display:flex;flex-direction:column;gap:6px;margin-top:auto;}'
+    + '.nbk-m{max-width:84%;padding:9px 12px;border-radius:14px;font-size:.93rem;line-height:1.42;white-space:pre-wrap;word-wrap:break-word;background:var(--sand);border-bottom-left-radius:4px;align-self:flex-start;}'
+    + '.nbk-m.me{align-self:flex-end;background:var(--a-forest);color:var(--paper);border-radius:14px;border-bottom-right-radius:4px;} .nbk-m i{display:block;font-style:normal;font-size:.7rem;opacity:.72;margin-top:3px;}'
+    + '.nbk-hear{display:block;margin-top:6px;font:700 .78rem Karla,sans-serif;padding:5px 10px;border-radius:999px;border:0;background:var(--paper);color:var(--ink);cursor:pointer;} .nbk-m .slot audio{max-width:100%;}'
+    + '.nbk-none{color:var(--grey);font-size:.88rem;margin:0;}'
+    + '.nbk-reply{display:flex;gap:8px;align-items:flex-end;padding:10px 20px 6px;border-top:1px solid var(--row-line);} .nbk-reply textarea{flex:1;min-height:0;border:0;background:var(--sand);border-radius:12px;padding:10px 12px;resize:none;}'
+    + '.nbk-reply .nbk-btn.go{border-radius:999px;background:var(--a-lemon);color:var(--ink);background-image:none;padding:11px 18px;} .nbk-reply + .nbk-msg{padding:0 20px 12px;margin:0;}'
     + '@media (max-width:560px){.nbk-sheet{top:auto;left:0;width:100%;max-height:88vh;border-radius:16px 16px 0 0;transform:translateY(100%);} .nbk-sheet.on{transform:none;} .nbk-arc{width:48px;height:48px;right:14px;}}'
     + '@media (prefers-reduced-motion:reduce){.nbk-sheet,.nbk-back,.nbk-arc{transition:none;}}'
     + '@media print{.nbk-arc,.nbk-sheet,.nbk-back{display:none !important;}}';
@@ -272,62 +287,141 @@
     return '<div class="nbk-carry"><b>Action points from TP' + esc(prev) + '</b><ul>' + pts.map(function(p){ return '<li>' + esc(p) + '</li>'; }).join('') + '</ul><p class="q">What will you try this time?</p></div>';
   }
 
+  /* ---- ONE SHEET, ONE STEP (Ramy, 22 Nov 2026: "the notebook and the message system ... needs to be one thing ... too
+     many steps"; mock-up docs/mockups/notebook-and-feedback-2026-11-22/notebook.html). The arc opens a sheet over the
+     page: write, tap who it is for, press one button, and the button says what it will do. A note that goes to someone
+     does not close the sheet: it turns into the conversation with them, so a word back can go straight away.
+     No new store op: a trainee's note to a tutor is the store's askQuestion (it lands in that tutor's notebook and on the
+     question wall), a tutor's is tutorConnectNote, a trainee's word back on a tutor's note is replyNote, sharing is
+     shareNote, tutor to tutor is the shared flag.
+     TAKEN OFF THE SHEET: the date as a heading, the box of action points from the TP before, "Email it to my tutor" (a
+     note now reaches the tutor inside Lite; the email link stays on the notebook page), "Earlier in this thread", and
+     the sentence at the foot. ---- */
+  function first(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
+  function same(a, b){ return String(a || '').trim().toLowerCase().replace(/\s+/g, ' ') === String(b || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+  function tutorNames(){ var cs = settings(); try { if (window.hubTutorNames) return window.hubTutorNames(cs) || []; } catch (e) {} return String(cs.tutorNames || '').split(/[,\n;]+/).map(function(x){ return x.trim(); }).filter(Boolean); }
+  function otherTutorNames(){ var me = who(); return tutorNames().filter(function(n){ return !same(n, me); }); }
+  function rosterList(){ var r = rd('connect_roster_v1'); return Object.keys((r && r.trainees) || {}).map(function(k){ var t = r.trainees[k] || {}; return { token: t.token || k, name: String(t.name || ''), group: String(t.group || '') }; }).filter(function(t){ return t.name; }).sort(function(a, b){ return a.name.localeCompare(b.name); }); }
+  /* who a note can be for, as the chips of the sheet */
+  function peers(th){
+    if (MODE === 'trainee') {
+      var cs = settings(), me = rd('hub:me') || {}, names = tutorNames(), today1 = '';
+      try { if (window.hubClassPlan && hubClassPlan(cs, me.group) && window.hubTutorOn) today1 = hubTutorOn(cs, me.group) || ''; } catch (e) {}
+      if (today1) names = [today1].concat(names.filter(function(n){ return !same(n, today1); }));
+      return [{ k: '', label: 'Only me' }, { k: 'group', label: 'My TP group' }, { k: 'course', label: 'Whole course' }]
+        .concat(names.length ? names.map(function(n){ return { k: 'tutor', name: n, label: first(n) }; }) : [{ k: 'tutor', name: '', label: 'My tutor' }]);
+    }
+    var out = [{ k: '', label: 'Only me' }], others = otherTutorNames();
+    out.push({ k: 'tutors', name: others.join(' and '), label: others.length ? others.map(first).join(' and ') : 'The other tutors' });
+    if (th && th.k === 'trainee' && th.id) { var row = rosterList().filter(function(t){ return t.token === th.id; })[0] || { token: th.id, name: th.t, group: '' };
+      out.push({ k: 'trainee', to: row.token, name: row.name, label: first(row.name) }); if (row.group) out.push({ k: 'tgroup', group: row.group, label: 'TP group ' + row.group }); }
+    else if (rosterList().length) out.push({ k: 'pick', label: 'A trainee' });
+    return out;
+  }
+  function goLabel(p){ return !p || !p.k ? 'Save' : p.k === 'group' ? 'Share with my TP group' : p.k === 'course' ? 'Share with the whole course' : p.k === 'tgroup' ? 'Send to ' + p.label : 'Send to ' + (p.label || 'my tutor'); }
+  function peerTitle(p){ return p.k === 'group' ? 'My TP group' : p.k === 'course' ? 'The whole course' : p.k === 'tgroup' ? 'TP group ' + p.group : (p.name || p.label || 'My tutor'); }
+  function peerKey(p){ return p.k + ':' + (p.k === 'trainee' ? p.to : p.k === 'tgroup' ? p.group : p.k === 'tutor' ? String(p.name || '').toLowerCase() : ''); }
+  /* the conversation with one audience, oldest first, put together from the records both sides already hold */
+  function messages(p){
+    var out = [], add = function(me, n, text, at, by){ out.push({ me: me, text: text == null ? n.text : text, at: at || n.at, by: by || n.by || '', audio: text == null ? n.audio : null, note: n }); };
+    if (MODE === 'trainee') {
+      var mineN = load().notes, got = rd('connect_notes_v1') || [];
+      if (p.k === 'tutor') {
+        mineN.forEach(function(n){ if (n && n.sent && n.sent.scope === 'tutor' && (!p.name || same(n.sent.name, p.name))) add(true, n); });
+        got.forEach(function(n){ if (!n || !n.fromTutor || n.scope !== 'trainee' || (p.name && !same(n.by, p.name))) return; add(false, n);
+          (n.replies || []).forEach(function(r){ add(true, n, r.text, r.at, 'You'); }); });
+      } else {
+        mineN.forEach(function(n){ if (n && n.shared === p.k) add(true, n); });
+        got.forEach(function(n){ if (n && n.scope === p.k) { add(false, n, null, null, (n.by || 'Someone') + (n.fromTutor ? ', tutor' : '')); (n.replies || []).forEach(function(r){ add(true, n, r.text, r.at, 'You'); }); } });
+      }
+    } else {
+      var c = tutor.cache(), mineT = c.mine || [];
+      if (p.k === 'tutors') { mineT.forEach(function(n){ if (n && n.shared) add(true, n); }); (c.shared || []).forEach(function(n){ if (n) add(false, n); }); }
+      else if (p.k === 'trainee') {
+        mineT.forEach(function(n){ if (!n) return;
+          if (n.sent && n.sent.scope === 'trainee' && n.sent.to === p.to) { add(true, n); (n.replies || []).forEach(function(r){ add(false, n, r.text, r.at, r.by); }); }
+          else if (/^q-/.test(String(n.id)) && same(n.by, p.name)) { var m = String(n.text || '').match(/^Question from [^:]*: “([\s\S]*)”/); add(false, n, m ? m[1] : n.text, n.at, n.by); } });
+      } else if (p.k === 'tgroup') mineT.forEach(function(n){ if (n && n.sent && n.sent.scope === 'group' && String(n.sent.group) === String(p.group)) { add(true, n); (n.replies || []).forEach(function(r){ add(false, n, r.text, r.at, r.by); }); } });
+    }
+    return out.sort(function(a, b){ return String(a.at).localeCompare(String(b.at)); });
+  }
+  /* one note on its way: kept in the writer's own notebook, then sent where it is going */
+  function deliver(note, p, voice){
+    if (MODE === 'trainee') {
+      if (p.k === 'group' || p.k === 'course') note.shared = p.k;
+      if (p.k === 'tutor') { note.sent = { scope: 'tutor', name: p.name || '' }; if (voice && !note.text) note.text = 'Voice note, ' + secs(voice.seconds); }
+      var nb = load(); nb.notes.push(note);
+      return save(nb).then(function(){
+        if (p.k === 'group' || p.k === 'course') return S.call({ op: 'shareNote', token: S.token(), item: note, scope: p.k }).then(function(r){ if (r && r.notes) { try { localStorage.setItem('connect_notes_v1', JSON.stringify(r.notes)); } catch (e) {} } return r || {}; });
+        if (p.k === 'tutor') { var th = note.thread || {}, body = { op: 'askQuestion', token: S.token(), text: voice ? String(note.text || '').replace(/^Voice note, [\d:]+$/, '') : note.text, to: p.name || '', session: { k: th.k || 'day', id: th.id || '', title: th.k === 'day' ? 'A note' : (th.t || ''), date: note.day } };
+          if (voice) { body.bytes = voice.bytes; body.type = voice.type; body.seconds = voice.seconds; }
+          return S.call(body, voice ? 120000 : undefined).then(function(r){ return r || {}; }); }
+        return {};
+      });
+    }
+    note.by = who();
+    if (p.k === 'tutors') note.shared = true;
+    if (p.k === 'trainee') note.sent = { scope: 'trainee', to: p.to, name: p.name };
+    if (p.k === 'tgroup') note.sent = { scope: 'group', group: p.group };
+    return tutor.put(note).then(function(){
+      if (p.k === 'trainee' || p.k === 'tgroup') return S.call({ op: 'tutorConnectNote', who: who(), item: note, scope: p.k === 'trainee' ? 'trainee' : 'group', to: p.to || '', group: p.group || '' }).then(function(r){ return r || {}; });
+      return {};
+    });
+  }
+  /* a trainee's word back on the tutor's last note goes under that note; anything else is a new note to them */
+  function replyTarget(p){
+    if (MODE !== 'trainee' || p.k !== 'tutor') return null;
+    var ms = messages(p), last = ms[ms.length - 1];
+    return (last && !last.me && last.note && last.note.fromTutor) ? last.note : null;
+  }
+
   var sheet = null, back = null, rec = null, recBlob = null, recSecs = 0, recTimer = null, recStream = null;
   function close(){
     if (!sheet) return;
     stopRec();
     sheet.classList.remove('on'); back.classList.remove('on');
-    setTimeout(function(){ if (sheet) { sheet.remove(); back.remove(); sheet = null; back = null; } }, 230);
+    var s0 = sheet, b0 = back; sheet = null; back = null;
+    setTimeout(function(){ s0.remove(); b0.remove(); }, 230);
   }
   function stopRec(){ try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (e) {} if (recStream) { recStream.getTracks().forEach(function(t){ t.stop(); }); recStream = null; } clearInterval(recTimer); }
-  function notesInThread(th){
-    var key = threadKey(th);
-    if (MODE === 'trainee') return load().notes.filter(function(n){ return threadKey(n.thread) === key; });
-    return (tutor.cache().mine || []).filter(function(n){ return threadKey(n.thread) === key; });
-  }
-  function open(th){
-    th = th || context(); css();
-    if (sheet) close();
+  function frame(label){
+    css(); if (sheet) { stopRec(); sheet.remove(); back.remove(); }
     back = document.createElement('div'); back.className = 'nbk-back'; back.addEventListener('click', close);
-    sheet = document.createElement('aside'); sheet.className = 'nbk-sheet'; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'A new note');
-    var d = today(), needName = MODE === 'tutor' && !who();
-    var earlier = notesInThread(th).slice(-3).reverse();
-    sheet.innerHTML = '<div class="nbk-head"><div><p class="nbk-eyebrow">Your notebook</p><h2>' + esc(dayLabel(d, true)) + '</h2>'
-      + '<div class="nbk-where">' + (th.k === 'day' ? '<span>A note for the day</span>' : '<span class="nbk-chip ' + esc(th.k) + '">' + esc(th.t) + '</span>' + (th.sub ? '<span>' + esc(th.sub) + '</span>' : '')) + '</div></div>'
-      + '<button type="button" class="nbk-x" aria-label="Close">&times;</button></div>'
-      + '<div class="nbk-body">'
-      + (needName ? '<p style="margin:0 0 6px;font-size:.88rem;color:var(--grey)">The notebook is yours alone, so it needs your name once: the same one the dashboard asks for.</p><input class="nbk-name" type="text" placeholder="Your name" autocomplete="name">' : '')
-      + carryHTML(th)
-      + '<textarea placeholder="' + (th.k === 'input' ? 'What you want to remember from this session.' : th.k === 'tp' ? 'What you noticed. What to try.' : 'Write it down.') + '" aria-label="Your note"></textarea>'
-      /* WHO SEES IT, AND THE TUTOR, FROM THE PEN ITSELF (Ramy, 14 Nov 2026, on Maya: "why can't Maya send a message to her
-         classmates from notes ... there should be an email your tutor shortcut from there"). Both lived only on the
-         notebook page, a page away from where the note is written. Only me is the choice until they pick another. */
-      + (MODE === 'trainee' ? '<div class="nbk-who" role="group" aria-label="Who sees this note"><span>Who sees it</span><button type="button" class="on" data-who="" aria-pressed="true">Only me</button><button type="button" data-who="group" aria-pressed="false">My TP group</button><button type="button" data-who="course" aria-pressed="false">The whole course</button></div>' : '')
-      + '<div class="nbk-row">' + (mimePick() && navigator.mediaDevices ? '<button type="button" class="nbk-btn rec"><span class="dot"></span><span class="lbl">Record a voice note</span></button>' : '') + '<button type="button" class="nbk-btn go" disabled>Save the note</button>'
-      + (MODE === 'trainee' && tutorEmails().length ? '<a class="nbk-mail off" href="#" aria-disabled="true">Email it to my tutor</a>' : '') + '</div>'
-      + '<div class="nbk-audio" hidden></div>'
-      + (earlier.length ? '<div class="nbk-earlier"><h3>Earlier in this thread</h3>' + earlier.map(function(n){ return '<p><small>' + esc(dayLabel(n.day)) + (n.audio ? ' · voice note' : '') + '</small>' + esc(String(n.text || '').slice(0, 220)) + (String(n.text || '').length > 220 ? '…' : '') + '</p>'; }).join('') + '</div>' : '')
-      + '</div>'
-      + '<div class="nbk-foot"><span class="nbk-msg">' + (MODE === 'trainee' ? 'Yours alone, unless you share it.' : 'Yours alone, unless you send it: to the other tutor, or to a trainee or their TP group.') + '</span><a href="' + (location.pathname.indexOf('/input-sessions/') !== -1 ? '../../' : '') + '37_notebook.html">Open your notebook</a></div>';
+    sheet = document.createElement('aside'); sheet.className = 'nbk-sheet'; sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', label);
     document.body.appendChild(back); document.body.appendChild(sheet);
-    requestAnimationFrame(function(){ back.classList.add('on'); sheet.classList.add('on'); });
-    var ta = sheet.querySelector('textarea'), go = sheet.querySelector('.nbk-btn.go'), rb = sheet.querySelector('.nbk-btn.rec'), au = sheet.querySelector('.nbk-audio'), nm = sheet.querySelector('.nbk-name'), msg = sheet.querySelector('.nbk-msg');
-    var scope = '', mail = sheet.querySelector('.nbk-mail');
-    Array.prototype.forEach.call(sheet.querySelectorAll('.nbk-who button'), function(b){ b.addEventListener('click', function(){
-      scope = b.getAttribute('data-who') || '';
-      Array.prototype.forEach.call(sheet.querySelectorAll('.nbk-who button'), function(x){ var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-    }); });
-    if (mail) {
-      ta.addEventListener('input', function(){ var has = !!ta.value.trim(); mail.classList.toggle('off', !has); mail.setAttribute('aria-disabled', has ? 'false' : 'true'); });
-      mail.addEventListener('click', function(e){
-        var text = ta.value.trim(); if (!text) { e.preventDefault(); return; }
-        var me = rd('hub:me') || {}, onThread = th.k !== 'day' && th.t;
-        mail.href = 'mailto:' + encodeURIComponent(tutorEmails().join(',')) + '?subject=' + encodeURIComponent('A note from ' + (me.name || 'a trainee') + (onThread ? ' — ' + th.t : ''))
-          + '&body=' + encodeURIComponent(text + '\n\n(' + dayLabel(d, true) + (onThread ? ', ' + th.t : '') + ', from my notebook on Connect Lite)');
-      });
+    requestAnimationFrame(function(){ if (back) back.classList.add('on'); if (sheet) sheet.classList.add('on'); });
+  }
+  function bookHref(){ return (location.pathname.indexOf('/input-sessions/') !== -1 ? '../../' : '') + '37_notebook.html'; }
+  function headHTML(inner){ return '<div class="nbk-head"><p class="nbk-ctx">' + inner + '</p>' + (/37_notebook/.test(location.pathname) ? '' : '<a class="nbk-book" href="' + bookHref() + '">Notebook</a>') + '<button type="button" class="nbk-x" aria-label="Close">&times;</button></div>'; }
+  function noteFor(th, text){
+    var d = today(), note = { id: newId(), at: nowISO(), day: d, thread: { k: th.k, id: th.id, t: th.k === 'day' ? dayLabel(d) : th.t }, text: text };
+    if (th.sub) note.thread.sub = th.sub;
+    note.where = (location.pathname.split('/').slice(-2).join('/') + location.search).slice(0, 200);
+    return note;
+  }
+  function open(th, preset){
+    th = th || context(); frame('A new note');
+    var needName = MODE === 'tutor' && !who(), list = peers(th), cur = list[0];
+    if (preset) cur = list.filter(function(p){ return peerKey(p) === peerKey(preset); })[0] || (list.push(preset), preset);
+    var canRec = !!(mimePick() && navigator.mediaDevices);
+    sheet.innerHTML = headHTML(th.k === 'day' ? 'A note for today' : 'Note on <b>' + esc(th.t) + (th.sub ? ' · ' + esc(th.sub) : '') + '</b>')
+      + '<div class="nbk-body">'
+      + (needName ? '<input class="nbk-name" type="text" placeholder="Your name, as on the dashboard" autocomplete="name" aria-label="Your name">' : '')
+      + '<textarea placeholder="Write it down." aria-label="Your note"></textarea>'
+      + '<div class="nbk-who" role="group" aria-label="Who it is for"></div>'
+      + '<div class="nbk-row">' + (canRec ? '<button type="button" class="nbk-btn rec" aria-label="Record a voice note"><span class="dot"></span><span class="lbl">Voice</span></button>' : '') + '<button type="button" class="nbk-btn go" disabled>Save</button></div>'
+      + '<div class="nbk-audio" hidden></div><p class="nbk-msg" aria-live="polite"></p></div>';
+    var ta = sheet.querySelector('textarea'), go = sheet.querySelector('.nbk-btn.go'), rb = sheet.querySelector('.nbk-btn.rec'), au = sheet.querySelector('.nbk-audio'), nm = sheet.querySelector('.nbk-name'), msg = sheet.querySelector('.nbk-msg'), whoBox = sheet.querySelector('.nbk-who');
+    function ready(){ go.disabled = !(ta.value.trim() || recBlob) || !!(nm && !nm.value.trim()) || cur.k === 'pick'; go.textContent = goLabel(cur); }
+    function chips(){
+      whoBox.innerHTML = list.map(function(p, i){ return '<button type="button" data-i="' + i + '" class="' + (p === cur ? 'on' : '') + '" aria-pressed="' + (p === cur) + '">' + esc(p.label) + '</button>'; }).join('')
+        + (cur.k === 'pick' ? '<select class="nbk-pick" aria-label="Which trainee"><option value="">Which trainee?</option>' + rosterList().map(function(t){ return '<option value="' + esc(t.token) + '">' + esc(t.name) + '</option>'; }).join('') + '</select>' : '');
+      Array.prototype.forEach.call(whoBox.querySelectorAll('button'), function(b){ b.addEventListener('click', function(){ cur = list[+b.getAttribute('data-i')]; chips(); ready(); }); });
+      var sel = whoBox.querySelector('.nbk-pick'); if (sel) sel.addEventListener('change', function(){ var t = rosterList().filter(function(x){ return x.token === sel.value; })[0]; if (!t) return;
+        var p = { k: 'trainee', to: t.token, name: t.name, label: first(t.name) }; list = list.filter(function(x){ return x.k !== 'pick' && x.k !== 'trainee'; }).concat([p, { k: 'pick', label: 'Another trainee' }]); cur = p; chips(); ready(); });
     }
+    chips(); ready();
     sheet.querySelector('.nbk-x').addEventListener('click', close);
-    function ready(){ go.disabled = !(ta.value.trim() || recBlob) || (nm && !nm.value.trim()); }
     ta.addEventListener('input', ready); if (nm) nm.addEventListener('input', ready);
     setTimeout(function(){ (nm || ta).focus(); }, 240);
     recBlob = null; recSecs = 0;
@@ -339,48 +433,63 @@
         rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
         rec.onstop = function(){
           recBlob = new Blob(chunks, { type: rec.mimeType || type || 'audio/webm' });
-          rb.classList.remove('on'); rb.querySelector('.lbl').textContent = 'Record again';
+          rb.classList.remove('on'); rb.querySelector('.lbl').textContent = 'Again';
           au.hidden = false; au.innerHTML = '<span>Voice note, ' + secs(recSecs) + '</span><button type="button" class="rm">Remove</button><audio controls src="' + URL.createObjectURL(recBlob) + '"></audio>';
-          au.querySelector('.rm').addEventListener('click', function(){ recBlob = null; recSecs = 0; au.hidden = true; au.innerHTML = ''; rb.querySelector('.lbl').textContent = 'Record a voice note'; ready(); });
+          au.querySelector('.rm').addEventListener('click', function(){ recBlob = null; recSecs = 0; au.hidden = true; au.innerHTML = ''; rb.querySelector('.lbl').textContent = 'Voice'; ready(); });
           ready();
         };
         var t0 = Date.now(); recSecs = 0;
         rec.start(250); rb.classList.add('on'); rb.querySelector('.lbl').textContent = 'Stop · 0:00';
-        recTimer = setInterval(function(){ recSecs = Math.round((Date.now() - t0) / 1000); rb.querySelector('.lbl').textContent = 'Stop · ' + secs(recSecs); if (recSecs >= MAX_SECONDS) stopRec(); }, 250);
+        recTimer = setInterval(function(){ recSecs = Math.round((Date.now() - t0) / 1000); rb.querySelector('.lbl').textContent = 'Stop · ' + secs(recSecs); if (recSecs >= (MODE === 'trainee' && cur.k === 'tutor' ? 30 : MAX_SECONDS)) stopRec(); }, 250);
       }, function(){ msg.textContent = 'The microphone was not allowed. Type the note instead.'; });
     });
     go.addEventListener('click', function(){
       if (go.disabled) return;
       if (nm) { try { localStorage.setItem('chub:tutorName', nm.value.trim()); } catch (e) {} }
-      go.disabled = true; go.textContent = 'Saving…';
-      /* a day's thread is named by its date, so the page never reads "Today" for a day that has gone */
-      var note = { id: newId(), at: nowISO(), day: d, thread: { k: th.k, id: th.id, t: th.k === 'day' ? dayLabel(d) : th.t }, text: ta.value.trim() };
-      if (th.sub) note.thread.sub = th.sub;
-      var where = location.pathname.split('/').slice(-2).join('/') + location.search; note.where = where.slice(0, 200);
-      var ready2 = recBlob ? upload(recBlob, recSecs).then(function(a){ note.audio = a; }) : Promise.resolve();
-      ready2.then(function(){
-        if (MODE === 'trainee') {
-          if (scope) note.shared = scope;
-          var nb = load(); nb.notes.push(note);
-          return save(nb).then(function(){
-            if (!scope) return null;
-            return S.call({ op: 'shareNote', token: S.token(), item: note, scope: scope }).then(function(r){
-              if (r && r.notes) { try { localStorage.setItem('connect_notes_v1', JSON.stringify(r.notes)); } catch (e) {} }
-              return r || {};
-            });
-          });
-        }
-        note.by = who(); return tutor.put(note);
-      }).then(function(r){
-        var withWhom = scope === 'course' ? 'the whole course' : 'your TP group';
-        msg.innerHTML = '<span class="nbk-saved">Saved.</span> ' + (!scope ? 'It is in your notebook, under ' + esc(dayLabel(d)) + (th.k !== 'day' ? ' and ' + esc(th.t) : '') + '.'
-          : (r && r.demo) ? (S.isTemplate && S.isTemplate() ? 'Shown as shared with ' + withWhom + ' in this tab only. Nothing reaches the course.' : 'Demo: shared with ' + withWhom + ' on this device only.')
-          : 'Shared with ' + withWhom + '.');
-        go.textContent = 'Saved'; ta.value = ''; recBlob = null; au.hidden = true; au.innerHTML = ''; if (rb) rb.querySelector('.lbl').textContent = 'Record a voice note';
-        if (mail) { mail.classList.add('off'); mail.setAttribute('aria-disabled', 'true'); }
-        paintCount(); setTimeout(close, scope ? 2600 : 1400);
-      }, function(e){ go.disabled = false; go.textContent = 'Save the note'; msg.textContent = 'Not saved — ' + ((e && e.message) || e); });
+      var p = cur, label = go.textContent; go.disabled = true; go.textContent = p.k ? 'Sending…' : 'Saving…';
+      var note = noteFor(th, ta.value.trim()), toTutor = MODE === 'trainee' && p.k === 'tutor';
+      /* a voice note to a tutor travels with the note itself (the store keeps it with the question); any other is filed first */
+      var prep = !recBlob ? Promise.resolve(null) : toTutor ? b64(recBlob).then(function(bytes){ return { bytes: bytes, type: recBlob.type, seconds: recSecs }; }) : upload(recBlob, recSecs).then(function(a){ note.audio = a; return null; });
+      prep.then(function(voice){ return deliver(note, p, voice); }).then(function(r){
+        recBlob = null; paintCount();
+        if (!p.k) { msg.innerHTML = '<span class="nbk-saved">Saved.</span>'; go.textContent = 'Saved'; ta.value = ''; au.hidden = true; au.innerHTML = ''; setTimeout(close, 1100); return; }
+        talk(p, th, (r && r.demo) ? (S.isTemplate && S.isTemplate() ? 'Trainee view: nothing reaches the course.' : 'Demo: kept on this device only.') : '');
+      }, function(e){ go.disabled = false; go.textContent = label; msg.textContent = 'Not sent — ' + ((e && e.message) || e); });
     });
+    document.addEventListener('keydown', function esc_(e){ if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc_); } });
+  }
+  /* the conversation: what went each way, and a box for the next word */
+  function talk(p, th, said){
+    th = th || context(); frame('With ' + peerTitle(p));
+    var el = sheet;
+    function paint(note){
+      if (sheet !== el) return;
+      var ms = messages(p), short = MODE === 'trainee' && p.k === 'tutor';
+      el.innerHTML = headHTML('With <b>' + esc(peerTitle(p)) + '</b>')
+        + '<div class="nbk-body nbk-talk"><div class="nbk-thread">' + (ms.length ? ms.map(function(m, i){
+            return '<div class="nbk-m ' + (m.me ? 'me' : 'them') + '">' + esc(m.text || '') + (m.audio ? '<button type="button" class="nbk-hear" data-i="' + i + '">Listen</button><span class="slot"></span>' : '')
+              + '<i>' + esc((m.me ? 'You' : first(m.by) || 'Them') + ' · ' + (m.note && m.note.day !== today() ? dayLabel(String(m.at).slice(0, 10)) + ' ' : '') + timeLabel(m.at)) + '</i></div>'; }).join('') : '<p class="nbk-none">Nothing yet.</p>') + '</div></div>'
+        + '<div class="nbk-reply"><textarea rows="2" placeholder="Reply…" aria-label="Reply"' + (short ? ' maxlength="400"' : '') + '></textarea><button type="button" class="nbk-btn go" disabled>Send</button></div><p class="nbk-msg" aria-live="polite">' + esc(note || '') + '</p>';
+      el.querySelector('.nbk-x').addEventListener('click', close);
+      var box = el.querySelector('.nbk-thread'); box.scrollTop = box.scrollHeight; var body = el.querySelector('.nbk-talk'); body.scrollTop = body.scrollHeight;
+      Array.prototype.forEach.call(el.querySelectorAll('.nbk-hear'), function(b){ b.addEventListener('click', function(){ var m = ms[+b.getAttribute('data-i')]; play(m.note, b.parentNode.querySelector('.slot'), b); }); });
+      var ta = el.querySelector('textarea'), go = el.querySelector('.nbk-btn.go'), msg = el.querySelector('.nbk-msg');
+      ta.addEventListener('input', function(){ go.disabled = !ta.value.trim(); });
+      go.addEventListener('click', function(){
+        var text = ta.value.trim(); if (!text) return; go.disabled = true; go.textContent = 'Sending…';
+        var under = replyTarget(p), job;
+        if (under) job = S.call({ op: 'replyNote', token: S.token(), id: under.id, text: text }).then(function(r){
+          var got = (r && r.notes) || null;
+          if (!got) { got = rd('connect_notes_v1') || []; var n = got.filter(function(x){ return x.id === under.id; })[0]; if (n) n.replies = (n.replies || []).concat([{ by: 'You', at: nowISO(), text: text }]); }
+          try { localStorage.setItem('connect_notes_v1', JSON.stringify(got)); } catch (e) {} return r || {}; });
+        else job = deliver(noteFor(th, text), p, null);
+        job.then(function(r){ paintCount(); paint((r && r.demo) ? (S.isTemplate && S.isTemplate() ? 'Trainee view: nothing reaches the course.' : 'Demo: kept on this device only.') : ''); },
+          function(e){ go.disabled = false; go.textContent = 'Send'; msg.textContent = 'Not sent — ' + ((e && e.message) || e); });
+      });
+      if (!note) setTimeout(function(){ if (sheet === el) ta.focus(); }, 240);
+    }
+    paint(said || '');
+    if (MODE === 'tutor' && who()) tutor.load().then(function(){ paint(''); }, function(){});
     document.addEventListener('keydown', function esc_(e){ if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc_); } });
   }
 
@@ -433,5 +542,5 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
 
-  window.HubNotebook = { mode: MODE, context: context, open: open, load: load, save: save, tutor: tutor, play: play, arc: arcSVG, who: who, today: today, dayLabel: dayLabel, timeLabel: timeLabel, threadKey: threadKey, actionPoints: actionPoints, newId: newId, nowISO: nowISO, secs: secs, place: place, count: paintCount };
+  window.HubNotebook = { mode: MODE, context: context, open: open, load: load, save: save, tutor: tutor, play: play, talk: talk, peers: peers, messages: messages, peerTitle: peerTitle, arc: arcSVG, who: who, today: today, dayLabel: dayLabel, timeLabel: timeLabel, threadKey: threadKey, actionPoints: actionPoints, newId: newId, nowISO: nowISO, secs: secs, place: place, count: paintCount };
 })();
