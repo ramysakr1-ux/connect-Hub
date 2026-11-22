@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611221745">
+<link rel="stylesheet" href="hub-tokens.css?v=202611221812">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -469,7 +469,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611221745">
+<link rel="stylesheet" href="hub-house.css?v=202611221812">
 </head>
 <body>
 <div class="board">
@@ -681,20 +681,20 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202611221745"></script>
-<script src="observation-defaults.js?v=202611221745"></script>
-<script src="hub-shared.js?v=202611221745"></script>
-<script src="hub-hand.js?v=202611221745"></script>
-<script src="hub-ink.js?v=202611221745"></script>
+<script src="hub-due.js?v=202611221812"></script>
+<script src="observation-defaults.js?v=202611221812"></script>
+<script src="hub-shared.js?v=202611221812"></script>
+<script src="hub-hand.js?v=202611221812"></script>
+<script src="hub-ink.js?v=202611221812"></script>
 <script src="input-sessions/library.js?v=202611221105"></script>
-<script src="hub-store.js?v=202611221745"></script>
-<script src="hub-say.js?v=202611221745"></script>
-<script src="hub-shelf.js?v=202611221745"></script>
-<script src="hub-front.js?v=202611221745"></script>
-<script src="hub-sync.js?v=202611221745"></script>
-<script src="hub-notebook.js?v=202611221745"></script>
-<script src="hub-feedback.js?v=202611221745"></script>
-<script src="hub-about.js?v=202611221745"></script>
+<script src="hub-store.js?v=202611221812"></script>
+<script src="hub-say.js?v=202611221812"></script>
+<script src="hub-shelf.js?v=202611221812"></script>
+<script src="hub-front.js?v=202611221812"></script>
+<script src="hub-sync.js?v=202611221812"></script>
+<script src="hub-notebook.js?v=202611221812"></script>
+<script src="hub-feedback.js?v=202611221812"></script>
+<script src="hub-about.js?v=202611221812"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1192,7 +1192,9 @@ if (fbBack){
     const linkify = t => e(t).replace(/(https?:\/\/[^\s<]+)/g, m => `<a href="${m}" target="_blank" rel="noopener noreferrer">${m.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>`);
     const initials = n => hubInitials(n);
     const when = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const today = new Date(); const sameDay = d.toDateString() === today.toDateString(); return sameDay ? 'Today, ' + window.hubTimeOf(d) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); };
-    const fresh = posts.filter(p => outAt(p) > seenAt).length;
+    /* what is still current: the rest folds under Older notices (hubNoticeCurrent, hub-shared.js) */
+    const current = posts.filter(p => !window.hubNoticeCurrent || hubNoticeCurrent(p));
+    const fresh = current.slice(0, 3).filter(p => outAt(p) > seenAt).length;   /* of the ones on the board, not the folded ones */
     /* The stream's newest post is not always first now (a due post leads),
        so "seen" is stamped from the newest, not the first. */
     const newestAt = posts.reduce((m, p) => outAt(p) > m ? outAt(p) : m, '');
@@ -1204,8 +1206,10 @@ if (fbBack){
     /* Three, then "Older posts" (Ramy, 11 Oct 2026: "five is too many"). */
     const SHOWN = 3;
     const draw = () => {
-      const list = showAll ? posts : posts.slice(0, SHOWN);
-      host.innerHTML = `<div class="shead"><h2>Course noticeboard</h2>${fresh ? `<span class="new">${fresh} new</span>` : ''}${posts.length > SHOWN ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older notices (' + (posts.length - SHOWN) + ')'}</button>` : ''}</div>`
+      const list = showAll ? posts : current.slice(0, SHOWN);
+      const olderN = posts.length - current.slice(0, SHOWN).length;
+      host.innerHTML = `<div class="shead"><h2>Course noticeboard</h2>${fresh ? `<span class="new">${fresh} new</span>` : ''}${olderN > 0 ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older notices (' + olderN + ')'}</button>` : ''}</div>`
+        + (list.length ? '' : '<p class="nonew" style="margin:6px 0 0; color:var(--grey); font-size:.9rem;">Nothing new.</p>')
         + '<div class="pins">' + list.map(p => `<article class="post"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}${outAt(p) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(p.text)}</p></div></article>`).join('') + '</div>';
       host.hidden = false;
       const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });

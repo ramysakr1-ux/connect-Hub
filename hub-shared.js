@@ -2165,6 +2165,29 @@ window.hubLockup = function(size){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foot); else foot();
 })();
 
+/* A NOTICE STAYS WHILE IT MATTERS, THEN LEAVES THE BOARD (Ramy, 22 Nov 2026, seeing a notice of 17 November still up on
+   the 22nd: "Announcement would stay as long as it's relevant. And then it goes away ... If there are always things on
+   the notice board, people stop reading. They have to notice a change"; and "course days only"). The rule, for the
+   trainees' board and the tutors' alike:
+     a notice with a "count down to"   stays until that time, and twelve hours more;
+     any other notice                  stays the day it goes out and the next course day (the timetable's next open day,
+                                       so a Friday notice lasts to the end of Monday).
+   After that it is not deleted: it folds under "Older notices". Nothing is written; this only decides what shows. */
+window.hubNoticeCurrent = function(p){
+  if (!p) return false;
+  try {
+    var now = window.hubNow ? window.hubNow() : Date.now();
+    if (p.due) { var d = window.HubDue ? window.HubDue.state(p.due) : null, at = d && d.has ? +d.at : Date.parse(p.due); if (!isNaN(at)) return now <= at + 12 * 3600000; }
+    var out = (p.publishAt && String(p.publishAt) > String(p.at)) ? p.publishAt : p.at, t0 = Date.parse(out);
+    if (isNaN(t0)) return true;
+    var cs = {}, tt = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || '{}') || {}; } catch (e) {}
+    var ymd = function(ms){ try { return new Date(ms).toLocaleDateString('en-CA', cs.timeZone ? { timeZone: cs.timeZone } : undefined); } catch (e) { return new Date(ms).toISOString().slice(0, 10); } };
+    var outDay = ymd(t0), today = window.hubToday ? window.hubToday() : ymd(now);
+    var next = (tt.days || []).filter(function(x){ return x && x.date && !x.closed && x.date > outDay; }).map(function(x){ return x.date; }).sort()[0] || ymd(t0 + 86400000);
+    return today <= next;
+  } catch (e) { return true; }
+};
+
 /* SIGN OUT (15 Oct 2026). Ramy: "there is no sign out... I can't close the
    page", on a phone he opens many trainees' links on. A link is the login and
    the device remembers the last one opened, so on a shared phone or computer
