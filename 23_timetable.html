@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611230020">
+<link rel="stylesheet" href="hub-tokens.css?v=202611230032">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -854,27 +854,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611230020">
+<link rel="stylesheet" href="hub-house.css?v=202611230032">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611230020"></script>
-<script src="hub-tracker.js?v=202611230020"></script>
-<script src="hub-rotation.js?v=202611230020"></script>
-<script src="hub-xlsx.js?v=202611230020"></script>
-<script src="hub-docx.js?v=202611230020"></script>
-<script src="hub-timetable-parse.js?v=202611230020"></script>
-<script src="assignment-defaults.js?v=202611230020"></script>
-<script src="hub-shared.js?v=202611230020"></script>
+<script src="hub-due.js?v=202611230032"></script>
+<script src="hub-tracker.js?v=202611230032"></script>
+<script src="hub-rotation.js?v=202611230032"></script>
+<script src="hub-xlsx.js?v=202611230032"></script>
+<script src="hub-docx.js?v=202611230032"></script>
+<script src="hub-timetable-parse.js?v=202611230032"></script>
+<script src="assignment-defaults.js?v=202611230032"></script>
+<script src="hub-shared.js?v=202611230032"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611230020"></script>
-<script src="hub-say.js?v=202611230020"></script>
-<script src="hub-sync.js?v=202611230020"></script>
-<script src="hub-notebook.js?v=202611230020"></script>
+<script src="hub-store.js?v=202611230032"></script>
+<script src="hub-say.js?v=202611230032"></script>
+<script src="hub-sync.js?v=202611230032"></script>
+<script src="hub-notebook.js?v=202611230032"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1155,8 +1155,10 @@ function dues(){
     const mine = {};
     trs.forEach(t => { const g = String(t.group || ''); (mine[g] = mine[g] || []).push(t.id || t.token); });
     const groups = Object.keys(by);
+    /* WHOSE LETTERS (Ramy, 23 Nov 2026, "fix the deadline chips"): each group has its own A, B, C, so two groups' letters
+       read "AB · AB". With more than one group, the letters carry their group: "Group 1: A, B · Group 2: A, B". */
     return Object.keys(mine).sort().map(g => (groups.length > 1 && mine[g].length === by[g].length)
-      ? 'Group ' + (g || '—') : mine[g].map(t => L[t] || '').join('')).join(' · ');
+      ? 'Group ' + (g || '—') : (groups.length > 1 ? 'Group ' + (g || '—') + ': ' : '') + mine[g].map(t => L[t] || '').filter(Boolean).sort().join(', ')).join(' · ');
   }
 }
 
@@ -1518,7 +1520,8 @@ function dayHTML(day, B, idx){
     const at = toMin(local);
     const top = Math.min(H - 18, Math.max(0, at == null ? 0 : (at - B.from) * PXM)) + i * 19;
     const late = x.past && x.missing;
-    const body = `${esc(x.title)} due${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
+    const parts = String(x.title || '').split(' · '), who = parts.slice(1).join(' · ');   /* the same words as the week board's chip */
+    const body = `${esc(parts[0])} due${local ? ' ' + esc(hubClock(local)) : ''}${who ? ' · ' + esc(who) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
     return (EDIT && !x.fixed) ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-move="${esc(x.key)}" data-field="${x.field || 'due'}" style="top:${top}px" title="Move this deadline">${body}</button>`
                 : EDIT ? `<button type="button" class="due asbtn${late ? ' late' : ''}" data-asg="${esc(x.key)}" data-field="${x.field || 'due'}" style="top:${top}px" title="Set its dates">${body}</button>`
                 : `<div class="due${late ? ' late' : ''}" style="top:${top}px">${body}</div>`;
@@ -1631,7 +1634,9 @@ function weekBoard(w, n){
     (DUES[day.date] || []).forEach(x => {
       const local = window.HubDue && x.due ? HubDue.toLocalInput(x.due).slice(11, 16) : '';
       const late = x.past && x.missing;
-      const body = `${esc(x.title)} in${local ? ' · ' + esc(hubClock(local)) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
+      /* "LSRT · AB · AB in · 10:00 AM" read as nothing (Ramy, 23 Nov 2026): the assignment, "due" and the time, then whose */
+      const parts = String(x.title || '').split(' · '), who = parts.slice(1).join(' · ');
+      const body = `${esc(parts[0])} due${local ? ' ' + esc(hubClock(local)) : ''}${who ? ' · ' + esc(who) : ''}${late ? ' · ' + (IS_TRAINEE ? 'yours is not in' : x.missing + ' of ' + x.total + ' not in') : ''}`;
       const rs = /resub/i.test(x.title || '') ? ' rs' : '';
       out.push((EDIT && !x.fixed) ? `<button type="button" class="due asbtn${rs}${late ? ' late' : ''}" data-move="${esc(x.key)}" data-field="${x.field || 'due'}" title="Move this deadline"><i class="fl" aria-hidden="true"></i>${body}</button>` : EDIT ? `<button type="button" class="due asbtn${rs}${late ? ' late' : ''}" data-asg="${esc(x.key)}" data-field="${x.field || 'due'}" title="Set its dates"><i class="fl" aria-hidden="true"></i>${body}</button>` : `<div class="due${rs}${late ? ' late' : ''}"><i class="fl" aria-hidden="true"></i>${body}</div>`);
     });
@@ -1991,7 +1996,7 @@ function render(){
   const mode = IS_TUTOR && TT && TT.days && TT.days.length ? `<div class="smode"><span class="chip${EDIT ? ' draft' : ' on'}">${EDIT ? (pubNow ? 'Editing · the course sees the published one' : 'Editing · not published yet') : 'Read only · what the course sees'}</span><button type="button" class="btn quiet" id="preview">${EDIT ? 'Trainee view' : 'Edit timetable'}</button></div>` : '';
   const head = `<p class="eyebrow">Course</p><h1>Timetable${TT && TT.days && TT.days.length ? '<button type="button" class="printpill" id="ttPrint">Print week</button>' : ''}</h1>
     <p class="lede">${EDIT
-      ? 'The course’s timetable. Click a session to change it; trainees see it once you publish. Its dates, the days it meets and its usual day are in <b>Set up the timetable</b>; the rooms and the sessions are set here.'   /* R02 (30 Oct 2026): who owns what, said where both show */
+      ? 'Click a session to change it.'   /* THE INTRO IN ONE LINE (Ramy, 23 Nov 2026, "fix the intro"): the chip under it says what the course sees, and Set up the timetable is its own button */
       : IS_TRAINEE || IS_TUTOR ? 'Every day of the course. The teaching practice cell says who is teaching that day; your assignment deadlines are marked on the day they fall.'
       : 'Every day of the course. The teaching practice cell says who is teaching that day, and each assignment deadline is marked on the day it falls.'}</p>${mode}`;
   /* Set, then seen. A skeleton is twenty empty days, and until 29 Sep 2026 the
@@ -4478,7 +4483,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611230020'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611230032'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);
