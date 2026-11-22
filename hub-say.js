@@ -306,7 +306,34 @@
     }
   }
 
-  window.hubSay = { open: open, hooks: hooks };
+  /* PINNED TO THE BOTTOM (Ramy, 22 Nov 2026: "pin it to the bottom but take it a bit higher"). On a page shorter than the
+     screen, the space goes above Say something, so the three sit at the foot of the screen; the page's own bottom padding
+     keeps them a little above the edge. A page taller than the screen is left as it is. */
+  var pinT = null;
+  function pin() {
+    var g = document.querySelector('.hub-brand-foot.has-say') || document.querySelector('.say-group');
+    if (!g) return;
+    g.style.marginTop = '';
+    /* the credit: the shared footer itself, or the landing's own footer after the group */
+    var cr = g.classList.contains('say-group') ? (g.nextElementSibling || g) : g;
+    var bottom = cr.getBoundingClientRect().bottom + window.scrollY;
+    var b = document.body, bs = getComputedStyle(b);
+    var tail = (b.getBoundingClientRect().bottom + window.scrollY + (parseFloat(bs.marginBottom) || 0)) - bottom;   /* what the page keeps under the credit */
+    var spare = window.innerHeight - bottom - Math.max(56, tail);   /* at least 56px clear of the edge: "a bit higher"; never a scroll it did not have */
+    if (spare > 0) g.style.marginTop = (parseFloat(getComputedStyle(g).marginTop) || 0) + spare + 'px';
+  }
+  function pinSoon() { clearTimeout(pinT); pinT = setTimeout(pin, 120); }
+  window.addEventListener('resize', pinSoon);
+  window.addEventListener('load', pinSoon);
+  document.addEventListener('hub:ready', pinSoon);
+  [600, 1800, 4000, 6500].forEach(function (ms) { setTimeout(pin, ms); });
+  if (window.MutationObserver) {
+    var mo = new MutationObserver(function (list) { if (list.some(function (m) { return !(m.target.closest && m.target.closest('.say-row, .say-group, .hub-brand-foot')); })) pinSoon(); });
+    var startMo = function () { mo.observe(document.body, { childList: true, subtree: true }); };
+    if (document.body) startMo(); else document.addEventListener('DOMContentLoaded', startMo);
+  }
+
+  window.hubSay = { open: open, hooks: hooks, pin: pin };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();

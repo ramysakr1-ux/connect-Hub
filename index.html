@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611221953">
+<link rel="stylesheet" href="hub-tokens.css?v=202611222023">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -469,7 +469,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611221953">
+<link rel="stylesheet" href="hub-house.css?v=202611222023">
 </head>
 <body>
 <div class="board">
@@ -681,20 +681,20 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202611221953"></script>
-<script src="observation-defaults.js?v=202611221953"></script>
-<script src="hub-shared.js?v=202611221953"></script>
-<script src="hub-hand.js?v=202611221953"></script>
-<script src="hub-ink.js?v=202611221953"></script>
+<script src="hub-due.js?v=202611222023"></script>
+<script src="observation-defaults.js?v=202611222023"></script>
+<script src="hub-shared.js?v=202611222023"></script>
+<script src="hub-hand.js?v=202611222023"></script>
+<script src="hub-ink.js?v=202611222023"></script>
 <script src="input-sessions/library.js?v=202611221105"></script>
-<script src="hub-store.js?v=202611221953"></script>
-<script src="hub-say.js?v=202611221953"></script>
-<script src="hub-shelf.js?v=202611221953"></script>
-<script src="hub-front.js?v=202611221953"></script>
-<script src="hub-sync.js?v=202611221953"></script>
-<script src="hub-notebook.js?v=202611221953"></script>
-<script src="hub-feedback.js?v=202611221953"></script>
-<script src="hub-about.js?v=202611221953"></script>
+<script src="hub-store.js?v=202611222023"></script>
+<script src="hub-say.js?v=202611222023"></script>
+<script src="hub-shelf.js?v=202611222023"></script>
+<script src="hub-front.js?v=202611222023"></script>
+<script src="hub-sync.js?v=202611222023"></script>
+<script src="hub-notebook.js?v=202611222023"></script>
+<script src="hub-feedback.js?v=202611222023"></script>
+<script src="hub-about.js?v=202611222023"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -807,6 +807,41 @@ const ASG = (function(){
   return {text: closed + ' of ' + TOTAL + ' complete', tone:'', total:TOTAL};
 })();
 
+/* THE NEXT DEADLINE (Ramy, 22 Nov 2026: "I don't think the countdown should be on the notice board ... the countdown for the
+   assignments should be somewhere else ... on the card ... If we have different countdowns, we'd be too busy"; mock-up
+   docs/mockups/assignment-countdown-2026-11-22). One deadline only: the earliest assignment still to hand in (or to hand in
+   again), with this trainee's own teaching set and extension, the same reading as the assignment page (dueFor in
+   9_assignment_submission.html). Late comes before upcoming. */
+const NEXTDUE = (function(){
+  try {
+    if (!window.HubDue) return null;
+    var subs = rec('connect_assignment_submissions_v1') || {}, wI = rec('connect_assignment_wording_v2') || window.CONNECT_HUB_DEFAULT_WORDING || {};
+    var me = rec('hub:me') || {}, ext = (rec('chub:tracker') || {}).extensions || {};
+    var NM = { lrt:'LRT', lsrt:'LSRT', fol:'FOL', lfc:'LFC', a5:'Assignment 5' };
+    var found = [];
+    hubAssignmentOrder(wI).forEach(function(k){
+      if (k === 'a5' ? !a5InPlay(subs) : !(hubReleased(wI, k) || subs[k])) return;
+      var w = wI[k]; if (!w) return;
+      var s = subs[k] || {}, stage = s.stage || '';
+      var open = !stage || stage === 'draft' || stage === 'returned_unmarked', resub = stage === 'resubmission_needed';
+      if (!open && !resub) return;
+      var base = resub ? HubDue.resubFor(w, s) : (window.hubDueFor ? hubDueFor(w, me.token, me.group) : w.dueAt);
+      var iso = HubDue.forPerson(base, ext['a:' + k + (resub ? ':resub' : '')]).iso, st = HubDue.state(iso);
+      if (st.has) found.push({ k: k, name: (NM[k] || k.toUpperCase()) + (resub ? ' resubmission' : ''), st: st, resub: resub });
+    });
+    if (!found.length) return null;
+    found.sort(function(a, b){ return (a.st.past === b.st.past) ? a.st.at - b.st.at : (a.st.past ? -1 : 1); });
+    var d = found[0], tz = (rec('connect_course_settings') || {}).timeZone || undefined;
+    var dayOf = function(ms){ return new Intl.DateTimeFormat('en-CA', tz ? { timeZone: tz } : {}).format(new Date(ms)); };
+    var now = window.hubNow ? hubNow() : Date.now(), today = window.hubToday ? hubToday() : dayOf(now);
+    var gap = Math.round((Date.parse(dayOf(d.st.at) + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 864e5);
+    var time = window.hubTimeOf ? hubTimeOf(new Date(d.st.at)) : new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: tz }).format(new Date(d.st.at));
+    var day = gap === 0 ? 'today' : gap === 1 ? 'tomorrow' : gap === -1 ? 'yesterday' : new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: tz }).format(new Date(d.st.at));
+    if (d.st.past) return { k: d.k, late: true, line: d.name + ' was due ' + day + ', ' + time, hero: d.name + ' was due ' + day + ' at ' + time + '. Hand it in today.', resub: d.resub };
+    if (gap <= 1) return { k: d.k, close: true, line: d.name + ' due ' + day + ', ' + time, hero: d.name + ' is due ' + day + ' at ' + time + '.', resub: d.resub };
+    return { k: d.k, line: d.name + ' due ' + day + ' · ' + gap + ' days', resub: d.resub };
+  } catch (e) { return null; }
+})();
 /* Which TP this is. The tutor's feedback and the trainee's own plan both carry
    the number in the same place (state.f.fTP, else the label -- "TP4 · Name"),
    and once a TP is returned it is filed in chub:tpHistory under its number, so
@@ -896,7 +931,9 @@ line(document.getElementById('badgeFeedback'),
   : matOnly(PLAN_TP) ? 'After your material' : 'After your lesson plan',
   NEXT === 'feedback' && fbOpened ? 'act' : '');
 
-line(document.getElementById('badgeAssign'), ASG.text, ASG.tone);
+/* a failed assignment keeps the card's line; otherwise the next deadline, when there is one */
+if (NEXTDUE && !(ASG.failed && ASG.failed.length)) line(document.getElementById('badgeAssign'), NEXTDUE.line, NEXTDUE.late ? 'stuck' : NEXTDUE.close ? 'act' : '');
+else line(document.getElementById('badgeAssign'), ASG.text, ASG.tone);
 
 /* Observations: only the filmed and live sheets are turned in (six of them);
    the peer sheets are notes and are not counted here. */
@@ -1183,7 +1220,8 @@ if (fbBack){
     const outAt = p => (p.publishAt && String(p.publishAt) > String(p.at)) ? String(p.publishAt) : String(p.at);
     /* A post with a "by when" stays at the top until it passes, then falls
        back into the order of posting; its pill counts down in gold. */
-    const dueState = p => (p && p.due && window.HubDue) ? HubDue.state(p.due) : { has: false };
+    /* NO COUNTDOWNS ON THE BOARD (Ramy, 22 Nov 2026): the deadlines are on the Written assignments card and the hero; a notice is news */
+    const dueState = p => ({ has: false });
     posts.sort((a, b) => { const da = dueState(a), db = dueState(b); const la = da.has && !da.past, lb = db.has && !db.past; if (la !== lb) return la ? -1 : 1; if (la && lb) return da.at - db.at; return outAt(b).localeCompare(outAt(a)); });
     const duePill = p => { const d = dueState(p); return d.has ? `<span class="due${d.past ? ' past' : ''}">${d.past ? 'was due ' + e(d.due) : e(d.due) + ' · ' + e(d.text)}</span>` : ''; };
     const host = document.getElementById('stream'); if (!host || !posts.length) return;
@@ -1210,8 +1248,8 @@ if (fbBack){
       const list = showAll ? posts : current;
       const olderN = posts.length - current.length;
       host.innerHTML = `<div class="shead"><h2>Course noticeboard</h2>${fresh ? `<span class="new">${fresh} new</span>` : ''}${olderN > 0 ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older notices (' + olderN + ')'}</button>` : ''}</div>`
-        + (list.length ? '' : '<p class="nonew" style="margin:6px 0 0; color:var(--grey); font-size:.9rem;">Nothing new.</p>')
-        + '<div class="pins">' + list.map(p => `<article class="post"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}${outAt(p) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(p.text)}</p></div></article>`).join('') + '</div>';
+
+        + '<div class="pins">' + (list.length ? '' : '<p class="nonew" style="margin:0; padding:6px 4px; color:var(--grey); font-size:.92rem; font-weight:600;">Nothing new on the board.</p>') + list.map(p => `<article class="post"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}${outAt(p) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(p.text)}</p></div></article>`).join('') + '</div>';
       host.hidden = false;
       const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });
     };
@@ -1555,7 +1593,10 @@ if (fbBack){
   if (CS.preCourseConnect && CS.gtkyFormat !== 'interview' && TODAY && START && TODAY === START
       && !(rec('connect_shared_v1') || []).some(function(x){ return x && x.kind === 'gtky' && x.by === ME.name; }))
     add('Pick your getting-to-know-you activity for today', '31_getting_to_know_you.html');
-  if (ASG.tone === 'stuck') add(ASG.text, '9_assignment_submission.html' + (ASG.failed && ASG.failed.length ? '?a=' + encodeURIComponent(ASG.failed[0]) : ''), ASG.failed && ASG.failed.length ? 'red' : 'amber');
+  /* the deadline, on the hero only the day before, the day itself, and once it is late */
+  const dueHero = NEXTDUE && (NEXTDUE.close || NEXTDUE.late);
+  if (dueHero) add(NEXTDUE.hero, '9_assignment_submission.html?a=' + encodeURIComponent(NEXTDUE.k), NEXTDUE.late ? 'red' : 'amber');
+  if (ASG.tone === 'stuck' && !(dueHero && NEXTDUE.resub && !(ASG.failed && ASG.failed.length))) add(ASG.text, '9_assignment_submission.html' + (ASG.failed && ASG.failed.length ? '?a=' + encodeURIComponent(ASG.failed[0]) : ''), ASG.failed && ASG.failed.length ? 'red' : 'amber');
   if (fbBack && selfIn && !fbOpened) add('Your teaching practice feedback is back — open it', '4_feedback_returned.html');
   /* A CLASSMATE SHARED THEIR NOTES (Ramy, 18 Nov 2026: "yes, add the line to the home page"). A peer sheet a
      classmate connected only showed on the Observation tasks page, so nobody knew one had arrived. One line, until

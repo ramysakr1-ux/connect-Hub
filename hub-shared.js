@@ -2169,15 +2169,14 @@ window.hubLockup = function(size){
    the 22nd: "Announcement would stay as long as it's relevant. And then it goes away ... If there are always things on
    the notice board, people stop reading. They have to notice a change"; and "course days only"). The rule, for the
    trainees' board and the tutors' alike:
-     a notice with a "count down to"   stays until that time, and twelve hours more;
-     any other notice                  stays the day it goes out and the next course day (the timetable's next open day,
+     every notice                      stays the day it goes out and the next course day (the timetable's next open day,
                                        so a Friday notice lasts to the end of Monday).
    After that it is not deleted: it folds under "Older notices". Nothing is written; this only decides what shows. */
 window.hubNoticeCurrent = function(p){
   if (!p) return false;
   try {
     var now = window.hubNow ? window.hubNow() : Date.now();
-    if (p.due) { var d = window.HubDue ? window.HubDue.state(p.due) : null, at = d && d.has ? +d.at : Date.parse(p.due); if (!isNaN(at)) return now <= at + 12 * 3600000; }
+    /* a notice's old countdown no longer keeps it up (22 Nov 2026): the deadline is on the assignment card */
     var out = (p.publishAt && String(p.publishAt) > String(p.at)) ? p.publishAt : p.at, t0 = Date.parse(out);
     if (isNaN(t0)) return true;
     var cs = {}, tt = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || '{}') || {}; } catch (e) {}
