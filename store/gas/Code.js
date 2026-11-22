@@ -3773,6 +3773,43 @@ case 'inbox': {
       return { read: frRead, skipped: frSkipped, about: frAbout, teach: frTeach, card: frCard, files: frList2,
         why: frTeach ? String(frOut.why || '').replace(/[<>]/g, ' ').trim().slice(0, 400) : '', said: String(frOut.said || '').replace(/[<>]/g, ' ').trim().slice(0, 200) };
     }
+    /* THE CANDIDATE LIST FOR APPIAN'S ENTRY FORM (v288, Ramy, 22 Nov 2026: "how are we going to import or export the list of
+       candidates into the entry form? ... check the files that we received from the center. The dates of birth are there").
+       Appian's entry form takes an Excel file: given name, family name, date of birth, email, previously deferred. Lite holds
+       one name and an email and has never asked a trainee their date of birth; the center's application form has all of it.
+       This reads ONE trainee's application form and hands back those four things, to the tutor's screen only. Nothing is
+       stored, nothing is sent to any outside service (no drafting model reads it: the form's own labels are matched), and
+       the page writes the file on the tutor's own computer. */
+    case 'folderEntry': {
+      requireTutor_(tutor);
+      var feSet = courseRead_(course.id, 'settings') || {};
+      if (feSet.demoToday) throw new Error('Not on a demo course');
+      var feIdOf = function (u) { u = String(u || ''); return (u.match(/\/folders\/([A-Za-z0-9_-]{10,})/) || u.match(/[?&]id=([A-Za-z0-9_-]{10,})/) || [])[1] || ''; };
+      var feId = feIdOf(req.url), feTop = feIdOf((feSet.docs || {}).docApplications);
+      if (!feId) throw new Error('That is not a link to a Drive folder');
+      if (!feTop) throw new Error('Save the Application task folder on Course admin first');
+      var feFolder = null, feInside = false;
+      try { feFolder = DriveApp.getFolderById(feId); var fePar = feFolder.getParents(); while (fePar.hasNext()) if (fePar.next().getId() === feTop) feInside = true; }
+      catch (e) { throw new Error('Lite cannot see inside that folder. Share it so anyone with the link can view, then try again.'); }
+      if (!feInside) throw new Error('That folder is not inside this course’s Application task folder');
+      var feFiles = [], feIt = feFolder.getFiles();
+      while (feIt.hasNext() && feFiles.length < 12) feFiles.push(feIt.next());
+      /* the application form first; an agreement or the interviewer's notes only if the form did not give it all */
+      var feRank = function (f) { var n = f.getName().toLowerCase(); return /appl/.test(n) ? 0 : /form/.test(n) && !/agree/.test(n) ? 1 : /agree/.test(n) ? 3 : 2; };
+      feFiles.sort(function (a, b) { return feRank(a) - feRank(b); });
+      var feOut = { given: '', family: '', dob: '', dobUnsure: false, nameUnsure: false, email: '', read: '' };
+      for (var feI = 0; feI < feFiles.length && feI < 3; feI++) {
+        var feT = ''; try { feT = fileText_(feFiles[feI]); } catch (e) { feT = ''; }
+        if (feT.replace(/\s+/g, '').length < 40) continue;
+        var feE = entryFrom_(feT);
+        if (!feOut.read && (feE.family || feE.dob || feE.email)) feOut.read = String(feFiles[feI].getName()).replace(/[<>\r\n]/g, ' ').slice(0, 120);
+        if (!feOut.family && feE.family) { feOut.given = feE.given; feOut.family = feE.family; feOut.nameUnsure = feE.nameUnsure; }
+        if (!feOut.dob && feE.dob) { feOut.dob = feE.dob; feOut.dobUnsure = feE.dobUnsure; }
+        if (!feOut.email && feE.email) feOut.email = feE.email;
+        if (feOut.family && feOut.dob && feOut.email) break;
+      }
+      return feOut;
+    }
     case 'renameTrainee': {
       requireTutor_(tutor);
       var sh2 = sheet_(SHEET_TRAINEES);
@@ -4257,6 +4294,30 @@ function fileText_(file) {
 }
 /* Addresses, phone numbers and dates of birth out of a file's text before it leaves Lite (v226): the model is asked about
    experience and placement, and needs none of them. */
+/* What Appian's entry form asks about one candidate, read off an application form's own labels (see folderEntry).
+   The form reaches here as plain text: a Word table's cells end " | ", a PDF's run together. A date is read day first,
+   as the center's form asks for it; where day and month could be either way round it says so, and the tutor checks. */
+function entryFrom_(text) {
+  var flat = String(text || '').replace(/\r/g, '').replace(/\s*\|\s*/g, ' ').replace(/[\s ]+/g, ' ');
+  var out = { given: '', family: '', dob: '', dobUnsure: false, nameUnsure: false, email: '' };
+  var tidy = function (v) { v = String(v || '').replace(/[<>|]/g, ' ').replace(/\s+/g, ' ').replace(/^[\s:.,-]+|[\s:.,-]+$/g, '').slice(0, 60);
+    /* BLOCK CAPITALS or all small become a name as a certificate prints it; a name already in mixed case is left alone */
+    return v && (v === v.toUpperCase() || v === v.toLowerCase()) ? v.toLowerCase().replace(/(^|[\s'-])([^\s'-])/g, function (m, a, b) { return a + b.toUpperCase(); }) : v; };
+  var n = flat.match(/First name ?\(?s?\)? ?:? ?(.{1,60}?) ?(?:Surname|Family name|Last name) ?:? ?(.{1,60}?) ?(?:[☐☒]|Male\b|Female\b|Date of birth|Nationality|$)/i);
+  if (n) { out.given = tidy(n[1]); out.family = tidy(n[2]); }
+  /* a form with the whole name typed in both boxes: the last word is taken as the family name, and the tutor is told */
+  if (out.given && out.given.toLowerCase() === out.family.toLowerCase() && /\s/.test(out.given)) { var w = out.given.split(' '); out.family = w.pop(); out.given = w.join(' '); out.nameUnsure = true; }
+  var d = flat.match(/(?:date of birth|d\.?o\.?b\.?|birth ?date)[^0-9]{0,24}(\d{1,4})[.\/\-](\d{1,2})[.\/\-](\d{2,4})/i);
+  if (d) {
+    var y, mo, da, p2 = function (x) { return (x < 10 ? '0' : '') + x; };
+    if (d[1].length === 4) { y = +d[1]; mo = +d[2]; da = +d[3]; }
+    else { da = +d[1]; mo = +d[2]; y = +d[3]; if (y < 100) y += y > 30 ? 1900 : 2000; if (mo > 12 && da <= 12) { var sw = mo; mo = da; da = sw; } else if (da <= 12 && mo <= 12 && da !== mo) out.dobUnsure = true; }
+    if (y > 1900 && y < 2100 && mo >= 1 && mo <= 12 && da >= 1 && da <= 31) out.dob = y + '-' + p2(mo) + '-' + p2(da); else out.dobUnsure = false;
+  }
+  var e = flat.match(/e-?mail(?: address)? ?:? ?(?:\[?mailto:)?([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/i) || flat.match(/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/);
+  if (e) out.email = e[1].slice(0, 120);
+  return out;
+}
 function scrubContacts_(t) {
   return String(t || '')
     .replace(/\[?mailto:[^\s\])]+\]?(\([^)]*\))?/gi, ' ')
