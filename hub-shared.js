@@ -3272,11 +3272,11 @@ window.hubPoolMend = function(P){
 /* ---- BACK STAYS WITH THE SCREEN ON THE LONG FORMS (Ramy, 21 Nov 2026: "with the long forms ... do you think Back should
    sort of stay on top with the screen, the same way Dictate and Typing stay with the screen without obstructing
    anything? ... make sure it's quiet"). On the lesson plan, the self-evaluation, the TP feedback, the assignment, the
-   marking screen and the observation sheet, the page's own Back link keeps its place at the top left as the page
+   marking screen, the observation sheet and the CELTA 5 (added 22 Nov 2026: "It's also a long document"), the page's own Back link keeps its place at the top left as the page
    scrolls: a small pale pill, no shadow, the same words and the same door. Short pages are left as they were. In the
    Trainee view it sits under that view's strip. Not printed. */
 (function(){
-  if (!/\/(1_trainee_plan_and_analysis|2_trainee_self_evaluation|3_tutor_feedback|9_assignment_submission|10_tutor_assignment_marking|18_observation_tasks)\.html$/.test(location.pathname)) return;
+  if (!/\/(1_trainee_plan_and_analysis|2_trainee_self_evaluation|3_tutor_feedback|9_assignment_submission|10_tutor_assignment_marking|18_observation_tasks|20_celta5)\.html$/.test(location.pathname)) return;
   try {
     /* THE WORDS AT THE TOP, AN ARROW ONCE YOU SCROLL (Ramy, 21 Nov 2026: "When you get to the top, it will be back. When
        you start scrolling down, it turns into an arrow"; the arrow is his own exception to no arrows on labels: "we can
