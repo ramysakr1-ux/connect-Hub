@@ -423,7 +423,7 @@ function doPost(e) {
    else counts as a change. The course's own day is part of the version, so a page whose content follows the
    date (a demo clock, released points) boots once the day turns. */
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
-var READ_OPS_ = { tutorPhrases: 1, adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
+var READ_OPS_ = { tutorPhrases: 1, stage1Words: 1, adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
   ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1, health: 1 };
 function verKey_(id) { return 'ver:' + id; }
@@ -2976,19 +2976,42 @@ case 'inbox': {
       var swKey = PropertiesService.getScriptProperties().getProperty('OPENAI_KEY');
       if (!swKey) throw new Error('Rewording is not switched on');
       var swPts = function(a){ return (Array.isArray(a) ? a : []).slice(0, 30).map(function(x){
-        return { text: String((x && x.text) || '').slice(0, 600), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).slice(0, 4) }; }).filter(function(x){ return x.text; }); };
+        return { text: String((x && x.text) || '').slice(0, 600), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).slice(0, 4), starred: !!(x && x.star) }; }).filter(function(x){ return x.text; }); };
       var swIn = { strengths: swPts(req.strengths), actions: swPts(req.actions) };
-      var swSys = 'You help a CELTA tutor write a trainee\'s Stage 1 record from the tutors\' feedback on the first two lessons. '
-        + 'Say every point again in your own words, so it does not repeat the feedback writer\'s phrasing, but keep its meaning, its detail and its strength: '
-        + 'a firm point stays firm, a mild one stays mild, and nothing a point names is lost (where, how much, what it led to). '
-        + 'The clear, professional register of a CELTA candidate record: natural and readable, never chatty, never stiff or bureaucratic (not prior to, simultaneously, utilize, facilitate). '
-        + 'Strengths: short phrases saying what the trainee did, no full stop, the way tutors write them, e.g. "Good rapport with the students and a relaxed atmosphere", "Clear staging for a receptive skills lesson", "Good focus on pair and group work". '
-        + 'Action points: imperatives addressed to the trainee, e.g. "Keep instructions short and give a demonstration first", "Reduce your TTT during the feedback stage", "Make sure you monitor during peer checking before you start feedback". '
-        + 'If two points say the same thing, join them into one and keep both codes. Keep each point\'s codes exactly as given; never add, change or guess a code. '
+      /* v292: how many points (his own Stage 2s, 2021 to 2025: about ten strengths and six or seven action points), and on
+         request Stage 2's Overall comment in his voice (Ramy, 22 Nov 2026: "Strengths, action points, overall comment") */
+      var swNum = function(v, d){ v = parseInt(v, 10); return v >= 1 && v <= 15 ? v : d; };
+      var swMostS = swNum(req.mostS, 10), swMostA = swNum(req.mostA, 7);
+      var swOverall = !!req.overall, swName = String(req.name || '').replace(/[^\p{L}' -]/gu, '').trim().slice(0, 40);
+      /* v291 (22 Nov 2026). Ramy: Stage 1 "just really copies the feedback"; and how a stage must read: "more general,
+         like criteria reference, not referring to like a particular incident inside a TP or ... to students' names ...
+         language of imperative, not past, just telling them what to do". One prompt for Stage 1, 2 and 3 (the CELTA 5
+         page asks once for planning and once for teaching). A read: it writes nothing, so it is in READ_OPS_ and no
+         longer moves the course's version. */
+      var swSys = 'You help a CELTA tutor write a trainee\'s stage record in the CELTA 5 booklet from the tutors\' feedback on the trainee\'s recent lessons. '
+        + 'The record is a summary against the CELTA criteria, not a retelling of the lessons. '
+        + 'Turn each point into a general, criteria-referenced point: say what it shows about the trainee\'s planning or teaching under its criterion, and leave out everything tied to one lesson: '
+        + 'no topics, pictures, texts, handouts or equipment named, no TP numbers, no target language items quoted (not "used to", not "might"), no minutes or counts, no events ("when a student asked ..."), and never a student\'s name. '
+        + 'Keep the point\'s meaning and its strength: a firm point stays firm, a mild one stays mild. '
+        + 'It is a summary, not a copy of the feedback: give at most ' + swMostS + ' strengths and at most ' + swMostA + ' action points. '
+        + 'Join points about the same or a closely related criterion into one point and keep all their codes; when there are still too many, keep the ones that matter most: '
+        + 'action points marked "starred" first, then anything that comes up in more than one lesson, then the rest; leave out minor ones rather than going over the number. '
+        + 'Never write the word starred. '
+        + 'Strengths: short phrases with no full stop, the way an experienced CELTA tutor writes them, e.g. "Good rapport with the students and a supportive atmosphere", '
+        + '"Clear instructions, supported by a demonstration", "Thorough language analysis, with form and pronunciation complete", "Good staging for receptive skills lessons", "Confident classroom presence and good voice projection". '
+        + 'Action points: an instruction in the imperative, present tense, telling the trainee what to do from now on; never what they did or did not do, never past tense, never a question. '
+        + 'E.g. "Keep instructions short, demonstrate, and check them with ICQs", "Clarify the target language before practice: elicit the meaning, check it with CCQs, then focus on form and pronunciation", '
+        + '"Base your anticipated problems on what the students may find difficult with the target language", "Manage your time so that every stage of the plan is taught", "Give students time to answer before you answer your own questions". '
+        + 'Plain, brisk and specific, never chatty, never a report or a reference (not demonstrated, showcased, effectively, facilitated, fostered, commendable, utilize, prior to). '
+        + 'Keep each point\'s codes exactly as given; never add, change or guess a code. '
         + 'Write "students", never Ss. ' + celtaShorthand_()
         + 'In the points, write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
         + 'No praise that is not in the original, no grades, no names, no arrows. American spelling. '
-        + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]}.';
+        + (swOverall ? 'Also write the Overall comment for Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of AT LEAST 150 words and at most 200 (his own ran 560 to 1,100 characters): never shorter than 150 words, in the tutor\'s own voice. '
+          + 'Open with how the trainee has progressed over the first stage of the course and their first name at the end of that sentence, e.g. "You have shown steady progress over the first stage of the course, ' + (swName || 'NAME') + '." '
+          + 'Then two or three sentences on what is working, in general, criteria-referenced terms. Then "For the next stage of the course, ..." and what to focus on, as instructions. End with "Best of luck!". '
+          + 'The same rules as the points: no single lessons, no TP numbers, no students\' names, no grade, nothing that is not in the points. Write "students", never Ss. ' : '')
+        + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]' + (swOverall ? ',"overall":"..."' : '') + '}.';
       var swResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
         payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
@@ -2999,7 +3022,9 @@ case 'inbox': {
       var swAllowed = {}; swIn.strengths.concat(swIn.actions).forEach(function(x){ x.codes.forEach(function(c){ swAllowed[c] = 1; }); });
       var swClean = function(a){ return (Array.isArray(a) ? a : []).map(function(x){
         return { text: String((x && x.text) || '').trim().slice(0, 400), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).filter(function(c){ return swAllowed[c]; }) }; }).filter(function(x){ return x.text; }); };
-      return { strengths: swClean(swOut.strengths), actions: swClean(swOut.actions) };
+      var swRes = { strengths: swClean(swOut.strengths), actions: swClean(swOut.actions) };
+      if (swOverall) swRes.overall = String(swOut.overall || '').trim().slice(0, 1600);
+      return swRes;
     }
     /* ---- IS IT THEIR OWN WORK? (25 Oct 2026) ------------------------------
        Ramy: "a deterrent against plagiarism ... anything to do with another
