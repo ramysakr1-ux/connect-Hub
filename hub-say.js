@@ -75,6 +75,9 @@
       '  background:none; color:var(--grey,#555); border:1px solid var(--sand-line,#ddd);',
       '  border-radius:999px; padding:10px 18px; cursor:pointer;}',
       '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6); background:none;}',
+      '.hub-brand-foot.has-say{margin-top:72px;} .say-row{flex-basis:100%; display:flex; justify-content:center;}',
+      '.say-row .say-pill{margin:0 0 4px; font-size:0.72rem; padding:7px 14px; opacity:.85;}',
+      '.say-pill{margin-top:72px; margin-bottom:10px;}',
       '.say-pill:focus-visible{outline:3px solid var(--gold,#c89b4a); outline-offset:3px;}',
       '.say-here{font:600 0.72rem/1 inherit; background:none; border:0; padding:3px 0; margin:0;',
       '  color:var(--faint,#999); cursor:pointer; text-decoration:underline; text-underline-offset:3px;}',
@@ -216,17 +219,26 @@
     b.onclick = function () { open(''); };
     place(b);
     /* a page that draws itself late (the last page) can wipe the container it landed in: put it back once the page has settled */
-    [1500, 5000].forEach(function (ms) { setTimeout(function () { if (!b.isConnected && !document.querySelector('.say-pill')) place(b); }, ms); });
+    [1500, 5000].forEach(function (ms) { setTimeout(function () { if ((!b.isConnected && !document.querySelector('.say-pill')) || (!b.closest('.hub-brand-foot') && document.querySelector('.hub-brand-foot'))) place(b); }, ms); });
   }
 
   /* THE CREDIT IS THE LAST LINE (Ramy, 9 Nov 2026: "why is my credit sitting on top of say something? We need to be
      consistent across the platform"). Most screens end with the pill and then the credit line; the landings (tutor
      home, course admin, the assessor pack, the trainee home) draw their own footer, and the pill landed after it.
      Where such a footer is in the pill's container, the pill goes just before it. */
+  /* DOWN BY THE CREDIT (Ramy, 22 Nov 2026: "it's too close to everything, and I think trainees confuse it for something
+     they should say. Just push it down ... closer to my credit, and both should be at the bottom ... out of the way").
+     Where the page ends with the credit line, the pill sits in that footer, on a line of its own just above the credit,
+     smaller than it was. A page with its own footer keeps it just before that; a page with neither keeps it last. */
   function place(b) {
+    var bf = document.querySelector('.hub-brand-foot');
+    if (bf) { var row = bf.querySelector('.say-row'); if (!row) { row = document.createElement('div'); row.className = 'say-row'; bf.insertBefore(row, bf.firstChild); } row.appendChild(b); bf.classList.add('has-say'); return; }
     var h = host();
     var foot = [].filter.call(h.querySelectorAll('footer.foot'), function (f) { return /designed and built/.test(f.textContent); })[0];
-    if (foot) foot.parentNode.insertBefore(b, foot); else h.appendChild(b);
+    /* a landing's own footer: inside it, on a line of its own above the credit */
+    if (foot) { var r2 = document.createElement('div'); r2.className = 'say-row'; r2.appendChild(b); foot.insertBefore(r2, foot.firstChild);
+      try { if (/flex/.test(getComputedStyle(foot).display)) foot.style.flexWrap = 'wrap'; } catch (e) {} }
+    else h.appendChild(b);
   }
 
   /* WHERE IN THE FLOW. Not simply the end of <body>: ten screens center their

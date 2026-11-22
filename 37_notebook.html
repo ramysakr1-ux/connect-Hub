@@ -23,7 +23,7 @@
 <title>Your notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611221646">
+<link rel="stylesheet" href="hub-tokens.css?v=202611221708">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 120px; display:flex; justify-content:center;}
@@ -108,8 +108,10 @@
   .note .replybox .btn{font-size:0.82rem; padding:8px 14px;}
   /* ---- one list (22 Nov 2026) ---- */
   .board{max-width:680px;}
-  .title{border-top:0; padding-top:0;} .title h1{font-weight:700; font-size:2rem;}
-  .sub{margin:4px 0 14px; font-size:0.88rem; color:var(--grey);}
+  .title{border-top:0; padding-top:0; align-items:baseline; margin:0 0 14px;} .title h1{font-weight:700; font-size:1.7rem;}
+  .sub{font-size:0.88rem; color:var(--grey);}
+  /* no Say something and no credit line on this page (Ramy, 22 Nov 2026: "it's a bit too much and it's just sitting there") */
+  .hub-brand-foot, .say-pill{display:none !important;}
   .tabs{gap:6px; margin:0 0 6px; border-bottom:0; flex-wrap:wrap;}
   .tab{font-size:0.82rem; padding:8px 13px; border:1px solid var(--sand-line); border-radius:999px; background:var(--paper); color:var(--a-forest); margin:0;}
   .board .tabs .tab{padding:8px 14px; min-height:40px; border:1px solid var(--sand-line); color:var(--a-forest);}
@@ -131,7 +133,7 @@
   .quick b{background:var(--a-lemon); color:var(--ink); border-radius:999px; padding:9px 16px; font-size:0.85rem;}
   @media print{ .quick{display:none !important;} }
   @media (max-width:640px){
-    body{padding:22px 16px 120px;} .quick{left:14px; right:76px; width:auto; transform:none; margin-left:0;}
+    body{padding:22px 16px 120px;} .board .tabs{gap:5px; flex-wrap:nowrap;} .board .tabs .tab{padding:8px 10px; font-size:0.78rem; white-space:nowrap;} .quick{left:14px; right:76px; width:auto; transform:none; margin-left:0;}
     .title h1{font-size:2.1rem;}
     .day{grid-template-columns:1fr; gap:8px;}
     .day .date{position:static; display:flex; align-items:baseline; gap:10px;}
@@ -145,18 +147,18 @@
   }
   @media print{ .back, .title .write, .tabs, .acts, .nbk-arc{display:none !important;} body{background:#fff; padding:0;} .note, .thread{box-shadow:none; border:1px solid #ddd;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611221646">
+<link rel="stylesheet" href="hub-house.css?v=202611221708">
 </head>
-<body>
+<body data-say-pill="off">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611221646"></script>
-<script src="hub-store.js?v=202611221646"></script>
-<script src="hub-say.js?v=202611221646"></script>
-<script src="hub-sync.js?v=202611221646"></script>
-<script src="hub-notebook.js?v=202611221646"></script>
+<script src="hub-shared.js?v=202611221708"></script>
+<script src="hub-store.js?v=202611221708"></script>
+<script src="hub-say.js?v=202611221708"></script>
+<script src="hub-sync.js?v=202611221708"></script>
+<script src="hub-notebook.js?v=202611221708"></script>
 <script type="text/x-hub-app">
 /* Two people have a notebook: a trainee and a tutor. Nobody else has a door. */
 (function(){
@@ -322,16 +324,16 @@ function listHTML(){
 /* ---- the page --------------------------------------------------------------- */
 function render(){
   const who = TUTOR ? NB.who() : (ME.name || '');
-  const head = '<div class="title"><h1>Notebook</h1></div>';
+  const count = everything().length;
+  /* one line: the name of the page, and whose it is beside it (Ramy, 22 Nov 2026: "too many writings" down the top) */
+  const head = '<div class="title"><h1>Notebook</h1>' + (TUTOR && !NB.who() ? '' : '<span class="sub">' + esc([who.split(/\s+/)[0], count + (count === 1 ? ' note' : ' notes')].filter(Boolean).join(' · ')) + '</span>') + '</div>';
   if (TUTOR && !NB.who()) {
     $('app').innerHTML = head + '<div class="namecard"><p>The notebook is yours alone, so it needs your name once: the same one the dashboard asks for.</p><input type="text" id="whoIn" placeholder="Your name" autocomplete="name"><button type="button" class="btn primary" id="whoGo">Open my notebook</button></div>';
     $('whoGo').addEventListener('click', () => { const v = $('whoIn').value.trim(); if (!v) return; try { localStorage.setItem('chub:tutorName', v); } catch (e) {} loadTutor(); });
     $('whoIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('whoGo').click(); });
     return;
   }
-  const n = everything().length;
   $('app').innerHTML = head
-    + '<p class="sub">' + esc([who.split(/\s+/)[0], n + (n === 1 ? ' note' : ' notes')].filter(Boolean).join(' · ')) + '</p>'
     + '<div class="tabs" role="group" aria-label="Which notes">' + FILTERS.map(f => '<button type="button" class="tab' + (FILTER === f[0] ? ' active' : '') + '" data-filter="' + f[0] + '" aria-pressed="' + (FILTER === f[0]) + '">' + f[1] + '</button>').join('') + '</div>'
     + (NOTE ? '<p class="lede" aria-live="polite">' + esc(NOTE) + '</p>' : '')
     + listHTML()
