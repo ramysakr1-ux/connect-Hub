@@ -77,10 +77,12 @@
       '.say-pill:hover{color:var(--teal,#0b6); border-color:var(--teal,#0b6); background:none;}',
       '.hub-brand-foot.has-say{margin-top:72px;} .say-row{flex-basis:100%; display:flex; justify-content:center;}',
       '.say-row .say-pill{margin:0; font-size:0.72rem; padding:7px 14px; opacity:.85;}',
-      '.say-line{flex-basis:100%; height:1px; background:var(--sand-line,#ddd); margin:14px 0 12px;}',
+      '.say-line{flex-basis:100%; height:1px; background:var(--sand-line,#ddd); margin:20px 0 12px;}',
+      '.hub-brand-foot .say-line{margin-bottom:10px;}',
       '.hub-brand-foot.has-say{width:100%; max-width:1180px; box-sizing:border-box; gap:0 10px;}',
       '.say-pill.say-above{margin:72px auto 14px; font-size:0.72rem; padding:7px 14px; opacity:.85;}',
-      '.say-pill.say-above + footer.foot{margin-top:0 !important;}',
+      '.say-group{margin:72px 0 0; display:flex; flex-wrap:wrap;} .say-group .say-pill{margin:0; font-size:0.72rem; padding:7px 14px; opacity:.85;}',
+      'footer.foot.after-say{margin-top:0 !important; padding-top:0 !important; border-top:0 !important;}',
       '.say-pill{margin-top:72px; margin-bottom:10px;}',
       '.say-pill:focus-visible{outline:3px solid var(--gold,#c89b4a); outline-offset:3px;}',
       '.say-here{font:600 0.72rem/1 inherit; background:none; border:0; padding:3px 0; margin:0;',
@@ -243,8 +245,13 @@
       row.appendChild(b); bf.classList.add('has-say'); return; }
     var h = host();
     var foot = [].filter.call(h.querySelectorAll('footer.foot'), function (f) { return /designed and built/.test(f.textContent); })[0];
-    /* a landing's own footer already draws the line over the credit: the pill goes just above that footer */
-    if (foot) { b.classList.add('say-above'); foot.parentNode.insertBefore(b, foot); }
+    /* a landing's own footer: the same three as everywhere else (Ramy, 22 Nov 2026: "keep it consistent, similar to the
+       tracker's"): the pill, the line, the credit, close together at the bottom. The footer's own rule is replaced by the
+       same line the other screens draw. */
+    if (foot) { var grp = document.createElement('div'); grp.className = 'say-group';
+      var r3 = document.createElement('div'); r3.className = 'say-row'; r3.appendChild(b);
+      var l3 = document.createElement('div'); l3.className = 'say-line'; l3.setAttribute('aria-hidden', 'true');
+      grp.appendChild(r3); grp.appendChild(l3); foot.parentNode.insertBefore(grp, foot); foot.classList.add('after-say'); }
     else h.appendChild(b);
   }
 
