@@ -23,7 +23,7 @@
 <title>Connect Lite — Grades report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611232110">
+<link rel="stylesheet" href="hub-tokens.css?v=202611232124">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -375,7 +375,7 @@
   }
   @media print{ #profbar, #course{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611232110">
+<link rel="stylesheet" href="hub-house.css?v=202611232124">
 </head>
 <body>
 <div class="board">
@@ -430,12 +430,12 @@
 
 </div>
 
-<script src="hub-tracker.js?v=202611232110"></script>
-<script src="hub-store.js?v=202611232110"></script>
-<script src="hub-say.js?v=202611232110"></script>
-<script src="hub-rotation.js?v=202611232110"></script>
-<script src="hub-shared.js?v=202611232110"></script>
-<script src="hub-sync.js?v=202611232110"></script>
+<script src="hub-tracker.js?v=202611232124"></script>
+<script src="hub-store.js?v=202611232124"></script>
+<script src="hub-say.js?v=202611232124"></script>
+<script src="hub-rotation.js?v=202611232124"></script>
+<script src="hub-shared.js?v=202611232124"></script>
+<script src="hub-sync.js?v=202611232124"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. Only tutor
    screens link here, but a trainee's link opened it and read the course and
@@ -455,7 +455,8 @@ if (window.hubTutorRoomOnly && hubTutorRoomOnly({ assessor: true }))
 --------------------------------------------------------------------------- */
 /* Grades live on each trainee's tracker record (roster.trainees[id].tracker.grades),
    the tutor-only kind hub-sync already pushes to the store -- so every tutor on the
-   course and the assessor pack read the same record. Nothing autosaves: Save writes. */
+   course and the assessor pack read the same record. It saves itself a moment after
+   the last change (see touch); Save writes at once. */
 const T = window.HubTracker;
 const RO = window.HubMode === 'assessor' || window.HubMode === 'trainee';
 
@@ -655,22 +656,36 @@ let DATA={}, ORDER=[], dirty=false;
 var SUGG={};   // the provisionals' four lists as the latest TPs suggest them, shown until the tutor keeps them (see suggestFor)
 
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem('connect_roster_v1')) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
-function persist(){
+/* IT SAVES ITSELF (Ramy, 23 Nov 2026: "you can build it"). Until today nothing
+   was written until Save was pressed, and leaving the page lost it without a
+   word. Now a change is written a moment after the last key, and at once when
+   the page is hidden or left. Only a trainee whose record differs from what
+   this page last read or wrote is written, so a tab left open does not put its
+   old copy of the other trainees over what the other tutor has written since.
+   A suggested record is kept only by Save or by changing it, as before. */
+let WROTE={}, WROTE_COURSE='', saveT=null;
+const recOf = id => { const rec = Object.assign({}, DATA[id]); delete rec.name; return rec; };
+function persist(auto){
   if (RO) return;
-  OPEN.forEach(id => keepSuggestion(id));   /* saving with a suggested record open keeps it */
-  const roster = loadRoster();
+  clearTimeout(saveT); saveT=null;
+  if (auto !== true) OPEN.forEach(id => keepSuggestion(id));   /* saving with a suggested record open keeps it */
+  const roster = loadRoster(); let wrote = false;
   ORDER.forEach(p=>{
     const tr = roster.trainees[p.id]; if (!tr) return;
+    const rec = recOf(p.id), j = JSON.stringify(rec);
+    if (j === WROTE[p.id]) return;
     tr.tracker = tr.tracker || {};
-    const rec = Object.assign({}, DATA[p.id]); delete rec.name;
-    tr.tracker.grades = rec;
+    tr.tracker.grades = rec; WROTE[p.id] = j; wrote = true;
   });
-  localStorage.setItem('connect_roster_v1', JSON.stringify(roster));
-  persistCourse();
+  if (wrote) localStorage.setItem('connect_roster_v1', JSON.stringify(roster));
+  if (JSON.stringify(COURSE) !== WROTE_COURSE) { persistCourse(); WROTE_COURSE = JSON.stringify(COURSE); }
   dirty=false; paintState();
 }
-function touch(){ if (RO) return; dirty=true; paintState(); }
-function paintState(){ document.getElementById('saveState').textContent = RO ? 'Read-only' : (dirty ? 'Unsaved changes' : 'Saved'); }
+function touch(){ if (RO) return; dirty=true; paintState(); clearTimeout(saveT); saveT=setTimeout(() => persist(true), 900); }
+const saveNow = () => { if (dirty) persist(true); };
+window.addEventListener('pagehide', saveNow);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveNow(); });
+function paintState(){ document.getElementById('saveState').textContent = RO ? 'Read-only' : (dirty ? 'Saving\u2026' : 'Saved'); }
 
 /* Handbook 11.6, read off the trainee's assignment record by the tracker's own
    rule engine: one failed written assignment rules out Pass A; more than one rules
@@ -1192,7 +1207,7 @@ document.getElementById('copyAll').addEventListener('click', e => {
   toClipboard([course, ...ORDER.map((p, i) => profileText(p.id, i))].filter(Boolean).join('\n\n———\n\n'), e.currentTarget, 'Copied');
 });
 
-document.getElementById('saveBtn').addEventListener('click', persist);
+document.getElementById('saveBtn').addEventListener('click', () => persist());
 /* Built at the moment of pressing, so what prints is what is on screen. Also
    catches the browser's own print (Cmd-P), which would otherwise paper over
    nothing at all now that the working panes are hidden on print. */
@@ -1215,6 +1230,7 @@ window.addEventListener('beforeprint', buildPrintable);
   if (RO) people.forEach(p => OPEN.add(p.id));   /* the assessor reads the whole report; a tutor opens the one they are writing */
   DATA={};
   people.forEach(p=>{ DATA[p.id] = foldEvidence(p.saved ? {...blankRecord(p.name), ...p.saved, name:p.name} : blankRecord(p.name)); });
+  people.forEach(p=>{ WROTE[p.id] = JSON.stringify(recOf(p.id)); }); WROTE_COURSE = JSON.stringify(COURSE);
 
   let cs=null; try{ cs=JSON.parse(localStorage.getItem('connect_course_settings')); }catch(e){}
   const bits=[cs&&cs.courseName, cs&&cs.centreName, cs&&cs.centreNumber].filter(Boolean);

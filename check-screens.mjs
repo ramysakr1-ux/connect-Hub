@@ -211,8 +211,9 @@ const KEPT = [
   { name: 'the trainee’s CELTA 5',         url: '20_celta5.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check' }) },
   { name: 'the tutor’s side of a CELTA 5', url: '20_celta5.html?k=check-k&trainee=t1', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t1: keptTrainee('t1', KEPT_VOCAB) } }) }) },
   { name: 'the pre-course task',           url: '30_precourse_key.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check' }) },
+  { name: 'the grades report',             url: '13_grades_report.html?k=check-k', prep: '#openAll', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t1: keptTrainee('t1', KEPT_VOCAB) } }) }) },
 ];
-/* NOT YET COVERED, so nobody reads this list as "everything": the grades report, the course record, the final report,
+/* NOT YET COVERED, so nobody reads this list as "everything": the course record, the final report,
    the handover, assignment marking, the observation sheets and the notebook keep their words in the store or need a
    fuller made-up course than this harness seeds. Add each here when it can be opened with boxes to write in. */
 /* boxes that are not meant to keep their words, each with why (matched on the box's id) */
@@ -232,7 +233,9 @@ for (const k of KEPT) {
   const where = `[kept] ${k.name}`;
   try {
     const open = async () => { await page.goto(base + k.url, { waitUntil: 'domcontentloaded', timeout: 20000 }); await page.waitForTimeout(1800);
-      await page.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; })); await page.waitForTimeout(200); };
+      await page.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; }));
+      if (k.prep) await page.click(k.prep, { timeout: 3000 }).catch(() => {});   // a page whose boxes sit in closed cards names the button that opens them
+      await page.waitForTimeout(200); };
     await open(); loads++;
     /* mark every box a person can write in: a textarea, or a box edited in place */
     const boxes = await page.evaluate(skip => {
