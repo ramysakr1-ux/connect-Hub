@@ -1906,6 +1906,7 @@ case 'inbox': {
       if (tutor) {
         if (!TUTOR_WRITES[k2]) throw new Error('Not a record kind: ' + k2);
         if (!me) throw new Error('No token');
+        if (k2 === 'assignments') return putAssignments_(course.id, me.token, req.data, 'tutor');
         write_(course.id, me.token, k2, req.data);
         return { saved: true };
       }
@@ -1928,6 +1929,7 @@ case 'inbox': {
         } finally { if (!ivHad) ivLock.releaseLock(); }
         return { saved: true };
       }
+      if (k2 === 'assignments') return putAssignments_(course.id, me.token, req.data, 'trainee');
       /* v299 (23 Nov 2026): a self-evaluation is filed with its TP before it is cleared or replaced (fileLateSelf_) */
       if (k2 === 'selfeval') { try { fileLateSelf_(course.id, me.token, req.data); } catch (lsErr) {} }
       write_(course.id, me.token, k2, req.data);
@@ -5029,6 +5031,55 @@ function privateFolderOnce_(course, key, name) {
 /* What a page sends as the interview record, with every recording the store already lists kept on it: by student, by
    the recording's id. A recording deleted through the store (audioGone) is never brought back. A transcript the store
    holds is kept when the page's copy of that recording has none at all. */
+/* EACH SIDE WRITES ONLY ITS OWN PART OF AN ASSIGNMENT (v300, 23 Nov 2026). A page sends a trainee's assignments whole,
+   as it last loaded them. So a trainee saving their LRT draft from a page loaded earlier sent back an old copy of their
+   LSRT, and a tutor's page held open while the trainee wrote did the same the other way: Ramy's name came back as an
+   LSRT's 1st marker after it had been cleared, and the same path could wipe a tutor's marks or a trainee's draft.
+   Per assignment, against what is stored:
+     - a trainee moves draft -> submitted, returned_unmarked -> submitted, resubmission_needed -> resubmitted, or edits
+       while the assignment is open to them; the tutor's part (markers, marks, notes, feedback, margin) stays as stored.
+       Anything else a trainee sends for an assignment that is with the tutor or finished is not taken.
+     - a tutor marks while it is submitted or resubmitted, returns it (closed, resubmission_needed, returned_unmarked),
+       or edits a finished one; an assignment open to the trainee is the trainee's and is not taken from a tutor.
+   An assignment the store does not have yet (Assignment 5 being set, a first save) is taken as sent. One missing from
+   what is sent is kept, except Assignment 5 withdrawn by a tutor before anything was submitted for it. Read, merge and write under the lock, so two saves cannot cross. */
+var ASG_TUTOR_PARTS_ = ['markers', 'criteriaMarks', 'criteriaComments', 'feedback', 'margin', 'flags'];
+var ASG_OPEN_ = { draft: 1, resubmission_needed: 1, returned_unmarked: 1 };
+function mergeAssignments_(was, now, who) {
+  if (!now || typeof now !== 'object') return now;
+  if (!was || typeof was !== 'object') return now;
+  var out = {}, k;
+  for (k in was) out[k] = was[k];
+  /* a tutor withdrawing Assignment 5 before anything is written for it sends the record without it */
+  if (who === 'tutor' && was.a5 && !('a5' in now) && String(was.a5.stage || 'draft') === 'draft' && !was.a5.sub1) delete out.a5;
+  for (k in now) {
+    var S = was[k], I = now[k];
+    if (!S || typeof S !== 'object' || !I || typeof I !== 'object') { out[k] = I; continue; }
+    var s = String(S.stage || 'draft'), i = String(I.stage || 'draft');
+    if (who === 'trainee') {
+      var moves = (s === 'draft' && i === 'submitted') || (s === 'returned_unmarked' && i === 'submitted') || (s === 'resubmission_needed' && i === 'resubmitted');
+      if (moves || (ASG_OPEN_[s] && i === s)) {
+        var t = {}, f; for (f in I) t[f] = I[f];
+        ASG_TUTOR_PARTS_.forEach(function(p){ if (p in S) t[p] = S[p]; else delete t[p]; });
+        out[k] = t;
+      } else out[k] = S;
+    } else {
+      var marking = (s === 'submitted' || s === 'resubmitted') && (i === s || i === 'closed' || i === 'resubmission_needed' || i === 'returned_unmarked');
+      out[k] = (marking || (s === 'closed' && i === 'closed')) ? I : S;
+    }
+  }
+  return out;
+}
+function putAssignments_(courseId, token, data, who) {
+  var lock = LockService.getScriptLock(), had = lock.hasLock();
+  if (!had) lock.waitLock(20000);
+  try {
+    write_(courseId, token, 'assignments', mergeAssignments_(read_(courseId, token, 'assignments'), data, who));
+    try { SpreadsheetApp.flush(); } catch (fl) {}
+  } finally { if (!had) lock.releaseLock(); }
+  return { saved: true };
+}
+
 function interviewKeepAudio_(was, now) {
   if (!was || typeof was !== 'object' || !now || typeof now !== 'object') return now;
   var gone = {}; [was.audioGone, now.audioGone].forEach(function (l) { (Array.isArray(l) ? l : []).forEach(function (x) { gone[String(x)] = 1; }); });
