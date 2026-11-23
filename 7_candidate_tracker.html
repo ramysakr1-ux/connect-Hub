@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231106">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231223">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -293,7 +293,7 @@
   .t1 .as.fail{background:var(--brick); color:var(--paper);} .t1 .as.late{background:var(--paper); box-shadow:inset 0 0 0 1.5px var(--brick); color:var(--brick);} .t1 .as.soon{background:var(--paper); box-shadow:inset 0 0 0 1.5px oklch(70% 0.11 70); color:oklch(42% 0.11 55);}
   .t1 .as.none{box-shadow:inset 0 0 0 1.5px var(--sand-line); background:none; color:oklch(68% 0.01 280);}
   .t1 .cell.sel{outline:2.5px solid var(--ink); outline-offset:2px;} .t1 .cell:not(.e):hover{filter:brightness(.96);}
-  .t1 .c5{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--grey); text-decoration:none;} .t1 .c5:hover{text-decoration:underline;}
+  .t1 .c5{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--grey);} .t1 .c5 a.st{color:inherit; text-decoration:none; align-self:flex-start;} .t1 .c5 a.st:hover{text-decoration:underline;}
   .t1 .st b{font-weight:700; margin-left:6px;} .t1 .st.ok b{color:oklch(38% 0.08 140);} .t1 .st.wait b{color:oklch(48% 0.13 55);} .t1 .st.you b{color:var(--a-navy);} .t1 .st.bad b{color:var(--brick);} .t1 .st.none b{color:oklch(68% 0.01 280);}
   .t1-key{display:flex; gap:14px; flex-wrap:wrap; margin:14px 0 0; font-size:12.5px; color:var(--grey);} .t1-key i{display:inline-block; width:14px; height:14px; border-radius:4px; vertical-align:-2px; margin-right:5px;}
   .t1-key .kf{background:oklch(93% 0.035 140);} .t1-key .ka{background:oklch(91% 0.07 92);} .t1-key .km{background:var(--a-navy);} .t1-key .kr{background:oklch(92% 0.045 65);} .t1-key .kn{background:var(--brick);}
@@ -302,7 +302,7 @@
   @media (max-width:820px){ .t1-head{display:none;} .t1{grid-template-columns:1fr; gap:10px;} .tps{width:auto; flex-wrap:wrap;} .t1 .tp{width:30px; height:30px;} .asg{grid-template-columns:repeat(2, minmax(0,1fr));} }
   @media print{ .filters{display:none;} .t1-row{border:1px solid #ddd; break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231106">
+<link rel="stylesheet" href="hub-house.css?v=202611231223">
 </head>
 <body>
 <div class="page">
@@ -330,15 +330,15 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202611231106"></script>
-<script src="hub-shared.js?v=202611231106"></script>
-<script src="hub-rotation.js?v=202611231106"></script>
-<script src="assignment-defaults.js?v=202611231106"></script>
-<script src="hub-tracker.js?v=202611231106"></script>
-<script src="hub-store.js?v=202611231106"></script>
-<script src="hub-say.js?v=202611231106"></script>
-<script src="hub-sync.js?v=202611231106"></script>
-<script src="hub-notebook.js?v=202611231106"></script>
+<script src="hub-due.js?v=202611231223"></script>
+<script src="hub-shared.js?v=202611231223"></script>
+<script src="hub-rotation.js?v=202611231223"></script>
+<script src="assignment-defaults.js?v=202611231223"></script>
+<script src="hub-tracker.js?v=202611231223"></script>
+<script src="hub-store.js?v=202611231223"></script>
+<script src="hub-say.js?v=202611231223"></script>
+<script src="hub-sync.js?v=202611231223"></script>
+<script src="hub-notebook.js?v=202611231223"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -637,11 +637,13 @@ function render(){
   html += shown.map((p, i) => {
     const g = ME ? '' : grpOf(p);
     const head = g && (i === 0 || grpOf(shown[i - 1]) !== g) ? `<p class="t1-grp">Group ${esc(g)}</p>` : '';
-    const stages = [1, 2, 3].map(n => { const s = stageOf5(p, n); return s ? `<span class="st ${s.cls}">Stage ${n}<b>${s.w}</b></span>` : ''; }).join('');
+    /* each stage opens its own part of the CELTA 5 (Ramy, 23 Nov 2026: one link round all three opened the same place) */
+    const c5href = (ME ? '20_celta5.html' : '20_celta5.html?trainee=' + encodeURIComponent(p.tr.id));
+    const stages = [1, 2, 3].map(n => { const s = stageOf5(p, n); return s ? `<a class="st ${s.cls}" href="${c5href}#s${n}" title="Open Stage ${n} on the CELTA 5">Stage ${n}<b>${s.w}</b></a>` : ''; }).join('');
     return head + `<div class="t1 t1-row${needsLook(p) ? ' flag' : ''}"><div class="who">${letterChip(p.tr)}<b>${esc(p.tr.name)}</b></div>`
       + `<div class="tps">${TPS.map(t => tpBox(p, t)).join('')}</div>`
       + `<div class="asg" style="--n:${ASSN.length}">${ASSN.map(a => asgBox(p, a)).join('')}</div>`
-      + `<a class="c5" href="${ME ? '20_celta5.html' : '20_celta5.html?trainee=' + encodeURIComponent(p.tr.id)}" title="Open the CELTA 5">${stages}</a></div>`;
+      + `<div class="c5">${stages}</div></div>`;
   }).join('');
   if (!shown.length) html += '<div class="empty">Nobody here.</div>';
   html += `<div class="t1-key"><span><i class="kf"></i>Fine</span><span><i class="ka"></i>Above standard</span><span><i class="km"></i>${ME ? 'With your tutor' : 'Waiting for you'}</span><span><i class="kr"></i>${ME ? 'Waiting for you' : 'Waiting for the trainee'}</span><span><i class="kn"></i>Not to standard, failed or late</span></div>`;
