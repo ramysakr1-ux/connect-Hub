@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231506">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231522">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -225,7 +225,7 @@
   /* A contenteditable has no ::placeholder, so this stands in for one -- and
      it takes the same color as a real one: --grey does not clear 4.5 on the
      field fill. */
-  .pt-text:empty:before{content:attr(data-ph); color:var(--field-ph); font-style:italic;}
+  .pt-text:empty{min-height:calc(1.55em + 8px); cursor:text;}   /* no words in an empty line (Ramy, 23 Nov 2026: remove "Write one point"), but it keeps a line's height to click into */
   .tag{display:inline-block; background:var(--teal); color:var(--paper); font-size:0.74rem;
     font-weight:700; padding:1px 8px; border-radius:6px; margin:0 2px; cursor:help;
     user-select:all; vertical-align:1px;}
@@ -636,7 +636,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231506">
+<link rel="stylesheet" href="hub-house.css?v=202611231522">
 </head>
 <body>
 <div class="board">
@@ -828,14 +828,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611231506"></script>
-<script src="hub-shared.js?v=202611231506"></script>
-<script src="hub-store.js?v=202611231506"></script>
-<script src="hub-say.js?v=202611231506"></script>
-<script src="hub-crit-learn.js?v=202611231506"></script>
-<script src="hub-crit-vocab.js?v=202611231506"></script>
-<script src="hub-sync.js?v=202611231506"></script>
-<script src="hub-notebook.js?v=202611231506"></script>
+<script src="hub-exchange.js?v=202611231522"></script>
+<script src="hub-shared.js?v=202611231522"></script>
+<script src="hub-store.js?v=202611231522"></script>
+<script src="hub-say.js?v=202611231522"></script>
+<script src="hub-crit-learn.js?v=202611231522"></script>
+<script src="hub-crit-vocab.js?v=202611231522"></script>
+<script src="hub-sync.js?v=202611231522"></script>
+<script src="hub-notebook.js?v=202611231522"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1201,7 +1201,7 @@ function addPoint(listId, html, _unused){
   const row=document.createElement('div');
   row.className='pt';
   row.innerHTML=`<div class="pt-row">
-      <div class="pt-text" contenteditable="true" data-ph="Write one point — then tag it"></div>
+      <div class="pt-text" contenteditable="true"></div>
       ${host.dataset.star ? `<button class="star" type="button" title="Star it: it carries into their next plan and self-evaluation">★</button>` : ''}
     </div>
     <div class="suggest-row"></div>`;
@@ -2117,6 +2117,12 @@ function draftApply(s){
     $('loadedInfo').textContent='Loaded: '+((META().tp||'TP')+' · '+(META().name||''))+
       (DOC.self?' · self-evaluation included':' · no self-evaluation yet');
     tpPointLink();
+  } else if(s.tcomm && DOC){
+    /* THE PLAN COMMENTS COME BACK ON A RELOAD (Ramy, 23 Nov 2026: "why did my LP comments disappear? ... I reloaded and it
+       disappeared"; the same had happened to Belma). Since 17 Nov a draft no longer lays its old copy of the plan over the
+       fresh one, so this branch had nothing to draw: the plan was drawn before the comments were read, and the comment
+       boxes beside the stages came up empty although the comments were saved. Now the plan is drawn again with them. */
+    showSeen(DOC);
   }
   (s.f?DRAFT_FIELDS:[]).forEach(function(k){ if(s.f[k]!==undefined) $(k).value=s.f[k]; });
   $('fGrade').dispatchEvent(new Event('change'));
