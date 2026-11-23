@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231905">
+<link rel="stylesheet" href="hub-tokens.css?v=202611232049">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -234,8 +234,22 @@
   @media(prefers-reduced-motion:reduce){ .wm-fill, .wm-mark{transition:none;} #submitBtn.av3-ready{animation:none;} }
   @media(max-width:560px){ .wm{flex-wrap:wrap; gap:6px;} .wm-track{width:100%;} }
   @media print{ .wm-track{display:none;} }
+  /* attach material: the same three ways and lines as the lesson plan (23 Nov 2026) */
+  .am-pill{font:inherit; font-weight:700; font-size:0.86rem; min-height:40px; padding:0 18px; border-radius:999px; border:1.5px solid var(--teal); background:var(--surface); color:var(--teal); cursor:pointer;}
+  .am-pill.am-go{background:var(--teal); color:var(--paper);}
+  .am-menu{margin-top:8px; border:1.5px solid var(--sand-line); border-radius:10px; background:var(--surface); max-width:440px; overflow:hidden;}
+  .am-menu > button{display:block; width:100%; text-align:left; font:inherit; color:var(--ink); background:none; border:0; border-top:1px solid var(--sand-line); padding:11px 14px; cursor:pointer;}
+  .am-menu > button:first-child{border-top:0;} .am-menu > button[hidden]{display:none;}
+  .am-menu b{display:block; font-size:0.9rem; color:var(--teal);} .am-menu small{display:block; font-size:0.8rem; color:var(--grey); line-height:1.45; margin-top:2px;}
+  .am-linkrow{margin-top:12px; max-width:620px;} .am-linkrow label{display:block; font-weight:700; margin-bottom:6px;}
+  .am-linkline{display:flex; gap:8px; flex-wrap:wrap; align-items:center;} .am-linkline input{flex:1 1 240px; min-width:0;}
+  .am-x{font:inherit; font-size:0.86rem; background:none; border:0; color:var(--grey); cursor:pointer; min-height:40px;}
+  .am-line{display:flex; align-items:center; gap:10px; margin-top:10px; border:1.5px solid var(--teal); border-radius:20px; padding:8px 16px; font-size:0.85rem; background:var(--surface);}
+  .am-line .am-name{flex:1; min-width:0; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .am-line .am-where{font-weight:400; color:var(--grey);}
+  .am-line a{color:var(--teal); font-weight:700;} .am-line button{font:inherit; border:0; background:none; color:var(--grey); cursor:pointer;}
+  .am-saved{margin-top:8px; color:var(--teal); font-weight:700;} .am-msg{margin-top:6px; color:var(--brick); font-weight:600;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231905">
+<link rel="stylesheet" href="hub-house.css?v=202611232049">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -243,19 +257,20 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611231905"></script>
-<script src="assignment-history.js?v=202611231905"></script>
-<script src="assignment-examples.js?v=202611231905"></script>
-<script src="hub-due.js?v=202611231905"></script>
-<script src="hub-shared.js?v=202611231905"></script>
-<script src="hub-store.js?v=202611231905"></script>
-<script src="hub-say.js?v=202611231905"></script>
-<script src="hub-sync.js?v=202611231905"></script>
-<script src="hub-notebook.js?v=202611231905"></script>
-<script src="observation-defaults.js?v=202611231905"></script>
-<script src="hub-rotation.js?v=202611231905"></script>
-<script src="hub-peers.js?v=202611231905"></script>
-<script src="fol-interview.js?v=202611231905"></script>
+<script src="assignment-defaults.js?v=202611232049"></script>
+<script src="assignment-history.js?v=202611232049"></script>
+<script src="assignment-examples.js?v=202611232049"></script>
+<script src="hub-due.js?v=202611232049"></script>
+<script src="hub-shared.js?v=202611232049"></script>
+<script src="hub-store.js?v=202611232049"></script>
+<script src="hub-drive-pick.js?v=202611232049"></script>
+<script src="hub-say.js?v=202611232049"></script>
+<script src="hub-sync.js?v=202611232049"></script>
+<script src="hub-notebook.js?v=202611232049"></script>
+<script src="observation-defaults.js?v=202611232049"></script>
+<script src="hub-rotation.js?v=202611232049"></script>
+<script src="hub-peers.js?v=202611232049"></script>
+<script src="fol-interview.js?v=202611232049"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -364,7 +379,7 @@ function collect(){
 }
 
 let FIELDS = {}; // s{idx}_i{itemIdx}_f{fieldIdx} or s{idx} for plain text response
-let MATERIALSLINK = '';
+let MATERIALSLINK = '', MATERIALSFILES = [], AM_CHOOSER = false, AM_LOCKED = false, AM_BUSY = false;   /* the files: on the trainee's own Drive, up to five (23 Nov 2026) */
 
 function itemsForFieldsSection(a, secIdx){
   // find nearest preceding picker section
@@ -432,9 +447,11 @@ function render(){
   TEXT = sub.draft && sub.draft.text ? sub.draft.text : TEXT;
   FIELDS = sub.draft && sub.draft.fields ? sub.draft.fields : FIELDS;
   DECL = sub.draft && sub.draft.decl ? sub.draft.decl : DECL;
-  MATERIALSLINK = sub.draft && sub.draft.materialsLink ? sub.draft.materialsLink : MATERIALSLINK;
+  MATERIALSLINK = sub.draft && typeof sub.draft.materialsLink === 'string' ? sub.draft.materialsLink : MATERIALSLINK;
+  MATERIALSFILES = sub.draft && Array.isArray(sub.draft.materialsFiles) ? sub.draft.materialsFiles : MATERIALSFILES;
 
   const locked = sub.stage==='submitted' || sub.stage==='resubmitted' || sub.stage==='closed';
+  AM_LOCKED = locked;
   /* The header carries what changes -- the deadline and the word count -- and
      nothing that does not. It used to print the format and then every marking
      criterion on one line, joined by dots: six criteria of Cambridge prose
@@ -617,9 +634,9 @@ function render(){
     } else if (s.type==='declaration') {
       const d = DECL[i] || { checks:s.items.map(()=>false), aiUsed:'', aiLink:'', aiPurpose:'' };
       html += `<div class="card declcard"><h2>${esc(s.label)}</h2>${TW}
-        <div class="row"><label>Materials link (if this assignment uses outside material)</label>
-          <p class="hint">If you're linking a Drive file or worksheet here, use different material from any assessed TP lesson \u2014 Handbook 9.2.1.</p>
-          <input type="url" data-role="materialslink" value="${esc(MATERIALSLINK)}" placeholder="https://drive.google.com/..." ${locked?'disabled':''}></div>
+        <div class="row"><label>Materials (if this assignment uses outside material)</label>
+          <p class="hint">If you attach a Drive file or a worksheet here, use different material from any assessed TP lesson \u2014 Handbook 9.2.1.</p>
+          ${amHTML(locked)}</div>
         ${s.items.map((it,ci)=>`<label class="decl"><input type="checkbox" data-role="decl-check" data-i="${i}" data-ci="${ci}" ${d.checks[ci]?'checked':''} ${locked?'disabled':''}><span>${esc(it)}</span></label>`).join('')}
         ${s.aiToggle?`<div class="ai-toggle">
           <label><input type="radio" name="ai${i}" data-role="ai" data-i="${i}" value="yes" ${d.aiUsed==='yes'?'checked':''} ${locked?'disabled':''}> Used AI</label>
@@ -848,14 +865,87 @@ function bindInputs(){
   document.querySelectorAll('[data-role="aipurpose"]').forEach(el => el.addEventListener('change', () => {
     const i = el.dataset.i; if (!DECL[i]) DECL[i]={checks:[],aiUsed:'',aiLink:'',aiPurpose:''}; DECL[i].aiPurpose = el.value; dirty=true; autosave();
   }));
-  document.querySelectorAll('[data-role="materialslink"]').forEach(el => el.addEventListener('input', () => {
-    MATERIALSLINK = el.value; dirty = true; autosave();
-  }));
+  amBind();
   const btn = $('submitBtn');
   if (btn) btn.addEventListener('click', preSubmit);
 }
 
-function snapshot(){ return { picked:PICKED, text:TEXT, fields:FIELDS, decl:DECL, materialsLink:MATERIALSLINK }; }
+function snapshot(){ return { picked:PICKED, text:TEXT, fields:FIELDS, decl:DECL, materialsLink:MATERIALSLINK, materialsFiles:MATERIALSFILES }; }
+
+/* ATTACH MATERIAL, THE SAME THREE WAYS AS THE LESSON PLAN (Ramy, 23 Nov 2026: "we need to look into the lesson plan
+   attachments, and we need to look into the assignment attachments"). From this device and From my Google Drive are
+   Google's chooser: the file is on the trainee's own Drive and is added as a line, up to five. A link is one link to a
+   folder, attached when Attach is pressed; a second link asks before it replaces the first. Every attachment is a line
+   with Open and Remove. On a Lite where Google's chooser is not switched on, the link is the one way, as it always was. */
+const AM_MAX = 5;
+function amLines(locked){
+  const rm = (attr) => locked ? '' : `<button type="button" ${attr}>Remove</button>`;
+  let host = ''; try { host = new URL(MATERIALSLINK).hostname.replace(/^www\./, ''); } catch (e) {}
+  return (MATERIALSFILES || []).map((f, k) => `<div class="am-line"><span class="am-name">${esc(f.name)}<span class="am-where"> \u00b7 on your Google Drive</span></span><a href="${esc(f.url)}" target="_blank" rel="noopener">Open</a>${rm('data-role="am-remove" data-k="' + k + '"')}</div>`).join('')
+    + ((MATERIALSLINK || '').trim() ? `<div class="am-line"><span class="am-name">${/\/folders\//.test(MATERIALSLINK) ? 'Link to your folder' : 'Your link'}${host ? `<span class="am-where"> \u00b7 ${esc(host)}</span>` : ''}</span><a href="${esc(MATERIALSLINK)}" target="_blank" rel="noopener">Open</a>${rm('data-role="am-linkremove"')}</div>` : '');
+}
+function amHTML(locked){
+  const any = (MATERIALSFILES || []).length || (MATERIALSLINK || '').trim();
+  return `<div class="am" id="amWrap">
+    ${locked ? '' : `<button type="button" class="am-pill" data-role="am-open" aria-expanded="false">${any ? 'Attach something else' : 'Attach material'}</button>
+    <div class="am-menu" data-role="am-menu" hidden>
+      <button type="button" data-am="device"${AM_CHOOSER ? '' : ' hidden'}><b>From this device</b><small>A file on your computer or phone. It is saved to your own Google Drive.</small></button>
+      <button type="button" data-am="drive"${AM_CHOOSER ? '' : ' hidden'}><b>From my Google Drive</b><small>Pick a file or a folder you already have there. Lite asks you to sign in to Google the first time.</small></button>
+      <button type="button" data-am="link"><b>A link</b><small>One link to a folder that holds everything for this assignment.</small></button>
+    </div>
+    <div class="am-linkrow" data-role="am-linkrow" hidden><label for="amLinkNew">Paste the link to your folder</label>
+      <div class="am-linkline"><input type="url" id="amLinkNew" placeholder="https://drive.google.com/..."><button type="button" class="am-pill am-go" data-role="am-attach">Attach</button><button type="button" class="am-x" data-role="am-cancel">Cancel</button></div>
+      <p class="hint">Set the folder to \u201canyone with the link can view\u201d, or your tutor cannot open it.</p></div>`}
+    <div data-role="am-lines">${amLines(locked)}</div>
+    <p class="hint am-saved" data-role="am-saved"${any ? '' : ' hidden'}>Attached and saved. Your tutor opens these from your work.</p>
+    <p class="hint am-msg" data-role="am-msg" role="status" hidden></p></div>`;
+}
+function amSay(t){ const m = document.querySelector('[data-role="am-msg"]'); if (m) { m.textContent = t || ''; m.hidden = !t; } }
+function amPaint(){
+  const w = document.getElementById('amWrap'); if (!w) return;
+  const said = (document.querySelector('[data-role="am-msg"]') || {}).textContent || '';
+  w.outerHTML = amHTML(AM_LOCKED); amBind(); amSay(said);
+}
+function amChanged(){ dirty = true; autosave(); amPaint(); }
+async function amPick(view){
+  if (AM_LOCKED) return;
+  if (AM_BUSY) { amSay('Google\u2019s window is already open. Finish there, or close it and press the button again.'); return; }
+  if (MATERIALSFILES.length >= AM_MAX) { amSay('An assignment holds five files. Remove one to add another.'); return; }
+  AM_BUSY = true; amSay('');
+  try {
+    const f = await HubDrivePick.pick({ upload: view === 'device' });
+    if (!f || AM_LOCKED) return;
+    if (MATERIALSFILES.some(x => x && x.url === f.url)) { amSay('\u201C' + f.name + '\u201D is already attached.'); return; }
+    const ok = await confirmModal('Let anyone with the link view \u201C' + f.name + '\u201D? Your tutor cannot open it otherwise. You can change this in your Drive at any time.', 'Let them view it', { cancel: 'Not now' });
+    const shared = ok ? await HubDrivePick.share(f.id) : false;
+    MATERIALSFILES = MATERIALSFILES.concat([{ name: f.name, url: f.url, drive: 1 }]);
+    amChanged();
+    amSay(shared ? '' : ok ? 'Your Drive did not let Lite change who can view \u201C' + f.name + '\u201D. Open it in Drive, choose Share, and set it to anyone with the link.' : 'Your tutor cannot open \u201C' + f.name + '\u201D until you share it. In Drive, choose Share, then anyone with the link.');
+  } catch (e) { amSay(((e && e.message) || 'That did not work') + '.'); }
+  finally { AM_BUSY = false; }
+}
+async function amLinkAttach(){
+  if (AM_LOCKED) return;
+  const box = document.getElementById('amLinkNew'), v = (box.value || '').trim(); if (!v) { box.focus(); return; }
+  if (!/^https?:\/\//i.test(v)) { amSay('That is not a whole link. Copy it again from the Share box or the address bar: it starts with https://'); return; }
+  const had = (MATERIALSLINK || '').trim();
+  if (had && had !== v && !(await confirmModal('This assignment already has a link. Replace it with this one?', 'Replace the link', { cancel: 'Keep the first one' }))) return;
+  MATERIALSLINK = v; amSay(''); amChanged();
+}
+function amBind(){
+  const q = r => document.querySelector('[data-role="' + r + '"]');
+  const open = q('am-open'), menu = q('am-menu'), row = q('am-linkrow');
+  if (open) open.addEventListener('click', () => { menu.hidden = !menu.hidden; open.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true'); if (AM_CHOOSER && window.HubDrivePick) HubDrivePick.prepare().catch(() => {}); });
+  if (menu) menu.addEventListener('click', e => { const b = e.target.closest('[data-am]'); if (!b) return; menu.hidden = true; open.setAttribute('aria-expanded', 'false');
+    if (b.dataset.am === 'link') { row.hidden = false; const i = document.getElementById('amLinkNew'); i.value = ''; i.focus(); }
+    else amPick(b.dataset.am); });
+  const at = q('am-attach'); if (at) at.addEventListener('click', amLinkAttach);
+  const nw = document.getElementById('amLinkNew'); if (nw) nw.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amLinkAttach(); } });
+  const cn = q('am-cancel'); if (cn) cn.addEventListener('click', () => { row.hidden = true; });
+  document.querySelectorAll('[data-role="am-remove"]').forEach(b => b.addEventListener('click', () => { if (AM_LOCKED) return; MATERIALSFILES = MATERIALSFILES.filter((_, k) => k !== +b.dataset.k); amSay(''); amChanged(); }));
+  const lr = q('am-linkremove'); if (lr) lr.addEventListener('click', () => { if (AM_LOCKED) return; MATERIALSLINK = ''; amSay(''); amChanged(); });
+}
+if (window.HubDrivePick && window.HubStore && HubStore.isTrainee && HubStore.isTrainee()) HubDrivePick.available().then(on => { if (on) { AM_CHOOSER = true; amPaint(); } }).catch(() => {});
 
 function autosave(){
   const sub = subFor(CURRENT);

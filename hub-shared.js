@@ -1604,6 +1604,9 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
        reading the record can open what the writing refers to (24 Sep 2026). */
     var ml = (snap && snap.materialsLink || '').trim();
     if (ml) out += '<p style="margin:0 0 10px;"><a href="' + esc(ml) + '" target="_blank" rel="noopener" style="display:inline-block;font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:16px;background:oklch(37.5% 0.058 195);color:#fff;text-decoration:none;">Open the materials</a></p>';
+    /* files the trainee attached from their own Drive, each to open (23 Nov 2026) */
+    var mf = (snap && Array.isArray(snap.materialsFiles) ? snap.materialsFiles : []).filter(function(f){ return f && f.url; });
+    if (mf.length) out += '<p style="margin:0 0 10px;">' + mf.map(function(f){ return '<a href="' + esc(f.url) + '" target="_blank" rel="noopener" style="display:inline-block;margin:0 6px 6px 0;font-size:0.78rem;font-weight:700;padding:5px 12px;border-radius:16px;border:1.5px solid currentColor;text-decoration:none;">' + esc(f.name || 'Attached file') + '</a>'; }).join('') + '</p>';
     a.sections.forEach((s,i) => {
       if (s.type==='text' && !/before you start/i.test(s.label) && snap.text && snap.text[i]) {
         out += `<div class="roundlabel">${esc(s.label)}</div><div class="readonly">${markFlags(nl2br(snap.text[i]), flags)}</div>`;
@@ -2551,7 +2554,7 @@ window.hubWorkChecks = function (a, snap, key, who) {
   }
   /* the materials link the brief asks for */
   var intro = ((a.sections || []).filter(function (x) { return /^before you start$/i.test((x.label || '').trim()); })[0] || {}).body || '';
-  if (/materials link|appendi/i.test(intro)) add(snap.materialsLink ? 'ok' : 'look', snap.materialsLink ? 'Materials link attached' : 'No materials link', snap.materialsLink ? 'Open it from the top of the work.' : 'The brief asks for the tasks to be attached.', snap.materialsLink ? 'Your tutor can open it.' : 'The brief asks you to attach your tasks: paste the link in the declaration at the foot of the page.');
+  if (/materials link|appendi/i.test(intro)) { var hasMat = snap.materialsLink || (Array.isArray(snap.materialsFiles) && snap.materialsFiles.length); add(hasMat ? 'ok' : 'look', hasMat ? 'Materials attached' : 'No materials attached', hasMat ? 'Open it from the top of the work.' : 'The brief asks for the tasks to be attached.', hasMat ? 'Your tutor can open it.' : 'The brief asks you to attach your tasks: use Attach material in the declaration at the foot of the page.'); }
   if (T) return items;
   /* the tutor's only */
   var d = null; (a.sections || []).forEach(function (sec, i) { if (sec.type === 'declaration') d = (snap.decl || {})[i]; });

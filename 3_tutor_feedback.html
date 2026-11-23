@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231905">
+<link rel="stylesheet" href="hub-tokens.css?v=202611232049">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -636,7 +636,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231905">
+<link rel="stylesheet" href="hub-house.css?v=202611232049">
 </head>
 <body>
 <div class="board">
@@ -828,14 +828,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611231905"></script>
-<script src="hub-shared.js?v=202611231905"></script>
-<script src="hub-store.js?v=202611231905"></script>
-<script src="hub-say.js?v=202611231905"></script>
-<script src="hub-crit-learn.js?v=202611231905"></script>
-<script src="hub-crit-vocab.js?v=202611231905"></script>
-<script src="hub-sync.js?v=202611231905"></script>
-<script src="hub-notebook.js?v=202611231905"></script>
+<script src="hub-exchange.js?v=202611232049"></script>
+<script src="hub-shared.js?v=202611232049"></script>
+<script src="hub-store.js?v=202611232049"></script>
+<script src="hub-say.js?v=202611232049"></script>
+<script src="hub-crit-learn.js?v=202611232049"></script>
+<script src="hub-crit-vocab.js?v=202611232049"></script>
+<script src="hub-sync.js?v=202611232049"></script>
+<script src="hub-notebook.js?v=202611232049"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1620,6 +1620,15 @@ function fillAims(){
   } catch(e) {}
 }
 document.addEventListener('change', e=>{ if(e.target && e.target.id==='fTP') fillAims(); });
+/* THE LAST TP'S ACTION POINT READS ACROSS, NOT DOWN (Ramy, 23 Nov 2026: "Check the bottom part. It's wrapped around").
+   The action point itself was put in the narrow label column, in bold, so a sentence ran down five lines beside an empty
+   cell. The label is short now; the action point and what the trainee did about it sit in the wide column. */
+function lastTpRow(a){
+  const prev=String(a.prev||'').replace(/^[\s\u2022]+/,'').trim(), did=String(a.did||'').trim();
+  return `<tr><td width="28%"><b>Last TP\u2019s action point</b></td><td>${prev?`<p style="margin:0 0 4px;">${nl2br(prev)}</p>`:''}${did
+    ? `<p style="margin:0;"><b>What they did about it:</b></p>${bulletsHTML(did)}`
+    : '<p style="margin:0;color:var(--grey);">They wrote nothing about it.</p>'}</td></tr>`;
+}
 function showSeen(d){
   const m=d.meta||{}, p=d.plan||{}, l=d.la||{};
   const rows=(p.rows||[]).filter(r=>(r.stage||'').trim()||(r.proc||'').trim());
@@ -1752,7 +1761,7 @@ function showSeen(d){
         .filter(([,v])=>(v||'').trim())
         .map(([k,v])=>`<tr><td width="28%"><b>${k}</b></td><td>${bulletsHTML(v)}</td></tr>`).join('')}
       ${(s.actions||[]).filter(a=>(a.prev||'').trim()||(a.did||'').trim())
-        .map(a=>`<tr><td width="28%"><b>Last TP: ${nl2br(a.prev)}</b></td><td>${bulletsHTML(a.did)}</td></tr>`).join('')}
+        .map(lastTpRow).join('')}
     </table>`;
   }
   $('seenBody').innerHTML=html;
@@ -2415,7 +2424,7 @@ window.HUB_REDRAW=function(){
         const sv=selfRec.state.self||selfRec.state;
         const rows=(window.hubSelfRows ? hubSelfRows(sv, true) : []).filter(([,v])=>(v||'').trim())
           .map(([k,v])=>`<tr><td width="28%"><b>${k}</b></td><td>${bulletsHTML(v)}</td></tr>`).join('')
-          + (sv.actions||[]).filter(a=>(a.prev||'').trim()||(a.did||'').trim()).map(a=>`<tr><td width="28%"><b>Last TP: ${nl2br(a.prev)}</b></td><td>${bulletsHTML(a.did)}</td></tr>`).join('');
+          + (sv.actions||[]).filter(a=>(a.prev||'').trim()||(a.did||'').trim()).map(lastTpRow).join('');
         /* not twice: where the form's own plan card already shows their self-evaluation, that is the one to read */
         const shownAlready = $('seen').style.display!=='none' && /Their self-evaluation/.test(($('seenBody')||{}).innerText||'');
         if(rows && $('seen') && !$('selfLate') && !shownAlready){
