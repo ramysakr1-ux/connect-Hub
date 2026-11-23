@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231427">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231506">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -239,7 +239,7 @@
   .prev-pill:hover{background:var(--fb-act-wash);} .prev-pill:disabled{opacity:.5; cursor:default;}
   @media print{ .prev-pill{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231427">
+<link rel="stylesheet" href="hub-house.css?v=202611231506">
 </head>
 <body>
 <div class="board">
@@ -347,13 +347,11 @@
   <div class="card" id="cardST">
     <span class="se-pill se-good">Strengths</span>
     <div id="stList"></div>
-    <button class="btn-add" type="button" id="addST">+ Add another</button>
   </div>
 
   <div class="card">
     <span class="se-pill se-act">To work on</span>
     <div id="wkList"></div>
-    <button class="btn-add" type="button" id="addWK">+ Add another</button>
   </div>
   </div>
 
@@ -361,7 +359,6 @@
     <h2>Your action points from the last TP</h2>
     <button type="button" class="prev-pill" id="prevBtn">Bring in last TP's action points</button>
     <div id="apList"></div>
-    <button class="btn-add" type="button" id="addAP">+ Add another</button>
   </div>
 
   <div class="card next">
@@ -384,12 +381,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611231427"></script>
-<script src="hub-shared.js?v=202611231427"></script>
-<script src="hub-store.js?v=202611231427"></script>
-<script src="hub-say.js?v=202611231427"></script>
-<script src="hub-sync.js?v=202611231427"></script>
-<script src="hub-notebook.js?v=202611231427"></script>
+<script src="hub-due.js?v=202611231506"></script>
+<script src="hub-shared.js?v=202611231506"></script>
+<script src="hub-store.js?v=202611231506"></script>
+<script src="hub-say.js?v=202611231506"></script>
+<script src="hub-sync.js?v=202611231506"></script>
+<script src="hub-notebook.js?v=202611231506"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -463,7 +460,6 @@ function renumber(){
   [...$('apList').children].forEach((r,i)=>{ r.querySelector('.n').textContent=i+1; });
 }
 for(let i=0;i<2;i++) addAP('','');
-$('addAP').addEventListener('click',()=>{ addAP('',''); dirty=true; });
 
 /* The action points come from the last TP your tutor returned -- read straight out
    of this browser's own record of it, so nothing is retyped and nothing is
@@ -579,9 +575,21 @@ function addWK(a,b,c){ const first=!$('wkList').children.length; return seRow($(
 function setAim(v){ document.querySelectorAll('#aimYN button').forEach(b=>b.setAttribute('aria-checked', b.dataset.v===v ? 'true' : 'false')); }
 function getAim(){ const b=document.querySelector('#aimYN button[aria-checked="true"]'); return b ? b.dataset.v : ''; }
 document.querySelectorAll('#aimYN button').forEach(b=>b.addEventListener('click',()=>{ if(b.disabled) return; setAim(getAim()===b.dataset.v ? '' : b.dataset.v); dirty=true; autosave(); }));
-$('addST').addEventListener('click',()=>{ addST('',''); dirty=true; });
-$('addWK').addEventListener('click',()=>{ addWK('','',''); dirty=true; });
 addST('',''); addST('',''); addWK('','',''); addWK('','','');   /* a page with nothing saved yet starts with two rows of each */
+/* NO ADD ANOTHER PILL (Ramy, 23 Nov 2026, as on the tutor's feedback form: "add a point just by clicking on the next line"):
+   each list keeps one empty row at its end; writing in it makes the next one. Empty rows are left out when it is saved. */
+const SPARE={ stList:()=>addST('',''), wkList:()=>addWK('','',''), apList:()=>addAP('','') };
+function keepSpare(id){
+  if(typeof locked!=='undefined' && locked) return;
+  const list=$(id); if(!list) return;
+  const last=list.lastElementChild;
+  if(!last || [...last.querySelectorAll('textarea')].some(t=>t.value.trim())){ SPARE[id](); if(id==='apList') renumber(); }
+}
+Object.keys(SPARE).forEach(id=>{
+  let t=null; const soon=()=>{ clearTimeout(t); t=setTimeout(()=>keepSpare(id),0); };
+  $(id).addEventListener('input', soon);
+  new MutationObserver(soon).observe($(id), { childList:true });
+});
 function fillSelf(s){
   const first = s.v!==2 && ['well','not','learn','diff'].some(k=>String(s[k]||'').replace(/•/g,'').trim());
   /* a sheet with words in it keeps the stage it was written in (none, if it is older than the stages); an empty one takes its TP's */
