@@ -430,8 +430,15 @@ function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
   var day = '';
-  try { var st = courseRead_(id, 'settings') || {}; day = courseDay_(st) || Utilities.formatDate(new Date(), st.timeZone || 'Europe/London', 'yyyy-MM-dd'); } catch (e) {}
-  return v + '|' + day;
+  var out = '';
+  try { var st = courseRead_(id, 'settings') || {}; day = courseDay_(st) || Utilities.formatDate(new Date(), st.timeZone || 'Europe/London', 'yyyy-MM-dd');
+    /* A HELD NOTICE GOING UP MOVES THE VERSION (v298, 23 Nov 2026; Ramy: "So do they have to refresh the page to see the
+       new notice?"). A notice set for 5 pm wrote nothing when 5 pm came, so an open phone, and one opening Lite, kept its
+       copy without it until somebody saved something. The count of held notices now out is part of the stamp. */
+    var sNow = courseDay_(st) ? new Date(courseDay_(st) + 'T23:59:59Z').getTime() : Date.now();
+    out = String((courseRead_(id, 'stream') || []).filter(function (p) { if (!p || p.draft || !p.publishAt) return false; var t = new Date(String(p.publishAt)).getTime(); return !isNaN(t) && t <= sNow; }).length);
+  } catch (e) {}
+  return v + '|' + day + (out ? '|' + out : '');
 }
 function bumpVersion_(id) {
   var props = PropertiesService.getScriptProperties();
@@ -459,7 +466,7 @@ function settleVersions_(op) {
   if (Object.keys(CHANGED_).length) { try { SpreadsheetApp.flush(); } catch (e) {} }
   Object.keys(CHANGED_).forEach(function (id) {
     var b = bumpVersion_(id);
-    if (id === cid) { var day = REQ_VER_.split('|')[1] || ''; out = { before: b.before + '|' + day, after: b.after + '|' + day }; }
+    if (id === cid) { var tail = REQ_VER_.indexOf('|') >= 0 ? REQ_VER_.slice(REQ_VER_.indexOf('|')) : '|'; out = { before: b.before + tail, after: b.after + tail }; }   /* the day and the notices out (v298) ride on both */
   });
   CHANGED_ = {};
   if (!out && cid && REQ_VER_) out = { at: REQ_VER_ };
