@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231522">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231547">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -636,7 +636,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231522">
+<link rel="stylesheet" href="hub-house.css?v=202611231547">
 </head>
 <body>
 <div class="board">
@@ -828,14 +828,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611231522"></script>
-<script src="hub-shared.js?v=202611231522"></script>
-<script src="hub-store.js?v=202611231522"></script>
-<script src="hub-say.js?v=202611231522"></script>
-<script src="hub-crit-learn.js?v=202611231522"></script>
-<script src="hub-crit-vocab.js?v=202611231522"></script>
-<script src="hub-sync.js?v=202611231522"></script>
-<script src="hub-notebook.js?v=202611231522"></script>
+<script src="hub-exchange.js?v=202611231547"></script>
+<script src="hub-shared.js?v=202611231547"></script>
+<script src="hub-store.js?v=202611231547"></script>
+<script src="hub-say.js?v=202611231547"></script>
+<script src="hub-crit-learn.js?v=202611231547"></script>
+<script src="hub-crit-vocab.js?v=202611231547"></script>
+<script src="hub-sync.js?v=202611231547"></script>
+<script src="hub-notebook.js?v=202611231547"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1310,7 +1310,7 @@ function addPoint(listId, html, _unused){
       });
       if(isBlankPoint(box)) box.innerHTML='';
       dirty=true;
-      say('Pasted '+said.join(', ')+'.'+(lost.length?' Not added: '+lost.join(', ')+'.':'')+' Check each code fits what the point says.');
+      say(lost.length ? 'Not added: '+lost.join(', ')+'. Tag the point by hand if it fits.' : '');   /* a warning only when a code could not be added (23 Nov 2026) */
       try{ ['lSP','lAP','lST','lAT'].forEach(id=>$(id).dispatchEvent(new Event('input',{bubbles:true}))); }catch(err){}
       return;
     }
@@ -1328,10 +1328,10 @@ function addPoint(listId, html, _unused){
       nr.querySelector('.pt-text').dispatchEvent(new Event('ai-suggest'));
     });
     renderSuggestions(); dirty=true;
-    const bits=[];
-    if(got.items.length>1) bits.push(got.items.length+' points pasted.');
-    if(got.dropped.length) bits.push('Not added: '+got.dropped.map(d=>d.code+(d.why==='kind'?(scope==='planning'?' (a teaching criterion)':' (a planning criterion)'):' (not one of the 41)')).join(', ')+'.');
-    say(bits.length ? bits.join(' ')+' Check each code fits what the point says.' : 'Check each code fits what the point says.');
+    /* A WARNING ONLY WHEN NEEDED (Ramy, 23 Nov 2026: "It should come as a warning only when needed and then disappear once
+       fixed"; it showed after every paste, most of all when he moved a point from one box to another). Now nothing is said
+       unless a code could not be added to this box; the next key in the point, or moving to another, takes it away. */
+    say(got.dropped.length ? 'Not added: '+got.dropped.map(d=>d.code+(d.why==='kind'?(scope==='planning'?' (a teaching criterion)':' (a planning criterion)'):' (not one of the 41)')).join(', ')+'. Tag the point by hand if it fits.' : '');
     try{ host.dispatchEvent(new Event('input',{bubbles:true})); }catch(err){}
   });
 
@@ -1353,8 +1353,12 @@ function addPoint(listId, html, _unused){
   };
   box.addEventListener('focus',()=>{
     if(isBlankPoint(box)){ box.innerHTML=POINT_BULLET; caretToEnd(); }
-    document.querySelectorAll('.pt').forEach(r=>{ if(r!==row){ const sr=r.querySelector('.suggest-row'); if(sr) sr.innerHTML=''; } });
+    document.querySelectorAll('.pt').forEach(r=>{ if(r!==row){ const sr=r.querySelector('.suggest-row'); if(sr) sr.innerHTML=''; const pn=r.querySelector('.pastenote'); if(pn) pn.hidden=true; } });
   });
+  /* THE PASTE NOTE GOES ONCE YOU CARRY ON (Ramy, 23 Nov 2026: "Check each code fits what the point says. is always there
+     now"): it was put under a point after a paste and nothing ever took it away. The next key in that point, or moving
+     into another point, takes it away. */
+  box.addEventListener('keydown',e=>{ if(e.isTrusted && !e.metaKey && !e.ctrlKey){ const pn=row.querySelector('.pastenote'); if(pn) pn.hidden=true; } });
   box.addEventListener('keydown',e=>{
     if(e.key!=='Enter' || e.shiftKey) return;
     e.preventDefault();

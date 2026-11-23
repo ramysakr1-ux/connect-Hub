@@ -189,10 +189,84 @@ for (const mode of MODES) {
   }
 }
 
+/* 4. WHAT IS WRITTEN IS STILL THERE AFTER A RELOAD (Ramy, 23 Nov 2026: "Let's make sure this never happens again, pls.
+   not the first time"). Twice a tutor's comments beside a trainee's plan were saved and then not shown when the form was
+   opened again (17 to 23 Nov; Belma first, then Ramy), and nothing here looked: the sweep above only opens pages. This
+   writes a marked word into EVERY box a person can write in on the forms people write on, waits for the page to save
+   itself, reloads, and expects every marked word back on the screen. A new box on these pages is covered the day it is
+   added; a box that is not meant to keep its words goes in NOT_KEPT with the reason. Made-up people only. */
+const KEPT_PLAN = { meta: { tp: 'TP3', name: 'Maya Check', level: 'B1', length: '45', framework: 'Text-based' },
+  plan: { main: 'Reading for gist and detail', sub: 'Speaking for fluency', pers: 'Give instructions before handing out materials', mats: 'My slides', profile: '10 learners at B1',
+    probs: [{ problem: 'Odd number of learners', solution: 'One group of three' }],
+    rows: [{ time: '5', stage: 'Lead-in', aim: 'To raise interest', proc: 'Photos of cities', int1: 'T-Ss' }, { time: '8', stage: 'Gist task', aim: 'To read for the main idea', proc: 'Match headings', int1: 'S' }, { time: '12', stage: 'Detail task', aim: 'To read for detail', proc: 'True or false', int1: 'S-S' }] } };
+const KEPT_VOCAB = { type: 'vocab', context: 'A weekend away', vocab: [{ item: 'itinerary', def: 'a plan of a journey', convey: 'a picture', clar: 'CCQs', form: 'noun', prob: 'stress' }, { item: 'budget', def: 'money to spend', convey: 'a situation', clar: 'CCQs', form: 'noun', prob: 'spelling' }] };
+const KEPT_GRAMMAR = { type: 'grammar', context: 'Plans for 2030', blocks: [{ fields: [{ key: 'meaning', label: 'Meaning', value: 'A completed action before a time in the future' }, { key: 'form', label: 'Form', value: 'will + have + past participle' }, { key: 'probs', label: 'Problems', pairs: [{ problem: 'Weak form of have', solution: 'Drill it' }] }] }] };
+const keptTrainee = (id, la) => ({ id, token: id, name: 'Maya Check', group: '1', assignments: {}, tp: { plan: { status: 'turned_in', state: Object.assign({}, KEPT_PLAN, { la }) } } });
+const KEPT = [
+  { name: 'the tutor’s TP feedback form (vocabulary analysis)', url: '3_tutor_feedback.html?k=check-k&trainee=t1', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t1: keptTrainee('t1', KEPT_VOCAB) } }) }) },
+  { name: 'the tutor’s TP feedback form (grammar analysis)',    url: '3_tutor_feedback.html?k=check-k&trainee=t2', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t2: keptTrainee('t2', KEPT_GRAMMAR) } }) }) },
+  { name: 'the trainee’s self-evaluation', url: '2_trainee_self_evaluation.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check', 'chub:plan': JSON.stringify({ status: 'turned_in', state: KEPT_PLAN }) }) },
+  { name: 'the trainee’s lesson plan',     url: '1_trainee_plan_and_analysis.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check' }) },
+  { name: 'the trainee’s assignment',      url: '9_assignment_submission.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check' }) },
+  { name: 'the trainee’s CELTA 5',         url: '20_celta5.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check' }) },
+  { name: 'the tutor’s side of a CELTA 5', url: '20_celta5.html?k=check-k&trainee=t1', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t1: keptTrainee('t1', KEPT_VOCAB) } }) }) },
+  { name: 'the pre-course task',           url: '30_precourse_key.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check' }) },
+];
+/* NOT YET COVERED, so nobody reads this list as "everything": the grades report, the course record, the final report,
+   the handover, assignment marking, the observation sheets and the notebook keep their words in the store or need a
+   fuller made-up course than this harness seeds. Add each here when it can be opened with boxes to write in. */
+/* boxes that are not meant to keep their words, each with why (matched on the box's id) */
+const NOT_KEPT = {
+  xText: 'the paste-something-back box: it is read and emptied',
+};
+let keptBoxes = 0;
+for (const k of KEPT) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.addInitScript(([seed, settings]) => {
+    if (localStorage.getItem('kept:seeded')) return;   // once: a reload must find what the page saved, not the seed again
+    localStorage.setItem('kept:seeded', '1');
+    for (const [key, v] of Object.entries(seed)) localStorage.setItem(key, v);
+    localStorage.setItem('connect_course_settings', settings);
+  }, [k.seed, SETTINGS]);
+  const where = `[kept] ${k.name}`;
+  try {
+    const open = async () => { await page.goto(base + k.url, { waitUntil: 'domcontentloaded', timeout: 20000 }); await page.waitForTimeout(1800);
+      await page.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; })); await page.waitForTimeout(200); };
+    await open(); loads++;
+    /* mark every box a person can write in: a textarea, or a box edited in place */
+    const boxes = await page.evaluate(skip => {
+      const out = []; let n = 0;
+      document.querySelectorAll('textarea, [contenteditable="true"], [contenteditable=""]').forEach(el => {
+        if (el.disabled || el.readOnly || !el.getClientRects().length || skip[el.id]) return;
+        const lab = el.id || el.dataset.tc || el.dataset.k || el.className.split(' ')[0] || el.tagName.toLowerCase();
+        el.setAttribute('data-kept', 'kept' + (++n) + 'x'); out.push({ mark: 'kept' + n + 'x', lab, edit: el.tagName !== 'TEXTAREA' });
+      });
+      return out;
+    }, NOT_KEPT);
+    if (!boxes.length) failures.push(`${where}: found no box to write in — the check itself needs looking at`);
+    for (const b of boxes) {
+      const el = page.locator(`[data-kept="${b.mark}"]`);
+      if (!(await el.count())) continue;   // the page redrew it since it was marked; the ones that remain still prove the save
+      if (b.edit) { await el.click({ timeout: 3000 }).catch(() => {}); await page.keyboard.type(b.mark); }
+      else await el.fill(b.mark, { timeout: 3000 }).catch(() => {});
+      b.wrote = await page.evaluate(m => { const e = document.querySelector(`[data-kept="${m}"]`); return !!e && ((e.value || '') + (e.textContent || '')).includes(m); }, b.mark);
+    }
+    await page.waitForTimeout(2200);   // the pages save themselves under a second after the last key
+    await open(); loads++;
+    const back = await page.evaluate(() => [...document.querySelectorAll('textarea, input, [contenteditable]')].map(e => (e.value || '') + ' ' + (e.textContent || '')).join(' \n '));
+    const wrote = boxes.filter(b => b.wrote); 
+    const gone = wrote.filter(b => !back.includes(b.mark)); keptBoxes += wrote.length - gone.length;
+    if (wrote.length < Math.min(3, boxes.length)) failures.push(`${where}: could only write in ${wrote.length} of ${boxes.length} boxes — the check itself needs looking at`);
+    for (const b of gone) failures.push(`${where}: what was written in "${b.lab}" is NOT on the screen after a reload`);
+  } catch (e) { failures.push(`${where}: did not run — ${String(e).slice(0, 120)}`); }
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 
-console.log(`\nConnect Lite — ${loads} page loads, ${screens.length} screens x ${MODES.length} links.`);
+console.log(`\nConnect Lite — ${loads} page loads, ${screens.length} screens x ${MODES.length} links; ${keptBoxes} written boxes read back after a reload.`);
 if (!failures.length) { console.log('Nothing screamed.\n'); process.exit(0); }
 console.log(`\n${failures.length} PROBLEM(S):\n`);
 for (const f of failures) console.log('  ' + f);
