@@ -78,6 +78,15 @@
 // to write" labels over bullets that the section heading already introduces.
 // The bullets themselves are the assignment and stay.
 //
+// THE AI LINE (24 Nov 2026, asked for by a course tutor). "Before you start" in
+// FOL, LRT, LSRT and LFC ends with one more paragraph: what AI may be used for
+// (planning, preparing, organizing, checking spelling and punctuation), what it
+// may not (writing or rewriting the work), that it is used in English, and that
+// any use is declared with the link to the conversation, so a tutor can read
+// what was asked. Assignment 5 does not carry it. Nothing else changed: not
+// the criteria, not another section, not the order. The earlier trim took out
+// a whole "Referencing and use of AI" block; this is one line, not that block.
+//
 // Cambridge makes the center responsible for designing its four assignments,
 // so every word here is meant to be rewritten on screen 8 by a center that
 // wants its own. That is the point of shipping them: a course that changes
@@ -110,7 +119,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Your task\nChoose four items from the letter below:\n• one grammar structure;\n• one functional exponent; and\n• two vocabulary items.\n\nAnalyze each item in terms of its meaning, form, pronunciation, and use. Identify the difficulties learners may have with each item. Analyze only the words in bold.\n\nWrite 750–1,000 words of continuous prose. The letter itself is not included in the word count.\n\nResearch every item and cite all sources. Include a page number wherever the source has one.\n\nDo not use this analysis as the basis of an assessed TP lesson.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
+        "body": "Your task\nChoose four items from the letter below:\n• one grammar structure;\n• one functional exponent; and\n• two vocabulary items.\n\nAnalyze each item in terms of its meaning, form, pronunciation, and use. Identify the difficulties learners may have with each item. Analyze only the words in bold.\n\nWrite 750–1,000 words of continuous prose. The letter itself is not included in the word count.\n\nResearch every item and cite all sources. Include a page number wherever the source has one.\n\nDo not use this analysis as the basis of an assessed TP lesson.\n\nWhether you pass on the first or second submission does not affect your certificate grade.\n\nAI: you can use it to plan, prepare and organize, and to check spelling and punctuation. You cannot use it to write or rewrite your work. Declare any use below, with a link to the conversation in English.",
         "readonly": true
       },
       {
@@ -242,7 +251,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Your task\nChoose one of the three texts below for the class described. Design:\n• two reading tasks; and\n• one productive follow-up task.\n\nExplain why you chose the text and why the tasks are suitable for this class.\n\nWrite 750–1,000 words of continuous prose. The bibliography and appendices are not included in the word count.\n\nAdd both reading tasks, with their answer keys, and the productive task using the Materials link.\n\nDo not use this text or these tasks as the basis of an assessed TP lesson.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
+        "body": "Your task\nChoose one of the three texts below for the class described. Design:\n• two reading tasks; and\n• one productive follow-up task.\n\nExplain why you chose the text and why the tasks are suitable for this class.\n\nWrite 750–1,000 words of continuous prose. The bibliography and appendices are not included in the word count.\n\nAdd both reading tasks, with their answer keys, and the productive task using the Materials link.\n\nDo not use this text or these tasks as the basis of an assessed TP lesson.\n\nWhether you pass on the first or second submission does not affect your certificate grade.\n\nAI: you can use it to plan, prepare and organize, and to check spelling and punctuation. You cannot use it to write or rewrite your work. Declare any use below, with a link to the conversation in English.",
         "readonly": true
       },
       {
@@ -351,7 +360,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Your task\nThis assignment asks you to identify the needs of the learners you are currently teaching and plan practical classroom responses.\n\nDescribe your current teaching-practice group. Then identify:\n• one grammar difficulty; and\n• one pronunciation difficulty\nthat you have noticed in TP1–4 or in the student interviews. For each difficulty, present one suitable classroom activity. At least one activity must be taken from, or adapted from, a published source.\n\nWrite 750–1,000 words of continuous prose. The bibliography and appendices are not included in the word count.\n\nAdd both activities using the Materials link. For each one, include the materials and state its source; if you have adapted it, say how.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
+        "body": "Your task\nThis assignment asks you to identify the needs of the learners you are currently teaching and plan practical classroom responses.\n\nDescribe your current teaching-practice group. Then identify:\n• one grammar difficulty; and\n• one pronunciation difficulty\nthat you have noticed in TP1–4 or in the student interviews. For each difficulty, present one suitable classroom activity. At least one activity must be taken from, or adapted from, a published source.\n\nWrite 750–1,000 words of continuous prose. The bibliography and appendices are not included in the word count.\n\nAdd both activities using the Materials link. For each one, include the materials and state its source; if you have adapted it, say how.\n\nWhether you pass on the first or second submission does not affect your certificate grade.\n\nAI: you can use it to plan, prepare and organize, and to check spelling and punctuation. You cannot use it to write or rewrite your work. Declare any use below, with a link to the conversation in English.",
         "readonly": true
       },
       {
@@ -438,7 +447,7 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
       {
         "type": "text",
         "label": "Before you start",
-        "body": "Your task\nThis assignment asks you to reflect on your progress during the course and plan your development after it.\n\nIdentify:\n• your main teaching strengths;\n• your main action points; and\n• what you have learned from observing your peers and experienced teachers.\n\nThen explain how you plan to keep developing after the CELTA.\n\nWrite 750–1,000 words of continuous prose. The bibliography is not included in the word count.\n\nWhether you pass on the first or second submission does not affect your certificate grade.",
+        "body": "Your task\nThis assignment asks you to reflect on your progress during the course and plan your development after it.\n\nIdentify:\n• your main teaching strengths;\n• your main action points; and\n• what you have learned from observing your peers and experienced teachers.\n\nThen explain how you plan to keep developing after the CELTA.\n\nWrite 750–1,000 words of continuous prose. The bibliography is not included in the word count.\n\nWhether you pass on the first or second submission does not affect your certificate grade.\n\nAI: you can use it to plan, prepare and organize, and to check spelling and punctuation. You cannot use it to write or rewrite your work. Declare any use below, with a link to the conversation in English.",
         "readonly": true
       },
       {
@@ -536,7 +545,20 @@ window.CONNECT_HUB_DEFAULT_WORDING = {
    while the course has NO assignment record at all, because criteriaMarks are
    POSITIONAL and a shorter list would move a Met onto a different criterion;
    and dueAt, resubDays and releaseAt are the center's and are carried over
-   untouched. */
+   untouched.
+
+   24 NOV 2026, THE AI LINE: the defaults as they stood on 21 Nov are NOT added
+   here, on purpose. This list drives one thing only, the adoption below, which
+   REPLACES a course's copy at the tutor's next boot, and when it replaces a
+   whole assignment it carries over a fixed list of fields that has neither
+   `source` nor `releaseFrom`: a course with no submissions yet would be
+   rewritten without anyone pressing anything and would lose the date its
+   assignments open. Whether a course's copy is Connect's assignment in an
+   earlier version is not read from this list at all: the wording page asks
+   hubIsConnectsAsg (hub-shared.js), which reads the fingerprints in
+   assignment-history.js, made from git by tools/wording-history.mjs. That
+   file was made again the same day and now holds the 21 Nov wording of the
+   four. Make it again after every commit that changes the wording above. */
 window.CONNECT_HUB_SUPERSEDED_WORDING = [
   {
     "lrt": {
