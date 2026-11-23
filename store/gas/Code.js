@@ -1928,6 +1928,8 @@ case 'inbox': {
         } finally { if (!ivHad) ivLock.releaseLock(); }
         return { saved: true };
       }
+      /* v299 (23 Nov 2026): a self-evaluation is filed with its TP before it is cleared or replaced (fileLateSelf_) */
+      if (k2 === 'selfeval') { try { fileLateSelf_(course.id, me.token, req.data); } catch (lsErr) {} }
       write_(course.id, me.token, k2, req.data);
       return { saved: true };
     }
@@ -5435,6 +5437,28 @@ function traineeCelta5t_(t) {
        home page can say "your self-evaluation first" -- and the same in the history in place of that TP's document;
      - everything, once the self-evaluation is in (the same test the feedback page has always used).
    The records themselves are not changed, and a tutor, the assessor and the center read them as before. */
+/* A SELF-EVALUATION IS NEVER JUST CLEARED (v299, 23 Nov 2026; Ramy: "some of the trainees submitted their self-eval, but
+   [their tutor] can't find it"). When feedback goes back BEFORE the self-evaluation comes in, the returned document has
+   no self-evaluation in it. The trainee then writes it, reads the feedback, and starts the next TP, which clears their
+   self-evaluation record: the only copy. On C/21 five past TPs lost theirs that way. A trainee cannot write a filed TP
+   (tpHistory is the tutors'), so it is done here: when a turned-in self-evaluation is about to be cleared or replaced by
+   another TP's, and that TP's filed record has no self-evaluation, the answers go onto the filed record as lateSelf.
+   The pages draw it under the returned document (hubLateSelfHTML). */
+function selfTp_(rec) { var m = /\d+/.exec(String((rec && rec.state && rec.state.doc && rec.state.doc.meta && rec.state.doc.meta.tp) || (rec && rec.label) || '')); return m ? String(parseInt(m[0], 10)) : ''; }
+function fileLateSelf_(courseId, token, incoming) {
+  var was = read_(courseId, token, 'selfeval');
+  if (!was || was.status !== 'turned_in' || !was.state) return false;
+  var n = selfTp_(was); if (!n) return false;
+  if (incoming && selfTp_(incoming) === n) return false;   // still this TP's sheet: edited, taken back, or turned in again
+  var h = read_(courseId, token, 'tpHistory') || {}, rec = h[n];
+  if (!rec || rec.lateSelf) return false;
+  if (/self-?evaluation/i.test(String(rec.docHTML || '')) || (rec.state && rec.state.doc && rec.state.doc.self)) return false;
+  var ans = was.state.self || was.state, keep = {};
+  Object.keys(ans).forEach(function (k) { if (k !== 'doc') keep[k] = ans[k]; });
+  rec.lateSelf = { self: keep, turnedInAt: was.turnedInAt || null };
+  var one = {}; one[n] = rec; writeHistory_(courseId, token, one);
+  return true;
+}
 function tpNumOf_(rec) { var m = /\d+/.exec(String((rec && rec.state && rec.state.f && rec.state.f.fTP) || (rec && rec.label) || '')); return m ? String(parseInt(m[0], 10)) : ''; }
 function traineeHold_(b) {
   if (!b || !b.feedback || typeof b.feedback !== 'object') return b;

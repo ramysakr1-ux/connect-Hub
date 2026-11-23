@@ -13,7 +13,7 @@
 <title>Feedback returned</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231547">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231803">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -186,7 +186,7 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231547">
+<link rel="stylesheet" href="hub-house.css?v=202611231803">
 </head>
 <body>
 <div class="board">
@@ -202,11 +202,11 @@
   </div>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202611231547"></script>
-<script src="hub-store.js?v=202611231547"></script>
-<script src="hub-say.js?v=202611231547"></script>
-<script src="hub-sync.js?v=202611231547"></script>
-<script src="hub-notebook.js?v=202611231547"></script>
+<script src="hub-shared.js?v=202611231803"></script>
+<script src="hub-store.js?v=202611231803"></script>
+<script src="hub-say.js?v=202611231803"></script>
+<script src="hub-sync.js?v=202611231803"></script>
+<script src="hub-notebook.js?v=202611231803"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -322,9 +322,11 @@ function v2Grade(g){
 }
 
 
-function addDoc(html, heading){
+function addDoc(html, heading, rec){
   const doc=document.createElement('div');
   doc.className='doc';
+  /* a self-evaluation that came in after the feedback went back is shown under it (rec.lateSelf, 23 Nov 2026) */
+  if (rec && window.hubLateSelfHTML) html = String(html||'') + hubLateSelfHTML(rec);
   /* 18 Nov 2026: documents returned before the form was fixed can read "4c \u2022 Please": drop the bullet after a code. */
   html=String(html||'').replace(/(<(?:li|br)[^>]*>(?:\s*<strong style="color:#[0-9a-fA-F]{6};">[^<]*<\/strong>)+)[\s\u00A0]*\u2022[\s\u00A0]*/g, '$1 ');
   doc.innerHTML=(heading?'<p class="tpmark">'+heading+'</p>':'')+html;
@@ -396,9 +398,9 @@ if(currentOpen){
       + '</section>');
   }
 }
-if(currentOpen) addDoc(fb.docHTML, past.length ? 'Teaching practice ' + (function(){ const m=String((fb.state&&fb.state.f&&fb.state.f.fTP)||fb.label||'').match(/\d+/); return m?m[0]:''; })() : '');
+if(currentOpen) addDoc(fb.docHTML, past.length ? 'Teaching practice ' + (function(){ const m=String((fb.state&&fb.state.f&&fb.state.f.fTP)||fb.label||'').match(/\d+/); return m?m[0]:''; })() : '', fb);
 if(currentOpen && document.getElementById('fv2Ready')) content.querySelectorAll('.doc, .fv2-open').forEach(el => el.classList.add('fv2-wait'));
-past.forEach(x => addDoc(x.r.docHTML, 'Teaching practice ' + x.n));
+past.forEach(x => addDoc(x.r.docHTML, 'Teaching practice ' + x.n, x.r));
 
 if(currentHeld || currentComing){
   /* THE SEALED ENVELOPE. Same rule, same link, same words as before; drawn

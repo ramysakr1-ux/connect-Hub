@@ -36,7 +36,7 @@
 <title>Connect Lite — TP points</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231547">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231803">
 <style>
   /* the start, in two steps (28 Oct 2026) */
   .tstep{margin:18px 0 0; padding:16px 18px 18px; border-radius:16px; background:var(--paper); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3)); border-top:3px solid var(--a-forest, var(--teal));}
@@ -736,7 +736,7 @@
   .tp-ro .cvpick::after{display:none;} .tp-ro .cv .cvpick select:disabled{border-color:transparent; background:transparent; padding-left:0;}
   .tp-ro .gchip, .tp-ro .gcard{cursor:default !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231547">
+<link rel="stylesheet" href="hub-house.css?v=202611231803">
 <style>
 /* THE CARD A TRAINEE RECEIVES, IN COLOR (Ramy, 21 Oct 2026: "the card that
    the trainees receive ... could use a bit of color and distinction"). Each
@@ -909,15 +909,15 @@ body.ls-open{overflow:hidden;}
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611231547"></script>
-<script src="hub-tracker.js?v=202611231547"></script>
-<script src="hub-rotation.js?v=202611231547"></script>
-<script src="hub-shared.js?v=202611231547"></script>
+<script src="hub-due.js?v=202611231803"></script>
+<script src="hub-tracker.js?v=202611231803"></script>
+<script src="hub-rotation.js?v=202611231803"></script>
+<script src="hub-shared.js?v=202611231803"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611231547"></script>
-<script src="hub-say.js?v=202611231547"></script>
-<script src="hub-sync.js?v=202611231547"></script>
-<script src="hub-notebook.js?v=202611231547"></script>
+<script src="hub-store.js?v=202611231803"></script>
+<script src="hub-say.js?v=202611231803"></script>
+<script src="hub-sync.js?v=202611231803"></script>
+<script src="hub-notebook.js?v=202611231803"></script>
 <script type="text/x-hub-app">
 /* A set's credit as shown (Ramy, 5 Nov 2026: "change it to Lite's library"). Lite's own sets are stored with by: 'Connect',
    and courses keep copies that say so; the screen says Lite. */
@@ -1250,7 +1250,7 @@ function stamp(cell, found){
   if (ses && ses.dayPdf && ses.dayPdf.url) out.dayPdf = ses.dayPdf;
   if ((sl.files || []).length) {
     const own = (out.pages || []).filter(f => f && !f.fromSet);
-    out.pages = sl.files.map(f => ({ name: f.name, url: f.url, fromSet: 1 })).concat(own);
+    out.pages = sl.files.map(f => Object.assign({ name: f.name, url: f.url, fromSet: 1 }, f.ans ? { ans: 1 } : {})).concat(own);
   }
   out.stages = (sl.stages || []).filter(s => s && (s.name || s.todo))
     .map(s => ({ name: s.name || '', aim: s.aim || '', minutes: s.minutes || '', interaction: s.interaction || '', todo: s.todo || '', avoid: s.avoid || '' }));
@@ -1972,6 +1972,16 @@ function lsStagesFor(stages, page, whats){
   return (hits.length === 1 ? 'Stage ' : 'Stages ') + txt;
 }
 /* The cards for a lesson's materials, and what the side sheet shows for each. */
+/* a teacher's book page among the attached pages: { kind, title }, or null */
+function lsTeacher(f){
+  const nm = String((f && f.name) || '');
+  /* a Workbook's own answer key is one too: "Workbook: answer key p. 83" */
+  const k = nm.match(/^\s*Workbook\s*[:,]\s*(answer key.*)$/i);
+  if (k) { const t2 = k[1].trim().replace(/\bpp?\.\s*/i, 'page '); return { kind: 'Workbook', title: t2.charAt(0).toUpperCase() + t2.slice(1) }; }
+  const m = nm.match(/^\s*(Teacher[’']s (?:Book|Guide))\s*[:,]?\s*(.*)$/i); if (!m) return null;
+  let t = m[2].trim().replace(/^pp?\.\s*/i, 'page '); t = t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Page';
+  return { kind: /guide/i.test(m[1]) ? 'Teacher’s Guide' : 'Teacher’s Book', title: t };
+}
 function lsMaterials(c, key){
   const parts = lsRefParts(c), groups = [], byKey = {};
   parts.forEach(p => {
@@ -1983,19 +1993,23 @@ function lsMaterials(c, key){
   const used = new Set();
   groups.forEach(g => {
     if (!g.page) return;
-    const f = files.find(x => !used.has(x) && new RegExp('\\bp(?:age|\\.)?\\s*' + g.page + '\\b', 'i').test(x.name)
+    const f = files.find(x => !used.has(x) && !lsTeacher(x) && new RegExp('\\bp(?:age|\\.)?\\s*' + g.page + '\\b', 'i').test(x.name)
       && (g.src !== 'WB' ? !/workbook/i.test(x.name) : /workbook/i.test(x.name)));
     if (f) { used.add(f); g.file = f; }
   });
-  files.filter(f => !used.has(f)).forEach(f => { const m = f.name.match(/\b(\d{1,3})\b/); groups.push({ src: /workbook/i.test(f.name) ? 'WB' : 'SB', page: m ? m[1] : '', whats: [], file: f, name: f.name }); });
+  files.filter(f => !used.has(f)).forEach(f => { const m = f.name.match(/\b(\d{1,3})\b/);
+    /* A TEACHER'S PAGE IS NAMED AS ONE (Ramy, 23 Nov 2026: "I want them to be able to see the answers ... a teacher book
+       page"). It was drawn as "Student's Book, page 229". It keeps its own name, and says so when it carries the answers. */
+    if (lsTeacher(f)) { const t = lsTeacher(f); groups.push({ src: 'TB', kindName: t.kind, page: '', whats: f.ans && !/answer/i.test(t.title) ? ['With the answers'] : [], file: f, name: t.title, teacher: 1 }); return; }
+    groups.push({ src: /workbook/i.test(f.name) ? 'WB' : 'SB', page: m ? m[1] : '', whats: [], file: f, name: f.name }); });
   const stages = (c.stages || []).filter(s => s && (s.name || s.todo));
   const list = groups.filter(g => g.page || g.whats.length || g.file).map(g => ({
-    kind: g.page ? (LS_KIND[g.src] || 'Coursebook') : 'Also',
+    kind: g.teacher ? g.kindName : g.page ? (LS_KIND[g.src] || 'Coursebook') : 'Also',
     title: g.page ? 'Page ' + g.page : (g.name || g.whats[0] || 'Material'),
-    lines: g.page ? g.whats : g.whats.slice(1),
+    lines: g.teacher ? g.whats : g.page ? g.whats : g.whats.slice(1),
     file: g.file ? g.file.url || '' : '',
-    uses: g.whats.map(w => ({ what: w, stages: lsStagesFor(stages, g.page, [w]) })),
-    num: g.page || '',
+    uses: g.teacher ? [] : g.whats.map(w => ({ what: w, stages: lsStagesFor(stages, g.page, [w]) })),
+    num: g.page || (g.teacher ? ((String(g.name).match(/\d{1,3}/) || [''])[0]) : ''),
   }));
   window.__LS = window.__LS || {};
   window.__LS[key] = list;

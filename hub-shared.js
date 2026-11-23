@@ -946,7 +946,21 @@ window.hubMoveOn = function(page){
     if (page === 'self' && !later) return false;
     if (plan && !later && !(plan.status === 'turned_in' && (!nP || nP === nF))) return false;
     var h = rd('chub:tpHistory') || {};
-    if (!h[nF]) { h[nF] = fb; localStorage.setItem('chub:tpHistory', JSON.stringify(h)); }
+    if (!h[nF]) h[nF] = fb;
+    /* THE SELF-EVALUATION IS FILED WITH ITS TP, NEVER JUST CLEARED (Ramy, 23 Nov 2026: "some of the trainees submitted
+       their self-eval, but [their tutor] can't find it"). When the feedback went back BEFORE the self-evaluation came in,
+       the returned document has no self-evaluation in it, and this function then removed the only copy: on C/21 five
+       past TPs lost theirs that way. It now goes onto the TP's filed record (lateSelf) before anything is removed. This
+       copy is the trainee's own; the tutors' copy is filed by the store at the same moment (fileLateSelf_, v299). */
+    try {
+      var rec = h[nF], inDoc = /self-?evaluation/i.test(String(rec.docHTML || '')) || !!(rec.state && rec.state.doc && rec.state.doc.self);
+      if (!inDoc && !rec.lateSelf && se.state) {
+        var ans = se.state.self || se.state, keep = {};
+        Object.keys(ans).forEach(function(k){ if (k !== 'doc') keep[k] = ans[k]; });
+        rec.lateSelf = { self: keep, turnedInAt: se.turnedInAt || null };
+      }
+    } catch (e2) {}
+    localStorage.setItem('chub:tpHistory', JSON.stringify(h));
     if (!later) localStorage.removeItem('chub:plan');
     localStorage.removeItem('chub:selfeval');
     localStorage.removeItem('chub:feedback');
@@ -1845,6 +1859,20 @@ window.hubFileDoc = function(give){
    Every page that SHOWS one (the trainee's own print, the tutor's feedback form, the brief for Ask Connect) asks here, so
    one written in the first shape keeps showing exactly as it was written and the two cannot drift.
    Returns [[label, text], ...]; text is plain lines, a list as "• " lines. short: the tutor's narrow first column. */
+/* A self-evaluation filed after its feedback went back (rec.lateSelf, see hubMoveOn): the part to show under the returned
+   document, in the document's own plain style. '' when the record has none. */
+window.hubLateSelfHTML = function(rec){
+  try {
+    var ls = rec && rec.lateSelf; if (!ls || !ls.self || !window.hubSelfRows) return '';
+    var e = function(v){ return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    var rows = hubSelfRows(ls.self, false).filter(function(r){ return String(r[1] || '').trim(); });
+    if (!rows.length) return '';
+    var when = ''; try { var d = new Date(+ls.turnedInAt || ls.turnedInAt); if (!isNaN(d)) when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); } catch (x) {}
+    return '<div class="late-self" style="margin-top:22px;"><h2 style="font-family:\'Newsreader\',Georgia,serif;font-size:1.15rem;margin:0 0 4px;">Self-evaluation</h2>'
+      + '<p style="font-size:0.84rem;color:#6b6963;margin:0 0 10px;">Turned in' + (when ? ' on ' + e(when) : '') + ', after this feedback was returned.</p>'
+      + '<table style="width:100%;border-collapse:collapse;">' + rows.map(function(r){ return '<tr><td style="width:30%;vertical-align:top;padding:7px 10px;border:1px solid #ddd;font-weight:700;">' + e(r[0]) + '</td><td style="vertical-align:top;padding:7px 10px;border:1px solid #ddd;">' + e(r[1]).replace(/\n/g, '<br>') + '</td></tr>'; }).join('') + '</table></div>';
+  } catch (err) { return ''; }
+};
 window.hubSelfRows = function(s, short){
   s = s || {};
   var t = function(v){ return String(v == null ? '' : v).trim(); };
