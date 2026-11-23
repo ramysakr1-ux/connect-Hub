@@ -3569,6 +3569,9 @@ case 'inbox': {
         var pAt = new Date(String(req.publishAt));
         if (!isNaN(pAt.getTime()) && pAt.getTime() > Date.now()) post.publishAt = pAt.toISOString();
       }
+      /* v297 (23 Nov 2026): when the notice comes down. Ramy: "it should stay there until micro teaching time. And then
+         after that, it will go down." The pages fold it under Older notices from then (hubNoticeCurrent). */
+      var pDown = downAt_(req.downAt); if (pDown) post.downAt = pDown;
       var after = courseUpdate_(course.id, 'stream', function (list) { list.push(post); return list.length > 200 ? list.slice(list.length - 200) : list; });
       return { posted: post, stream: after };
     }
@@ -3603,6 +3606,21 @@ case 'inbox': {
     }    /* v73: a held-back post (scheduled, or carried from the last course by
        cloneCourse) is posted now, or given a date. publishAt '' means now:
        the post is stamped afresh so it reads as posted today. */
+    /* v297 (23 Nov 2026): set, change or clear when a notice comes down, on a notice already up or one held back.
+       An empty downAt clears it, and the notice follows the usual rule again (up until the next course day). */
+    case 'postDown': {
+      requireTutor_(tutor);
+      var pdId = String(req.id || ''), pdWhen = downAt_(req.downAt), pdFound = false;
+      var pdList = courseUpdate_(course.id, 'stream', function (list) {
+        return list.map(function (p) {
+          if (!p || String(p.id) !== pdId) return p;
+          pdFound = true; if (pdWhen) p.downAt = pdWhen; else delete p.downAt;
+          return p;
+        });
+      });
+      if (!pdFound) throw new Error('That post is not on the board any more');
+      return { saved: true, stream: pdList };
+    }
     case 'postAt': {
       requireTutor_(tutor);
       var paId = String(req.id || '');
@@ -5909,6 +5927,10 @@ function pinHash_(pin, salt) {
    from the last course (`draft`). A candidate, and the assessor, see only
    what has gone out. A demo course pinned to a day (settings.demoToday) is
    "now" at the end of that day, so a seeded post scheduled for it shows. */
+function downAt_(v) {
+  if (!v || !/^\d{4}-\d{2}-\d{2}T/.test(String(v))) return '';
+  var d = new Date(String(v)); return isNaN(d.getTime()) ? '' : d.toISOString();
+}
 function streamFor_(course, list, tutor) {
   list = Array.isArray(list) ? list : [];
   if (tutor) return list;

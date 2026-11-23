@@ -2178,6 +2178,10 @@ window.hubNoticeCurrent = function(p){
     var now = window.hubNow ? window.hubNow() : Date.now();
     /* a notice's old countdown no longer keeps it up (22 Nov 2026): the deadline is on the assignment card */
     var out = (p.publishAt && String(p.publishAt) > String(p.at)) ? p.publishAt : p.at, t0 = Date.parse(out);
+    /* A NOTICE WITH A TIME TO COME DOWN (Ramy, 23 Nov 2026: "it should stay there until micro teaching time. And then after
+       that, it will go down"): up until then, however many days that is, and under Older notices after */
+    var down = p.downAt ? Date.parse(p.downAt) : NaN;
+    if (!isNaN(down)) return now < down;
     if (isNaN(t0)) return true;
     var cs = {}, tt = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; tt = JSON.parse(localStorage.getItem('connect_timetable_v1') || '{}') || {}; } catch (e) {}
     var ymd = function(ms){ try { return new Date(ms).toLocaleDateString('en-CA', cs.timeZone ? { timeZone: cs.timeZone } : undefined); } catch (e) { return new Date(ms).toISOString().slice(0, 10); } };
@@ -2185,6 +2189,35 @@ window.hubNoticeCurrent = function(p){
     var next = (tt.days || []).filter(function(x){ return x && x.date && !x.closed && x.date > outDay; }).map(function(x){ return x.date; }).sort()[0] || ymd(t0 + 86400000);
     return today <= next;
   } catch (e) { return true; }
+};
+
+/* THE DAY WORDS FOLLOW THE CALENDAR (Ramy, 23 Nov 2026: "Something was announced yesterday and it says tomorrow. Then we can
+   either say like on Monday or the date, or it will change from tomorrow to today"). A notice's "today", "tonight",
+   "tomorrow" and "yesterday" are read from the day it went out: on a later day "tomorrow" reads "today" when that is
+   today, and the date when it has gone. Only the screen changes; the words in the course stay as they were written. */
+window.hubNoticeText = function(p){
+  var text = String((p && p.text) || '');
+  try {
+    if (!/\b(today|tonight|tomorrow|yesterday)\b/i.test(text)) return text;
+    var out = (p.publishAt && String(p.publishAt) > String(p.at)) ? p.publishAt : p.at, t0 = Date.parse(out);
+    if (isNaN(t0)) return text;
+    var cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+    var tz = cs.timeZone ? { timeZone: cs.timeZone } : {};
+    var ymd = function(ms){ try { return new Date(ms).toLocaleDateString('en-CA', tz); } catch (e) { return new Date(ms).toISOString().slice(0, 10); } };
+    var now = window.hubNow ? window.hubNow() : Date.now();
+    var outDay = ymd(t0), today = window.hubToday ? window.hubToday() : ymd(now);
+    if (today <= outDay) return text;
+    var dayNo = function(d){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000 : NaN; };
+    var base = dayNo(outDay), nowNo = dayNo(today);
+    var name = function(n){ return new Date(n * 86400000).toLocaleDateString('en-GB', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }); };
+    var cap = function(w, src){ return /^[A-Z]/.test(src) ? w.charAt(0).toUpperCase() + w.slice(1) : w; };
+    return text.replace(/(\b(?:by|until|till|from|before|after|since|on)\s+)?\b(today|tonight|tomorrow|yesterday)\b('s)?/gi, function(all, prep, w, poss){
+      var off = { today: 0, tonight: 0, tomorrow: 1, yesterday: -1 }[w.toLowerCase()], n = base + off;
+      if (n === nowNo) return (prep || '') + cap(w.toLowerCase() === 'tonight' ? 'tonight' : 'today', w) + (poss || '');
+      var on = (prep || poss) ? '' : 'on ';
+      return (prep || '') + cap(on + name(n), w) + (poss || '');
+    });
+  } catch (e) { return text; }
 };
 
 /* SIGN OUT (15 Oct 2026). Ramy: "there is no sign out... I can't close the
