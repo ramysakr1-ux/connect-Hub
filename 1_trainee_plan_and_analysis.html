@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231803">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231905">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -77,6 +77,9 @@
   .attach-menu > *:first-child{border-top:0;}
   .attach-menu > *:hover, .attach-menu > *:focus-visible{background:var(--hub-wash, oklch(96% 0.009 82)); outline:none;}
   .attach-menu b{display:block; font-size:0.9rem; color:var(--teal);} .attach-menu small{display:block; font-size:0.8rem; color:var(--grey); line-height:1.45; margin-top:2px;}
+  .attach-go{background:var(--teal) !important; color:#fff !important; border-color:var(--teal) !important;}
+  #matsSaved{margin-top:8px; color:var(--teal-deep, var(--teal)); font-weight:700;}
+  .matsfile .where{font-weight:400; color:var(--grey);}
   .attach-best{display:inline-block; margin-left:6px; padding:0 8px; border:1.3px solid var(--teal); border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:.03em; vertical-align:1px;}
   .attach-course{margin-top:10px; border:1.5px solid var(--sand-line); border-radius:10px; background:var(--surface); padding:12px 14px; max-width:560px;}
   .attach-course h3{margin:0 0 4px; font-family:'Karla',sans-serif; font-size:0.9rem; font-weight:700; color:var(--teal);}
@@ -506,7 +509,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231803">
+<link rel="stylesheet" href="hub-house.css?v=202611231905">
 </head>
 <body>
 <div class="board">
@@ -585,20 +588,24 @@
     <div class="attach" id="matsAttachWrap">
       <button type="button" class="attach-pill" id="matsAttach" aria-expanded="false" aria-controls="matsMenu">Attach material</button>
       <div class="attach-menu" id="matsMenu" hidden>
-        <button type="button" data-att="drive" id="matsDriveOpt" hidden><b>Choose from my Google Drive <span class="attach-best">Best</span></b><small>Pick a file on your own Drive, or upload one from this device into it. It stays yours, to keep after the course.</small></button>
-        <button type="button" data-att="link"><b>Add a link <span class="attach-best" id="matsLinkBest">Best</span></b><small>A file on your own Google Drive, a Doc, Slides, or any web page. Paste its share link. The file stays yours, to keep after the course.</small></button>
-        <button type="button" data-att="file"><b>Upload a file</b><small>From this device, up to 2 MB: a worksheet or a PDF. It is kept with the course only, and is removed some time after the course ends.</small></button>
-        <button type="button" data-att="course"><b>From the course</b><small>The pages and audio your tutors put with your TP point. Tick what you are using and it goes on your materials list.</small></button>
+        <button type="button" data-att="device"><b>From this device</b><small id="matsDeviceSmall">A file on your computer or phone, up to 2 MB.</small></button>
+        <button type="button" data-att="drive" id="matsDriveOpt" hidden><b>From my Google Drive</b><small>Pick a file or a folder you already have there. Lite asks you to sign in to Google the first time.</small></button>
+        <button type="button" data-att="link"><b>A link</b><small>One link to a folder that holds everything for this lesson.</small></button>
       </div>
     </div>
     <p class="hint" id="matsDriveMsg" role="status" style="margin-top:6px;color:var(--brick);font-weight:600;" hidden></p>
     <div class="attach-course" id="matsCourse" hidden></div>
     <div class="row" id="matsLinkRow" style="margin-top:12px;" hidden>
-      <label for="fMatsLink">Link</label>
-      <p class="hint">Set it to “anyone with the link can view”, or your tutor cannot open it.</p>
-      <div class="attach-line"><input type="url" id="fMatsLink" placeholder="https://drive.google.com/..."><button type="button" class="attach-x" id="matsLinkRemove">Remove</button></div>
+      <label for="fMatsLinkNew">Paste the link to your folder</label>
+      <div class="attach-line"><input type="url" id="fMatsLinkNew" placeholder="https://drive.google.com/..."><button type="button" class="attach-pill attach-go" id="matsLinkAttach">Attach</button><button type="button" class="attach-x" id="matsLinkCancel">Cancel</button></div>
+      <p class="hint">Set the folder to “anyone with the link can view”, or your tutor cannot open it.</p>
     </div>
-    <div id="matsPreview"></div>
+    <input type="url" id="fMatsLink" hidden>
+    <!-- EVERYTHING ATTACHED, ONE LINE EACH (Ramy, 23 Nov 2026: "when they upload something, they need to see it. So open,
+         remove ... If it's a link, then they see the link"). A file and the link each get a line with Open and Remove. -->
+    <div id="matsLines"></div>
+    <p class="hint" id="matsSaved" hidden>Attached and saved. Your tutor opens these from your plan.</p>
+    <div id="matsPreview" hidden></div>
     <div id="matsFileRow" hidden>
       <div class="dropzone" id="matsDrop">
         <span id="matsDropText">Drag and drop a file here, or <u>click to choose</u></span>
@@ -736,14 +743,14 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611231803"></script>
-<script src="hub-shared.js?v=202611231803"></script>
-<script src="hub-rotation.js?v=202611231803"></script>
-<script src="hub-store.js?v=202611231803"></script>
-<script src="hub-drive-pick.js?v=202611231803"></script>
-<script src="hub-say.js?v=202611231803"></script>
-<script src="hub-sync.js?v=202611231803"></script>
-<script src="hub-notebook.js?v=202611231803"></script>
+<script src="hub-due.js?v=202611231905"></script>
+<script src="hub-shared.js?v=202611231905"></script>
+<script src="hub-rotation.js?v=202611231905"></script>
+<script src="hub-store.js?v=202611231905"></script>
+<script src="hub-drive-pick.js?v=202611231905"></script>
+<script src="hub-say.js?v=202611231905"></script>
+<script src="hub-sync.js?v=202611231905"></script>
+<script src="hub-notebook.js?v=202611231905"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -778,6 +785,7 @@ function renderMatsPreview(){
   try{ matsRows(); }catch(e){}
   const url=($('fMatsLink').value||'').trim();
   const el=$('matsPreview');
+  try{ renderMatsFile(); }catch(e){}   /* the link is one of the lines (23 Nov 2026) */
   if(!url){ el.innerHTML=''; return; }
   const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if(!m){
@@ -817,7 +825,7 @@ var ONLY_YOU = [
 var LINK_BAD = '', LINK_SEQ = 0, LINK_TIMER = null, LINK_CHECK = Promise.resolve(), LINK_FRESH = '';
 function linkSay(text, ok){
   let el = $('matsLinkCheck');
-  if (!el) { el = document.createElement('p'); el.id = 'matsLinkCheck'; el.className = 'hint'; ($('fMatsLink').closest('.attach-line') || $('fMatsLink')).insertAdjacentElement('afterend', el); }
+  if (!el) { el = document.createElement('p'); el.id = 'matsLinkCheck'; el.className = 'hint'; ($('matsSaved') || $('fMatsLink')).insertAdjacentElement('afterend', el); }
   el.textContent = text || ''; el.style.display = text ? '' : 'none';
   el.style.marginTop = '6px'; el.style.fontWeight = '600'; el.style.color = ok ? 'var(--teal)' : 'var(--brick)';
 }
@@ -976,7 +984,7 @@ function rec0(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } 
 renderShareVol();
 
 function matsFilesMeta(){
-  return MATS_FILES.map(function(f){ var m = { name: f.name, type: f.type || '', size: f.size || 0 }; if (f.url) m.url = f.url; return m; });
+  return MATS_FILES.map(function(f){ var m = { name: f.name, type: f.type || '', size: f.size || 0 }; if (f.url) m.url = f.url; if (f.drive) m.drive = 1; return m; });
 }
 function matsFileMeta(){ return matsFilesMeta()[0] || null; }
 /* this browser keeps the bytes only of a file that has not reached Drive (a failed or unfinished send) */
@@ -1009,7 +1017,7 @@ function restoreMatsFiles(list){
     /* THE LINK STAYS WITH THE FILE. This used to return the name alone when the bytes were not on this device, so a
        plan opened on another laptop lost its Drive link, and the next save sent the plan to the tutor without it:
        the tutor saw "held on the trainee's own device" for a file that was on Drive all along (found 20 Nov 2026). */
-    if (meta.url) { out.url = meta.url; return out; }
+    if (meta.url) { out.url = meta.url; if (meta.drive) out.drive = 1; return out; }
     const h = held.find(x => x && x.name === meta.name && (!meta.size || !x.size || x.size === meta.size));
     if (h && h.dataUrl) out.dataUrl = h.dataUrl;
     return out;                                                             /* without either: named, but not on this device */
@@ -1038,18 +1046,26 @@ function renderMatsFile(){
      one browser that still holds the bytes. */
   const rows = MATS_FILES.map((f, i) => {
     const size = f.size ? ' \u00b7 ' + prettySize(f.size) : '';
-    return `<div class="matsfile"><span class="name">\uD83D\uDCCE ${esc(f.name)}${size}</span>
-    ${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">Open in Drive</a>` : ''}
+    return `<div class="matsfile"><span class="name">${esc(f.name)}${f.drive ? '<span class="where"> \u00b7 on your Google Drive</span>' : size}</span>
+    ${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">Open</a>` : ''}
     ${f.url ? '' : f.sending ? '<span style="color:var(--grey);font-style:italic;">sending</span>'
       : f.dataUrl ? `<a href="${f.dataUrl}" download="${esc(f.name)}">Download</a>`
       : '<span style="color:var(--grey);font-style:italic;">not on this device</span>'}
     <button type="button" data-mats-remove="${i}" aria-label="Remove ${esc(f.name)}">Remove</button></div>`; }).join('');
   const room = MATS_FILES.length < MATS_MAX_FILES;
-  drop.innerHTML = rows + (room
+  /* the lines: every file, then the link, each with Open and Remove (23 Nov 2026) */
+  const link = ($('fMatsLink').value || '').trim();
+  let host = ''; try { host = new URL(link).hostname.replace(/^www\./, ''); } catch (e) {}
+  const linkRow = link ? `<div class="matsfile"><span class="name">Link to your folder${host ? `<span class="where"> \u00b7 ${esc(host)}</span>` : ''}</span><a href="${esc(link)}" target="_blank" rel="noopener">Open</a><button type="button" data-mats-linkremove aria-label="Remove the link">Remove</button></div>` : '';
+  const lines = $('matsLines'); lines.innerHTML = rows + linkRow;
+  $('matsSaved').hidden = !(MATS_FILES.some(f => f && f.url) || link);
+  drop.innerHTML = (room
     ? `<span id="matsDropText">${MATS_FILES.length ? 'Drag and drop another file here, or <u>click to choose</u>' : 'Drag and drop a file here, or <u>click to choose</u>'}</span><input type="file" id="matsFileInput" multiple style="display:none;">`
     : `<span id="matsDropText">A plan holds five files. Remove one to add another, or use Add a link.</span>`);
   bindFileInput();
-  drop.querySelectorAll('[data-mats-remove]').forEach(b => b.addEventListener('click', e => { e.stopPropagation();
+  lines.querySelectorAll('[data-mats-linkremove]').forEach(b => b.addEventListener('click', () => { if (locked) return;
+    const i = $('fMatsLink'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); }));
+  lines.querySelectorAll('[data-mats-remove]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); if (locked) return;
     MATS_FILES.splice(+b.dataset.matsRemove, 1); if (!MATS_FILES.length && MATS_WANT === 'file') MATS_WANT = '';
     saveMatsLocal(); matsNote(''); dirty=true; autosave(); renderMatsFile(); }));
 
@@ -1113,12 +1129,12 @@ function bindFileInput(){
 }
 bindFileInput();
 /* ONE DOOR: the pill opens the choices; a row shows once it is chosen or holds something (18 Nov 2026) */
-let MATS_WANT = '';
+let MATS_WANT = '', MATS_CHOOSER = false;
 function matsRows(want){
   if (want !== undefined) MATS_WANT = want; want = MATS_WANT;
   const link = ($('fMatsLink').value || '').trim();
-  $('matsLinkRow').hidden = !(link || want === 'link');
-  $('matsFileRow').hidden = !(MATS_FILES.length || want === 'file');
+  $('matsLinkRow').hidden = want !== 'link';
+  $('matsFileRow').hidden = MATS_CHOOSER || want !== 'file';   /* the drop box is only for a Lite without Google's chooser */
   $('matsAttach').textContent = (link || MATS_FILES.length) ? 'Attach something else' : 'Attach material';
 }
 function matsMenu(open){ $('matsMenu').hidden = !open; $('matsAttach').setAttribute('aria-expanded', open ? 'true' : 'false'); }
@@ -1127,21 +1143,27 @@ $('matsAttach').addEventListener('click', () => { matsMenu($('matsMenu').hidden)
    scripts are fetched when the menu opens, so its sign-in window can open straight from the press. The file chosen comes
    back as its link, in the same box a pasted link goes in, and the same check then says whether a tutor can open it. */
 function matsDriveSay(t){ const m = $('matsDriveMsg'); m.textContent = t || ''; m.hidden = !t; }
-if (window.HubDrivePick && window.HubStore && HubStore.isTrainee && HubStore.isTrainee()) HubDrivePick.available().then(on => { if (on) { $('matsDriveOpt').hidden = false; $('matsLinkBest').hidden = true; } }).catch(() => {});
+if (window.HubDrivePick && window.HubStore && HubStore.isTrainee && HubStore.isTrainee()) HubDrivePick.available().then(on => { if (on) { MATS_CHOOSER = true; $('matsDriveOpt').hidden = false; $('matsDeviceSmall').textContent = 'A file on your computer or phone. It is saved to your own Google Drive.'; matsRows(); } }).catch(() => {});
 let matsDriveBusy = false;
-async function matsDrivePick(){
+/* THREE WAYS, LIKE ANY PLATFORM (Ramy, 23 Nov 2026: "you open it, and then you attach something. You can get it from the
+   computer ... from your drive, your own drive, and then the other option will be the link. I think that's enough").
+   From this device and From my Google Drive are Google's own chooser, opened on its upload page or on the Drive: either
+   way the file ends up on the trainee's OWN Drive, and the plan keeps its link. Nothing goes to the course's Drive any
+   more (the 2 MB upload stays only on a Lite where Google's chooser is not switched on). Each file is added to the plan's
+   files, up to five, as a line of its own: choosing one no longer replaces the link. */
+async function matsDrivePick(view){
   if (matsDriveBusy) { matsDriveSay('Google\u2019s window is already open. Finish there, or close it and press the button again.'); return; }
+  if (MATS_FILES.length >= MATS_MAX_FILES) { matsDriveSay('A plan holds five files. Remove one to add another.'); return; }
   matsDriveBusy = true; matsDriveSay('');
   try {
-    const f = await HubDrivePick.pick();
+    const f = await HubDrivePick.pick({ upload: view === 'device' });
     if (!f || locked) return;
-    const had = ($('fMatsLink').value || '').trim();
-    if (had && had !== f.url && !(await confirmModal('Your plan already has a link. Choosing \u201C' + f.name + '\u201D replaces it.', 'Replace the link', { cancel: 'Keep my link' }))) return;
+    if (MATS_FILES.some(x => x && x.url === f.url)) { matsDriveSay('\u201C' + f.name + '\u201D is already attached.'); return; }
     const ok = await confirmModal('Let anyone with the link view \u201C' + f.name + '\u201D? Your tutor cannot open it otherwise. You can change this in your Drive at any time.', 'Let them view it', { cancel: 'Not now' });
     const shared = ok ? await HubDrivePick.share(f.id) : false;
-    if (shared) LINK_FRESH = String(f.url || '').trim();   // the check that follows asks Google again, not the store's memory of a moment ago
-    const i = $('fMatsLink'); i.value = f.url; matsRows('link'); i.dispatchEvent(new Event('input', { bubbles: true }));
-    if (!shared) matsDriveSay(ok ? 'Your Drive did not let Lite change who can view this file. Open it in Drive, choose Share, and set it to anyone with the link.' : 'Your tutor cannot open this file until you share it. In Drive, choose Share, then anyone with the link.');
+    MATS_FILES.push({ name: f.name, type: f.mime || '', size: 0, url: f.url, drive: 1 });
+    saveMatsLocal(); dirty = true; autosave(); renderMatsFile(); matsRows('');
+    if (!shared) matsDriveSay(ok ? 'Your Drive did not let Lite change who can view \u201C' + f.name + '\u201D. Open it in Drive, choose Share, and set it to anyone with the link.' : 'Your tutor cannot open \u201C' + f.name + '\u201D until you share it. In Drive, choose Share, then anyone with the link.');
   } catch (e) { matsDriveSay(((e && e.message) || 'That did not work') + '.'); }
   finally { matsDriveBusy = false; }
 }
@@ -1150,10 +1172,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('matsMe
 $('matsMenu').addEventListener('click', e => {
   const b = e.target.closest('[data-att]'); if (!b) return;
   matsMenu(false);
-  if (b.dataset.att === 'link') { matsRows('link'); $('fMatsLink').focus(); }
-  if (b.dataset.att === 'file') { matsRows('file'); if (MATS_FILES.length < MATS_MAX_FILES && $('matsFileInput')) $('matsFileInput').click(); }
-  if (b.dataset.att === 'course') matsCourseOpen();
-  if (b.dataset.att === 'drive') matsDrivePick();
+  if (locked) return;
+  if (b.dataset.att === 'link') { matsRows('link'); $('fMatsLinkNew').value = ''; $('fMatsLinkNew').focus(); }
+  if (b.dataset.att === 'device') { if (MATS_CHOOSER) matsDrivePick('device'); else { matsRows('file'); if (MATS_FILES.length < MATS_MAX_FILES && $('matsFileInput')) $('matsFileInput').click(); } }
+  if (b.dataset.att === 'drive') matsDrivePick('drive');
 });
 /* FROM THE COURSE (Ramy, 18 Nov 2026: "the picker is important"). What the tutors put with this trainee's TP point: its
    pages, its coursebook reference, its audio. Ticking one writes it on the materials list above as a line of its own;
@@ -1209,7 +1231,19 @@ function matsCourseOpen(){
     box.scrollIntoView({ block: 'center' });
   });
 }
-$('matsLinkRemove').addEventListener('click', () => { const i = $('fMatsLink'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); matsRows(MATS_WANT === 'link' ? '' : MATS_WANT); });
+/* THE LINK IS ATTACHED WHEN ATTACH IS PRESSED (Ramy, 23 Nov 2026: "it's just sitting there and then they upload another
+   one and it replaces the other link and then you can't tell"). The box closes, the link becomes a line with Open and
+   Remove, and it is saved. A second link asks before it takes the first one's place. */
+async function matsLinkAttach(){
+  if (locked) return;
+  const box = $('fMatsLinkNew'), v = (box.value || '').trim(); if (!v) { box.focus(); return; }
+  const had = ($('fMatsLink').value || '').trim();
+  if (had && had !== v && !(await confirmModal('Your plan already has a link. Replace it with this one?', 'Replace the link', { cancel: 'Keep the first one' }))) return;
+  const i = $('fMatsLink'); i.value = v; box.value = ''; matsRows(''); i.dispatchEvent(new Event('input', { bubbles: true }));
+}
+$('matsLinkAttach').addEventListener('click', matsLinkAttach);
+$('fMatsLinkNew').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); matsLinkAttach(); } });
+$('matsLinkCancel').addEventListener('click', () => { $('fMatsLinkNew').value = ''; matsRows(''); });
 matsRows();
 const matsDrop=$('matsDrop');
 matsDrop.addEventListener('click', e=>{ if(MATS_FILES.length < MATS_MAX_FILES && $('matsFileInput') && !e.target.closest('a, button, input')) $('matsFileInput').click(); });

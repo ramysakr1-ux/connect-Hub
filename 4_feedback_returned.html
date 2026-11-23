@@ -13,7 +13,7 @@
 <title>Feedback returned</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231849">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231905">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -186,7 +186,7 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231849">
+<link rel="stylesheet" href="hub-house.css?v=202611231905">
 </head>
 <body>
 <div class="board">
@@ -202,11 +202,11 @@
   </div>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202611231849"></script>
-<script src="hub-store.js?v=202611231849"></script>
-<script src="hub-say.js?v=202611231849"></script>
-<script src="hub-sync.js?v=202611231849"></script>
-<script src="hub-notebook.js?v=202611231849"></script>
+<script src="hub-shared.js?v=202611231905"></script>
+<script src="hub-store.js?v=202611231905"></script>
+<script src="hub-say.js?v=202611231905"></script>
+<script src="hub-sync.js?v=202611231905"></script>
+<script src="hub-notebook.js?v=202611231905"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -341,12 +341,37 @@ function addDoc(html, heading, rec){
   doc.className='doc';
   /* a self-evaluation that came in after the feedback went back is shown under it (rec.lateSelf, 23 Nov 2026) */
   if (rec && window.hubLateSelfHTML) html = String(html||'') + hubLateSelfHTML(rec);
+  /* the tutor's comment on the self-evaluation, written at any time (rec.selfNote, 23 Nov 2026). A tutor gets the box to
+     write it in; everyone else reads it. Only where there is a self-evaluation to comment on. */
+  const tpNo = (function(){ const m = String(heading || '').match(/(\d+)$/) || String((rec && rec.state && rec.state.f && rec.state.f.fTP) || (rec && rec.label) || '').match(/\d+/); return m ? parseInt(m[1] || m[0], 10) : (TP_ONLY || 0); })();
+  const hasSelf = !!rec && (!!rec.lateSelf || /self-?evaluation/i.test(String(rec.docHTML || '')));
+  const canNote = hasSelf && tpNo && VIEW_ID && !IN_PACK && window.HubMode === 'tutor';
+  if (rec && hasSelf && !canNote && window.hubSelfNoteHTML) html += hubSelfNoteHTML(rec);
+  if (canNote) html += '<div class="self-note-edit" data-tp="' + tpNo + '" style="margin-top:18px;"><label style="display:block;font-weight:700;margin:0 0 6px;">Your comment on the self-evaluation</label>'
+    + '<textarea rows="4" style="width:100%;box-sizing:border-box;font:inherit;line-height:1.5;padding:10px 12px;border:1.5px solid var(--sand-line);border-radius:8px;background:var(--field, #fff);color:var(--ink);">' + String((rec.selfNote && rec.selfNote.text) || '').replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</textarea>'
+    + '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px;"><button type="button" data-savenote style="font:inherit;font-weight:700;min-height:40px;padding:0 18px;border-radius:999px;border:0;background:var(--teal);color:#fff;cursor:pointer;">Save the comment</button><span class="self-note-said" style="font-size:.86rem;color:var(--grey);">' + (rec.selfNote && rec.selfNote.text ? 'The trainee sees this under their self-evaluation.' : 'The trainee will see it under their self-evaluation.') + '</span></div></div>';
   /* 18 Nov 2026: documents returned before the form was fixed can read "4c \u2022 Please": drop the bullet after a code. */
   html=String(html||'').replace(/(<(?:li|br)[^>]*>(?:\s*<strong style="color:#[0-9a-fA-F]{6};">[^<]*<\/strong>)+)[\s\u00A0]*\u2022[\s\u00A0]*/g, '$1 ');
   doc.innerHTML=(heading?'<p class="tpmark">'+heading+'</p>':'')+html;
   const hn = String(heading || '').match(/(\d+)$/); if (hn) { doc.dataset.tp = hn[1]; doc.id = 'tp-' + hn[1]; }
   if (window.hubStackTables) hubStackTables(doc);
   content.appendChild(doc);
+  const ed = doc.querySelector('.self-note-edit');
+  if (ed) ed.querySelector('[data-savenote]').addEventListener('click', function(){
+    const said = ed.querySelector('.self-note-said'), text = ed.querySelector('textarea').value.trim(), n = +ed.dataset.tp;
+    try {
+      const ro = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null'), tr = ro && ro.trainees && ro.trainees[VIEW_ID]; if (!tr || !tr.tp) throw new Error('no record');
+      let who = ''; try { who = (localStorage.getItem('chub:tutorName') || '').trim(); } catch (e) {}
+      const note = text ? { text: text, by: who, at: new Date().toISOString() } : null;
+      const num = r => { const m = String((r && r.state && r.state.f && r.state.f.fTP) || (r && r.label) || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
+      let put = 0;
+      if (tr.tp.history && tr.tp.history[n]) { if (note) tr.tp.history[n].selfNote = note; else delete tr.tp.history[n].selfNote; put++; }
+      if (tr.tp.feedback && tr.tp.feedback.status === 'returned' && num(tr.tp.feedback) === n) { if (note) tr.tp.feedback.selfNote = note; else delete tr.tp.feedback.selfNote; put++; }
+      if (!put) throw new Error('no record');
+      localStorage.setItem('connect_roster_v1', JSON.stringify(ro));
+      said.textContent = text ? 'Saved. The trainee sees this under their self-evaluation.' : 'Removed.'; said.style.color = 'var(--teal)';
+    } catch (e) { said.textContent = 'That did not save. Reload the page and try again.'; said.style.color = 'var(--brick)'; }
+  });
   /* read by a tutor or the assessor: the document exactly as the trainee got it (Ramy, 22 Nov 2026; the labelled parts of
      21 Nov are gone) */
 }

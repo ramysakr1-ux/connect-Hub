@@ -13,7 +13,8 @@
  *   HubDrivePick.available()  -> Promise<boolean>   cheap: "off" is remembered for ten minutes
  *   HubDrivePick.prepare()    -> Promise            fetch Google's two scripts ahead of the press (a sign-in window
  *                                                    opened after a wait is blocked by the browser)
- *   HubDrivePick.pick()       -> Promise<{ id, name, url, mime } | null>     null = closed without choosing
+ *   HubDrivePick.pick(opts)   -> Promise<{ id, name, url, mime } | null>     null = closed without choosing;
+ *                                                    opts.upload opens on the upload page
  *   HubDrivePick.share(id)    -> Promise<boolean>   "anyone with the link can view", so a tutor can open it
  */
 (function (root) {
@@ -87,12 +88,16 @@
       } catch (e) { fail('Google did not sign you in. Try again'); }
     });
   }
-  function open(tok) {
+  /* opts.upload: open on "Upload" (a file from this device goes into the person's own Drive), else on their Drive, where a
+     folder can be chosen too (23 Nov 2026: From this device / From my Google Drive) */
+  function open(tok, opts) {
     return new Promise(function (res, rej) {
       try {
         var P = root.google.picker;
-        var mine = new P.DocsView(P.ViewId.DOCS).setIncludeFolders(false).setSelectFolderEnabled(false).setOwnedByMe(true).setMode(P.DocsViewMode.LIST);
-        var b = new P.PickerBuilder().addView(mine).addView(new P.DocsUploadView())
+        var mine = new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setSelectFolderEnabled(true).setOwnedByMe(true).setMode(P.DocsViewMode.LIST);
+        var up = new P.DocsUploadView();
+        var b0 = new P.PickerBuilder(); if (opts && opts.upload) b0.addView(up).addView(mine); else b0.addView(mine).addView(up);
+        var b = b0
           .setOAuthToken(tok).setDeveloperKey(cfg.apiKey).setAppId(cfg.appId).setTitle('Choose your material')
           .setCallback(function (d) {
             var act = d && d[P.Response.ACTION];
@@ -107,8 +112,8 @@
   }
   /* pick(): everything Google needs is already here when prepare() ran first, so the sign-in window opens straight from
      the press. If it did not, this waits for it, and a browser that then blocks the window says so. */
-  function pick() {
-    var go = function () { return signIn().then(open); };
+  function pick(opts) {
+    var go = function () { return signIn().then(function (tok) { return open(tok, opts); }); };
     if (cfg && root.google && root.google.accounts && root.google.accounts.oauth2 && root.google.picker) return go();
     return prepare().then(go);
   }

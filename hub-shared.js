@@ -1873,6 +1873,20 @@ window.hubLateSelfHTML = function(rec){
       + '<table style="width:100%;border-collapse:collapse;">' + rows.map(function(r){ return '<tr><td style="width:30%;vertical-align:top;padding:7px 10px;border:1px solid #ddd;font-weight:700;">' + e(r[0]) + '</td><td style="vertical-align:top;padding:7px 10px;border:1px solid #ddd;">' + e(r[1]).replace(/\n/g, '<br>') + '</td></tr>'; }).join('') + '</table></div>';
   } catch (err) { return ''; }
 };
+/* A TUTOR'S COMMENT ON A SELF-EVALUATION, WRITTEN AT ANY TIME (Ramy, 23 Nov 2026: "you should still be able to comment on
+   the self-eval even, like, after the fact"). Kept on the TP's record as selfNote { text, by, at } and drawn under the
+   self-evaluation for the trainee, the tutors and the assessor. '' when there is none. */
+window.hubSelfNoteHTML = function(rec){
+  try {
+    var n = rec && rec.selfNote; if (!n || !String(n.text || '').trim()) return '';
+    var e = function(v){ return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    var when = ''; try { var d = new Date(n.at); if (!isNaN(d)) when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); } catch (x) {}
+    return '<div class="self-note" style="margin-top:18px;padding:14px 16px;border:1px solid #ddd;border-left:4px solid #1f6f6b;border-radius:8px;">'
+      + '<p style="margin:0 0 6px;font-weight:700;">Tutor\u2019s comment on the self-evaluation</p>'
+      + '<p style="margin:0;white-space:pre-wrap;">' + e(n.text) + '</p>'
+      + ((n.by || when) ? '<p style="margin:8px 0 0;font-size:0.82rem;color:#6b6963;">' + e([n.by, when].filter(Boolean).join(', ')) + '</p>' : '') + '</div>';
+  } catch (err) { return ''; }
+};
 window.hubSelfRows = function(s, short){
   s = s || {};
   var t = function(v){ return String(v == null ? '' : v).trim(); };
