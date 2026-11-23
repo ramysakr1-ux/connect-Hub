@@ -13,7 +13,7 @@
 <title>Feedback returned</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611232124">
+<link rel="stylesheet" href="hub-tokens.css?v=202611232143">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -186,7 +186,7 @@
   .wordmark-spin{animation:wordmark-spin 90s linear infinite; transform-origin:50% 50%; transform-style:preserve-3d;}
   @media(prefers-reduced-motion:reduce){ .wordmark-spin{animation:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611232124">
+<link rel="stylesheet" href="hub-house.css?v=202611232143">
 </head>
 <body>
 <div class="board">
@@ -202,11 +202,11 @@
   </div>
   <div id="content"></div>
 </div>
-<script src="hub-shared.js?v=202611232124"></script>
-<script src="hub-store.js?v=202611232124"></script>
-<script src="hub-say.js?v=202611232124"></script>
-<script src="hub-sync.js?v=202611232124"></script>
-<script src="hub-notebook.js?v=202611232124"></script>
+<script src="hub-shared.js?v=202611232143"></script>
+<script src="hub-store.js?v=202611232143"></script>
+<script src="hub-say.js?v=202611232143"></script>
+<script src="hub-sync.js?v=202611232143"></script>
+<script src="hub-notebook.js?v=202611232143"></script>
 <script type="text/x-hub-app">
 function rec(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 
@@ -245,15 +245,17 @@ const TP_REC = TP_ONLY ? (function(){
 
 const fb = OWN ? rec('chub:feedback') : TP_ONLY ? TP_REC : ((VIEWED && VIEWED.tp && VIEWED.tp.feedback) || null);
 /* A TUTOR OPENING A PAST TP HAS READ ITS SELF-EVALUATION (23 Nov 2026). One filed after the feedback went back (lateSelf)
-   stays flagged on the dashboard until a tutor opens it; this is that. Saved with the record, so it clears for both
-   tutors. An assessor's reading marks nothing. */
+   stays flagged on the dashboard until a tutor opens it; this is that. Saved with the record, by the tutor's name. An assessor's reading marks nothing. */
 try {
   if (TP_ONLY && !IN_PACK && window.HubMode === 'tutor' && VIEW_ID) {
     const ro = JSON.parse(localStorage.getItem('connect_roster_v1') || 'null'), tr0 = ro && ro.trainees && ro.trainees[VIEW_ID];
     const h0 = tr0 && tr0.tp && tr0.tp.history && tr0.tp.history[TP_ONLY];
-    if (h0 && h0.lateSelf && !h0.lateSelf.readAt) {
-      let who = ''; try { who = (localStorage.getItem('chub:tutorName') || '').trim(); } catch (e) {}
-      h0.lateSelf = Object.assign({}, h0.lateSelf, { readAt: new Date().toISOString(), readBy: who });
+    let who = ''; try { who = (localStorage.getItem('chub:tutorName') || '').trim(); } catch (e) {}
+    /* read is each tutor's own (23 Nov 2026): the record keeps who has opened it, so it stays lit for the other tutor */
+    const seen0 = h0 && h0.lateSelf && (who ? ((h0.lateSelf.readers || {})[who] || (h0.lateSelf.readAt && h0.lateSelf.readBy === who)) : h0.lateSelf.readAt);
+    if (h0 && h0.lateSelf && !seen0) {
+      const at0 = new Date().toISOString(), rd = Object.assign({}, h0.lateSelf.readers); if (who) rd[who] = at0;
+      h0.lateSelf = Object.assign({}, h0.lateSelf, h0.lateSelf.readAt ? {} : { readAt: at0, readBy: who }, { readers: rd });
       localStorage.setItem('connect_roster_v1', JSON.stringify(ro));
     }
   }
@@ -350,6 +352,8 @@ function addDoc(html, heading, rec){
      was kept off both, and those are the trainees a tutor most needs to write to. */
   const canNote = !!rec && tpNo && VIEW_ID && window.HubMode === 'tutor';
   if (rec && !canNote && window.hubSelfNoteHTML) html += hubSelfNoteHTML(rec);
+  /* the trainee has now been shown the comment: the line on their home goes (index.html reads chub:selfNoteSeen:<n>) */
+  if (OWN && rec && tpNo && rec.selfNote && String(rec.selfNote.text || '').trim()) { try { localStorage.setItem('chub:selfNoteSeen:' + tpNo, String(rec.selfNote.at || '1')); } catch (e) {} }
   if (canNote) html += '<div class="self-note-edit" data-tp="' + tpNo + '" data-where="' + (hasSelf ? 'under their self-evaluation' : 'under this TP\u2019s feedback') + '" style="margin-top:18px;"><label style="display:block;font-weight:700;margin:0 0 6px;">Your comment on the self-evaluation</label>'
     + (hasSelf ? '' : '<p style="margin:0 0 8px;font-size:.9rem;color:var(--grey);">No self-evaluation is filed with this TP.</p>')
     + '<textarea rows="4" style="width:100%;box-sizing:border-box;font:inherit;line-height:1.5;padding:10px 12px;border:1.5px solid var(--sand-line);border-radius:8px;background:var(--field, #fff);color:var(--ink);">' + String((rec.selfNote && rec.selfNote.text) || '').replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</textarea>'
