@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231803">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231849">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -520,6 +520,10 @@
   .trc-v.amber .trc-w{font-family:'Karla',sans-serif; font-size:11px; font-weight:500; letter-spacing:0; text-transform:none;}
   .trc-n{font-size:0.78rem; color:var(--grey);}
   .trc-act{display:flex; justify-content:flex-end; gap:6px; white-space:nowrap;}
+  /* a past TP's self-evaluation still to read: its own line across the row */
+  .trc-late{grid-column:1 / -1; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; padding-top:8px; border-top:1px dashed var(--row-line); font-size:.86rem; font-weight:600; color:var(--ink-warm);}
+  .trc-latebtn{display:inline-flex; align-items:center; min-height:32px; padding:0 14px; border-radius:999px; background:var(--a-mustard); color:var(--ink); font-weight:700; text-decoration:none;}
+  @media (max-width:560px){ .trc-latebtn{min-height:40px;} }
   .rowbtn{display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; height:var(--pill-h); padding:0 14px;
     font-family:'Karla',sans-serif; font-size:0.82rem; font-weight:700; border-radius:var(--r-control); border:0;
     background:var(--box); color:var(--ink); text-decoration:none; white-space:nowrap; cursor:pointer;}
@@ -690,7 +694,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231803">
+<link rel="stylesheet" href="hub-house.css?v=202611231849">
 </head>
 <body>
 <div class="board">
@@ -822,27 +826,27 @@
 
 </div>
 
-<script src="hub-due.js?v=202611231803"></script>
-<script src="observation-defaults.js?v=202611231803"></script>
-<script src="hub-rotation.js?v=202611231803"></script>
-<script src="hub-peers.js?v=202611231803"></script>
-<script src="hub-shared.js?v=202611231803"></script>
+<script src="hub-due.js?v=202611231849"></script>
+<script src="observation-defaults.js?v=202611231849"></script>
+<script src="hub-rotation.js?v=202611231849"></script>
+<script src="hub-peers.js?v=202611231849"></script>
+<script src="hub-shared.js?v=202611231849"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611231803"></script>
-<script src="hub-say.js?v=202611231803"></script>
-<script src="hub-hand.js?v=202611231803"></script>
-<script src="hub-ink.js?v=202611231803"></script>
-<script src="hub-shelf.js?v=202611231803"></script>
+<script src="hub-store.js?v=202611231849"></script>
+<script src="hub-say.js?v=202611231849"></script>
+<script src="hub-hand.js?v=202611231849"></script>
+<script src="hub-ink.js?v=202611231849"></script>
+<script src="hub-shelf.js?v=202611231849"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611231803"></script>
-<script src="hub-sync.js?v=202611231803"></script>
-<script src="hub-notebook.js?v=202611231803"></script>
-<script src="hub-tracker.js?v=202611231803"></script>
-<script src="hub-feedback.js?v=202611231803"></script>
+<script src="assignment-defaults.js?v=202611231849"></script>
+<script src="hub-sync.js?v=202611231849"></script>
+<script src="hub-notebook.js?v=202611231849"></script>
+<script src="hub-tracker.js?v=202611231849"></script>
+<script src="hub-feedback.js?v=202611231849"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -885,7 +889,18 @@ function selfUnread(tr){
   if (!(fb && fb.status==='returned' && se && se.status==='turned_in')) return false;
   const a=+new Date(se.turnedInAt||0), b=+new Date(fb.returnedAt||0);
   if (!(a > b)) return false;
+  if (String(fb.selfReadAt||'') === String(a)) return false;   /* read by either tutor: saved with the record (23 Nov 2026) */
   try { return localStorage.getItem('chub:selfRead:'+tr.id) !== String(a); } catch (e) { return true; }
+}
+/* EVERY SELF-EVALUATION STILL TO READ (Ramy, 23 Nov 2026: "the trainer doesn't get notified that the self eval has been
+   submitted"). The row's amber "In, read it" went out the moment the trainee started their next TP, read or not, and it
+   was never counted at the top. This lists them all: the current TP's, and any filed with a past TP after its feedback
+   went back (lateSelf, store v299) that no tutor has opened yet. [{ n, cur }] */
+function selfToRead(tr){
+  const t=tr.tp||{}, out=[];
+  if (selfUnread(tr)) { const m=String((t.feedback.state&&t.feedback.state.f&&t.feedback.state.f.fTP)||t.feedback.label||'').match(/\d+/); out.push({ n:m?parseInt(m[0],10):0, cur:true }); }
+  Object.keys(t.history||{}).forEach(n=>{ const r=t.history[n]; if (r && r.lateSelf && !r.lateSelf.readAt && !out.some(x=>x.n===+n)) out.push({ n:+n }); });
+  return out.sort((a,b)=>a.n-b.n);
 }
 function tpState(tr){
   const fb=tr.tp&&tr.tp.feedback, plan=tr.tp&&tr.tp.plan, self=tr.tp&&tr.tp.selfeval;
@@ -1156,7 +1171,8 @@ function paintRows(){
       const waited = s.act && waitedFor(waitedSince(tr));
       const fbWord = fb && fb.status === 'returned' ? 'Returned' : s.act ? (fb && fb.status === 'draft' ? 'In progress' : 'Ready to write') : fb && fb.status === 'draft' ? 'Draft' : 'Not started';
       const fbTone = fb && fb.status === 'returned' ? 'ok' : s.act ? 'amber' : fb && fb.status === 'draft' ? 'in' : L.fb ? 'late' : 'faint';
-      return `<div class="trc trc-tp${s.act || s.read ? ' need' : ''}">
+      const filed = selfToRead(tr).filter(x => !x.cur);   /* a past TP's self-evaluation nobody has opened yet */
+      return `<div class="trc trc-tp${s.act || s.read || filed.length ? ' need' : ''}">
          ${twho(tr, n)}
          <div class="trc-cells">
          ${tcell('Plan', planIn ? (pn && pn < pf ? 'Material in' : 'In') : 'Not in yet', planIn ? 'ok' : L.plan ? 'late' : 'faint')}
@@ -1164,11 +1180,13 @@ function paintRows(){
          ${tcell('Your feedback', fbWord, fbTone, waited || '')}
          </div>
          <div class="trc-act">${tbtn(s.act ? 'Write feedback' : s.read ? 'Read it' : s.label === 'Returned' ? 'View feedback' : 'Open', s.act || s.read, '3_tutor_feedback.html?trainee=' + encodeURIComponent(tr.id))}</div>
+         ${filed.length ? `<div class="trc-late">${filed.map(x => `<span>The TP${x.n} self-evaluation is in.</span> <a class="trc-latebtn" href="4_feedback_returned.html?trainee=${encodeURIComponent(tr.id)}&tp=${x.n}">Read it</a>`).join(' ')}</div>` : ''}
        </div>`;
     };
     host.innerHTML = bar +
       (rows.length ? byGroup(rows, r => r.tr.group).map(([g, rs]) => { const k = rs.filter(r => r.s.act).length; markBehind(rs, ['plan', 'self', 'fb'], r => r.f.n);
-        return groupCard(g, rs.length, { cols: ['Plan', 'Self-evaluation', 'Your feedback'], waiting: k ? k + ' ready for your feedback' : '', door: g ? groupDoor(g) : '', teach: g ? teachLine(g) : '', rows: rs.map(tpRow).join('') }); }).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
+        const kr = rs.reduce((n2, r) => n2 + selfToRead(r.tr).length, 0);
+        return groupCard(g, rs.length, { cols: ['Plan', 'Self-evaluation', 'Your feedback'], waiting: [k ? k + ' ready for your feedback' : '', kr ? kr + (kr === 1 ? ' self-evaluation to read' : ' self-evaluations to read') : ''].filter(Boolean).join(' · '), door: g ? groupDoor(g) : '', teach: g ? teachLine(g) : '', rows: rs.map(tpRow).join('') }); }).join('') : '<div class="empty">Nothing waiting on this tab.</div>');
     return;
   }
 
@@ -1619,7 +1637,9 @@ function paintBrief(){
   /* nothing waiting on the tutor */
   const list = myPeople();
   const waiting = list.filter(t => tpState(t).act).length + assignmentRows(list).filter(r => r.s.act).length;
-  if (list.length && !waiting && !stage1DueList().length) chips.push('<span class="dv6-chip clear">\u2713 Nothing waiting on you</span>');
+  const toRead = list.reduce((n2, t) => n2 + selfToRead(t).length, 0);
+  if (list.length && !waiting && !toRead && !stage1DueList().length) chips.push('<span class="dv6-chip clear">\u2713 Nothing waiting on you</span>');
+  if (toRead) chips.push('<a class="dv6-chip wait" href="#rows"><b>' + toRead + '</b> ' + (toRead === 1 ? 'self-evaluation to read' : 'self-evaluations to read') + '</a>');
   /* something waiting: a mustard pill, Lite's color for "waiting for the
      tutor" (Ramy, 21 Oct 2026), down to the cards that list it */
   if (waiting) chips.push('<a class="dv6-chip wait" href="#queue"><b>' + waiting + '</b> waiting on you</a>');

@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611231803">
+<link rel="stylesheet" href="hub-tokens.css?v=202611231849">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -636,7 +636,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611231803">
+<link rel="stylesheet" href="hub-house.css?v=202611231849">
 </head>
 <body>
 <div class="board">
@@ -828,14 +828,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611231803"></script>
-<script src="hub-shared.js?v=202611231803"></script>
-<script src="hub-store.js?v=202611231803"></script>
-<script src="hub-say.js?v=202611231803"></script>
-<script src="hub-crit-learn.js?v=202611231803"></script>
-<script src="hub-crit-vocab.js?v=202611231803"></script>
-<script src="hub-sync.js?v=202611231803"></script>
-<script src="hub-notebook.js?v=202611231803"></script>
+<script src="hub-exchange.js?v=202611231849"></script>
+<script src="hub-shared.js?v=202611231849"></script>
+<script src="hub-store.js?v=202611231849"></script>
+<script src="hub-say.js?v=202611231849"></script>
+<script src="hub-crit-learn.js?v=202611231849"></script>
+<script src="hub-crit-vocab.js?v=202611231849"></script>
+<script src="hub-sync.js?v=202611231849"></script>
+<script src="hub-notebook.js?v=202611231849"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1241,6 +1241,9 @@ function addPoint(listId, html, _unused){
     const lp=lastPoint();
     const existing=lp.tags;
     const text=lp.text||'';
+    /* A POINT THAT HAS ITS CRITERION NEEDS NO SUGGESTION (Ramy, 23 Nov 2026: "Suggested, still there. I already chose
+       what I want to choose"): once the point being written carries a tag, nothing more is suggested for it. */
+    if(existing.length){ suggestRow.innerHTML=''; return; }
     /* codes the note tidier proposed come first, as suggestions like any other (tidyNotes) */
     const ai=(row.dataset.ai||'').split(',').filter(c=>c && VALID_CODES.has(c) && existing.indexOf(c)<0).map(c=>({code:c, learned:0, wording:0, ai:true}));
     /* when the tidier has suggested a code, that is the suggestion: the form's own keyword
@@ -2423,6 +2426,8 @@ window.HUB_REDRAW=function(){
           $('seen').insertAdjacentElement('afterend', box);
         }
         if(TRAINEE_ID){ try{ localStorage.setItem('chub:selfRead:'+TRAINEE_ID, String(sAt)); }catch(e){} }
+        /* and with the record, so it clears for the other tutor too (23 Nov 2026) */
+        if(TRAINEE_ID && String(rec.selfReadAt||'')!==String(sAt)){ try{ saveFeedbackRecord({ selfReadAt: sAt }); }catch(e){} }
       }
     }
   }catch(e){} }
