@@ -889,8 +889,8 @@
     }
     var said = al ? name + ' is already turned in, so it was not turned in again.'
         + (redrawn ? ' This page now shows the one your tutor has.' : '')
-        + ' What you typed on this device is kept.'
-        + (al[1] === 'plan' ? ' To change your plan, take it back first, or ask your tutor to give it back.' : '')
+        + ' What you typed on this device is saved as a separate copy. Ask your tutor if you need it.'
+        + (al[1] === 'plan' ? ' To change your plan, take it back first, or ask your tutor to give it back.' : ' Ask your tutor if it needs changing.')
       : /^changed:/.test(kinds) ? name + ' was changed on another device after this page opened. This page now shows the newest copy.'
       : redrawn ? name + ' was saved on another device after this page opened. This page now shows the saved copy.'
       : /celta5/.test(kinds) ? name + ' was submitted or signed on another device, so that part stays as it was saved there.'
