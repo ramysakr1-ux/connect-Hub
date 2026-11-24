@@ -897,11 +897,35 @@ window.hubWordingFilled = function(w){
    time it was saved are not the brief. The same brief always gives the same short key, so an attempt can say which
    version it answered, and the course keeps each version by its key (course kind briefs). */
 window.hubBriefCore = function(b){ b = b || {}; return { title: b.title || '', wordMin: b.wordMin || '', wordMax: b.wordMax || '', format: b.format || '', criteria: b.criteria || [], sections: b.sections || [] }; };
-window.hubBriefKey = function(b){
-  var s = JSON.stringify(window.hubBriefCore(b)), h = 5381;
+/* THE AI LINE IS NOT THE TASK (24 Nov 2026). One paragraph on AI was added at the end of "Before you start" in FOL,
+   LRT, LSRT and LFC that morning (assignment-defaults.js). It changes nothing a trainee answers, so the key is made
+   without it: a brief that has it gives the same key as the same brief without it, and every script handed in before
+   it still answers "the brief as it is now". The text stays in the brief and in the copy the course keeps.
+   A key saved on 24 Nov with the line inside is still recognized: hubBriefSame accepts either key. */
+window.HUB_BRIEF_AI_LINES = [
+  'AI: you can use it to plan, prepare and organize, and to check spelling and punctuation. You cannot use it to write or rewrite your work. Declare any use below, with a link to the conversation in English.'
+];
+function hubBriefHash_(core){
+  var s = JSON.stringify(core), h = 5381;
   for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
   return ('0000000' + h.toString(16)).slice(-8);
-};
+}
+function hubBriefNoAi_(core){
+  var lines = window.HUB_BRIEF_AI_LINES || [];
+  core.sections = (core.sections || []).map(function(x){
+    if (!x || typeof x.body !== 'string' || x.body.indexOf('AI:') < 0) return x;
+    var paras = x.body.split('\n\n'), kept = paras.filter(function(p){ return lines.indexOf(String(p).trim()) < 0; });
+    if (kept.length === paras.length) return x;
+    var y = {}; Object.keys(x).forEach(function(k){ y[k] = x[k]; }); y.body = kept.join('\n\n');
+    return y;
+  });
+  return core;
+}
+window.hubBriefKey = function(b){ return hubBriefHash_(hubBriefNoAi_(window.hubBriefCore(b))); };
+/* the key as it was made before 24 Nov 2026, AI line included */
+window.hubBriefKeyWithAi = function(b){ return hubBriefHash_(window.hubBriefCore(b)); };
+/* does this saved key name this brief? */
+window.hubBriefSame = function(h, b){ return !!h && (h === window.hubBriefKey(b) || h === window.hubBriefKeyWithAi(b)); };
 /* REFLECT BEFORE READING, ONE RULE FOR EVERY PAGE (Ramy, 19 Nov 2026: "Just want to make sure that he can't open his
    feedback"). The feedback page waited for the self-evaluation; the CELTA 5, "Bring in last TP's action points" on the
    self-evaluation and on the next plan, and the Lessons from the Classroom desk did not, and each showed a part of it.
@@ -2907,6 +2931,27 @@ window.hubHeadHTML = function (text, heads) {
     for (var i = 0; i < vals.length; i++) { var m = String(vals[i] || '').match(/\b[Tt]ext\s+([ABC])\b/); if (m) return m[1].toUpperCase(); }
     return '';
   }
+  /* THE LETTER THE TRAINEE WROTE UNDER "TEXT CHOSEN" (24 Nov 2026). chosen() takes the first "Text X" anywhere in
+     the work, which can be one they turned down ("Why not the other texts: Text A ..."). pick() reads one answer:
+     a lone letter first ("B", "B, because ..."), then the first "Text X" in it ("I chose Text B", "text b").
+     answered() finds the "Text chosen:" answer in a snapshot and picks from it. The new marking layout uses these;
+     the trainee's page and the old layout keep chosen(). */
+  function pick(t) {
+    t = String(t || '');
+    var m = t.match(/^[\s*_]*([abc])[\s*_]*(?=$|[.,;:()\u2014\u2013!-])/i) || t.match(/\btext\s+([abc])\b/i);
+    return m ? m[1].toUpperCase() : '';
+  }
+  function answered(snap) {
+    if (!snap) return '';
+    var vals = [];
+    if (snap.text) Object.keys(snap.text).sort(function (x, y) { return x - y; }).forEach(function (k) { vals.push(snap.text[k]); });
+    if (snap.fields) Object.keys(snap.fields).sort().forEach(function (k) { vals.push(snap.fields[k]); });
+    for (var i = 0; i < vals.length; i++) {
+      var m = String(vals[i] || '').match(/(?:^|\n)[ \t*_]*text chosen[ \t*_]*:([^\n]*)/i);
+      if (m) { var l = pick(m[1]); if (l) return l; }
+    }
+    return '';
+  }
   function open(letter) {
     if (!CUR) return;
     var texts = of(CUR.a); if (!texts.length) return;
@@ -2952,7 +2997,7 @@ window.hubHeadHTML = function (text, heads) {
     var w = document.getElementById('hubTexts'); if (w && !w.hidden && !t.closest('.tx-sheet')) close();
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
-  window.hubTexts = { of: of, chosen: chosen, link: link, open: open, close: close };
+  window.hubTexts = { of: of, chosen: chosen, answered: answered, pick: pick, link: link, open: open, close: close };
 })();
 
 /* ---- ONE MIC THAT FOLLOWS THE CURSOR (Ramy, 18 Oct 2026: "one mic that follows

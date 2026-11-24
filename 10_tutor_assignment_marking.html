@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611241809">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241950">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -327,7 +327,8 @@
      be pressed is a button and looks pressable; one that cannot is plain. The More menu holds what is used now and
      then. A sheet is the one box everything here opens in. */
   .mkn-door{display:inline-flex; align-items:baseline; gap:10px; min-height:40px; padding:8px 14px; border:1.5px solid var(--a-forest); border-radius:var(--r-control); background:var(--paper); color:var(--ink); font:700 0.9rem 'Karla',sans-serif; cursor:pointer; white-space:nowrap;}
-  .mkn-door small{font-size:0.78rem; font-weight:500; color:var(--grey);}
+  /* the chosen text's link in the work: on a phone its tap target is 40px or more, and the line looks the same */
+  @media (max-width:1079px){ body.mkn #mkWork a.mkn-txt{padding:12px 8px; margin:0 -8px; -webkit-tap-highlight-color:transparent;} body.mkn #mkWork .hl a.mkn-txt{padding:14px 8px;} }
   .mkn-door:hover{background:color-mix(in oklab, var(--a-forest) 6%, var(--paper)) !important; box-shadow:none !important;}
   .mkn-pill{display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:0 14px; border:1.5px solid transparent; border-radius:999px; background:var(--a-stone); color:var(--ink); font:700 0.86rem 'Karla',sans-serif; white-space:nowrap;}
   .mkn-pill svg{flex:none;}
@@ -524,7 +525,7 @@
   @media (prefers-reduced-motion:reduce){ body.mkn .mkn-panel, body.mkn .mkn-panel.open{transition:none;} }
   @media print{ #mknFoot, #mknScrim, .mkn-phead{display:none !important;} body.mkn .mkn-panel{position:static !important; transform:none !important; visibility:visible !important; max-height:none !important; box-shadow:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611241809">
+<link rel="stylesheet" href="hub-house.css?v=202611241950">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -533,18 +534,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611241809"></script>
-<script src="assignment-history.js?v=202611241809"></script>
-<script src="hub-exchange.js?v=202611241809"></script>
-<script src="hub-docx.js?v=202611241809"></script>
-<script src="hub-marking.js?v=202611241809"></script>
-<script src="hub-due.js?v=202611241809"></script>
-<script src="hub-shared.js?v=202611241809"></script>
-<script src="hub-store.js?v=202611241809"></script>
-<script src="hub-say.js?v=202611241809"></script>
-<script src="hub-sync.js?v=202611241809"></script>
-<script src="hub-notebook.js?v=202611241809"></script>
-<script src="fol-interview.js?v=202611241809"></script>
+<script src="assignment-defaults.js?v=202611241950"></script>
+<script src="assignment-history.js?v=202611241950"></script>
+<script src="hub-exchange.js?v=202611241950"></script>
+<script src="hub-docx.js?v=202611241950"></script>
+<script src="hub-marking.js?v=202611241950"></script>
+<script src="hub-due.js?v=202611241950"></script>
+<script src="hub-shared.js?v=202611241950"></script>
+<script src="hub-store.js?v=202611241950"></script>
+<script src="hub-say.js?v=202611241950"></script>
+<script src="hub-sync.js?v=202611241950"></script>
+<script src="hub-notebook.js?v=202611241950"></script>
+<script src="fol-interview.js?v=202611241950"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -825,7 +826,7 @@ function briefLine(a, sub){
     + ((b.criteria || []).length ? '<h4>Criteria</h4><ul>' + b.criteria.map(c => '<li>' + esc(c.text || c) + '</li>').join('') + '</ul>' : '') + '</div>';
   const one = (label, rec, B) => {
     if (!rec || !rec.h) return '<p>' + label + ': submitted before Lite kept brief versions, so the brief shown is the current one.</p>';
-    if (rec.h === now) return '<p>' + label + ': answered the brief as it is now.</p>';
+    if (rec.h === now || (window.hubBriefSame && hubBriefSame(rec.h, a))) return '<p>' + label + ': answered the brief as it is now.</p>';
     const v = (B || {})[rec.h];
     return '<p>' + label + ': answered an earlier version of the brief' + (v && v.at ? ', saved ' + esc(when(v.at)) : '') + '.</p>'
       + (v && v.brief ? '<details><summary>Open that version</summary>' + show(v.brief) + '</details>' : '<p class="note">That version was not kept.</p>');
@@ -1513,7 +1514,7 @@ function mknBarHTML(st){
   const items = mknMoreHTML(st);
   const more = items ? `<div class="mkn-morewrap"><button type="button" class="mkn-more" id="mknMore" aria-haspopup="true" aria-expanded="false" aria-controls="mknMenu">More</button><div class="mkn-menu" id="mknMenu" role="menu" aria-label="More" hidden>${items}</div></div>` : '';
   return `<header class="mkn-bar" id="mknBar">
-    <a class="mkn-all" id="mknAll" href="5_tutor_dashboard.html#assignments">All ${esc(NAMES[CURRENT] || CURRENT.toUpperCase())}</a>
+    <a class="mkn-all" id="mknAll" href="${esc(MKN_BACK)}">Back</a>
     <span class="mkn-avi" aria-hidden="true">${esc(window.hubInitials ? hubInitials(name) : name.slice(0, 2).toUpperCase())}</span>
     <div class="mkn-who"><h1 class="mkn-name">${esc(name)}</h1><p class="mkn-what">${what}</p></div>
     ${nav}<span class="mkn-gap"></span>${mknStepsHTML(st)}${more}${ret}${mknProgHTML(st)}
@@ -1682,6 +1683,22 @@ document.addEventListener('keydown', e => {
   const t = e.target; if (t && t.matches && t.matches('#mkPanel textarea[data-crit-comment]')) { const i = MKN_OPEN; mknCommentClose(i); const l = document.querySelector(`#mkPanel [data-mkncomment="${i}"]`); if (l) l.focus(); }
 });
 
+/* BACK (Ramy, 24 Nov 2026: "What does that mean, all LSRT? Why not just go back?"). The door at the top left goes back to
+   the page the tutor opened the marking from (the dashboard's Assignments tab, the trainee tracker), kept for this tab, so
+   moving between trainees with the arrows still goes back to where they started. Opened from a link or a bookmark, it goes
+   to the dashboard's Assignments tab. The dashboard comes back on its Assignments tab (a referrer carries no #). */
+const MKN_BACK = (function(){
+  const K = 'mkn:back', HOME = '5_tutor_dashboard.html#assignments';
+  try {
+    const r = document.referrer ? new URL(document.referrer) : null;
+    if (r && r.origin === location.origin) {
+      const page = r.pathname.split('/').pop() || '';
+      if (page && !/^10_tutor_assignment_marking\.html$/.test(page)) sessionStorage.setItem(K, /^5_tutor_dashboard\.html$/.test(page) ? HOME : page + r.search);
+    }
+    return sessionStorage.getItem(K) || HOME;
+  } catch (e) { return HOME; }
+})();
+
 /* how tall the two rows at the top are, for everything that sticks under them */
 function mknSetTop(){
   const bar = $('mknBar'), row = $('mknRow'); if (!bar) return;
@@ -1827,7 +1844,8 @@ function mknCap(w){ w = String(w || ''); return w.charAt(0).toUpperCase() + w.sl
 function mknChosenText(st){
   if (!window.hubTexts) return null;
   const texts = hubTexts.of(st.a); if (!texts.length) return null;
-  const ch = hubTexts.chosen(st.snap);
+  /* the letter written under "Text chosen" first; the first mention anywhere only when that gives none */
+  const ch = (hubTexts.answered && hubTexts.answered(st.snap)) || hubTexts.chosen(st.snap);
   return texts.filter(x => x.id === ch)[0] || null;
 }
 /* what the trainee attached: one link and any files */
@@ -1859,6 +1877,13 @@ function mknOverlap(sub){
 /* WHAT LITE'S OWN CHECKS FLAG (24 Nov 2026): sources, phonemic script, materials missing, the declaration, the same
    materials used twice, an older brief. Only what is flagged; the word count has its own pill and is not said
    twice. A requirement, never a mark: the list is for the tutor to read. */
+/* the short words a flagged check has on the pill, when it is the only one (the sheet keeps the full label) */
+function mknReqShort(x){
+  const l = String((x && x.label) || '');
+  if (/^Sources in the text:/.test(l)) return 'Sources missing from the bibliography';
+  if (/^AI declared/.test(l)) return 'AI record not complete';
+  return l;
+}
 function mknRequirements(st){
   const out = [], a = st.a, sub = st.sub;
   if (!mknHasWork(st.snap)) return out;
@@ -1866,7 +1891,7 @@ function mknRequirements(st){
   const twice = mknOverlap(sub);
   if (twice.length) out.push({ label: 'The same materials used twice', detail: twice.join('. ') + '.', html: 'Handbook 9.2.1: materials prepared for the language related task and the language skills task <b>should</b> not be used as the basis for assessed TP lessons, or vice versa. A recommendation. The call is yours.' });
   const rec = st.round === 'sub2' ? sub.brief2 : sub.brief1;
-  try { if (rec && rec.h && window.hubBriefKey && rec.h !== hubBriefKey(a)) out.push({ label: 'An earlier version of the brief', detail: 'This work answers the brief as it was before it was last changed.', brief: true }); } catch (e) {}
+  try { if (rec && rec.h && window.hubBriefKey && !(window.hubBriefSame ? hubBriefSame(rec.h, a) : rec.h === hubBriefKey(a))) out.push({ label: 'An earlier version of the brief', detail: 'This work answers the brief as it was before it was last changed.', brief: true }); } catch (e) {}
   try { if (a.trap && window.hubTrapFound && hubTrapFound(a.trap, sub)) out.push({ label: 'The hidden word is used in this work', detail: 'The trainee is not told.' }); } catch (e) {}
   return out;
 }
@@ -1874,10 +1899,10 @@ function mknRequirements(st){
 /* ---- THE DOORS (24 Nov 2026) ---- */
 function mknDoorsHTML(st){
   if (st.sub.stage === 'draft') return '';
-  let h = '<button type="button" class="mkn-door" id="mknGuide"><b>Marking guidelines</b><small>tutors only</small></button>';
-  const tx = mknChosenText(st);
-  if (tx) h += `<button type="button" class="mkn-door" id="mknText"><b>Text ${esc(tx.id)}</b><small>the text ${esc(mknThey(st))} chose</small></button>`;
-  if (mknMaterials(st.snap).any) h += `<button type="button" class="mkn-door" id="mknTasks"><b>${esc(mknCap(st.pro.poss))} tasks and answer keys</b><small>attached</small></button>`;
+  /* A CALMER ROW (24 Nov 2026, the course tutor): the doors are their names alone, and the chosen text has no door of
+     its own; it opens from "Text chosen" in the work. */
+  let h = '<button type="button" class="mkn-door" id="mknGuide"><b>Marking guidelines</b></button>';
+  if (mknMaterials(st.snap).any) h += `<button type="button" class="mkn-door" id="mknTasks"><b>${esc(mknCap(st.pro.poss))} tasks and answer keys</b></button>`;
   return h;
 }
 
@@ -1890,16 +1915,18 @@ function mknPillsHTML(st){
     const m1 = sub.criteriaMarks.sub1 || [], met = st.crit.filter((c, i) => m1[i] === true).length, not = st.crit.filter((c, i) => m1[i] === false).length;
     if (met + not) out.push(pill('First round: ' + met + ' met, ' + not + ' not met', 'is-plain'));
   }
-  const ti = mknTurnedIn(a, sub, st.round);
-  if (ti) out.push(pill(esc(ti.text), ti.late ? 'is-amber' : '', !ti.late));
-  const w = mknWords(a, st.snap);
-  if (w) out.push(pill(w.n + ' words · ' + w.state, w.state === 'in range' ? '' : 'is-amber', w.state === 'in range'));
+  /* ONE PILL FOR WHEN AND HOW LONG (24 Nov 2026): "Turned in 23 Nov · 2 days early · 872 words", with ", under" or
+     ", over" when the count is out of range; mustard when it was late or the count is out of range */
+  const ti = mknTurnedIn(a, sub, st.round), w = mknWords(a, st.snap);
+  const wout = !!w && w.state !== 'in range', wtxt = w ? w.n + (w.n === 1 ? ' word' : ' words') + (wout ? ', ' + w.state : '') : '';
+  if (ti || w) out.push(`<span class="mkn-pill${(ti && ti.late) || wout ? ' is-amber' : ''}" id="mknWhen">${esc([ti ? ti.text : '', wtxt].filter(Boolean).join(' · '))}</span>`);
   /* own work: the check runs only when a tutor presses this pill (24 Nov 2026) */
   out.push(mknOwnPillHTML(st));
   const d = mknDecl(a, st.snap);
-  if (d && d.has && (d.ai === 'yes' || d.ai === 'no')) out.push(`<button type="button" class="mkn-pill" id="mknDecl">${d.ai === 'no' ? MKN_CHECK + 'Declared: did not use AI' : 'Declared: used AI'}</button>`);
+  if (d && d.has && (d.ai === 'yes' || d.ai === 'no')) out.push(`<button type="button" class="mkn-pill" id="mknDecl">${d.ai === 'no' ? MKN_CHECK + 'Did not use AI' : 'Used AI'}</button>`);
+  /* THINGS TO CHECK (24 Nov 2026): one thing flagged is said in its own words; two or more are counted */
   const req = mknRequirements(st);
-  if (req.length) out.push(`<button type="button" class="mkn-pill is-amber" id="mknReq">Requirements · ${req.length} to look at</button>`);
+  if (req.length) out.push(`<button type="button" class="mkn-pill is-amber" id="mknReq">${esc(req.length === 1 ? mknReqShort(req[0]) : req.length + ' things to check')}</button>`);
   /* THE 1ST MARKER IS WHOEVER PRESSES THIS. Opening the page never sets it. Any tutor may take a script, and any
      tutor may change the name, while the script is with the tutors (the store keeps a tutor's write only then). */
   const first = String((sub.markers || {}).first || '').replace(/\s+/g, ' ').trim(), can = st.marking || sub.stage === 'closed';
@@ -1990,8 +2017,9 @@ function mknGuideSheet(){
     foot: 'Handbook 9.2.3: a proportion of each assignment <b>must</b> be double-marked (3 up to 9 trainees, 4 up to 16, 5 up to 24); double-marked ones <b>should</b> be initialled by both tutors.' });
 }
 /* THE TEXT THEY CHOSE: that text and no other. No tabs: the other texts stay with the brief. */
-function mknTextSheet(){
-  const st = mknState(); if (!st) return; const tx = mknChosenText(st); if (!tx) return;
+function mknTextSheet(letter){
+  const st = mknState(); if (!st) return;
+  const tx = (letter && window.hubTexts ? hubTexts.of(st.a).filter(x => x.id === letter)[0] : null) || mknChosenText(st); if (!tx) return;
   const body = esc(tx.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').split(/\n{2,}/).map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('');
   mknSheet({ id: 'text', cap: 'The text ' + esc(mknThey(st)) + ' chose', title: 'Text ' + esc(tx.id) + (tx.title ? ' — ' + esc(tx.title) : ''), html: body,
     foot: 'Only the text ' + esc(mknThey(st)) + ' chose is shown. The others stay with the brief.' });
@@ -2018,7 +2046,7 @@ function mknDeclSheet(){
 function mknReqSheet(){
   const st = mknState(); if (!st) return; const req = mknRequirements(st); if (!req.length) return;
   const h = '<ul class="mkn-list">' + req.map(x => `<li><b>${esc(x.label)}</b>${x.detail ? `<span>${esc(x.detail)}</span>` : ''}${x.html ? `<span>${x.html}</span>` : ''}${x.brief ? '<div class="mk-brief" id="briefLine"></div>' : ''}</li>`).join('') + '</ul>';
-  mknSheet({ id: 'req', narrow: true, title: 'Requirements to look at', html: h, foot: 'Requirements, not criteria. They say whether the work is ready to mark, not whether it passes.' });
+  mknSheet({ id: 'req', narrow: true, title: 'Things to check', html: h, foot: 'Requirements, not criteria. They say whether the work is ready to mark, not whether it passes.' });
   if ($('briefLine')) { briefLine(st.a, st.sub); const hd = $('briefLine').querySelector('h2'); if (hd) hd.remove(); }
 }
 
@@ -2033,7 +2061,7 @@ function mknMoreHTML(st){
      preview of a return, no bringing marks back */
   const marking = st.marking && !(st.s2 && st.s2.view);
   /* on a phone the door back to the list has no room in the bar, so it is the menu's first item (24 Nov 2026) */
-  groups[0].push(`<a role="menuitem" class="mkn-mi mkn-onphone" id="mknAll2" href="5_tutor_dashboard.html#assignments"><b>All ${esc(NAMES[CURRENT] || CURRENT.toUpperCase())}</b><span>Back to the list</span></a>`);
+  groups[0].push(`<a role="menuitem" class="mkn-mi mkn-onphone" id="mknAll2" href="${esc(MKN_BACK)}"><b>Back</b><span>To where you opened this</span></a>`);
   if (marking) {
     groups[0].push(row('data-mknmenu="unmarked"', 'Return unmarked', 'Send it straight back with a reason'));
     groups[0].push(row('data-mknmenu="preview"', 'Preview as ' + name, 'See what ' + they + ' will get'));
@@ -2101,6 +2129,15 @@ function mknBringHTML(st){
       <p class="mkn-sh-foot" id="xDone" style="display:none;"></p>
     </div></div></div>`;
 }
+/* THE CHOSEN TEXT FROM THE WORK (24 Nov 2026): the one link under "Text chosen" (hub-marking.js, mknOneTextLink)
+   opens the text in the page's own sheet. Caught before hub-shared.js's reader, which the new layout does not show. */
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('mkn')) return;
+  const l = e.target && e.target.closest && e.target.closest('#mkWork a.txtlink'); if (!l) return;
+  e.preventDefault(); e.stopPropagation();
+  try { l.focus({ preventScroll: true }); } catch (x) {}  /* Safari does not focus a link it clicks: Close brings focus back here */
+  mknTextSheet(l.getAttribute('data-text') || '');
+}, true);
 function mknBringOpen(){ const b = $('mknBring'); if (!b) return; MKN_BRING = true; MKN_FOCUS = document.activeElement; b.hidden = false; const t = $('xText'); if (t) t.focus(); }
 
 document.addEventListener('click', e => {
@@ -2125,7 +2162,6 @@ document.addEventListener('click', e => {
   if ($('mknMenu') && !$('mknMenu').hidden && !t.closest('#mknMenu')) mknMenuShow(false);
   /* the doors and the pills */
   if (t.closest('#mknGuide')) { mknGuideSheet(); return; }
-  if (t.closest('#mknText')) { mknTextSheet(); return; }
   if (t.closest('#mknTasks')) { mknTasksSheet(); return; }
   if (t.closest('#mknDecl')) { mknDeclSheet(); return; }
   if (t.closest('#mknReq')) { mknReqSheet(); return; }

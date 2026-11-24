@@ -660,6 +660,39 @@
     var snap = CTX.sub[CTX.round] || CTX.sub.sub2 || CTX.sub.sub1;
     hubTexts.link(document.getElementById('mkWork'), '.mloc .readonly', CTX.a, CTX.key, hubTexts.chosen(snap), 'Read the text they chose');
   }
+  /* ONE LINK TO THE CHOSEN TEXT (24 Nov 2026, the course tutor). In the new layout the text has no door of its own:
+     the letter under "Text chosen" is the one link, and it opens the page's own sheet (the page listens for
+     a.mkn-txt). Every other mention of a text, and the "Text chosen" head itself, is plain words again. When the
+     letter is not there to link, the head keeps the link, so the text can still be opened. */
+  function mknOneTextLink() {
+    var work = document.getElementById('mkWork'); if (!work) return;
+    var all = [].slice.call(work.querySelectorAll('a.txtlink'));
+    var snap = CTX.sub[CTX.round] || CTX.sub.sub2 || CTX.sub.sub1, ids = textsOf().map(function (x) { return x.id; });
+    var keep = null;
+    /* the letter is the one written under "Text chosen" (the words on the screen after the head, up to the line's end);
+       only when that says no letter is the snapshot's answer, then the first mention anywhere, used */
+    [].some.call(work.querySelectorAll('.mloc .readonly'), function (box) {
+      var head = [].filter.call(box.querySelectorAll('.hl'), function (h) { return /^\s*text chosen/i.test(h.textContent); })[0]; if (!head) return false;
+      var rest = '', n = head.nextSibling;
+      while (n && !(n.nodeType === 1 && n.nodeName === 'BR')) { rest += n.textContent || ''; n = n.nextSibling; }
+      var ch = hubTexts.pick(rest) || hubTexts.answered(snap) || hubTexts.chosen(snap);
+      if (!ch || ids.indexOf(ch) < 0) return false;
+      n = head.nextSibling;
+      while (n && n.nodeType === 3 && !n.nodeValue.trim()) n = n.nextSibling;
+      if (n && n.nodeType === 1 && n.matches('a.txtlink') && n.getAttribute('data-text') === ch) keep = n;
+      else {
+        keep = head.querySelector('a.txtlink');
+        if (!keep) { keep = document.createElement('a'); keep.href = '#'; keep.className = 'txtlink'; while (head.firstChild) keep.appendChild(head.firstChild); head.appendChild(keep); all.push(keep); }
+        keep.setAttribute('data-text', ch);
+      }
+      return true;
+    });
+    all.forEach(function (l) {
+      if (l === keep) return;
+      var par = l.parentNode; while (l.firstChild) par.insertBefore(l.firstChild, l); par.removeChild(l);
+    });
+    if (keep) { keep.classList.add('mkn-txt'); keep.id = 'mknTextLink'; keep.title = 'Read the text they chose'; }
+  }
 
   /* ---- THE FRONT PAGE THAT STAYS WITH YOU (Ramy, 18 Oct 2026: "as you scroll
      down, the criteria stays with you... the front page is like still there").
@@ -858,6 +891,7 @@
         document.body.classList.remove('mk-nohelp');
         paintMargin();
         linkTexts();
+        mknOneTextLink();
         /* what the page draws on the work after the comments (24 Nov 2026: the passages own work found) */
         if (typeof ctx.paintMore === 'function') { try { ctx.paintMore(); } catch (e) {} }
         if (window.hubMic) hubMic.bar('#meText, #comment, [data-crit-comment], #mknSecond', { under: true });
@@ -1059,7 +1093,11 @@
       'body.mkn .mc-acts{float:none; display:flex; align-items:center; gap:6px; margin:0;} body.mkn .mc-acts i{font-style:normal; color:var(--grey);}',
       'body.mkn .mc-acts button{min-height:40px; padding:0 2px; font:700 0.82rem Karla,sans-serif; color:var(--a-forest); text-decoration:underline; text-decoration-color:currentColor; text-underline-offset:3px;}',
       'body.mkn mark.mc{background:color-mix(in oklab, var(--grey) 16%, transparent); border-bottom-color:var(--grey);}',
-      'body.mkn mark.mc.mc-good, body.mkn mark.mc-tick{background:color-mix(in oklab, var(--a-green) 18%, transparent); border-bottom-color:var(--a-green);}',
+      'body.mkn mark.mc.mc-good{background:color-mix(in oklab, var(--a-green) 18%, transparent); border-bottom-color:var(--a-green);}',
+      /* A TICK IS A TICK (Ramy, 24 Nov 2026: "can we not highlight when it's only good"): ticked words keep their place
+         for a click (another tick, or the minus) but carry no colour; the green tick after them is the mark. A Good
+         comment with words keeps its highlight. */
+      'body.mkn mark.mc-tick{background:none !important; border-bottom:0 !important; box-shadow:none !important; color:inherit;}',
       'body.mkn mark.mc.mc-fix{background:color-mix(in oklab, var(--a-red) 14%, transparent); border-bottom-color:var(--a-red);}',
       'body.mkn .mloc.has-mc .mgut{margin:10px 0 0;}',
       /* the first round beside a resubmission, faded; a passage own work found, mustard with a dotted line (24 Nov 2026) */
