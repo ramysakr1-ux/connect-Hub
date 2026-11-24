@@ -5041,9 +5041,10 @@ function privateFolderOnce_(course, key, name) {
        Anything else a trainee sends for an assignment that is with the tutor or finished is not taken.
      - a tutor marks while it is submitted or resubmitted, returns it (closed, resubmission_needed, returned_unmarked),
        or edits a finished one; an assignment open to the trainee is the trainee's and is not taken from a tutor.
+       A second marker's signature already stored is never dropped by such a write (keepSigned_).
    An assignment the store does not have yet (Assignment 5 being set, a first save) is taken as sent. One missing from
    what is sent is kept, except Assignment 5 withdrawn by a tutor before anything was submitted for it. Read, merge and write under the lock, so two saves cannot cross. */
-var ASG_TUTOR_PARTS_ = ['markers', 'criteriaMarks', 'criteriaComments', 'feedback', 'margin', 'flags'];
+var ASG_TUTOR_PARTS_ = ['markers', 'criteriaMarks', 'criteriaComments', 'feedback', 'margin', 'flags', 'second', 'marked1At', 'marked2At', 'assigned', 'assignedAt', 'assignedAfter'];
 var ASG_OPEN_ = { draft: 1, resubmission_needed: 1, returned_unmarked: 1 };
 function mergeAssignments_(was, now, who) {
   if (!now || typeof now !== 'object') return now;
@@ -5065,9 +5066,33 @@ function mergeAssignments_(was, now, who) {
       } else out[k] = S;
     } else {
       var marking = (s === 'submitted' || s === 'resubmitted') && (i === s || i === 'closed' || i === 'resubmission_needed' || i === 'returned_unmarked');
-      out[k] = (marking || (s === 'closed' && i === 'closed')) ? I : S;
+      /* THE TUTOR'S COPY MUST BE OF THE SUBMISSION THE STORE HOLDS (v302, 24 Nov 2026). Found in a rehearsal the night before
+         C/21's LSRT deadline: a tutor returned an assignment and left the tab open, the trainee resubmitted, and anything
+         typed in that old tab sent its copy (Resubmission needed, no resubmission in it) and the store took it: the
+         resubmission was gone. A real return, a mark or a return unmarked always comes from a page that loaded the
+         submission being marked, so it carries the same time stamp; a copy that does not is an old one and is not taken. */
+      var sameRound = s === 'resubmitted' || (s === 'closed' && S.sub2)
+        ? String(I.sub2At || '') === String(S.sub2At || '')
+        : String(I.sub1At || '') === String(S.sub1At || '');
+      out[k] = ((marking || (s === 'closed' && i === 'closed')) && sameRound) ? keepSigned_(S, I) : S;
     }
   }
+  return out;
+}
+/* A SECOND MARKER'S SIGNATURE SURVIVES THE FIRST MARKER'S RETURN (v301, 24 Nov 2026). The order on a course is: the
+   1st marker marks, the 2nd marker signs, the 1st marker returns. The 1st marker's page was loaded before the signature,
+   so its copy has none, and taking that copy whole would wipe the signature, the 2nd marker's comment and the name the
+   tracker reads. A stored signed round (signed, or done in the older shape) is kept when the copy sent has no signed
+   record for that round, and so is the 2nd marker's name. A tutor's copy that carries its own signed record replaces it. */
+function keepSigned_(S, I) {
+  var sgn = function(x){ return !!(x && (x.signed || x.done)); };
+  var ss = S.second, need = false, r;
+  if (ss && typeof ss === 'object') for (r in ss) if (sgn(ss[r]) && !sgn((I.second || {})[r])) need = true;
+  var nameLost = S.markers && S.markers.second && !(I.markers && I.markers.second);
+  if (!need && !nameLost) return I;
+  var out = {}, f; for (f in I) out[f] = I[f];
+  if (need) { var sec = {}; for (r in (I.second || {})) sec[r] = I.second[r]; for (r in ss) if (sgn(ss[r]) && !sgn(sec[r])) sec[r] = ss[r]; out.second = sec; }
+  if (nameLost) { var m = {}; for (f in (I.markers || {})) m[f] = I.markers[f]; m.second = S.markers.second; m.doubleMarked = true; out.markers = m; }
   return out;
 }
 function putAssignments_(courseId, token, data, who) {
