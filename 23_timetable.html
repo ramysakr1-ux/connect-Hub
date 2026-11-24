@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611242313">
+<link rel="stylesheet" href="hub-tokens.css?v=202611242330">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -874,27 +874,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611242313">
+<link rel="stylesheet" href="hub-house.css?v=202611242330">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611242313"></script>
-<script src="hub-tracker.js?v=202611242313"></script>
-<script src="hub-rotation.js?v=202611242313"></script>
-<script src="hub-xlsx.js?v=202611242313"></script>
-<script src="hub-docx.js?v=202611242313"></script>
-<script src="hub-timetable-parse.js?v=202611242313"></script>
-<script src="assignment-defaults.js?v=202611242313"></script>
-<script src="hub-shared.js?v=202611242313"></script>
+<script src="hub-due.js?v=202611242330"></script>
+<script src="hub-tracker.js?v=202611242330"></script>
+<script src="hub-rotation.js?v=202611242330"></script>
+<script src="hub-xlsx.js?v=202611242330"></script>
+<script src="hub-docx.js?v=202611242330"></script>
+<script src="hub-timetable-parse.js?v=202611242330"></script>
+<script src="assignment-defaults.js?v=202611242330"></script>
+<script src="hub-shared.js?v=202611242330"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611242313"></script>
-<script src="hub-say.js?v=202611242313"></script>
-<script src="hub-sync.js?v=202611242313"></script>
-<script src="hub-notebook.js?v=202611242313"></script>
+<script src="hub-store.js?v=202611242330"></script>
+<script src="hub-say.js?v=202611242330"></script>
+<script src="hub-sync.js?v=202611242330"></script>
+<script src="hub-notebook.js?v=202611242330"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -3588,6 +3588,16 @@ let BOOK = null, BOOK_AT = 0;
    set, so every sheet made before keeps its places). */
 const placeLen = x => [10, 15, 20, 30, 45, 60].indexOf(+x.pl) >= 0 ? +x.pl : 15;
 const isSheet = x => x && /consultation|tutorial/i.test(x.t || '') && toMin(x.e) - toMin(x.s) >= placeLen(x);
+/* A TUTORIAL FOR SOME LETTERS ONLY (Ramy, 24 Nov 2026: "lock booking to their letters too"). The letters at the end of the
+   name, written any of the usual ways ("· ABC", "- A&B", "A and B"), say who books it; a trainee with another letter sees
+   whose it is and where theirs is, and no Book button. Tutors and the assessor see every sheet as before. */
+const setLettersOf = t => { const m = /[·\-–—:]\s*([A-F](?:\s*(?:&|,|and|\+)?\s*[A-F])+)\s*$/.exec(String(t || '')); return m ? m[1].replace(/and/g, '').replace(/[^A-F]/g, '') : ''; };
+const myLetterNow = () => { if (!IS_TRAINEE || !window.hubLetterOf) return ''; const me = rec('hub:me') || {}; try { return hubLetterOf(me.token, me.name) || ''; } catch (e) { return ''; } };
+const notMine = x => { const L = setLettersOf(x && x.t), me = myLetterNow(); return !!(IS_TRAINEE && L && me && L.indexOf(me) < 0); };
+const lettersSaid = L => L.length === 1 ? L : L.slice(0, -1).split('').join(', ') + ' and ' + L.slice(-1);
+const mineElsewhere = (x) => { const me = myLetterNow(); if (!me) return null; const base = String(x.t || '').replace(/[·\-–—:]\s*[A-F][A-F&,+\sand]*$/, '').trim().toLowerCase();
+  for (const d of (TT.days || [])) { if (!d || d.date < TODAY) continue; for (const s of (d.sessions || [])) { if (s === x || !isSheet(s)) continue; const L = setLettersOf(s.t);
+    if (L && L.indexOf(me) >= 0 && String(s.t || '').replace(/[·\-–—:]\s*[A-F][A-F&,+\sand]*$/, '').trim().toLowerCase() === base) return { day: d, x: s }; } } return null; };
 const placesOf = x => window.hubSheetSplit ? hubSheetSplit(SETTINGS, x).total : Math.max(1, Math.floor((toMin(x.e) - toMin(x.s)) / placeLen(x)));
 const placeAt = (x, n) => window.hubSheetPlace ? hubSheetPlace(SETTINGS, x, n).at : toHM(toMin(x.s) + (n - 1) * placeLen(x));
 /* a both-tutors tutorial (11 Nov 2026): the places a trainee can book are their own tutor's list; anyone else sees them all */
@@ -3609,6 +3619,7 @@ function bookLine(day, x){
   if (!isSheet(x) || !BOOK) return '';
   const sh = sheetOf(day, x), mine = placesFor(x, day.date), N = mine.length, used = sh.taken.filter(n => mine.indexOf(n) !== -1).length;
   if (sh.mine.length) return `<div class="bk mine">Your place · ${esc(hubClock(placeAt(x, sh.mine[0].n)))}</div>`;
+  if (notMine(x)) return `<div class="bk full">For ${esc(lettersSaid(setLettersOf(x.t)))}</div>`;
   return `<div class="bk${used >= N ? ' full' : ''}">${used >= N ? 'Full' : (N - used) + ' of ' + N + ' open'}</div>`;
 }
 function sheetHTML(day, x){
@@ -3637,7 +3648,8 @@ function openBooking(date, id){
   const el = pop('ttpop'), sh = sheetOf(day, x), isTut = /tutorial/i.test(x.t || '');
   const tview = !!(window.HubStore && HubStore.isTemplate && HubStore.isTemplate());
   const demo = !!SETTINGS.demoToday || tview;
-  const can = IS_TRAINEE && !demo && !sh.mine.length && placesFor(x, date).some(n => sh.taken.indexOf(n) === -1) && date >= TODAY;
+  const other = notMine(x), there = other ? mineElsewhere(x) : null;
+  const can = IS_TRAINEE && !demo && !other && !sh.mine.length && placesFor(x, date).some(n => sh.taken.indexOf(n) === -1) && date >= TODAY;
   el.innerHTML = sheetHTML(day, x) + (IS_TRAINEE ? (sh.mine.length
       ? `<div class="acts"><button type="button" class="btn quiet" id="bkFree">Cancel my place</button><button type="button" class="btn" id="bkOk">Done</button></div>`
       : can ? `${isTut ? '' : `<label>What is it about?<select id="bkAsg"><option value="">Something else</option>${['fol', 'lrt', 'lsrt', 'lfc'].map(k => `<option value="${k}">${asgShort(k)}</option>`).join('')}</select></label>`}
@@ -3646,6 +3658,7 @@ function openBooking(date, id){
           if (isTut && window.hubSheetSplit && hubSheetSplit(SETTINGS, x).split) return 'Book the next open place.';
           return isTut ? (own ? 'Tutorials are with your tutor, ' + esc(own) + '.' : 'Tutorials are with your own tutor.') : 'Before you submit an assignment, any tutor; after, your own tutor' + (own ? ', ' + esc(own) : '') + ', only.'; })()}</p>
         <div class="acts"><button type="button" class="btn quiet" id="bkOk">Close</button><button type="button" class="btn" id="bkGo">Book the next place</button></div><p class="bkmsg" id="bkMsg"></p>`
+      : other ? `<p class="bkrule">This tutorial is for ${esc(lettersSaid(setLettersOf(x.t)))}.${there ? ' Yours is on ' + esc(dayName(there.day.date)) + ' at ' + esc(hubClock(there.x.s)) + '.' : ''}</p><div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`
       : `${demo ? `<p class="bkrule">${tview ? 'This is the trainee view, so places are not booked here.' : 'This is a demo course, so places are not booked here.'}</p>` : ''}<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`) : `<div class="acts"><button type="button" class="btn" id="bkOk">Close</button></div>`);
   el.hidden = false; el.classList.add('sheetpop'); asDrawer(el, x.t || 'Book a place');
   placeNear(el, document.querySelector(`.tile[data-date="${date}"][data-id="${id}"]`));
@@ -4505,7 +4518,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611242313'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611242330'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);
