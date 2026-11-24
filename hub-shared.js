@@ -2573,8 +2573,13 @@ window.hubWorkChecks = function (a, snap, key, who) {
    [data-loc][data-round] block holds one piece of returned work; a comment on
    it highlights the words it is about and sits under the block, from "Your
    tutor". Read-only: the tutor writes them on the marking page. */
-window.hubPaintMargin = function (root, margin) {
+/* BESIDE THE WORDS (23 Nov 2026): a caller may pass { beside: true }. The block is then marked tm-has so the page can
+   set the comments in a column beside the text on a wide screen, each card carries the id of its highlight
+   (data-tmc) so the page can line the two up, and the card is headed by its kind ("Your tutor · good", "Your tutor ·
+   to work on", "Your tutor") with the quoted words on a second line. With no third argument nothing changes. */
+window.hubPaintMargin = function (root, margin, opts) {
   if (!root || !margin) return;
+  var beside = !!(opts && opts.beside);
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   [].forEach.call(root.querySelectorAll('.tmloc[data-loc]'), function (loc) {
     var items = (margin[loc.getAttribute('data-round')] || []).filter(function (c) { return c.loc === loc.getAttribute('data-loc') && (c.text || c.tick); });
@@ -2588,6 +2593,11 @@ window.hubPaintMargin = function (root, margin) {
         span.innerHTML = hubTickSVG('draw'); hubInsertAt(box, at + sp, span);
       });
       if (c.tick) return;
+      if (beside) {
+        loc.classList.add('tm-has');
+        gut.insertAdjacentHTML('beforeend', '<div class="tmcard' + (c.tone ? ' tone-' + c.tone : '') + '" data-tmc="' + esc(id).replace(/"/g, '&quot;') + '"><span>Your tutor' + (c.tone === 'good' ? ' \u00b7 good' : c.tone === 'fix' ? ' \u00b7 to work on' : '') + '</span>' + (c.quote ? '<i class="tmq">\u201C' + esc(c.quote.length > 60 ? c.quote.slice(0, 58) + '\u2026' : c.quote) + '\u201D</i>' : '') + '<p>' + esc(c.text) + '</p></div>');
+        return;
+      }
       gut.insertAdjacentHTML('beforeend', '<div class="tmcard' + (c.tone ? ' tone-' + c.tone : '') + '"><span>Your tutor' + (c.quote ? ', on “' + esc(c.quote.length > 60 ? c.quote.slice(0, 58) + '…' : c.quote) + '”' : '') + '</span><p>' + esc(c.text) + '</p></div>');
     });
   });

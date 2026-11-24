@@ -15,7 +15,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611240108">
+<link rel="stylesheet" href="hub-tokens.css?v=202611240910">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -248,8 +248,86 @@
   .am-line .am-name{flex:1; min-width:0; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .am-line .am-where{font-weight:400; color:var(--grey);}
   .am-line a{color:var(--teal); font-weight:700;} .am-line button{font:inherit; border:0; background:none; color:var(--grey); cursor:pointer;}
   .am-saved{margin-top:8px; color:var(--teal); font-weight:700;} .am-msg{margin-top:6px; color:var(--brick); font-weight:600;}
+  /* THE RETURNED VIEW (23 Nov 2026): what a trainee sees once an assignment has come back from the tutor. A band that
+     says the result in one word, two cards under it (the tutor's overall comment, the criteria), then the work with
+     the tutor's comments beside the words. It replaces the plain header, the waiting banner and the feedback card
+     for the stages closed, resubmission needed and returned unmarked only; a draft and a submitted assignment are
+     drawn as they were. A drawing over the same record: nothing new is saved. Tokens only, no new colors. */
+  .rt-band{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px 26px; align-items:center; border-radius:18px; padding:24px 28px; margin-bottom:16px; background:var(--teal); color:var(--paper);}
+  .rt-band.stuck{background:var(--tone-stuck);}
+  .rt-ey{font-size:0.72rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; margin:0; opacity:.9;}
+  .rt-out{font-family:'Newsreader',Georgia,serif; font-size:2.5rem; font-weight:400; line-height:1.05; margin:6px 0 10px; color:var(--paper);}
+  .rt-band p.rt-say{margin:0 0 6px; font-size:1rem; line-height:1.5; max-width:62ch;} .rt-band p.rt-say:last-child{margin-bottom:0;}
+  .rt-act{display:flex; flex-direction:column; align-items:center; gap:12px;}
+  .rt-cta, .rt-cta:hover{display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 26px; border-radius:999px; border:0; background:var(--paper); color:var(--ink); font:800 0.95rem 'Karla',sans-serif; text-decoration:none; white-space:nowrap; cursor:pointer;}
+  .rt-cta:focus-visible{outline:3px solid var(--a-mustard); outline-offset:2px;}
+  .rt-due{margin:0; font-size:0.84rem; line-height:1.4; text-align:center; max-width:30ch;}
+  .rt-grid{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:16px; margin-bottom:16px; align-items:start;}
+  .rt-grid.one{grid-template-columns:minmax(0,1fr);}
+  .rt-card{background:var(--paper); border:1px solid var(--row-line); border-radius:14px; padding:18px 20px; margin-bottom:16px;} .rt-grid .rt-card{margin-bottom:0;}
+  .rt-card h3{font:800 0.72rem 'Karla',sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--grey); margin:0 0 10px;}
+  .rt-sayc{font-family:'Newsreader',Georgia,serif; font-size:1.16rem; line-height:1.5; margin:0;}
+  .rt-by{margin:10px 0 0; font-size:0.84rem; color:var(--grey);}
+  .rt-was{margin:14px 0 4px; padding-top:12px; border-top:1px solid var(--row-line); font:800 0.7rem 'Karla',sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--grey);}
+  .rt-wasc{margin:0; font-size:0.9rem; line-height:1.55;}
+  .rt-card .fb-flags h2{font-family:'Newsreader',Georgia,serif; font-size:1.1rem; margin:0 0 8px !important; color:var(--ink);} .rt-card .fb-flags p{font-size:0.9rem; line-height:1.6;}
+  .rt-note{margin:-4px 0 10px; font-size:0.82rem; color:var(--grey);}
+  .rt-cr{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 14px; align-items:start; padding:10px 0; border-top:1px solid var(--row-line);} .rt-cr:first-of-type{border-top:0; padding-top:0;} .rt-cr:last-child{padding-bottom:0;}
+  .rt-ct{font-size:0.9rem; font-weight:600; line-height:1.4;} .rt-cn{font-size:0.84rem; color:var(--grey); line-height:1.45; margin-top:4px;}
+  .rt-cr .fb-ev{background:var(--sand);}
+  .rt-m{padding:5px 13px; border-radius:999px; font-size:0.8rem; font-weight:800; white-space:nowrap; background:var(--sand); color:var(--grey);}
+  .rt-m.met, .rt-tag.ok{background:color-mix(in oklch, var(--teal) 12%, var(--paper)); color:var(--teal);}
+  .rt-m.not, .rt-tag.fix{background:var(--tone-stuck); color:var(--paper);}
+  .rt-tag{display:inline-block; vertical-align:middle; margin:0 0 3px 12px; padding:4px 12px; border-radius:999px; font:800 0.74rem 'Karla',sans-serif; letter-spacing:0; white-space:nowrap;}
+  .rt-work{margin:26px 0 14px;} .rt-h{font-family:'Newsreader',Georgia,serif; font-size:1.5rem; font-weight:700; margin:0 0 4px; color:var(--ink);}
+  .rt-hs{margin:0; font-size:0.9rem; line-height:1.5; color:var(--grey);} .rt-work .wm{margin-top:10px;}
+  .rt-hs + .rt-hs{margin-top:4px;} .rt-how{color:var(--ink); font-weight:600;}
+  /* CARRIED FORWARD (24 Nov 2026): a part left untouched on a resubmission is sent with its first answer, so its pill
+     says "Nothing to change" in green and turns to "Changed" in mustard the moment the trainee writes in it. One
+     line under the heading says what is sent. The gray "No changes asked for" pill is gone with the rule it described. */
+  .rt-tag.chg{background:var(--a-mustard); color:var(--ink);}
+  .rt-tag[hidden], .rt-tagline[hidden]{display:none;}
+  .rt-tagline{margin:-2px 0 10px; font-size:0.86rem; line-height:1.5; color:var(--grey);}
+  /* a long link in a tutor's comment breaks inside its card, never past it (23 Nov 2026) */
+  .rt-say, .rt-sayc, .rt-wasc, .rt-cn, .rt-ct, .rt-by, .rt-cr .fb-ev, body.rt-on .tmcard p, body.rt-on .tmcard .tmq{overflow-wrap:anywhere;}
+  /* "Start the resubmission" stops a section clear of the Back button, which stays at the top of the screen (23 Nov 2026) */
+  [data-rt-sec], #rtWork{scroll-margin-top:56px;}
+  /* the tutor's comments in this view: the house green and brick, a sand card, and beside the words on a wide screen */
+  body.rt-on mark.tmc{background:color-mix(in oklch, var(--grey) 14%, transparent); border-bottom-color:var(--grey);}
+  body.rt-on mark.tmc.tmc-good{background:color-mix(in oklch, var(--teal) 16%, transparent); border-bottom-color:var(--teal);}
+  body.rt-on mark.tmc.tmc-fix{background:color-mix(in oklch, var(--tone-stuck) 14%, transparent); border-bottom-color:var(--tone-stuck);}
+  body.rt-on mark.tmc.tm-on{box-shadow:0 0 0 2px var(--a-mustard);}
+  body.rt-on .tmcard{background:var(--sand); border:0; border-left:3px solid var(--grey); border-radius:10px; padding:10px 12px;}
+  /* white on the gray first-submission box; under a one-line field answer the card keeps its sand ground, and the
+     row keeps a gap before the next amber box (23 Nov 2026) */
+  body.rt-on .firstround .tmcard{background:var(--paper);}
+  body.rt-on .row > .tmloc.tm-has{margin-bottom:8px;}
+  body.rt-on .tmcard.tone-good{border-left-color:var(--teal);} body.rt-on .tmcard.tone-fix{border-left-color:var(--tone-stuck);}
+  body.rt-on .tmcard .tmq{display:block; font-size:0.8rem; color:var(--grey); margin-top:3px; line-height:1.4;}
+  @media(min-width:900px){
+    body.rt-on .tmloc.tm-has{display:grid; grid-template-columns:minmax(0,1fr) 250px; column-gap:20px; align-items:start;}
+    body.rt-on .tmloc.tm-has > .tmgut{display:block; margin:0;} body.rt-on .tmloc.tm-has > .tmgut .tmcard{margin-top:8px;} body.rt-on .tmloc.tm-has > .tmgut .tmcard:first-child{margin-top:0;}
+    body.rt-on .tmcard .tmq{display:none;}   /* beside its highlight, the card needs no quote; under the block on a phone it does */
+  }
+  /* THE BAR AT THE FOOT, ON A RESUBMISSION (23 Nov 2026): what is left to do and the same Resubmit button, always in
+     reach. hubReserveForBar measures it, so the page keeps room under its last line and the notebook arc and the
+     sync pill ride above it. */
+  .rt-bar{position:fixed; left:0; right:0; bottom:0; z-index:40; display:flex; align-items:center; justify-content:center; gap:8px 16px; flex-wrap:wrap; padding:10px 20px; background:var(--paper); border-top:1px solid var(--sand-line);}
+  .rt-bar[hidden]{display:none;}
+  .rt-bar .rt-count{font-size:0.92rem; font-weight:700;}
+  .rt-bar .status:empty{display:none;} .rt-bar .status{max-width:46ch; line-height:1.35;}
+  .rt-bar .btn-submit{min-height:44px; padding:0 26px; border-radius:999px; background:var(--a-mustard); color:var(--ink); font-weight:800; font-size:0.95rem;}
+  body.rt-barred{padding-bottom:var(--bar-reserve, 130px);}
+  @media(max-width:700px){
+    .rt-band{grid-template-columns:minmax(0,1fr); padding:20px 18px; border-radius:14px;} .rt-out{font-size:2rem;}
+    .rt-act{align-items:stretch;} .rt-due{text-align:left; max-width:none;}
+    .rt-grid{grid-template-columns:minmax(0,1fr);} .rt-card{padding:16px;}
+    .rt-tag{margin-left:0; display:table; margin-top:6px;}
+    .rt-bar{padding:10px 16px; justify-content:flex-start;} .rt-bar .rt-count, .rt-bar .status{flex:1 1 100%; max-width:none;} .rt-bar .btn-submit{width:100%; min-height:48px;}
+  }
+  @media print{ .rt-bar{display:none !important;} .rt-cta{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611240108">
+<link rel="stylesheet" href="hub-house.css?v=202611240910">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -257,20 +335,20 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611240108"></script>
-<script src="assignment-history.js?v=202611240108"></script>
-<script src="assignment-examples.js?v=202611240108"></script>
-<script src="hub-due.js?v=202611240108"></script>
-<script src="hub-shared.js?v=202611240108"></script>
-<script src="hub-store.js?v=202611240108"></script>
-<script src="hub-drive-pick.js?v=202611240108"></script>
-<script src="hub-say.js?v=202611240108"></script>
-<script src="hub-sync.js?v=202611240108"></script>
-<script src="hub-notebook.js?v=202611240108"></script>
-<script src="observation-defaults.js?v=202611240108"></script>
-<script src="hub-rotation.js?v=202611240108"></script>
-<script src="hub-peers.js?v=202611240108"></script>
-<script src="fol-interview.js?v=202611240108"></script>
+<script src="assignment-defaults.js?v=202611240910"></script>
+<script src="assignment-history.js?v=202611240910"></script>
+<script src="assignment-examples.js?v=202611240910"></script>
+<script src="hub-due.js?v=202611240910"></script>
+<script src="hub-shared.js?v=202611240910"></script>
+<script src="hub-store.js?v=202611240910"></script>
+<script src="hub-drive-pick.js?v=202611240910"></script>
+<script src="hub-say.js?v=202611240910"></script>
+<script src="hub-sync.js?v=202611240910"></script>
+<script src="hub-notebook.js?v=202611240910"></script>
+<script src="observation-defaults.js?v=202611240910"></script>
+<script src="hub-rotation.js?v=202611240910"></script>
+<script src="hub-peers.js?v=202611240910"></script>
+<script src="fol-interview.js?v=202611240910"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -413,6 +491,320 @@ document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('.wex-btn'); if (!b) return;
   WEX_OPEN = b.parentNode.querySelector('.wex-box').classList.toggle('open'); b.setAttribute('aria-expanded', WEX_OPEN ? 'true' : 'false');
 });
+/* ---- THE RETURNED VIEW (23 Nov 2026) --------------------------------------
+   What a trainee sees once the tutor has sent an assignment back: closed (Pass, Pass on resubmission, Fail),
+   resubmission needed, and returned unmarked. It was a plain header, a grey banner and one long feedback card, and
+   the result was a small pill beside a heading. Now the result is the first thing on the page, in one word, with
+   what to do next under it; the tutor's overall comment and the criteria sit side by side; and the tutor's comments
+   sit beside the words they are about. Everything is read from the record as the tutor's page wrote it. Nothing is
+   added to it and nothing is saved at a different time.
+
+   rtView says whether the record is one of those states (null if not, and the page draws itself as it always did).
+   rtTopHTML draws the band and the two cards. rtLabels says which sections to rework on a resubmission. */
+const RT_WORDS = ['no','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+const rtNum = n => RT_WORDS[n] || String(n);
+const rtCap = t => t.charAt(0).toUpperCase() + t.slice(1);
+function rtView(a, sub){
+  const f = sub.feedback, o = String((f && f.outcome) || '');
+  const kind = o === 'Returned unmarked' ? 'unm' : /^Pass/.test(o) ? 'pass' : /^Fail/.test(o) ? 'fail' : o === 'Resubmission needed' ? 'res' : '';
+  if (!kind) return null;
+  /* the outcome and the stage must tell the same story, or the page keeps its old drawing */
+  const ok = (kind === 'pass' || kind === 'fail') ? sub.stage === 'closed'
+    : kind === 'res' ? sub.stage === 'resubmission_needed'
+    : (sub.stage === 'returned_unmarked' || sub.stage === 'resubmission_needed');
+  if (!ok) return null;
+  /* the last round marked, as the feedback card always chose it */
+  const r2 = (sub.criteriaMarks.sub2 || []).some(m => m === true || m === false);
+  const round = r2 ? 'sub2' : 'sub1', marks = sub.criteriaMarks[round] || [], N = (a.criteria || []).length;
+  return { kind, outcome: o, r2, round, marks, N, met: (a.criteria || []).filter((c, i) => marks[i] === true).length };
+}
+/* The brief's own sentence about the certificate grade, word for word, if it has one ("Whether you pass on the first
+   or second submission does not affect your certificate grade."). An assignment whose brief does not say it gets no
+   such sentence: the page never promises it on the center's behalf. */
+function rtGradeLine(a){
+  const sec = (a.sections || []).filter(x => x.type === 'text' && /^before you start$/i.test(String(x.label || '').trim()))[0];
+  const all = [];
+  String((sec && sec.body) || '').split(/\n+/).forEach(l => (l.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).forEach(x => all.push(x.trim())));
+  return all.filter(x => /certificate grade/i.test(x) && /\b(not|n[’']t)\s+affect/i.test(x))[0] || '';
+}
+function rtTopHTML(a, sub, R){
+  const f = sub.feedback, crits = a.criteria || [], N = R.N;
+  const strip = t => String(t || '').replace(/^Returned unmarked:\s*/, '').trim();
+  /* when it came back: the day the tutor marked it. Returning work unmarked writes no date, so that band has none. */
+  const whenIso = R.kind === 'unm' ? '' : ((R.round === 'sub2' ? sub.marked2At : sub.marked1At) || '');
+  const when = whenIso && window.HubDue ? HubDue.fmt(whenIso).replace(/,?\s*\d{1,2}:\d\d.*$/, '') : '';
+  const says = [];
+  /* WHEN THE WINDOW HAS CLOSED (23 Nov 2026): the band stops saying "send it again" and says what the foot of the
+     page already says, in the same words (whyNotSubmit), with no button. */
+  const due = sub.stage === 'closed' ? { has: false } : dueFor(a, sub);
+  const shut = !!(due.has && due.past);
+  if (R.kind === 'pass') says.push((N && R.met === N ? (N === 1 ? 'The criterion is met. ' : 'All ' + rtNum(N) + ' criteria are met. ') : '') + 'This assignment is finished and is in your portfolio.');
+  else if (R.kind === 'fail') says.push('Your tutor’s comments are below.');
+  else if (R.kind === 'res') {
+    says.push((N ? (N === 1 ? 'The criterion is not met yet. ' : rtCap(R.met ? rtNum(R.met) : 'none') + ' of the ' + rtNum(N) + ' criteria ' + (R.met === 1 ? 'is' : 'are') + ' met. ') : '')
+      + (shut ? whyNotSubmit(a, sub) : 'Rework the sections your tutor marked and send it again. You have one resubmission.'));
+    const g = shut ? '' : rtGradeLine(a); if (g) says.push(g);
+  } else {
+    says.push(strip(sub.stage === 'returned_unmarked' ? f.generalComment1 : f.generalComment2) || 'Your tutor sent this back without marking it.');
+    if (shut) says.push(whyNotSubmit(a, sub)); else if (sub.stage === 'returned_unmarked') says.push('This does not use your one resubmission.');
+  }
+  /* one button at most. The record is a door this page already had (under "Passages found elsewhere"). Once the
+     window has closed there is no button: it would lead to a Resubmit that cannot be pressed. */
+  const cta = sub.stage === 'closed' ? `<a class="rt-cta" href="11_assignment_record.html?a=${encodeURIComponent(CURRENT)}&me=1">Open the record</a>`
+    : shut ? '' : `<button type="button" class="rt-cta" data-role="rt-go">${R.kind === 'res' ? 'Start the resubmission' : 'Submit again'}</button>`;
+  /* the deadline in the words the pill used, on its own line under the button */
+  const dueLine = (due.has && !shut) ? 'Due ' + due.due + ' · ' + due.text + (due.extended ? ' · your extension' : '') : '';
+  let html = `<div class="rt-top"><div class="rt-band${R.kind === 'pass' ? '' : ' stuck'}"><div><p class="rt-ey">${esc(a.title)}${when ? ' · returned ' + esc(when) : ''}</p><h1 class="rt-out">${esc(R.outcome)}</h1>${says.map(t => `<p class="rt-say">${nl2br(t)}</p>`).join('')}</div>
+    ${(cta || dueLine) ? `<div class="rt-act">${cta}${dueLine ? `<p class="rt-due">${esc(dueLine)}</p>` : ''}</div>` : ''}</div>`;
+
+  /* FROM YOUR TUTOR: the overall comment for the last round marked, and the first round's under it once there has
+     been a second. Not drawn when there is nothing to say; a returned-unmarked reason is already in the band. */
+  const second = sub.stage === 'closed' && R.r2;
+  const main = R.kind === 'unm' ? '' : String((second ? f.generalComment2 : strip(f.generalComment1)) || '').trim();
+  const earlier = (second || (R.kind === 'unm' && sub.stage === 'resubmission_needed')) ? strip(f.generalComment1) : '';
+  const by = String((sub.markers && sub.markers.first) || '').trim();
+  const tutorCard = (main || earlier) ? `<div class="rt-card"><h3>From your tutor</h3>${main ? `<p class="rt-sayc">${nl2br(main)}</p>` : ''}${earlier ? (main ? `<p class="rt-was">On your first submission</p><p class="rt-wasc">${nl2br(earlier)}</p>` : `<p class="rt-note">On your first submission</p><p class="rt-sayc">${nl2br(earlier)}</p>`) : ''}${by ? `<p class="rt-by">${esc(by)}</p>` : ''}</div>` : '';
+
+  /* THE CRITERIA: every criterion with its mark as a word, the tutor's note on it, and what the tutor tied to it in
+     the text. The same reading of the record as the old feedback card; not drawn when nothing has been marked. */
+  const cms = (sub.criteriaComments && sub.criteriaComments[R.round]) || [];
+  const mg = (sub.margin && sub.margin[R.round]) || [];
+  const tiedTo = i => mg.filter(x => x && x.crit != null && String(x.crit) === String(i) && (x.text || x.tick));
+  const rows = crits.map((c, i) => ({ text: c.text, m: R.marks[i], cm: cms[i] || '', ev: tiedTo(i) }));
+  const critCard = rows.some(r => r.m === true || r.m === false || r.cm || r.ev.length) ? `<div class="rt-card"><h3>${N === 1 ? 'The criterion' : 'The ' + rtNum(N) + ' criteria'}</h3>${R.kind === 'unm' ? '<p class="rt-note">As marked on your first submission.</p>' : ''}${rows.map(r => `<div class="rt-cr"><div><div class="rt-ct">${esc(r.text)}</div>${r.cm ? `<div class="rt-cn">${nl2br(r.cm)}</div>` : ''}${r.ev.length ? `<div class="fb-ev">${r.ev.map(x => `<div>${x.tick ? (window.hubTickSVG ? hubTickSVG() : '✓') + ' ' : ''}“${esc(String(x.quote || '').length > 70 ? x.quote.slice(0, 68) + '…' : x.quote)}”${x.tick ? ((x.n || 1) > 1 ? ' ×' + x.n : '') : ': ' + esc(x.text)}</div>`).join('')}</div>` : ''}</div><b class="rt-m ${r.m === true ? 'met' : r.m === false ? 'not' : ''}">${r.m === true ? 'Met' : r.m === false ? 'Not met' : 'Not marked'}</b></div>`).join('')}</div>` : '';
+  if (tutorCard || critCard) html += `<div class="rt-grid${tutorCard && critCard ? '' : ' one'}">${tutorCard}${critCard}</div>`;
+  const fl = flagsHTML(R.round); if (fl) html += `<div class="rt-card">${fl}</div>`;
+  return html + '</div>';
+}
+/* WHICH SECTIONS TO REWORK, ON A RESUBMISSION (23 Nov 2026). Read from what the tutor did, never guessed:
+   - where the course ties criteria to sections, from those ties (the rule that already locks a section as met);
+   - otherwise a section is "Rework this section" when it holds a to-work-on comment the tutor tied to a criterion
+     marked Not met in the first round.
+   If the tutor tied nothing, there are no labels at all. The other sections are marked 'ok' only when every Not met
+   criterion is accounted for by a section to rework: with one left untied, the page cannot know where it lives, so
+   the other sections carry no label. Labels only: nothing is locked by them. What is carried forward does not
+   depend on them either (rtPlan, 24 Nov 2026): every part left untouched is carried, labelled or not. */
+function rtLabels(a, sub){
+  const marks = sub.criteriaMarks.sub1 || [], crits = a.criteria || [], map = {};
+  const isAns = x => (x.type === 'text' && !hubIsReference(x)) || x.type === 'fields';
+  if (crits.some(c => typeof c.sectionIndex === 'number')) {
+    a.sections.forEach((x, i) => { if (!isAns(x)) return; const cs = critsForSection(a, i); if (!cs.length) return;
+      if (cs.every(c => marks[c.ci] === true)) map[i] = 'ok'; else if (cs.some(c => marks[c.ci] === false)) map[i] = 'fix'; });
+    /* AN OPEN SECTION NO CRITERION IS TIED TO (24 Nov 2026): the tutor asked nothing of it and it is carried when left
+       untouched, so it reads "Nothing to change" too, and "Changed" once written in. It had no pill and no line. */
+    a.sections.forEach((x, i) => { if (isAns(x) && !critsForSection(a, i).length && map[i] == null) map[i] = 'ok'; });
+  } else {
+    const fix = {}, tied = {};
+    ((sub.margin || {}).sub1 || []).forEach(c => {
+      if (!c || c.tick || c.tone !== 'fix' || !c.text || c.crit == null || c.crit === '' || marks[+c.crit] !== false) return;
+      const m = String(c.loc || '').match(/^t(\d+)$/) || String(c.loc || '').match(/^f:s(\d+)_/);
+      if (!m || !a.sections[+m[1]] || !isAns(a.sections[+m[1]])) return;
+      fix[+m[1]] = 1; tied[+c.crit] = 1;
+    });
+    if (Object.keys(fix).length) {
+      const whole = crits.every((c, i) => marks[i] !== false || tied[i]);
+      a.sections.forEach((x, i) => { if (!isAns(x)) return; if (fix[i]) map[i] = 'fix'; else if (whole) map[i] = 'ok'; });
+    }
+  }
+  return { map, n: Object.keys(map).filter(k => map[k] === 'fix').length };
+}
+/* WHAT A RESUBMISSION SENDS: UNTOUCHED PARTS ARE CARRIED FORWARD (24 Nov 2026). The course tutor's decision: "carry
+   them forward automatically". Round two starts every open box empty, and until now an empty box was sent empty, so
+   a trainee who reworked one section sent the tutor the others blank. Now a part the trainee leaves untouched goes
+   with its first answer.
+
+   rtPlan reads the draft and the first submission and returns { snap, secs }:
+   - snap is what Resubmit sends, in the shape snapshot() always had. It is a copy: the draft itself is not written
+     to, so an untouched box stays empty in the draft and the page still knows it is untouched after a reload.
+   - secs[i] says, for each answer section, whether it was touched, whether it differs from the first answer, and
+     what the page should say about it.
+
+   The rule for "untouched" (settled after the review, 24 Nov 2026: one rule for every box):
+   - a section already met and locked: carried as it always was (the 22 Sep 2026 fix, moved here unchanged);
+   - a text section with one box: untouched when the box holds no words. It is then sent with its first answer.
+     With anything typed in it, it is sent as typed: what is written takes the place of the first answer;
+   - a text section with headed boxes, and a table section: box by box. A box with no words in it is sent with its
+     first answer, a box written in is sent as typed. A headed section used to be sent as typed once one of its
+     boxes was written in, so a trainee who reworked one box sent the other three blank;
+   - a table's first answers are carried by the NAME of the item they were written for, not by its place in the
+     list. Taking an item off and putting it back moved it to the end, and two whole items were sent empty. Only
+     an item that was not in the first submission starts empty;
+   - a picker: untouched when nothing is picked. It is then sent with the first picks.
+   secs[i].changed says the words differ from the first answer; secs[i].fresh counts items new to round two. mats
+   says the attached materials differ from the first submission's. Nothing stored for the first submission is
+   changed. */
+/* the items a table section was written for in the first submission */
+function rtFirstItems(a, sub, i){
+  for (let j = i - 1; j >= 0; j--) if (a.sections[j].type === 'picker') return hubPickedItems(a.sections[j], (((sub.sub1 || {}).picked) || {})[j]);
+  return [];
+}
+function rtPlan(a, sub){
+  const snap = JSON.parse(JSON.stringify(snapshot())), s1 = sub.sub1 || {}, secs = {};
+  snap.picked = snap.picked || {}; snap.text = snap.text || {}; snap.fields = snap.fields || {};
+  const blank = v => !String(v == null ? '' : v).trim();
+  const bare = (t, s) => window.hubBareText ? hubBareText(t, s.heads) : String(t || '');
+  const itemsOf = (picked, i) => { for (let j = i - 1; j >= 0; j--) if (a.sections[j].type === 'picker') return hubPickedItems(a.sections[j], (picked || {})[j]); return []; };
+  (a.sections || []).forEach((s, i) => {
+    if (sectionLocked(a, sub, i)) {
+      /* Carry the locked sections into the resubmission. A section whose every
+         criterion was met renders as the green "Already met — carried forward"
+         box, which has no field in it, and snapshot() collects fields -- so the
+         resubmission went to the tutor holding ONLY the sections that had been
+         reopened. Four sections a tutor had already passed simply vanished from
+         sub2, and with them from the assessor's record of the resubmission
+         (trainee walk, 22 Sep 2026). "Carried forward" was true of the screen
+         and not of the data. */
+      if (s.type === 'text') {
+        if (snap.text[i] == null && s1.text) snap.text[i] = s1.text[i];
+      } else if (s.type === 'picker') {
+        if (snap.picked[i] == null && s1.picked) snap.picked[i] = s1.picked[i];
+      } else if (s.type === 'fields' && s1.fields) {
+        Object.keys(s1.fields).forEach(k => {
+          if (k.indexOf('s' + i + '_') === 0 && snap.fields[k] == null) snap.fields[k] = s1.fields[k];
+        });
+      }
+      secs[i] = { locked: true, type: s.type };
+      return;
+    }
+    if (s.type === 'text') {
+      if (hubIsReference(s)) return;
+      const first = (s1.text || {})[i], typed = snap.text[i], touched = !blank(bare(typed, s)), had = !blank(bare(first, s));
+      const heads = !!(s.heads && s.heads.length && window.hubSplitHeads && window.hubJoinHeads);
+      let changed = false;
+      if (!touched) { if (had) snap.text[i] = first; }
+      else if (heads) {
+        /* headed boxes, one by one: an empty box takes its first answer, a written one is sent as typed */
+        const now = hubSplitHeads(typed, s.heads), was = hubSplitHeads(first, s.heads); let carried = false;
+        const sent = s.heads.map((h, k) => {
+          if (blank(now[k])) { if (!blank(was[k])) carried = true; return was[k] || ''; }
+          if (String(now[k]).trim() !== String(was[k] || '').trim()) changed = true;
+          return now[k];
+        });
+        if (carried) snap.text[i] = hubJoinHeads(s.heads, sent);
+      } else changed = String(typed).trim() !== String(first == null ? '' : first).trim();
+      secs[i] = { type: 'text', heads, touched, had, fresh: 0, changed };
+    } else if (s.type === 'picker') {
+      const p = snap.picked[i], any = !!p && hubPickerCats(s).some(c => !c.fixed && (p[c.key] || []).length);
+      if (!any && s1.picked && s1.picked[i] != null) snap.picked[i] = JSON.parse(JSON.stringify(s1.picked[i]));
+    } else if (s.type === 'fields') {
+      const now = itemsOf(snap.picked, i), was = itemsOf(s1.picked, i), ff = s1.fields || {};
+      let touched = false, changed = false, had = false, fresh = 0;
+      now.forEach((item, ii) => {
+        /* by the item's name: j is where this item stood in the first submission, -1 if it is new */
+        const j = was.indexOf(item); if (j < 0) fresh++;
+        (s.fields || []).forEach((f, fi) => {
+          const k = 's' + i + '_i' + ii + '_f' + fi, v1 = j < 0 ? '' : ff['s' + i + '_i' + j + '_f' + fi];
+          if (!blank(v1)) had = true;
+          if (!blank(snap.fields[k])) { touched = true; if (String(snap.fields[k]).trim() !== String(v1 == null ? '' : v1).trim()) changed = true; }
+          else if (!blank(v1)) snap.fields[k] = v1;
+        });
+      });
+      secs[i] = { type: 'fields', touched, had, fresh, changed };
+    }
+  });
+  /* the materials: the same link and the same files as the first submission, or not */
+  const mk = o => JSON.stringify([String((o && o.materialsLink) || '').trim(), ((o && Array.isArray(o.materialsFiles)) ? o.materialsFiles : []).map(f => (f && f.url) || '')]);
+  return { snap, secs, mats: mk(snap) !== mk(s1) };
+}
+/* HAS THE RESUBMISSION CHANGED ANYTHING (24 Nov 2026). Resubmit was open as soon as any word was in a box, so a
+   trainee who pressed "Start the resubmission from this" and changed nothing could spend their one resubmission on
+   a copy of the first. Now it asks for a change: words that differ from the first answer somewhere, or different
+   materials attached (a tutor may have asked only for the materials). */
+function rtMoved(a, sub){ const p = rtPlan(a, sub); return p.mats || Object.keys(p.secs).some(i => p.secs[i].changed); }
+/* THE PILLS, THE LINES AND THE BAR'S COUNT FOLLOW THE TYPING (24 Nov 2026). Called by render() and, through
+   refreshGate(), on every keystroke, so "Nothing to change" turns to "Changed" at once and the bar counts the
+   sections the trainee has changed. It reads rtPlan and writes only to the screen. */
+const RT_SENT_ASIS = 'Your first answer is sent as it is. Write here only if you want to change it.';
+const RT_BOX_RULE = 'What you write in a box is sent in place of your first answer there. A box you leave empty is sent as it was.';
+function rtPaint(a, sub){
+  if (!a || sub.stage !== 'resubmission_needed') return;
+  const plan = rtPlan(a, sub); let k = 0;
+  Object.keys(plan.secs).forEach(i => {
+    const st = plan.secs[i]; if (st.locked) return;
+    const chg = st.changed || st.fresh > 0;
+    if (chg) k++;
+    const pill = document.querySelector('#app [data-rt-pill="' + i + '"]'), line = document.querySelector('#app [data-rt-line="' + i + '"]');
+    const lab = pill ? pill.dataset.lab : '';
+    if (pill && lab === 'ok') {
+      const show = chg || st.had;
+      pill.hidden = !show; pill.className = 'rt-tag ' + (chg ? 'chg' : 'ok'); pill.textContent = chg ? 'Changed' : 'Nothing to change';
+    }
+    if (line) {
+      /* WHAT TYPING DOES, SAID WHERE THE TYPING IS (24 Nov 2026): once a section is written in, its line says the
+         words take the place of the first answer. "Changed" alone left a trainee adding one reference to think they
+         were adding to the first answer. One rule for every box, so one sentence about empty boxes. */
+      const boxes = st.type === 'fields' || st.heads, say = [];
+      if (st.touched && st.had) say.push(boxes ? RT_BOX_RULE : 'What you write here is sent in place of your first answer.');
+      if (st.fresh) say.push('The boxes under a new item are sent as you leave them.');
+      if (!say.length && lab === 'ok' && st.had) say.push(RT_SENT_ASIS);
+      const t = say.join(' ');
+      line.textContent = t; line.hidden = !t;
+    }
+  });
+  const c = document.getElementById('rtCount');
+  if (c) { const base = c.dataset.base || ''; c.textContent = base + (k ? (base ? ' · ' : '') + k + ' changed' : ''); }
+}
+/* the bar at the foot on a resubmission: one element for the life of the page, filled by render() */
+const RT_BAR = document.createElement('div'); RT_BAR.id = 'rtBar'; RT_BAR.className = 'rt-bar'; RT_BAR.hidden = true; document.body.appendChild(RT_BAR);
+const RT_FIT = window.hubReserveForBar ? hubReserveForBar('#rtBar') : null;
+/* THE PEN FOLLOWS THE BAR (23 Nov 2026): the bar grows by a line when a reason not to resubmit comes back, and the
+   notebook pen only measured itself when the window changed size, so it sat on the bar. It is asked to measure
+   again whenever the bar changes height. */
+function rtBarFit(){ if (RT_FIT) RT_FIT(); try { if (window.HubNotebook && HubNotebook.place) HubNotebook.place(); } catch (e) {} }
+if (window.ResizeObserver) { try { new ResizeObserver(rtBarFit).observe(RT_BAR); } catch (e) {} }
+/* "Start the resubmission" and "Submit again" go to the first section to rework, or to the work */
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-role="rt-go"]'); if (!b) return;
+  const tag = document.querySelector('#app .rt-tag.fix'), box = document.querySelector('#app textarea.resub');
+  const el = (tag && tag.closest('.card')) || document.getElementById('rtWork') || (box && box.closest('.card')); if (!el) return;
+  let calm = false; try { calm = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (x) {}
+  el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+});
+/* AFTER THE COMMENTS ARE PAINTED (23 Nov 2026): the heading over the work says what the highlights mean, naming only
+   the kinds that are on the page, and on a wide screen each comment is moved level with the words it is about. */
+function rtAfterPaint(){
+  const app = $('app'), h = app.querySelector('#rtWork .rt-h'), line = $('rtWorkLine'); if (!h) return;
+  const has = q => !!app.querySelector(q);
+  const good = has('mark.tmc-good'), fix = has('mark.tmc-fix'), note = has('mark.tmc:not(.tmc-good):not(.tmc-fix):not(.tmc-tick)'), tick = has('.tmc-mark');
+  const any = good || fix || note || tick || has('.tmcard');
+  h.textContent = any ? 'Your work, with your tutor’s comments' : 'Your work';
+  const tones = [good ? 'green is something done well' : '', fix ? 'red is something to work on' : '', note ? 'gray is a comment' : ''].filter(Boolean).join('; ');
+  const t = ((good || fix || note) ? 'The words your tutor commented on are highlighted. ' + (tones ? rtCap(tones) + '. ' : '') : '') + (tick ? 'A tick marks something done well.' : '');
+  if (line) { line.textContent = t.trim(); line.hidden = !t.trim(); }
+  /* ON A RESUBMISSION, WHERE TO WRITE (23 Nov 2026): the old banner's sentence, which the band replaced. From
+     24 Nov 2026 it says what is now true, in two words only: "section" for a card and "box" for a box. What is
+     written takes the place of the first answer; a box left empty is sent as it was. Not said once the window has
+     closed. */
+  const how = $('rtHow');
+  if (how) { const sub = subFor(CURRENT), a = WORDING[CURRENT];
+    const say = sub.stage === 'resubmission_needed' && !dueFor(a, sub).past && !!app.querySelector('textarea.resub');
+    how.textContent = say ? 'Your first submission stays as it was. Write in the boxes of the sections you are changing. ' + RT_BOX_RULE : '';
+    how.hidden = !say; }
+  rtAlign();
+}
+function rtAlign(){
+  let wide = false; try { wide = matchMedia('(min-width:900px)').matches; } catch (e) {}
+  document.querySelectorAll('#app .tmloc.tm-has').forEach(loc => {
+    const gut = loc.querySelector('.tmgut'), box = loc.querySelector('.readonly'); if (!gut || !box) return;
+    const top0 = loc.getBoundingClientRect().top;
+    const cards = [].slice.call(gut.children).map(c => { c.style.marginTop = '';
+      const m = [].filter.call(box.querySelectorAll('mark.tmc'), x => x.dataset.tmc === c.dataset.tmc)[0];
+      return { c, y: m ? m.getBoundingClientRect().top - top0 : 0 }; }).sort((p, q) => p.y - q.y);
+    cards.forEach(x => gut.appendChild(x.c));   // in the order of the text, on a phone too
+    if (!wide) return;
+    let foot = 0;
+    cards.forEach((x, k) => { const mt = Math.max(k ? 8 : 0, Math.round(x.y - foot)); x.c.style.marginTop = mt + 'px'; foot += mt + x.c.offsetHeight; });
+  });
+}
+{ let raf = 0; window.addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(rtAlign); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(rtAlign).catch(() => {}); }
+/* pointing at a comment shows the words it is about */
+['mouseover', 'mouseout', 'focusin', 'focusout'].forEach(ev => document.addEventListener(ev, e => {
+  const c = e.target.closest && e.target.closest('#app .tmcard[data-tmc]'); if (!c) return;
+  const loc = c.closest('.tmloc'); if (!loc) return;
+  [].forEach.call(loc.querySelectorAll('mark.tmc'), m => { if (m.dataset.tmc === c.dataset.tmc) m.classList.toggle('tm-on', ev === 'mouseover' || ev === 'focusin'); });
+}));
+
 function render(){
   const a = WORDING && WORDING[CURRENT];
   if (!a){ $('app').innerHTML = '<div class="card"><p class="guide">This assignment isn\u2019t set up yet \u2014 check with your center.</p></div>'; return; }
@@ -424,6 +816,19 @@ function render(){
   // Returned unmarked: still round one. The tutor sent it back without
   // marking, so nothing is locked and submitting again is not the resubmission.
   const onRedo = sub.stage === 'returned_unmarked';
+  /* the returned view (23 Nov 2026): R is null for a draft or a submitted assignment, and nothing below changes for them */
+  const R = PREVIEW ? null : rtView(a, sub);
+  document.body.classList.toggle('rt-on', !!R);
+  const LAB = (R && onRound2) ? rtLabels(a, sub) : { map: {}, n: 0 };
+  /* "NOTHING TO CHANGE", NOW THAT IT IS TRUE (24 Nov 2026). An untouched part is sent with its first answer (rtPlan),
+     so a section the tutor asked nothing of reads "Nothing to change" in green, with one line under its heading. A
+     section to rework keeps "Rework this section". The pill and the line are drawn empty here and filled by rtPaint,
+     which also runs as the trainee types: "Nothing to change" becomes "Changed" at once. Where the tutor tied
+     nothing there are no pills at all. A locked section keeps its green pill; its own box says it is carried. */
+  const rtTag = i => !(R && onRound2) ? '' : LAB.map[i] === 'fix' ? `<span class="rt-tag fix" data-rt-pill="${i}" data-lab="fix">Rework this section</span>`
+    : (LAB.map[i] === 'ok' && sectionLocked(a, sub, i)) ? '<span class="rt-tag ok">Nothing to change</span>'
+    : LAB.map[i] === 'ok' ? `<span class="rt-tag ok" data-rt-pill="${i}" data-lab="ok" hidden></span>` : '';
+  const rtLine = i => (R && onRound2 && !sectionLocked(a, sub, i)) ? `<p class="rt-tagline" data-rt-line="${i}" hidden></p>` : '';
 
   if (onRound2 && !sub.round2Seeded) {
     const seeded = { picked:{}, text:{}, fields:{}, decl:{} };
@@ -435,11 +840,28 @@ function render(){
       // was, read-only; the resubmission is written in its own box, empty
       // until the trainee starts it or copies the first attempt down.
       if (s.type==='text') seeded.text[i] = '';
-      if (s.type==='picker') seeded.picked[i] = s1.picked ? s1.picked[i] : undefined;
+      /* A COPY OF THE FIRST PICKS, NOT THE FIRST PICKS THEMSELVES (24 Nov 2026). This handed round two the very
+         object the first submission holds, so changing a pick on a resubmission, before any reload, changed the
+         stored first submission with it. The carry rule compares the two rounds, so they must be two things. */
+      if (s.type==='picker') seeded.picked[i] = (s1.picked && s1.picked[i] != null) ? JSON.parse(JSON.stringify(s1.picked[i])) : undefined;
       if (s.type==='fields') { /* fields start empty too; the copy-down button fills them */ }
     });
     sub.draft = seeded;
     sub.round2Seeded = true;
+    saveSubs();
+  }
+  /* THE MATERIALS COME WITH THE RESUBMISSION (24 Nov 2026). Round two started with nothing attached, so the first
+     submission's link and files were not sent again and the check before Resubmit said none were attached. They are
+     now copied into the round-two draft once, where the trainee sees them in the declaration card and can remove or
+     replace them. Once only (round2Mats), so a link the trainee removes stays removed; and only when round two has
+     nothing attached, so nothing the trainee attached is replaced. */
+  if (onRound2 && !sub.round2Mats) {
+    const s1 = sub.sub1 || {}, d = sub.draft || (sub.draft = {});
+    if (!String(d.materialsLink || '').trim() && !(Array.isArray(d.materialsFiles) && d.materialsFiles.length)) {
+      d.materialsLink = typeof s1.materialsLink === 'string' ? s1.materialsLink : '';
+      d.materialsFiles = Array.isArray(s1.materialsFiles) ? JSON.parse(JSON.stringify(s1.materialsFiles)) : [];
+    }
+    sub.round2Mats = true;
     saveSubs();
   }
 
@@ -500,11 +922,18 @@ function render(){
   }
 
   if (sub.stage==='resubmission_needed') {
-    html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Resubmission needed \u2014 you have one attempt. Your first submission stays as it was, read-only; write the resubmission in the amber boxes below it.</div>`;
+    html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Resubmission needed \u2014 you have one attempt. Your first submission stays as it was, read-only; write the resubmission in the amber boxes below it. A box you leave empty is sent as it was.</div>`;
   }
   if (onRedo) {
     html += `<div class="locked-banner" style="background:oklch(93% 0.06 60);">Returned unmarked \u2014 your tutor sent this back without marking it. Fix what they asked for and submit it again. This does not use your one resubmission.</div>`;
   }
+
+  /* back from the tutor: the band and its two cards stand in for the header, the banners and the feedback card (23 Nov 2026) */
+  if (R) html = rtTopHTML(a, sub, R);
+  /* the heading over the work, placed before the first part the trainee wrote; rtAfterPaint fills in its line */
+  let workPlaced = !R;
+  const workHead = () => { if (workPlaced) return ''; workPlaced = true;
+    return `<div class="rt-work" id="rtWork"><h2 class="rt-h">Your work</h2><p class="rt-hs rt-how" id="rtHow" hidden></p><p class="rt-hs" id="rtWorkLine" hidden></p>${(a.wordMin && sub.stage !== 'closed') ? '<span id="wcCounter"></span>' : ''}</div>`; };
 
   /* The hidden word (17 Oct 2026): in every section of the brief, invisible -- see hubTrapSpan. */
   const TW = window.hubTrapSpan ? hubTrapSpan(a.trap) : '';
@@ -516,6 +945,7 @@ function render(){
     if (CL.length) html += `<div class="card" style="padding:14px 18px; margin-bottom:16px;"><p class="eyebrow" style="margin:0 0 6px;">Reading for this assignment</p>${CL.map(l => `<p style="margin:0 0 4px; font-size:0.95rem;"><a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" style="font-weight:700; color:var(--teal);">${esc(l.label)}</a></p>${l.note ? `<p style="margin:0 0 10px; font-size:0.84rem; line-height:1.6; color:var(--grey);">${esc(l.note)}</p>` : ''}`).join('')}</div>`; }
   html += critPending();
   a.sections.forEach((s,i) => {
+    if (!(s.type==='text' && hubIsReference(s))) html += workHead();
     if (s.type==='text') {
       // Reference material: read it, don't write in it. Was the label
       // "Before you start" and nothing else, so an assignment could carry
@@ -531,7 +961,8 @@ function render(){
            or a list of resubmission pitfalls starts closed, because it is
            there when wanted and in the way when not (Ramy, 25 Sep 2026: "you
            should be able to hide that if you want to"). */
-        const startsClosed = /recommended|reading|reference materials|resources|reasons for resubmission/i.test(s.label) && !/^text |the text/i.test(s.label);
+        /* once the assignment is finished the brief's texts start folded too: the page is then about the result (23 Nov 2026) */
+        const startsClosed = (R && sub.stage === 'closed') || (/recommended|reading|reference materials|resources|reasons for resubmission/i.test(s.label) && !/^text |the text/i.test(s.label));
         // **bold** in a reference text is the target language ("The target
         // language is in bold"), and it showed as bare asterisks (25 Sep 2026).
         /* a list of recommended resources: grouped, each one a link (hubResourcesHTML, 19 Nov 2026) */
@@ -551,7 +982,7 @@ function render(){
         html += `<details class="card ref ${startsClosed?'':'open'}"${startsClosed?'':' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${refHtml}${TW}</div></details>`;
         return;
       }
-      html += `<div class="card"><h2>${esc(s.label)}</h2><p class="guide">${nl2br(s.body)}${TW}</p>${wex(s)}`;
+      html += `<div class="card" data-rt-sec="${i}"><h2>${esc(s.label)}${rtTag(i)}</h2>${rtLine(i)}<p class="guide">${nl2br(s.body)}${TW}</p>${wex(s)}`;
       {
         if (isLockedNow) {
           html += `<div class="lockedbox"><span class="lockedtag">\u2713 Already met \u2014 carried forward, no changes needed</span><div class="readonly">${nl2br((sub.sub1&&sub.sub1.text&&sub.sub1.text[i])||'')}</div></div>`;
@@ -599,7 +1030,7 @@ function render(){
       const items = itemsForFieldsSection(a, i);
       const crit = critsForSection(a,i);
       const isLockedNow = onRound2 && sectionLocked(a,sub,i);
-      html += `<div class="card fill"><h2>${esc(s.label)}</h2>${TW}${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}${wex(s)}`;
+      html += `<div class="card fill" data-rt-sec="${i}"><h2>${esc(s.label)}${rtTag(i)}</h2>${rtLine(i)}${TW}${s.intro?`<p class="guide">${esc(s.intro)}</p>`:''}${wex(s)}`;
       if (!items.length) {
         html += `<p class="guide">Pick your items above first.</p>`;
       } else if (isLockedNow) {
@@ -620,11 +1051,16 @@ function render(){
           }
         });
         if (onRound2 && sub.sub1 && sub.sub1.fields && Object.keys(sub.sub1.fields).some(k=>k.startsWith('s'+i+'_'))) html += `<div class="firstround"><span class="fr-tag">Your first submission \u2014 as marked, read-only, shown under each field</span><button type="button" class="copyfirst" data-role="copyfirst" data-i="${i}" ${locked?'disabled':''}>Start the resubmission from it</button></div>`;
+        /* THE FIRST ANSWER SHOWN IS THE ONE THAT IS CARRIED (24 Nov 2026): found by the item's name, as rtPlan does,
+           so an item that has moved in the list shows its own first answer and its tutor's comments, and a new
+           item shows none. It was read by place. */
+        const wasItems = onRound2 ? rtFirstItems(a, sub, i) : [];
         items.forEach((item, ii) => {
           html += `<div class="itemblock"><span class="tag">${esc(item)}</span>`;
+          const wj = wasItems.indexOf(item);
           s.fields.forEach((f, fi) => {
-            const first = onRound2 && sub.sub1 && sub.sub1.fields ? (sub.sub1.fields[`s${i}_i${ii}_f${fi}`]||'') : '';
-            html += `<div class="row"><label>${esc(f.label)}</label>${f.hint?`<p class="hint">${esc(f.hint)}</p>`:''}${first?`<div class="tmloc" data-loc="f:s${i}_i${ii}_f${fi}" data-round="sub1"><div class="readonly fr-inline">${nl2br(first)}</div><div class="tmgut"></div></div>`:''}
+            const first = onRound2 && wj >= 0 && sub.sub1 && sub.sub1.fields ? (sub.sub1.fields[`s${i}_i${wj}_f${fi}`]||'') : '';
+            html += `<div class="row"><label>${esc(f.label)}</label>${f.hint?`<p class="hint">${esc(f.hint)}</p>`:''}${first?`<div class="tmloc" data-loc="f:s${i}_i${wj}_f${fi}" data-round="sub1"><div class="readonly fr-inline">${nl2br(first)}</div><div class="tmgut"></div></div>`:''}
               ${(sub.stage === 'closed' && ((sub.sub2 || sub.sub1 || {}).fields || {})[`s${i}_i${ii}_f${fi}`]) ? `<div class="tmloc" data-loc="f:s${i}_i${ii}_f${fi}" data-round="${sub.sub2 ? 'sub2' : 'sub1'}"><div class="readonly">${nl2br((sub.sub2 || sub.sub1).fields[`s${i}_i${ii}_f${fi}`])}</div><div class="tmgut"></div></div>` : `<textarea data-role="field" data-i="${i}" data-ii="${ii}" data-fi="${fi}" rows="2" class="${onRound2?'resub':''}" ${locked?'disabled':''} ${onRound2?'placeholder="Your resubmission"':''}>${esc((FIELDS[`s${i}_i${ii}_f${fi}`])||'')}</textarea>`}</div>`;
           });
           html += `</div>`;
@@ -645,7 +1081,8 @@ function render(){
         <div class="ai-fields ${d.aiUsed==='yes'?'open':''}" data-aibox="${i}">
           <!-- THE AI-USE RECORD (30 Oct 2026, the Connect Lite specification's R29: "collect purpose and verification;
                do not expect a private conversation link"). Which tool, what for, what came from it, and what the
-               trainee checked or changed. The link is optional now. -->
+               trainee checked or changed. The link was optional from 30 Oct; from 24 Nov 2026 the box asks for it plainly,
+               in English, as Before you start now says. It still never blocks Submit: some tools give no link to share. -->
           <div class="row"><label>Which tool</label><input type="text" data-role="aitool" data-i="${i}" value="${esc(d.aiTool||'')}" ${locked?'disabled':''} placeholder="For example ChatGPT, Claude, Grammarly"></div>
           <div class="row"><label>Purpose</label>
             <select data-role="aipurpose" data-i="${i}" ${locked?'disabled':''}>
@@ -656,7 +1093,7 @@ function render(){
             </select></div>
           <div class="row"><label>What you used from it</label><input type="text" data-role="aimaterial" data-i="${i}" value="${esc(d.aiMaterial||'')}" ${locked?'disabled':''} placeholder="For example a list of example sentences"></div>
           <div class="row"><label>What you checked or changed</label><textarea rows="3" data-role="aichecked" data-i="${i}" ${locked?'disabled':''} placeholder="What you checked against the book or your notes, and what you rewrote yourself">${esc(d.aiChecked||'')}</textarea></div>
-          <div class="row"><label>Link to the conversation <span class="hint" style="display:inline">(optional)</span></label><input type="url" data-role="ailink" data-i="${i}" value="${esc(d.aiLink)}" ${locked?'disabled':''} placeholder="https://… only if you want to share it"></div>
+          <div class="row"><label>Link to the conversation, in English</label><input type="url" data-role="ailink" data-i="${i}" value="${esc(d.aiLink)}" ${locked?'disabled':''} placeholder="https://…"></div>
         </div>`:''}
         <p class="hint" style="margin:8px 0 0;">Own work doesn\u2019t exclude joint preparation and discussion \u2014 but submitting an assignment substantially similar to another trainee\u2019s does count as a breach. Unacknowledged AI use is treated as plagiarism, and the center decides the penalty.</p>
       </div>`;
@@ -667,14 +1104,26 @@ function render(){
   // alone used to be enough, and an empty body went through.
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
   const due = dueFor(a, sub);
-  const canSubmit = declOk(a) && hasWriting() && openStage && !due.past;
-  html += `<div class="navbar"><span class="status" id="status"></span><span class="status" id="emptyHint">${whyNotSubmit(a, sub)}</span>
-    <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':sub.stage==='returned_unmarked'?'Submit again':'Submit'}</button>
-  </div>`;
+  const canSubmit = declOk(a) && canSend(a, sub) && openStage && !due.past;
+  const navInner = `<span class="status" id="status"></span><span class="status" id="emptyHint">${whyNotSubmit(a, sub)}</span>
+    <button class="btn btn-submit" id="submitBtn" ${canSubmit?'':'disabled'}>${sub.stage==='resubmission_needed'?'Resubmit':sub.stage==='returned_unmarked'?'Submit again':'Submit'}</button>`;
+  /* ON A RESUBMISSION THE BUTTON LIVES IN THE BAR AT THE FOOT (23 Nov 2026): the same button, id, reasons and rules,
+     with what is left to do beside it. Everywhere else it is the last line of the page, as it was. */
+  const inBar = !!(R && onRound2);
+  if (inBar) {
+    const met = (a.criteria || []).filter((c, k) => (sub.criteriaMarks.sub1 || [])[k] === true).length, N = (a.criteria || []).length;
+    const count = LAB.n ? `${LAB.n} ${LAB.n === 1 ? 'section' : 'sections'} to rework \u00b7 ${met} ${met === 1 ? 'criterion' : 'criteria'} already met` : N ? `${met} of ${N} criteria met` : '';
+    /* the count of empty boxes is gone (24 Nov 2026): an empty box is no longer sent empty. rtPaint adds "k changed". */
+    RT_BAR.innerHTML = `<b class="rt-count" id="rtCount" data-base="${esc(count)}">${count}</b>` + navInner;
+  } else { RT_BAR.innerHTML = ''; html += `<div class="navbar">${navInner}</div>`; }
+  RT_BAR.hidden = !inBar; document.body.classList.toggle('rt-barred', inBar);
 
   if (CX) html += hubConnectFooter();
   $('app').innerHTML = html;
-  if (window.hubPaintMargin) hubPaintMargin($('app'), sub.margin || {});
+  if (window.hubPaintMargin) hubPaintMargin($('app'), sub.margin || {}, R ? { beside: true } : null);
+  if (R) rtAfterPaint();
+  rtPaint(a, sub);
+  rtBarFit();
   if (window.hubTexts) hubTexts.link($('app'), '.tmloc .readonly, .lockedbox .readonly', a, CURRENT, hubTexts.chosen(sub.sub2 || sub.sub1), 'Read the text you chose');
   const wc = $('wcCounter');
   if (wc) wcMeter(wc, a);
@@ -700,10 +1149,20 @@ function wcMeter(el, a){
     + (state === 'under' ? ' \u00b7 ' + (lo - n) + ' to go' : state === 'over' ? ' \u00b7 ' + (n - hi) + ' over' : ' \u00b7 in range') + '</span>';
 }
 
-function countWords(){
+/* THE WORDS THAT WILL BE SENT (24 Nov 2026). On a resubmission the meter counts what Resubmit sends: the parts the
+   trainee wrote as typed, the untouched ones at the length of their first answer (rtPlan). Everywhere else it is
+   what is in the boxes, as it always was. countTyped is the boxes alone, on any round: "nothing written" still
+   means nothing typed. */
+function wordsIn(text, fields){
   const secs = (WORDING && WORDING[CURRENT] && WORDING[CURRENT].sections) || [];
-  let text = Object.keys(TEXT||{}).map(i => hubBareText(TEXT[i], (secs[i] || {}).heads)).join(' ') + ' ' + Object.values(FIELDS||{}).join(' ');
-  return (text.match(/\S+/g) || []).length;
+  let t = Object.keys(text||{}).map(i => hubBareText(text[i], (secs[i] || {}).heads)).join(' ') + ' ' + Object.values(fields||{}).join(' ');
+  return (t.match(/\S+/g) || []).length;
+}
+function countTyped(){ return wordsIn(TEXT, FIELDS); }
+function countWords(){
+  const a = WORDING && WORDING[CURRENT], sub = a ? subFor(CURRENT) : null;
+  if (a && sub && sub.stage === 'resubmission_needed') { const p = rtPlan(a, sub).snap; return wordsIn(p.text, p.fields); }
+  return countTyped();
 }
 function wordCountOk(a){
   if (!a.wordMin) return true;
@@ -719,7 +1178,7 @@ function refreshGate(){
   const sub = subFor(CURRENT);
   const btn = $('submitBtn');
   const openStage = sub.stage==='draft' || sub.stage==='resubmission_needed' || sub.stage==='returned_unmarked';
-  if (btn) btn.disabled = !(declOk(a) && hasWriting() && openStage && !dueFor(a, sub).past);
+  if (btn) btn.disabled = !(declOk(a) && canSend(a, sub) && openStage && !dueFor(a, sub).past);
   /* v3: one gold pulse the moment Submit becomes pressable (7 Oct 2026) */
   if (btn) { if (!btn.disabled && SUBMIT_WAS_OFF) { btn.classList.remove('av3-ready'); void btn.offsetWidth; btn.classList.add('av3-ready'); } SUBMIT_WAS_OFF = btn.disabled; }
   // Its own element: the autosave's 'Saved' flash clears #status a moment later.
@@ -730,9 +1189,14 @@ function refreshGate(){
      The reason is computed in one place now (walk, 21 Sep 2026). */
   const eh = $('emptyHint');
   if (eh) eh.textContent = whyNotSubmit(a, sub);
+  rtPaint(a, sub);   // the pills, their lines and the bar's "changed" count, on a resubmission only (24 Nov 2026)
 }
 // At least one word in any answer. Picked items alone are not writing.
-function hasWriting(){ return countWords() > 0; }
+/* On a resubmission this is still the words TYPED, not the words carried forward (24 Nov 2026). */
+function hasWriting(){ return countTyped() > 0; }
+/* What opens the button. Round one: something written. A resubmission: something CHANGED (rtMoved): a resubmission
+   with no change is not a resubmission, and it would use the trainee's one attempt (24 Nov 2026). */
+function canSend(a, sub){ return sub.stage === 'resubmission_needed' ? rtMoved(a, sub) : hasWriting(); }
 
 /* The reminder. Ramy, 24 Sep 2026: "a reminder, not a warning."
  *
@@ -784,7 +1248,11 @@ function whyNotSubmit(a, sub){
      as a fact with a way forward, not a telling-off: the tutor can open it. */
   if (due.past) return (due.resub ? 'The resubmission window closed ' : 'Submission closed ')
     + due.due + '. Ask your tutor if you need it opened.';
-  if (!hasWriting()) return 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.';
+  /* on a resubmission the first answers are carried, so "an empty assignment" would be the wrong words (24 Nov 2026) */
+  if (sub.stage === 'resubmission_needed') {
+    if (!rtMoved(a, sub)) return hasWriting() ? 'Nothing is changed yet. Change the sections you are reworking, then resubmit.'
+      : 'Nothing written yet. Write in the sections you are changing, then resubmit.';
+  } else if (!hasWriting()) return 'Nothing written yet \u2014 an empty assignment can\u2019t be submitted.';
   if (!declOk(a)) return 'The declaration at the end is not complete yet \u2014 tick each line, and answer the question about AI.';
   return '';
 }
@@ -816,7 +1284,11 @@ function bindInputs(){
   $('app').querySelectorAll('[data-role="copyfirst"]').forEach(b => b.addEventListener('click', () => {
     const i = +b.dataset.i, sub = subFor(CURRENT), s1 = sub.sub1 || {};
     if (s1.text && s1.text[i] != null) TEXT[i] = s1.text[i];
-    Object.keys(s1.fields||{}).forEach(k => { if (k.startsWith('s'+i+'_')) FIELDS[k] = s1.fields[k]; });
+    /* a table's first answers come down under the item they were written for, by its name (24 Nov 2026) */
+    const wa = WORDING[CURRENT], sec = wa.sections[i];
+    if (sec && sec.type === 'fields') { const was = rtFirstItems(wa, sub, i);
+      itemsForFieldsSection(wa, i).forEach((item, ii) => { const j = was.indexOf(item); if (j < 0) return;
+        (sec.fields || []).forEach((f, fi) => { const v = (s1.fields || {})['s' + i + '_i' + j + '_f' + fi]; if (v != null) FIELDS['s' + i + '_i' + ii + '_f' + fi] = v; }); }); }
     autosave(); render();
   }));
   document.querySelectorAll('[data-role="text"]').forEach(el => el.addEventListener('input', () => {
@@ -839,7 +1311,15 @@ function bindInputs(){
     if (idx!==-1) arr.splice(idx,1);
     // Each group has its own count now, so the cap is the group's, not the
     // section's -- C/17 picks one grammar item and two vocabulary items.
-    else { if (arr.length >= c.pick) return; arr.push(val); }
+    else { if (arr.length >= c.pick) return; arr.push(val);
+      /* ON A RESUBMISSION AN ITEM PUT BACK GOES BACK TO ITS PLACE (24 Nov 2026). A re-picked item went to the end of
+         the list, so taking one off and putting it back reordered the table under it. Items from the first
+         submission keep the place they had there; a new item takes the place of the one it replaces. The tutor's
+         page sets the two rounds side by side by place, so each item still sits beside its own first answer. */
+      const sb = subFor(CURRENT), w1 = sb.stage === 'resubmission_needed' && sb.sub1 && sb.sub1.picked && sb.sub1.picked[i] && sb.sub1.picked[i][cat];
+      if (Array.isArray(w1)) { const free = w1.map((v, n) => n).filter(n => arr.indexOf(w1[n]) < 0);
+        const ord = arr.map((v, n) => { const at = w1.indexOf(v); return { v, k: at >= 0 ? at : (free.length ? free.shift() : w1.length + n) }; }).sort((p, q) => p.k - q.k).map(x => x.v);
+        arr.splice(0, arr.length, ...ord); } }
     dirty = true; autosave(); render();
   }));
   document.querySelectorAll('[data-role="field"]').forEach(el => el.addEventListener('input', () => {
@@ -961,7 +1441,16 @@ function autosave(){
    listed, with Go back and Submit anyway: it never stops a submission. */
 function preSubmit(){
   const a = WORDING[CURRENT];
-  const items = window.hubWorkChecks ? hubWorkChecks(a, snapshot(), CURRENT, 'trainee').filter(x => x.state === 'look') : [];
+  /* on a resubmission the check reads what will be sent, carried parts included (24 Nov 2026) */
+  const sent = subFor(CURRENT).stage === 'resubmission_needed' ? rtPlan(a, subFor(CURRENT)).snap : snapshot();
+  const items = window.hubWorkChecks ? hubWorkChecks(a, sent, CURRENT, 'trainee').filter(x => x.state === 'look') : [];
+  /* A SECTION TO REWORK THAT IS SENT AS IT WAS (24 Nov 2026): carrying untouched sections makes it easy to resubmit
+     without touching the one the tutor asked for. It is listed here first, by name. Like the rest of this check it
+     never stops the submission. */
+  { const sb = subFor(CURRENT);
+    if (sb.stage === 'resubmission_needed' && !PREVIEW && rtView(a, sb)) { const plan = rtPlan(a, sb).secs, lab = rtLabels(a, sb).map;
+      Object.keys(lab).filter(i => lab[i] === 'fix' && plan[i] && !plan[i].locked && !plan[i].changed && !plan[i].fresh).reverse()
+        .forEach(i => items.unshift({ state: 'look', label: a.sections[i].label + ' is sent as it was', detail: 'Your tutor asked you to rework this section.' })); } }
   if (!items.length) { doSubmit(); return; }
   let ov = document.getElementById('preSubmit');
   if (!ov) { ov = document.createElement('div'); ov.id = 'preSubmit'; ov.className = 'ps-wrap'; document.body.appendChild(ov); }
@@ -974,30 +1463,13 @@ function preSubmit(){
 }
 function doSubmit(){
   const sub = subFor(CURRENT);
-  const snap = snapshot();
+  let snap = snapshot();
   if (sub.stage === 'resubmission_needed') {
-    /* Carry the locked sections into the resubmission. A section whose every
-       criterion was met renders as the green "Already met — carried forward"
-       box, which has no field in it, and snapshot() collects fields -- so the
-       resubmission went to the tutor holding ONLY the sections that had been
-       reopened. Four sections a tutor had already passed simply vanished from
-       sub2, and with them from the assessor's record of the resubmission
-       (trainee walk, 22 Sep 2026). "Carried forward" was true of the screen
-       and not of the data. */
+    /* WHAT IS SENT (24 Nov 2026): the draft, with every part the trainee left untouched carried from the first
+       submission, and the locked sections carried as before. rtPlan holds the rule. The draft is then set to what
+       was sent, as it always ended up, so the locked page shows the trainee the resubmission the tutor has. */
     const wa = WORDING && WORDING[CURRENT];
-    (wa && wa.sections || []).forEach((sec, i) => {
-      if (!sectionLocked(wa, sub, i)) return;
-      const first = sub.sub1 || {};
-      if (sec.type === 'text') {
-        if (snap.text[i] == null && first.text) snap.text[i] = first.text[i];
-      } else if (sec.type === 'picker') {
-        if (snap.picked[i] == null && first.picked) snap.picked[i] = first.picked[i];
-      } else if (sec.type === 'fields' && first.fields) {
-        Object.keys(first.fields).forEach(k => {
-          if (k.indexOf('s' + i + '_') === 0 && snap.fields[k] == null) snap.fields[k] = first.fields[k];
-        });
-      }
-    });
+    if (wa) { snap = rtPlan(wa, sub).snap; sub.draft = JSON.parse(JSON.stringify(snap)); }
     sub.sub2 = snap;
     sub.sub2At = new Date().toISOString();
     /* the brief this attempt answered (R30) */
@@ -1039,7 +1511,9 @@ function folIvMount(){
       '<p style="margin:14px 0 4px;font-weight:700">Your TP group&rsquo;s interviews</p>' + window.CONNECT_HUB_FOL.groupHtml(JSON.parse(localStorage.getItem('connect_fol_profiles_v1') || '[]'), { others: true }) +
       '<p style="margin:14px 0 4px;font-weight:700">The pool: what your TP group heard</p>' + window.CONNECT_HUB_FOL.poolHtml(JSON.parse(localStorage.getItem('connect_fol_pool_v1') || '[]')) +
       '<p style="margin:12px 0 0"><a href="31_getting_to_know_you.html">Open your interview notes</a></p></div>';
-    const app = document.getElementById('app'); if (app) app.insertBefore(box, app.firstChild);
+    /* under the band and its cards when the assignment is back (23 Nov 2026), at the top otherwise */
+    const app = document.getElementById('app'), top = app && app.querySelector('.rt-top');
+    if (top && top.parentNode === app) top.after(box); else if (app) app.insertBefore(box, app.firstChild);
     window.CONNECT_HUB_FOL.wirePlay(box);
   } catch (e) {}
 }
@@ -1154,7 +1628,7 @@ function lfcMount(){
       + '<p class="guide" style="margin:0 0 4px">This assignment starts from your own course. It follows the order of the brief below. Read what you have, then write in your own words. Nothing here is copied into your answer.</p>'
       + sectionA + shBlock + sectionC + sectionD + '</div>';
     const app = document.getElementById('app'); if (!app) return;
-    const hdr = app.querySelector('.header');
+    const hdr = app.querySelector('.rt-top') || app.querySelector('.header');   // under the band when the assignment is back (23 Nov 2026)
     if (hdr && hdr.parentNode === app) hdr.after(box); else app.insertBefore(box, app.firstChild);
   } catch (e) {}
 }
