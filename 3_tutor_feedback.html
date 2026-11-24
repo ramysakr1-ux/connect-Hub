@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611242351">
+<link rel="stylesheet" href="hub-tokens.css?v=202611250009">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -646,7 +646,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611242351">
+<link rel="stylesheet" href="hub-house.css?v=202611250009">
 </head>
 <body>
 <div class="board">
@@ -838,14 +838,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611242351"></script>
-<script src="hub-shared.js?v=202611242351"></script>
-<script src="hub-store.js?v=202611242351"></script>
-<script src="hub-say.js?v=202611242351"></script>
-<script src="hub-crit-learn.js?v=202611242351"></script>
-<script src="hub-crit-vocab.js?v=202611242351"></script>
-<script src="hub-sync.js?v=202611242351"></script>
-<script src="hub-notebook.js?v=202611242351"></script>
+<script src="hub-exchange.js?v=202611250009"></script>
+<script src="hub-shared.js?v=202611250009"></script>
+<script src="hub-store.js?v=202611250009"></script>
+<script src="hub-say.js?v=202611250009"></script>
+<script src="hub-crit-learn.js?v=202611250009"></script>
+<script src="hub-crit-vocab.js?v=202611250009"></script>
+<script src="hub-sync.js?v=202611250009"></script>
+<script src="hub-notebook.js?v=202611250009"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2449,7 +2449,9 @@ window.HUB_REDRAW=function(){
         if(!(await confirmModal('Give this back to '+traineeLabel('the trainee')+'? It becomes theirs to change again, and it is no longer sent until they send it again.','Give it back'))) return;
         const r=loadRoster(), tr=r.trainees&&r.trainees[TRAINEE_ID];
         if(!(tr&&tr.tp&&tr.tp.plan)) return;
-        Object.assign(tr.tp.plan, { status:'draft', turnedInAt:null, givenBackAt:Date.now() });
+        /* the first turn-in time as the store keeps it on a give-back, so this copy and the store's stay the same */
+        const first=tr.tp.plan.firstTurnedInAt||tr.tp.plan.turnedInAt;
+        Object.assign(tr.tp.plan, { status:'draft', turnedInAt:null, givenBackAt:Date.now() }, first?{ firstTurnedInAt:first }:{});
         saveRosterObj(r);
         this.remove();
         $('loadedInfo').insertAdjacentText('beforeend', ' · given back');

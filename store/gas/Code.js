@@ -5734,8 +5734,9 @@ function sameTpTaken_(was, now, nW, nN) {
     var t = Number(now.turnedInAt || 0);
     /* v304 (24 Nov 2026): a newer turn-in of the same TP is taken only when that turn-in was taken back or given back
        first. On C/21 a stale copy of a TP3 plan was turned in again at 18:38 over the one turned in at 13:42, with no take
-       back between, and the first time was lost. An older turn-in is never taken. */
-    if (t !== at) return t > at && (Number(now.backFrom) === at || Math.max(Number(now.takenBackAt || 0), Number(now.givenBackAt || 0)) > at);
+       back between, and the first time was lost. An older turn-in is never taken, unless it names in backFrom the turn-in
+       it took back (a take-back and a turn-in sent as one save from a device whose clock is behind). */
+    if (t !== at) return Number(now.backFrom) === at || (t > at && Number(now.backFrom) === at || Math.max(Number(now.takenBackAt || 0), Number(now.givenBackAt || 0)) > at);
     /* the same turn-in again is taken only with the same words: a page that laid the store's turned-in copy under a form
        drawn from an older one would otherwise send its old words under the turn-in's own stamp (review, 24 Nov 2026) */
     return JSON.stringify(now.state == null ? null : now.state) === JSON.stringify(was.state == null ? null : was.state) && String(now.docHTML || '') === String(was.docHTML || '');
@@ -5771,16 +5772,23 @@ function needsPrior_(was, data) {
    copy is not trusted for it, because a page merges every save onto its last copy and could carry the last TP's time
    onto the next. It is carried only between records of the same TP, so the next TP starts without one. A record from
    before v304 has none, and its turnedInAt (or, taken back, its backFrom) counts as the first. A record this store wrote
-   always has the field, 0 when nothing of this TP was turned in yet, so a backFrom a page carried over from the last TP
-   is not read as this TP's. Pages read firstTurnedInAt || turnedInAt. */
+   with a backFrom always has the field, 0 when nothing of this TP was turned in yet, so a backFrom a page carried over
+   from the last TP is not read as this TP's. Pages read firstTurnedInAt || turnedInAt. */
 function keepFirst_(kind, was, data) {
   if (!data || typeof data !== 'object') return data;
-  var ts = [data.status === 'turned_in' ? data.turnedInAt : 0];
-  var nD = turnTp_(kind, data);
-  if (was && typeof was === 'object' && nD && turnTp_(kind, was) === nD) ts.push(was.firstTurnedInAt, was.status === 'turned_in' ? was.turnedInAt : 0, was.firstTurnedInAt == null ? was.backFrom : 0);
-  var first = 0;
-  ts.forEach(function (t) { t = Number(t || 0); if (t > 0 && (!first || t < first)) first = t; });
-  data.firstTurnedInAt = first;
+  var nD = turnTp_(kind, data), nW = turnTp_(kind, was), first = 0;
+  var low = function (t) { t = Number(t || 0); if (t > 0 && (!first || t < first)) first = t; };
+  /* carried unless both copies name a TP and the TPs differ: a TP box cleared to be typed again (the autosave sends a
+     draft with no number) does not lose the first time (review, 24 Nov 2026) */
+  if (was && typeof was === 'object' && (!nD || !nW || nW === nD)) [was.firstTurnedInAt, was.status === 'turned_in' ? was.turnedInAt : 0, was.firstTurnedInAt == null ? was.backFrom : 0].forEach(low);
+  /* the stored times come first: a turn-in from a device whose clock is behind does not move the first time earlier */
+  if (!first && data.status === 'turned_in') low(data.turnedInAt);
+  /* written only when it says something the page's own copy also says (review, 24 Nov 2026): a plain draft and a first
+     turn-in are stored exactly as the page sent them, so the page's next refresh does not find its copy changed and
+     redraw with "changed on another device". It is written on a re-turn-in, a given-back draft and a taken-back one (the
+     pages set it there too), and on any record carrying backFrom, 0 when nothing of this TP was turned in. */
+  if (data.backFrom == null && (!first || (data.status === 'turned_in' && first === Number(data.turnedInAt)))) delete data.firstTurnedInAt;
+  else data.firstTurnedInAt = first;
   return data;
 }
 /* write a trainee's plan or self-evaluation, keeping what it replaces when that matters */
@@ -5812,7 +5820,9 @@ function refuseTurnedIn_(courseId, token, kind, was, got, data) {
      that were refused are kept beside the record (planRefused, selfevalRefused: the last three, { at, was }), so they are
      not lost even on a page from before v303, which takes a refusal as saved. No page reads them. */
   if ((kind === 'plan' || kind === 'selfeval') && data && typeof data === 'object') {
-    try { keepPrior_(courseId, token, kind, data, 'Refused'); } catch (krErr) {}
+    /* a refused turn-in, or a copy longer than the store's: a refused autosave of the same words would push the refused
+       turn-in out of the three kept (review, 24 Nov 2026) */
+    if (data.status === 'turned_in' || shrunk_(data, was == null ? null : was)) { try { keepPrior_(courseId, token, kind, data, 'Refused'); } catch (krErr) {} }
     var nT = turnTp_(kind, was);
     if (data.status === 'turned_in' && was && was.status === 'turned_in' && nT && turnTp_(kind, data) === nT) { out.why = 'already'; out.tp = nT; }
   }
