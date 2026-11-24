@@ -3008,19 +3008,15 @@ case 'inbox': {
       var swPts = function(a){ return (Array.isArray(a) ? a : []).slice(0, 30).map(function(x){
         return { text: String((x && x.text) || '').slice(0, 600), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).slice(0, 4), starred: !!(x && x.star) }; }).filter(function(x){ return x.text; }); };
       var swIn = { strengths: swPts(req.strengths), actions: swPts(req.actions) };
+      /* v305: Stage 2's Overall comment in the voice of the tutor who signs it (stage2CloseIn_, below the shorthand) */
+      var swClose = req.overall ? stage2CloseIn_(req) : null;
+      if (swClose) { swIn.lessonComments = swClose.lessons; if (swClose.voice.length) swIn.tutorSamples = swClose.voice; }
       /* v292: how many points (his own Stage 2s, 2021 to 2025: about ten strengths and six or seven action points), and on
          request Stage 2's Overall comment in his voice (Ramy, 22 Nov 2026: "Strengths, action points, overall comment") */
       var swNum = function(v, d){ v = parseInt(v, 10); return v >= 1 && v <= 15 ? v : d; };
       var swMostS = swNum(req.mostS, 10), swMostA = swNum(req.mostA, 7);
-      /* v296: the Overall comment's voice, for both the first pass and the lengthening pass (the lengthening pass had
-         drifted into report words and filler: "demonstrating", "foster deeper learning", "a solid foundation") */
-      var swOvVoice = 'VOICE OF THE OVERALL COMMENT: an experienced CELTA tutor talking to the trainee, plain and brisk, short sentences, the way these real ones read: '
-        + '"Good level of reduced TTT and language grading. You usually set a clear context at the start of the lesson and you stage your lessons according to one of the ways you have learned on the course." '
-        + '"Great rapport from the start, good level of TTT and graded language to the level. You are taking the lesson shapes on board and gradually learning to use the teaching techniques that you have learned on the course." '
-        + '"For the next stage of the course, continue to work on reducing your TTT and make sure you include more pair work and group work. Keep a low profile and slow down your own pace." '
-        + 'Fragments like "Good level of ..." and "Great rapport ..." are fine. Every sentence says something about this trainee from the points: no filler, no general praise, nothing about foundations, journeys, growth or potential. '
-        + 'Never add advice or praise that is not in the points. Never use: demonstrate, demonstrating, foster, ownership, thoughtfully, effectively, facilitate, showcase, commendable, solid foundation, '
-        + 'it is clear that, deeper learning, autonomy, strategies, ensure, utilize. ';
+      /* v296 put one tutor's real sentences here as the Overall comment's voice; v305 takes them out: the voice is the
+         signing tutor's own, from their samples, or a neutral one (stage2CloseVoice_) */
       var swOverall = !!req.overall, swName = String(req.name || '').replace(/[^\p{L}' -]/gu, '').trim().slice(0, 40);
       /* v291 (22 Nov 2026). Ramy: Stage 1 "just really copies the feedback"; and how a stage must read: "more general,
          like criteria reference, not referring to like a particular incident inside a TP or ... to students' names ...
@@ -3046,10 +3042,7 @@ case 'inbox': {
         + 'Write "students", never Ss. ' + celtaShorthand_()
         + 'In the points, write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
         + 'No praise that is not in the original, no grades, no names, no arrows. American spelling. '
-        + (swOverall ? 'Also write the Overall comment for Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of 180 to 230 words (his own ran 560 to 1,100 characters): never shorter than 160 words; count them before you answer, in the tutor\'s own voice. '
-          + 'Open with how the trainee has progressed over the first stage of the course and their first name at the end of that sentence, e.g. "You have shown steady progress over the first stage of the course, ' + (swName || 'NAME') + '." '
-          + 'Then two or three sentences on what is working, in general, criteria-referenced terms. Then "For the next stage of the course, ..." and what to focus on, as instructions. End with "Best of luck!". '
-          + 'The same rules as the points: no single lessons, no TP numbers, no students\' names, no grade, nothing that is not in the points. Write "students", never Ss. ' + swOvVoice : '')
+        + (swOverall ? stage2ClosePrompt_(swName, !!(swClose && swClose.voice.length)) : '')
         + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]' + (swOverall ? ',"overall":"..."' : '') + '}.';
       var swResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
@@ -3063,7 +3056,7 @@ case 'inbox': {
         return { text: String((x && x.text) || '').trim().slice(0, 400), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).filter(function(c){ return swAllowed[c]; }) }; }).filter(function(x){ return x.text; }); };
       var swRes = { strengths: swClean(swOut.strengths), actions: swClean(swOut.actions) };
       if (swOverall) {
-        swRes.overall = String(swOut.overall || '').trim();
+        swRes.overall = stage2CloseTidy_(swOut.overall, swName);
         /* v295: the model writes short whatever the prompt says (114 to 152 words against "180 to 230"). Under 150 words,
            it is asked once more to say the same at his length, from the same points and nothing else. */
         var swWords = function(t){ return String(t || '').split(/\s+/).filter(Boolean).length; };
@@ -3073,12 +3066,12 @@ case 'inbox': {
               method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
               payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
                 messages: [{ role: 'system', content: 'You lengthen a CELTA tutor\'s Stage 2 Overall comment to between 180 and 230 words, in the same voice and the same order: '
-                  + 'the progress sentence with the trainee\'s first name, then what is working, then "For the next stage of the course, ...", then "Best of luck!". '
-                  + 'Lengthen it by saying more about the points given, one by one, in concrete terms (what the trainee does, what it gives the students, what to do next): nothing new, no single lessons, no TP numbers, no students\' names, no grade. ' + swOvVoice
+                  + 'how far the trainee has come, with their first name, then what is consistently working, then what to keep attention on in the second half of the course. No stock phrases and no sign-off line. '
+                  + 'Lengthen it by saying more about the points given, one by one, in concrete terms (what the trainee does, what it gives the students, what to do next): nothing new, no single lessons, no TP numbers, no students\' names, no grade. ' + stage2CloseVoice_(!!(swClose && swClose.voice.length))
                   + 'Write "students", never Ss. American spelling. Answer as JSON: {"overall":"..."}.' },
-                  { role: 'user', content: JSON.stringify({ overall: swRes.overall, strengths: swRes.strengths, actions: swRes.actions }) }] })
+                  { role: 'user', content: JSON.stringify({ overall: swRes.overall, strengths: swRes.strengths, actions: swRes.actions, tutorSamples: (swClose && swClose.voice.length) ? swClose.voice : undefined }) }] })
             });
-            if (swLong.getResponseCode() === 200) { var swL = String((JSON.parse(JSON.parse(swLong.getContentText()).choices[0].message.content || '{}')).overall || '').trim(); if (swWords(swL) > swWords(swRes.overall)) swRes.overall = swL; }
+            if (swLong.getResponseCode() === 200) { var swL = String((JSON.parse(JSON.parse(swLong.getContentText()).choices[0].message.content || '{}')).overall || '').trim(); swL = stage2CloseTidy_(swL, swName); if (swWords(swL) > swWords(swRes.overall)) swRes.overall = swL; }
           } catch (swLe) {}
         }
         swRes.overall = swRes.overall.slice(0, 2000);
@@ -6259,6 +6252,58 @@ function celtaShorthand_() {
     + 'Note-taking shorthand: Ss or sts = students; T = teacher; EC = error correction; DEC = delayed error correction; instr = instructions; demo = demonstration; ex = exercise; '
     + 'BW = board work; monit = monitoring; pron = pronunciation; voc or vocab = vocabulary; gram = grammar; prep = preparation; LA = language analysis; GD = guided discovery; '
     + 'PPP = presentation, practice, production; v = very; + = and; w/ = with; w/o = without; b4 = before. ';
+}
+
+/* STAGE 2'S OVERALL COMMENT, IN THE VOICE OF THE TUTOR WHO SIGNS IT (v305, 25 Nov 2026; Ramy: the closing paragraph must
+   sound like the tutor who signs it, learned from that tutor's own overall comments on this course's TP feedback; too
+   few of them and it is a plain, neutral trainer voice, never another tutor's). The page picks the samples (the signer's
+   overall comments across the trainees the tutor link reads, names masked) and sends this trainee's overall comments
+   on the Stage 2 lessons; the store caps both again here. Ramy's own Stage 2s give only the shape: how far the trainee
+   has come, what is consistently working, what to keep attention on in the next stage. */
+var STAGE2_VOICE_MIN_ = 3, STAGE2_VOICE_MAX_ = 6, STAGE2_VOICE_LEN_ = 400, STAGE2_LESSONS_MAX_ = 4, STAGE2_LESSON_LEN_ = 900;
+function stage2CloseIn_(req) {
+  var clip = function (v, n) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n); };
+  var seen = {}, voice = (Array.isArray(req && req.voice) ? req.voice : []).map(function (x) { return clip(x, STAGE2_VOICE_LEN_); })
+    .filter(function (x) { var k = x.toLowerCase(); if (!x || x.split(' ').length < 15 || seen[k]) return false; seen[k] = 1; return true; }).slice(0, STAGE2_VOICE_MAX_);
+  var lessons = (Array.isArray(req && req.lessons) ? req.lessons : []).slice(0, STAGE2_LESSONS_MAX_).map(function (l) {
+    return { tp: Number(l && l.tp) || 0, overall: clip(l && l.overall, STAGE2_LESSON_LEN_) }; }).filter(function (l) { return l.overall; });
+  /* fewer than the minimum: none are sent, and the voice is the neutral one */
+  if (voice.length < STAGE2_VOICE_MIN_) voice = [];
+  return { voice: voice, lessons: lessons };
+}
+function stage2CloseVoice_(hasVoice) {
+  return hasVoice
+    ? 'VOICE OF THE OVERALL COMMENT: it is signed by the tutor who wrote "tutorSamples", overall comments that tutor wrote on other lessons on this course (a trainee is NAME there). '
+      + 'Write it as that tutor writes: their length of sentence, how they open, how they praise and how they turn to what to change, how direct or how warm they are, the everyday words they reach for, whether they use fragments, contractions or "I". '
+      + 'Take only the voice from the samples: never their content, never a whole sentence of theirs, and nothing about another trainee or another lesson. '
+    : 'VOICE OF THE OVERALL COMMENT: a plain, neutral trainer voice: clear and kind, short sentences, everyday words, no catchphrases, no sign-off line. ';
+}
+function stage2ClosePrompt_(name, hasVoice) {
+  return 'Also write the Overall comment that closes Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of 180 to 230 words (never shorter than 160 words; count them before you answer), in "overall". '
+    + 'Its shape: first how far the trainee has come over the first half of the course, with their first name' + (name ? ' (' + name + ')' : '') + ' once in that opening sentence; '
+    + 'then what is consistently working in their planning and teaching; then what to keep their attention on in the second half of the course, when they teach a new level and the later criteria come in, as instructions. '
+    + 'Draw it from "lessonComments" (the overall comments the tutors wrote on this trainee\'s lessons in this stage) and from the strengths and action points you give above, and from nothing else. '
+    + 'Make it this trainee\'s own: what is said of them could not be said of every trainee. Write to the trainee as "you". '
+    + 'The same rules as the points: general and criteria-referenced, no single lessons, no TP numbers, no topics or materials, no students\' names, no codes, no lists. '
+    + 'Never give a grade, a standard or a result, and never promise or predict one (not "pass", not "to standard", not "on track for"). '
+    + 'Never use stock phrases: not "Best of luck", not "Keep up the good work", not "a solid foundation", not "on the right track", not "journey", "growth" or "potential". '
+    + 'Never use: demonstrate, demonstrating, foster, ownership, thoughtfully, effectively, facilitate, showcase, commendable, it is clear that, deeper learning, autonomy, strategies, ensure, utilize. '
+    + 'Write "students", never Ss. ' + stage2CloseVoice_(hasVoice);
+}
+/* the paragraph as it comes back: a string or nothing; a label, quotes or arrows taken off; NAME put back as the name;
+   a sentence that gives or promises a grade left out; too short to be a paragraph and it is nothing */
+function stage2CloseTidy_(v, name) {
+  if (typeof v !== 'string') return '';
+  var t = v.replace(/\r/g, '').replace(/^\s*overall comment\s*:?\s*/i, '').replace(/^\s*["“]+|["”]+\s*$/g, '')
+    .replace(/[←-⇿➡➔➜]/g, '').replace(/[ \t]+/g, ' ').replace(/\n\s*\n[\s\n]*/g, '\n\n').trim();
+  if (!t || /^[\[{]/.test(t)) return '';
+  t = name ? t.replace(/\bNAME\b/g, name) : t.replace(/,?\s*\bNAME\b/g, '');
+  var grade = /\bPass(\s+[AB])?\b|\bwill pass\b|\b(above|below|to|at) (the )?(expected )?standard\b|\bon track (for|to)\b|\bfail/i;
+  t = t.split(/\n\n/).map(function (p) { return (p.match(/[^.!?]+[.!?]+["”']?\s*|[^.!?]+$/g) || []).filter(function (s) { return !grade.test(s); }).join('').trim(); })
+    .filter(Boolean).join('\n\n');
+  if (t.split(/\s+/).filter(Boolean).length < 25) return '';
+  if (t.length > 2000) { var cut = t.slice(0, 2000), at = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! ')); t = at > 1000 ? cut.slice(0, at + 1) : cut; }
+  return t;
 }
 
 // ---- keys --------------------------------------------------------------------

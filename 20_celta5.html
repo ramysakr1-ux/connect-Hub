@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611250020">
+<link rel="stylesheet" href="hub-tokens.css?v=202611250050">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -239,7 +239,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611250020">
+<link rel="stylesheet" href="hub-house.css?v=202611250050">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -252,20 +252,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611250020"></script>
-<script src="hub-hand.js?v=202611250020"></script>
-<script src="hub-ink.js?v=202611250020"></script>
-<script src="assignment-defaults.js?v=202611250020"></script>
-<script src="celta5-text.js?v=202611250020"></script>
-<script src="celta5-appendix.js?v=202611250020"></script>
-<script src="celta5-criteria.js?v=202611250020"></script>
-<script src="hub-tracker.js?v=202611250020"></script>
-<script src="observation-defaults.js?v=202611250020"></script>
-<script src="hub-shared.js?v=202611250020"></script>
-<script src="hub-store.js?v=202611250020"></script>
-<script src="hub-say.js?v=202611250020"></script>
-<script src="hub-sync.js?v=202611250020"></script>
-<script src="hub-notebook.js?v=202611250020"></script>
+<script src="celta5-pdf.js?v=202611250050"></script>
+<script src="hub-hand.js?v=202611250050"></script>
+<script src="hub-ink.js?v=202611250050"></script>
+<script src="assignment-defaults.js?v=202611250050"></script>
+<script src="celta5-text.js?v=202611250050"></script>
+<script src="celta5-appendix.js?v=202611250050"></script>
+<script src="celta5-criteria.js?v=202611250050"></script>
+<script src="hub-tracker.js?v=202611250050"></script>
+<script src="observation-defaults.js?v=202611250050"></script>
+<script src="hub-shared.js?v=202611250050"></script>
+<script src="hub-store.js?v=202611250050"></script>
+<script src="hub-say.js?v=202611250050"></script>
+<script src="hub-sync.js?v=202611250050"></script>
+<script src="hub-notebook.js?v=202611250050"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -492,8 +492,8 @@ function s3Opening(ev){
    of how things stand at the midpoint of the course" and then run PLANNING and TEACHING, each with its strengths and
    its action points and a code at the end of each point. That last shape is the one Stage 1 and Stage 3 already have
    here, so it is the one used: his opening sentence from those seven, with a colon where his had a dash, and the points
-   from the lessons between Stage 1 and the halfway point (TP3 and TP4 of eight). The closing paragraph he writes to
-   each trainee by name is left to him.
+   from the lessons between Stage 1 and the halfway point (TP3 and TP4 of eight). The closing paragraph is the Overall
+   comment, in the voice of the tutor who signs it (below).
    Like Stage 3's, the text is shown in the box and joins the record only when the tutor writes in it or returns the
    stage: an assessor's link reads a stage a tutor has not returned, and a draft nobody chose to keep should not be there. */
 function s2Evidence(){
@@ -520,6 +520,63 @@ function s2Opening(ev){
    progress over the first stage of the course, NAME. ... For the next stage of the course, ... Best of luck!"), about ten
    strengths and six or seven action points. The PLANNING and TEACHING layout of his autumn 2026 Stage 2s is left to Stage 3,
    which follows his Stage 3 sheet. The store writes the points and the overall comment together (stage1Words with overall). */
+/* STAGE 2'S OVERALL COMMENT IN THE SIGNING TUTOR'S VOICE (store v305, 25 Nov 2026; Ramy: it must sound like the tutor who
+   signs it). The signer is the name this browser signs with (chub:tutorName, Course admin's spelling). Their voice is
+   learned from the overall comments they wrote on this course's returned TP feedback, across every trainee this link
+   reads: a lesson is theirs when its Tutor field is the same listed tutor (hubTutorNameMatch: capitals, spaces, a first
+   name alone). At least S2_VOICE_MIN comments of fifteen words or more, or none is sent and the store writes in a plain,
+   neutral voice: never another tutor's. At most S2_VOICE_MAX, each cut to S2_VOICE_LEN characters at a sentence, taken in
+   turn from different trainees, newest lesson first, every trainee's name masked as NAME. What the paragraph says comes
+   from this trainee's own overall comments on the Stage 2 lessons (masked the same way) and the points. */
+const S2_VOICE_MIN = 3, S2_VOICE_MAX = 6, S2_VOICE_LEN = 400;
+function s2Signer(){ try { return String((window.hubTutorNameSettle ? hubTutorNameSettle() : localStorage.getItem('chub:tutorName')) || '').replace(/\s+/g, ' ').trim(); } catch (e) { return ''; } }
+function s2SameTutor(name, signer, list){
+  const norm = v => String(v || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  if (!norm(name) || !norm(signer)) return false;
+  list = (list || (window.hubTutorNameList ? hubTutorNameList() : [])).slice();
+  const match = window.hubTutorNameMatch;
+  if (!match) return norm(name) === norm(signer);
+  if (!list.some(t => norm(t) === norm(signer))) list.push(signer);
+  const a = match(name, list), b = match(signer, list);
+  return !!a && a === b;
+}
+/* a whole name in any capitals; a part of a name (Maya, Tanaka) only as a name is written, with its capital, so a
+   trainee called Will or Grace does not take "will" or "grace" out of a sentence */
+function s2Mask(text, names){
+  let t = String(text || '');
+  const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), edge = w => '(?<![\\p{L}])' + w + '(?![\\p{L}])';
+  const full = [], parts = [];
+  (names || []).forEach(n => { const f = String(n || '').replace(/\s+/g, ' ').trim(); if (!f) return; full.push(f);
+    f.split(' ').forEach(w => { if (w.replace(/[^\p{L}]/gu, '').length >= 2) parts.push(w); }); });
+  [...new Set(full)].sort((x, y) => y.length - x.length).forEach(w => { t = t.replace(new RegExp(edge(esc(w)), 'giu'), 'NAME'); });
+  [...new Set(parts)].sort((x, y) => y.length - x.length).forEach(w => {
+    const cap = w.charAt(0).toLocaleUpperCase() + w.slice(1).toLocaleLowerCase();
+    [cap, w.toLocaleUpperCase(), w].forEach(v => { if (v.charAt(0) === v.charAt(0).toLocaleUpperCase()) t = t.replace(new RegExp(edge(esc(v)), 'gu'), 'NAME'); });
+  });
+  return t.replace(/NAME(\s+NAME)+/g, 'NAME');
+}
+const s2Clip = (v, n) => { const t = String(v || '').replace(/\s+/g, ' ').trim(); if (t.length <= n) return t; const c = t.slice(0, n), at = Math.max(c.lastIndexOf('. '), c.lastIndexOf('! '), c.lastIndexOf('? ')); return at > n / 3 ? c.slice(0, at + 1) : c.replace(/\s+\S*$/, ''); };
+const s2Overall = fb => String((((fb || {}).state || {}).f || {}).tOverall || '').trim();
+function s2VoiceSamples(signer, trainees, list){
+  if (!trainees) { const r = rec('connect_roster_v1') || {}; trainees = r.trainees || {}; }
+  const all = Object.values(trainees || {}), names = all.map(t => t && t.name).filter(Boolean);
+  if (!String(signer || '').trim()) return { samples: [], count: 0 };
+  const per = all.map(t => { let h = {}; try { h = T.tpHistory(t) || {}; } catch (e) {}
+    return Object.keys(h).map(Number).sort((a, b) => b - a).map(n => h[n])
+      .filter(fb => s2SameTutor((((fb || {}).state || {}).f || {}).fTutor, signer, list))
+      .map(fb => s2Clip(s2Mask(s2Overall(fb), names), S2_VOICE_LEN)).filter(x => x.split(' ').length >= 15); });
+  const seen = new Set(), out = []; let count = 0;
+  per.forEach(a => a.forEach(x => { if (!seen.has(x.toLowerCase())) { seen.add(x.toLowerCase()); count++; } }));
+  seen.clear();
+  for (let i = 0; out.length < S2_VOICE_MAX && per.some(a => a.length > i); i++)
+    per.forEach(a => { const x = a[i]; if (x && out.length < S2_VOICE_MAX && !seen.has(x.toLowerCase())) { seen.add(x.toLowerCase()); out.push(x); } });
+  return { samples: count >= S2_VOICE_MIN ? out : [], count };
+}
+function s2LessonComments(ev, trainees){
+  if (!trainees) { const r = rec('connect_roster_v1') || {}; trainees = r.trainees || {}; }
+  const names = Object.values(trainees || {}).map(t => t && t.name).concat([who && who.name]).filter(Boolean);
+  return ev.tps.map(n => ({ tp: n, overall: s2Clip(s2Mask(s2Overall(ev.hist[n]), names), 900) })).filter(l => l.overall);
+}
 const sao = (pts, overall) => 'Strengths:\n' + s1Bullets(pts.S || []) + '\n\nAction points:\n' + s1Bullets(pts.A || []) + (overall ? '\n\nOverall comment:\n' + overall : '');
 function stageFill(cfg){
   const S = { raw: null, neu: null, words: 'idle' };
@@ -542,7 +599,10 @@ function stageFill(cfg){
     const ev = cfg.evidence(); if (!ev || !ev.ready) return;
     S.words = 'asking';
     try {
-      const pts = s3Points(ev), flat = JSON.stringify(pts);
+      const pts = s3Points(ev);
+      /* Stage 2's closing paragraph: the signer's voice and this trainee's lesson comments; a different signer asks again */
+      const close = cfg.shape === 'sao' ? (() => { const sg = s2Signer(), v = s2VoiceSamples(sg); return { signer: sg, samples: v.samples, lessons: s2LessonComments(ev) }; })() : null;
+      const flat = JSON.stringify(close ? [pts, close] : pts);
       const cacheKey = cfg.cache + (who.token || '') + ':' + flat.length + ':' + flat.split('').reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0);
       let r = null; try { r = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) {}
       if (!r) {
@@ -554,17 +614,18 @@ function stageFill(cfg){
         };
         if (cfg.shape === 'sao') {
           const body = { op: 'stage1Words', strengths: [...pts.planS, ...pts.teachS], actions: [...pts.planA, ...pts.teachA].sort((x, y) => (y.star ? 1 : 0) - (x.star ? 1 : 0)),
-            overall: true, name: String((who && who.name) || '').trim().split(/\s+/)[0], stage: 2 };
+            overall: true, name: String((who && who.name) || '').trim().split(/\s+/)[0], stage: 2, voice: close.samples, lessons: close.lessons };
           if (HubStore.token && HubStore.token()) body.token = HubStore.token();
           const a = await HubStore.call(body, 60000);
           if (!a || !Array.isArray(a.strengths) || !Array.isArray(a.actions) || (!a.strengths.length && !a.actions.length)) throw new Error('no words');
-          r = { S: a.strengths, A: a.actions, overall: String(a.overall || '').trim() };
+          r = { S: a.strengths, A: a.actions, overall: typeof a.overall === 'string' ? a.overall.trim() : '' };
         } else {
         const [p, t] = await Promise.all([ask(pts.planS, pts.planA), ask(pts.teachS, pts.teachA)]);
         if (!p || !t || !Array.isArray(p.strengths) || !Array.isArray(p.actions) || !Array.isArray(t.strengths) || !Array.isArray(t.actions)) throw new Error('no words');
         r = { planS: p.strengths, planA: p.actions, teachS: t.strengths, teachA: t.actions };
         }
-        try { localStorage.setItem(cacheKey, JSON.stringify(r)); } catch (e) {}
+        /* an answer without its closing paragraph is not kept, so the next opening asks for it again */
+        if (!(cfg.shape === 'sao' && !r.overall)) try { localStorage.setItem(cacheKey, JSON.stringify(r)); } catch (e) {}
       }
       if (cfg.shape === 'sao') {
         const was = S.neu || S.raw; S.neu = build(ev, r); S.words = 'done';
@@ -582,7 +643,7 @@ function stageFill(cfg){
   };
   return S;
 }
-const S2 = stageFill({ key: 'stage2', box: '#s2 textarea[data-k="summary"]', cache: 'chub:s2words2:', evidence: s2Evidence, opening: s2Opening, shape: 'sao' });
+const S2 = stageFill({ key: 'stage2', box: '#s2 textarea[data-k="summary"]', cache: 'chub:s2words3:', evidence: s2Evidence, opening: s2Opening, shape: 'sao' });
 const S3 = stageFill({ key: 'stage3', box: '#s3 textarea[data-k="summary"]', cache: 'chub:s3words:', evidence: s3Evidence, opening: s3Opening });
 /* Stage 2's and Stage 3's summary, read: Stage 1's layout, with PLANNING and TEACHING as headings and the line above each list in bold */
 function s3Pretty(v){
