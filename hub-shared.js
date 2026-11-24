@@ -2739,7 +2739,7 @@ window.hubPaintMargin = function (root, margin, opts) {
     var box = loc.querySelector('.readonly'), gut = loc.querySelector('.tmgut');
     items.forEach(function (c, n) {
       var id = c.id || ('n' + n);
-      var at = hubHighlight(box, c.quote, id, c.tick ? 'tmc tmc-tick' : 'tmc' + (c.tone ? ' tmc-' + c.tone : ''), 'tmc');
+      var at = hubHighlight(box, c.quote, id, c.tick ? 'tmc tmc-tick' : 'tmc' + (c.tone ? ' tmc-' + c.tone : ''), 'tmc', c.occ);
       if (at >= 0 && c.tick) hubTickSpots(c.quote, c.n || 1).forEach(function (sp) {
         var span = document.createElement('span'); span.className = 'tmc-mark'; span.setAttribute('role', 'img'); span.setAttribute('aria-label', 'ticked by your tutor');
         span.innerHTML = hubTickSVG('draw'); hubInsertAt(box, at + sp, span);
@@ -2780,9 +2780,19 @@ window.hubFlat = function (box) {
 };
 /* Wrap the first match of quote in <mark>s (one per text node it touches).
    Returns where it starts in the flat reading, or -1. */
-window.hubHighlight = function (box, quote, id, cls, key) {
+/* WHICH OCCURRENCE (Ramy, 24 Nov 2026: a tick on "think" at the end of a paragraph landed on the first "think"
+   above it). A comment made since then carries occ, which occurrence of its words in that answer it was made on
+   (0 = the first); it is drawn there. A comment without occ, or whose answer no longer has that many, is drawn on
+   the first, as before. */
+window.hubOccurrence = function (all, quote, start) {
+  var n = 0, i = all.indexOf(quote);
+  while (i >= 0 && i < start) { n++; i = all.indexOf(quote, i + 1); }
+  return n;
+};
+window.hubHighlight = function (box, quote, id, cls, key, occ) {
   if (!quote) return -1;
   var f = hubFlat(box), at = f.all.indexOf(quote); if (at < 0) return -1;
+  for (var k = 0, nx; k < (+occ || 0); k++) { nx = f.all.indexOf(quote, at + 1); if (nx < 0) break; at = nx; }
   var end = at + quote.length;
   f.nodes.forEach(function (pair) {
     var node = pair[0], start = pair[1], stop = start + node.nodeValue.length;
@@ -3347,6 +3357,7 @@ window.hubHeadHTML = function (text, heads) {
   function isBack(a) {
     if (!a || a.tagName !== 'A') return false;
     if (a.id === 'hubAkBack') return false;   /* the assessor's pill goes to the pack, by name */
+    if (a.id === 'mknAll' || a.id === 'mknAll2') return false;   /* the marking page's Back goes to where the marking was opened from, not to the trainee before (24 Nov 2026) */
     var t = (a.textContent || '').trim();
     return /^back$/i.test(t) || ((a.classList.contains('back') || a.id === 'back' || a.id === 'backLink') && /^back\b/i.test(t));
   }

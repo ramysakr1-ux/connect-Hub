@@ -143,7 +143,7 @@
       var box = loc.querySelector('.readonly');
       /* ticks first: n of them, spread over the words (hubTickSpots) */
       items.filter(function (c) { return c.tick; }).forEach(function (c) {
-        var at = hubHighlight(box, c.quote, c.id, 'mc mc-tick');
+        var at = hubHighlight(box, c.quote, c.id, 'mc mc-tick', null, c.occ);
         if (at < 0) return;
         hubTickSpots(c.quote, c.n || 1).forEach(function (sp) {
           var span = document.createElement('span'); span.className = 'tickmark'; span.setAttribute('role', 'img'); span.setAttribute('aria-label', 'ticked');
@@ -155,7 +155,7 @@
          headed by its criterion and its kind ("Criterion 1 · Good", "To work on", or just "Comment"), with Edit and
          Delete under your own. The writer's name shows only when the writer is somebody else. */
       if (MKN()) {
-        var placed = cm.map(function (c) { return { c: c, at: hubHighlight(box, c.quote, c.id, 'mc' + (c.tone ? ' mc-' + c.tone : '')) }; });
+        var placed = cm.map(function (c) { return { c: c, at: hubHighlight(box, c.quote, c.id, 'mc' + (c.tone ? ' mc-' + c.tone : ''), null, c.occ) }; });
         /* THE FIRST ROUND BESIDE A RESUBMISSION (24 Nov 2026). Where the page shows only the new version (data-first),
            the comments of the first round stand beside it too, faded and headed "First round", with no Edit or Delete.
            Their words are highlighted where the resubmission still has them; the card is drawn either way. A table row
@@ -163,7 +163,7 @@
         if (loc.hasAttribute('data-first') && round !== 'sub1') {
           var fl = loc.getAttribute('data-firstloc') || here;
           list('sub1').filter(function (c) { return c.loc === fl && !c.tick && c.text; }).forEach(function (c) {
-            placed.push({ c: c, first: true, at: hubHighlight(box, c.quote, c.id, 'mc mc-first') });
+            placed.push({ c: c, first: true, at: hubHighlight(box, c.quote, c.id, 'mc mc-first', null, c.occ) });
           });
         }
         placed.sort(function (x, y) { return (x.at < 0 ? 1e9 : x.at) - (y.at < 0 ? 1e9 : y.at); });
@@ -179,7 +179,7 @@
         return;
       }
       gut.innerHTML = cm.map(function (c) {
-        hubHighlight(box, c.quote, c.id, 'mc' + (c.tone ? ' mc-' + c.tone : ''));
+        hubHighlight(box, c.quote, c.id, 'mc' + (c.tone ? ' mc-' + c.tone : ''), null, c.occ);
         return '<div class="mcard' + (c.tone ? ' tone-' + c.tone : '') + (c.role === 'second' ? ' by-second' : '') + '" data-mcard="' + c.id + '">' +
           (c.crit != null && c.crit !== '' ? '<span class="mc-crit">Criterion ' + (+c.crit + 1) + '</span>' : '') +
           '<p>' + esc(c.text) + '</p>' +
@@ -263,8 +263,11 @@
     /* whole words: a selection that stops mid-word takes the rest of the word */
     while (st > 0 && isW.test(full[st - 1]) && isW.test(full[st])) st--;
     while (en < full.length && isW.test(full[en]) && isW.test(full[en - 1])) en++;
+    var lead = full.slice(st, en).match(/^\s*/)[0].length;
     var q = full.slice(st, en).replace(/^\s+|\s+$/g, '');
-    return q.length < 2 ? null : { loc: loc, quote: q.slice(0, 2000) };
+    if (q.length < 2) return null;
+    q = q.slice(0, 2000);
+    return { loc: loc, quote: q, occ: hubOccurrence(full, q, st + lead) };
   }
 
   /* the bar that appears over a selection */
@@ -288,10 +291,10 @@
     if (!CTX || !s || s.isCollapsed || !s.rangeCount) { b.hidden = true; return; }
     var r = s.getRangeAt(0), info = selectionInfo(r);
     if (!info || !canWrite(info.loc.getAttribute('data-round'))) { b.hidden = true; return; }
-    SEL = { loc: info.loc, quote: info.quote, crit: null, tickId: null };
-    /* the same words already ticked: Good adds another tick to them */
+    SEL = { loc: info.loc, quote: info.quote, occ: info.occ, crit: null, tickId: null };
+    /* the same words already ticked: Good adds another tick to them (the same place, not the same words elsewhere) */
     var here = info.loc.getAttribute('data-loc');
-    var ex = list(writeRound()).filter(function (c) { return c.tick && c.loc === here && c.quote === info.quote; })[0];
+    var ex = list(writeRound()).filter(function (c) { return c.tick && c.loc === here && c.quote === info.quote && (+c.occ || 0) === (+info.occ || 0); })[0];
     if (ex) { SEL.tickId = ex.id; SEL.crit = ex.crit == null || ex.crit === '' ? null : +ex.crit; }
     showBar(r);
   }
@@ -301,7 +304,7 @@
     var rec = list(writeRound()).filter(function (x) { return x.id === id; })[0], loc = ms[0].closest('.mloc'); if (!rec || !loc) return;
     var r = document.createRange(); r.setStartBefore(ms[0]); r.setEndAfter(ms[ms.length - 1]);
     var s = getSelection(); s.removeAllRanges(); s.addRange(r);
-    SEL = { loc: loc, quote: rec.quote, crit: rec.crit == null || rec.crit === '' ? null : +rec.crit, tickId: id };
+    SEL = { loc: loc, quote: rec.quote, occ: rec.occ, crit: rec.crit == null || rec.crit === '' ? null : +rec.crit, tickId: id };
     showBar(r);
   }
 
@@ -387,7 +390,7 @@
       if (!text) { if (opts.id) remove(opts.id); return; }   /* an empty comment is no comment */
       var l = list(writeRound());
       if (opts.id) { var c = l.filter(function (x) { return x.id === opts.id; })[0]; if (c) { c.text = text; c.crit = cv === '' ? null : +cv; c.tone = tone; } }
-      else l.push({ id: newId('m'), loc: opts.loc, quote: opts.quote, text: text, crit: cv === '' ? null : +cv, tone: tone, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
+      else l.push({ id: newId('m'), loc: opts.loc, quote: opts.quote, occ: +opts.occ || 0, text: text, crit: cv === '' ? null : +cv, tone: tone, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
       CTX.save(); CTX.rerender();
     };
   }
@@ -403,7 +406,7 @@
     if (tk && SEL) {
       var wl = list(writeRound()), rec = tickRec();
       if (rec) rec.n = Math.min(9, (rec.n || 1) + 1);
-      else { rec = { id: newId('t'), loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', tick: true, n: 1, crit: SEL.crit == null ? null : SEL.crit, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }; wl.push(rec); }
+      else { rec = { id: newId('t'), loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, occ: +SEL.occ || 0, text: '', tick: true, n: 1, crit: SEL.crit == null ? null : SEL.crit, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }; wl.push(rec); }
       JUST_TICKED = rec.id; RESEL = rec.id; CTX.save(); CTX.rerender(); return;
     }
     var ut = t.closest('[data-untick]');
@@ -424,7 +427,7 @@
       return;
     }
     var sb = t.closest('[data-sb]');
-    if (sb && SEL) { bar().hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, text: '', crit: SEL.crit, fromBar: true }); window.getSelection().removeAllRanges(); return; }
+    if (sb && SEL) { bar().hidden = true; editor({ loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, occ: SEL.occ, text: '', crit: SEL.crit, fromBar: true }); window.getSelection().removeAllRanges(); return; }
     var ed = t.closest('[data-medit]');
     if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit, tone: c.tone }); return; }
     var del = t.closest('[data-mdel]'); if (del) { remove(del.getAttribute('data-mdel')); return; }
