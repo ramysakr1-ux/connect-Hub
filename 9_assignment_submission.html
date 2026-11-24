@@ -46,7 +46,7 @@
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611242212">
+<link rel="stylesheet" href="hub-tokens.css?v=202611242221">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -358,7 +358,7 @@
   }
   @media print{ .rt-bar{display:none !important;} .rt-cta{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611242212">
+<link rel="stylesheet" href="hub-house.css?v=202611242221">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -366,20 +366,20 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611242212"></script>
-<script src="assignment-history.js?v=202611242212"></script>
-<script src="assignment-examples.js?v=202611242212"></script>
-<script src="hub-due.js?v=202611242212"></script>
-<script src="hub-shared.js?v=202611242212"></script>
-<script src="hub-store.js?v=202611242212"></script>
-<script src="hub-drive-pick.js?v=202611242212"></script>
-<script src="hub-say.js?v=202611242212"></script>
-<script src="hub-sync.js?v=202611242212"></script>
-<script src="hub-notebook.js?v=202611242212"></script>
-<script src="observation-defaults.js?v=202611242212"></script>
-<script src="hub-rotation.js?v=202611242212"></script>
-<script src="hub-peers.js?v=202611242212"></script>
-<script src="fol-interview.js?v=202611242212"></script>
+<script src="assignment-defaults.js?v=202611242221"></script>
+<script src="assignment-history.js?v=202611242221"></script>
+<script src="assignment-examples.js?v=202611242221"></script>
+<script src="hub-due.js?v=202611242221"></script>
+<script src="hub-shared.js?v=202611242221"></script>
+<script src="hub-store.js?v=202611242221"></script>
+<script src="hub-drive-pick.js?v=202611242221"></script>
+<script src="hub-say.js?v=202611242221"></script>
+<script src="hub-sync.js?v=202611242221"></script>
+<script src="hub-notebook.js?v=202611242221"></script>
+<script src="observation-defaults.js?v=202611242221"></script>
+<script src="hub-rotation.js?v=202611242221"></script>
+<script src="hub-peers.js?v=202611242221"></script>
+<script src="fol-interview.js?v=202611242221"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -986,7 +986,23 @@ function render(){
   { let CL = []; try { CL = ((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).courseLinks || []).filter(l => l && l.url && l.label && String(l.asg || '') === CURRENT); } catch (e) {}
     if (CL.length) html += `<div class="card" style="padding:14px 18px; margin-bottom:16px;"><p class="eyebrow" style="margin:0 0 6px;">Reading for this assignment</p>${CL.map(l => `<p style="margin:0 0 4px; font-size:0.95rem;"><a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" style="font-weight:700; color:var(--teal);">${esc(l.label)}</a></p>${l.note ? `<p style="margin:0 0 10px; font-size:0.84rem; line-height:1.6; color:var(--grey);">${esc(l.note)}</p>` : ''}`).join('')}</div>`; }
   html += critPending();
+  /* ONLY THE TEXT THEY CHOSE, ONCE IT COMES BACK (Ramy, 24 Nov 2026: "show only the text he chose"). On a returned
+     assignment the text the trainee wrote under "Text chosen" stays open where it was; the other texts go into one
+     closed fold, "The other two texts", after it. Before the first submission all of them show, to choose from. If the
+     answer names no text Lite can read, nothing changes. */
+  const TX = (R && window.hubTexts) ? hubTexts.of(a) : [], TXCH = TX.length ? (hubTexts.answered(sub.sub1) || '') : '';
+  const txIdx = s => { const m = String(s.label || '').match(/^\s*Text\s+([A-C])\b/i); return (TXCH && s.type === 'text' && hubIsReference(s) && m) ? m[1].toUpperCase() : ''; };
+  const TXLAST = TXCH ? a.sections.reduce((k, s, i) => txIdx(s) ? i : k, -1) : -1;
+  const otherTexts = () => { const others = a.sections.filter(s => txIdx(s) && txIdx(s) !== TXCH); if (!others.length) return '';
+    return `<details class="card ref"><summary><h2>${others.length === 2 ? 'The other two texts' : others.length === 1 ? 'The other text' : 'The other texts'}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${others.map(s => `<h3 style="margin:14px 0 6px;">${esc(s.label)}</h3>${nl2br(s.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')}`).join('')}${TW}</div></details>`; };
   a.sections.forEach((s,i) => {
+    if (txIdx(s)) {
+      if (txIdx(s) !== TXCH) { if (i === TXLAST) html += otherTexts(); return; }
+      const shut = sub.stage === 'closed';   /* a finished assignment keeps its text folded, as before */
+      html += `<details class="card ref ${shut ? '' : 'open'}"${shut ? '' : ' open'}><summary><h2>${esc(s.label)}</h2><span class="fold" aria-hidden="true"></span></summary><div class="refbody">${nl2br(s.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')}${TW}</div></details>`;
+      if (i === TXLAST) html += otherTexts();
+      return;
+    }
     if (!(s.type==='text' && hubIsReference(s))) html += workHead();
     if (s.type==='text') {
       // Reference material: read it, don't write in it. Was the label

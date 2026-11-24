@@ -2959,7 +2959,12 @@ window.hubHeadHTML = function (text, heads) {
   function pick(t) {
     t = String(t || '');
     var m = t.match(/^[\s*_]*([abc])[\s*_]*(?=$|[.,;:()\u2014\u2013!-])/i) || t.match(/\btext\s+([abc])\b/i);
-    return m ? m[1].toUpperCase() : '';
+    if (m) return m[1].toUpperCase();
+    /* a number or a place for the letter ("3", "the third text", 24 Nov 2026: a trainee wrote "Text chosen: 3") */
+    var d = t.match(/^[\s*_]*([123])[\s*_]*(?=$|[.,;:()\u2014\u2013!-])/) || t.match(/\btext\s+([123])\b/i);
+    if (d) return 'ABC'.charAt(+d[1] - 1);
+    var w = t.match(/\b(first|second|third)\s+(?:one|text)\b/i);
+    return w ? 'ABC'.charAt(['first', 'second', 'third'].indexOf(w[1].toLowerCase())) : '';
   }
   function answered(snap) {
     if (!snap) return '';
