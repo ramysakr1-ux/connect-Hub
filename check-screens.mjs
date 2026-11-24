@@ -202,7 +202,22 @@ const KEPT_PLAN = { meta: { tp: 'TP3', name: 'Maya Check', level: 'B1', length: 
 const KEPT_VOCAB = { type: 'vocab', context: 'A weekend away', vocab: [{ item: 'itinerary', def: 'a plan of a journey', convey: 'a picture', clar: 'CCQs', form: 'noun', prob: 'stress' }, { item: 'budget', def: 'money to spend', convey: 'a situation', clar: 'CCQs', form: 'noun', prob: 'spelling' }] };
 const KEPT_GRAMMAR = { type: 'grammar', context: 'Plans for 2030', blocks: [{ fields: [{ key: 'meaning', label: 'Meaning', value: 'A completed action before a time in the future' }, { key: 'form', label: 'Form', value: 'will + have + past participle' }, { key: 'probs', label: 'Problems', pairs: [{ problem: 'Weak form of have', solution: 'Drill it' }] }] }] };
 const keptTrainee = (id, la) => ({ id, token: id, name: 'Maya Check', group: '1', assignments: {}, tp: { plan: { status: 'turned_in', state: Object.assign({}, KEPT_PLAN, { la }) } } });
+/* THE TUTOR'S MARKING PAGE (24 Nov 2026): a criterion's comment box, the overall comment and the second marker's
+   comment. A criterion's box is in the page but closed until "Add a comment" is pressed, one at a time, so prepEval
+   opens them all at once (the same boxes, shown). Made-up work and made-up people. */
+const MK_TEXT = { 5: 'Text chosen: Text B', 6: 'My task: Students match seven headings to the paragraphs.', 7: 'My task: Students find six numbers.', 8: 'My task: Groups plan a meeting.', 9: 'Scrivener, J. (2011) Learning Teaching. Macmillan.' };
+const mkRec = (o) => Object.assign({ stage: 'submitted', usedResubmission: false, sub1: { picked: {}, text: MK_TEXT, fields: {}, decl: {} }, sub2: null, feedback: null,
+  criteriaMarks: { sub1: [], sub2: [] }, criteriaComments: { sub1: [], sub2: [] }, markers: { first: '', second: '', doubleMarked: false } }, o);
+const mkSeed = (rec, tutor) => Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': tutor || 'Check Tutor',
+  connect_roster_v1: JSON.stringify({ trainees: { t1: { id: 't1', token: 't1', name: 'Maya Check', group: '1', assignments: { lsrt: rec }, tracker: {}, about: {} } } }) });
+const MK_OPEN_BOXES = "document.querySelectorAll('#mkPanel textarea[data-crit-comment]').forEach(t => { t.hidden = false; })";
 const KEPT = [
+  { name: 'the tutor’s marking page (a script to mark)', url: '10_tutor_assignment_marking.html?k=check-k&trainee=t1&a=lsrt&new=1', prepEval: MK_OPEN_BOXES, seed: mkSeed(mkRec({})) },
+  { name: 'the tutor’s marking page (a resubmission)', url: '10_tutor_assignment_marking.html?k=check-k&trainee=t1&a=lsrt&new=1', prepEval: MK_OPEN_BOXES,
+    seed: mkSeed(mkRec({ stage: 'resubmitted', round2Seeded: true, sub2: { picked: {}, text: Object.assign({}, MK_TEXT, { 6: 'My task: Students match seven headings in three minutes.' }), fields: {}, decl: {} },
+      feedback: { outcome: 'Resubmission needed', generalComment1: 'Rework section B.', generalComment2: '' }, criteriaMarks: { sub1: [true, true, false, true], sub2: [] }, criteriaComments: { sub1: ['', '', 'No time limit.', ''], sub2: [] }, markers: { first: 'Check Tutor', second: '', doubleMarked: false } })) },
+  { name: 'the tutor’s marking page (the second marker)', url: '10_tutor_assignment_marking.html?k=check-k&trainee=t1&a=lsrt&new=1',
+    seed: mkSeed(mkRec({ criteriaMarks: { sub1: [true, true, false, true], sub2: [] }, criteriaComments: { sub1: ['', '', 'No time limit.', ''], sub2: [] }, feedback: { outcome: '', generalComment1: 'A thoughtful choice of text.', generalComment2: '' }, markers: { first: 'Check Tutor', second: '', doubleMarked: false } }), 'Check Second') },
   { name: 'the tutor’s TP feedback form (vocabulary analysis)', url: '3_tutor_feedback.html?k=check-k&trainee=t1', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t1: keptTrainee('t1', KEPT_VOCAB) } }) }) },
   { name: 'the tutor’s TP feedback form (grammar analysis)',    url: '3_tutor_feedback.html?k=check-k&trainee=t2', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t2: keptTrainee('t2', KEPT_GRAMMAR) } }) }) },
   { name: 'the trainee’s self-evaluation', url: '2_trainee_self_evaluation.html?t=check-t', seed: Object.assign({}, MODES[0].seed, { connect_user_name: 'Maya Check', 'chub:plan': JSON.stringify({ status: 'turned_in', state: KEPT_PLAN }) }) },
@@ -214,7 +229,7 @@ const KEPT = [
   { name: 'the grades report',             url: '13_grades_report.html?k=check-k', prep: '#openAll', seed: Object.assign({}, MODES[1].seed, { 'chub:setupSkipped': '1', 'chub:tutorName': 'Check Tutor', connect_roster_v1: JSON.stringify({ trainees: { t1: keptTrainee('t1', KEPT_VOCAB) } }) }) },
 ];
 /* NOT YET COVERED, so nobody reads this list as "everything": the course record, the final report,
-   the handover, assignment marking, the observation sheets and the notebook keep their words in the store or need a
+   the handover, the observation sheets and the notebook keep their words in the store or need a
    fuller made-up course than this harness seeds. Add each here when it can be opened with boxes to write in. */
 /* boxes that are not meant to keep their words, each with why (matched on the box's id) */
 const NOT_KEPT = {
@@ -235,6 +250,7 @@ for (const k of KEPT) {
     const open = async () => { await page.goto(base + k.url, { waitUntil: 'domcontentloaded', timeout: 20000 }); await page.waitForTimeout(1800);
       await page.evaluate(() => document.querySelectorAll('details').forEach(d => { d.open = true; }));
       if (k.prep) await page.click(k.prep, { timeout: 3000 }).catch(() => {});   // a page whose boxes sit in closed cards names the button that opens them
+      if (k.prepEval) await page.evaluate(k.prepEval).catch(() => {});          // or opens them itself (the marking page's comment boxes, 24 Nov 2026)
       await page.waitForTimeout(200); };
     await open(); loads++;
     /* mark every box a person can write in: a textarea, or a box edited in place */

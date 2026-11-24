@@ -617,7 +617,7 @@ await step('trainee: the closed assignment refuses, and says why', async () => {
 
 /* ===== TUTOR marks, extends, tracks, grades ===== */
 await step('tutor: marking shows the materials button and the due row; a pasted marking lands', async () => {
-  await T.p.goto(`${tutorUrl('10_tutor_assignment_marking.html')}&trainee=${amaraToken}&a=${assignKey}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  await T.p.goto(`${tutorUrl('10_tutor_assignment_marking.html')}&trainee=${amaraToken}&a=${assignKey}&old=1`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
   must(await T.p.$('a.mats-open'), 'no materials button on the submission');
   must(await T.p.$('.duerow'), 'no due row');
   // The word count. It used to be a CRITERION on every assignment, which
@@ -651,7 +651,7 @@ await step('tutor: a comment typed by hand survives marking the next criterion',
   return 'comment and general comment kept, and on the store';
 });
 await step('tutor: an extension on the closed assignment reaches her through the store', async () => {
-  await T.p.goto(`${tutorUrl('10_tutor_assignment_marking.html')}&trainee=${amaraToken}&a=${lateKey}`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
+  await T.p.goto(`${tutorUrl('10_tutor_assignment_marking.html')}&trainee=${amaraToken}&a=${lateKey}&old=1`, { waitUntil: 'domcontentloaded' }); await settle(T.p, 3000);
   must(await T.p.$('.duerow.past'), 'due row not red on a closed assignment');
   await T.p.click('#extSet'); await settle(T.p, 3000);
   const ext = ((STORE.trainees[amaraToken].records.tracker || {}).extensions || {});

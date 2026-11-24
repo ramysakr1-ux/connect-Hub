@@ -9,13 +9,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* SHOWN AS A PREVIEW INSIDE THE TUTOR'S MARKING PAGE (24 Nov 2026). The marking page's "Preview as <name>" opens this
+   page in a frame with ?mkpreview=1, to show the trainee's returned view of the record Return would write. In that
+   frame the page must never write and never reach the store: no boot (HUB_PREVIEW), storage reads come from the copy
+   the marking page hands over, storage writes stay in this frame's memory, and the network is shut. Opened any other
+   way, ?mkpreview=1 shows nothing at all. Every other visit is untouched by this script. */
+(function(){
+  if (!/[?&]mkpreview=1(&|$)/.test(location.search)) return;
+  window.HUB_PREVIEW = true; window.MK_PREVIEW = true;
+  var data = null; try { if (window.parent !== window && typeof window.parent.mknPreviewData === 'function') data = window.parent.mknPreviewData(); } catch (e) {}
+  if (!data || !data.keys) window.MK_PREVIEW_EMPTY = true;
+  var mem = { local: Object.create(null), session: Object.create(null) }, ls = null, ss = null;
+  try { ls = window.localStorage; } catch (e) {} try { ss = window.sessionStorage; } catch (e) {}
+  if (data && data.keys) Object.keys(data.keys).forEach(function(k){ if (data.keys[k] != null) mem.local[k] = String(data.keys[k]); });
+  var P = Storage.prototype, get = P.getItem;
+  var which = function(st){ return st === ss ? mem.session : mem.local; };
+  P.getItem = function(k){ var m = which(this); k = String(k); if (k in m) return m[k]; if (this === ss) return null; return window.MK_PREVIEW_EMPTY ? null : get.call(this, k); };
+  P.setItem = function(k, v){ which(this)[String(k)] = String(v); };
+  P.removeItem = function(k){ which(this)[String(k)] = null; };   /* gone for this frame, still there for the tutor */
+  P.clear = function(){};
+  window.fetch = function(){ return Promise.reject(new Error('preview: no network')); };
+  try { XMLHttpRequest.prototype.send = function(){ throw new Error('preview: no network'); }; } catch (e) {}
+  try { navigator.sendBeacon = function(){ return false; }; } catch (e) {}
+  window.open = function(){ return null; };
+  var css = document.createElement('style');
+  css.textContent = 'a.back, #picker, .nbk-arc, .nbk-sheet, #hubSync, .dictbar, .rt-bar, .hub-say, .tvbar{display:none !important;}'
+    + ' #app a, #app button, #app input, #app textarea, #app select, #app summary, #app label{pointer-events:none !important;}'
+    + ' body{padding-bottom:24px !important;}';
+  document.head.appendChild(css);
+})();
+</script>
 <link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="brand/favicon.ico" sizes="32x32">
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <title>Connect Lite — Assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611240910">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241322">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -327,7 +358,7 @@
   }
   @media print{ .rt-bar{display:none !important;} .rt-cta{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611240910">
+<link rel="stylesheet" href="hub-house.css?v=202611241322">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -335,20 +366,20 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611240910"></script>
-<script src="assignment-history.js?v=202611240910"></script>
-<script src="assignment-examples.js?v=202611240910"></script>
-<script src="hub-due.js?v=202611240910"></script>
-<script src="hub-shared.js?v=202611240910"></script>
-<script src="hub-store.js?v=202611240910"></script>
-<script src="hub-drive-pick.js?v=202611240910"></script>
-<script src="hub-say.js?v=202611240910"></script>
-<script src="hub-sync.js?v=202611240910"></script>
-<script src="hub-notebook.js?v=202611240910"></script>
-<script src="observation-defaults.js?v=202611240910"></script>
-<script src="hub-rotation.js?v=202611240910"></script>
-<script src="hub-peers.js?v=202611240910"></script>
-<script src="fol-interview.js?v=202611240910"></script>
+<script src="assignment-defaults.js?v=202611241322"></script>
+<script src="assignment-history.js?v=202611241322"></script>
+<script src="assignment-examples.js?v=202611241322"></script>
+<script src="hub-due.js?v=202611241322"></script>
+<script src="hub-shared.js?v=202611241322"></script>
+<script src="hub-store.js?v=202611241322"></script>
+<script src="hub-drive-pick.js?v=202611241322"></script>
+<script src="hub-say.js?v=202611241322"></script>
+<script src="hub-sync.js?v=202611241322"></script>
+<script src="hub-notebook.js?v=202611241322"></script>
+<script src="observation-defaults.js?v=202611241322"></script>
+<script src="hub-rotation.js?v=202611241322"></script>
+<script src="hub-peers.js?v=202611241322"></script>
+<script src="fol-interview.js?v=202611241322"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. A tutor or an
    assessor who reached this page got the trainee's submission form with a
@@ -563,7 +594,12 @@ function rtTopHTML(a, sub, R){
   const main = R.kind === 'unm' ? '' : String((second ? f.generalComment2 : strip(f.generalComment1)) || '').trim();
   const earlier = (second || (R.kind === 'unm' && sub.stage === 'resubmission_needed')) ? strip(f.generalComment1) : '';
   const by = String((sub.markers && sub.markers.first) || '').trim();
-  const tutorCard = (main || earlier) ? `<div class="rt-card"><h3>From your tutor</h3>${main ? `<p class="rt-sayc">${nl2br(main)}</p>` : ''}${earlier ? (main ? `<p class="rt-was">On your first submission</p><p class="rt-wasc">${nl2br(earlier)}</p>` : `<p class="rt-note">On your first submission</p><p class="rt-sayc">${nl2br(earlier)}</p>`) : ''}${by ? `<p class="rt-by">${esc(by)}</p>` : ''}</div>` : '';
+  /* THE SECOND MARKER'S COMMENT (24 Nov 2026), under the tutor's overall comment with the second marker's name: only
+     once signed, only when there are words, and only for the round this view shows. An older record's notes on each
+     criterion were written for the 1st marker and never come here. */
+  const sx = (sub.second || {})[R.round], secC = R.kind !== 'unm' && sx && sx.signed === true ? String(sx.comment || '').trim() : '';
+  const secBlock = secC ? `${main && by ? `<p class="rt-by">${esc(by)}</p>` : ''}<p class="rt-was">Second marker</p><p class="rt-sayc">${nl2br(secC)}</p>${sx.by ? `<p class="rt-by">${esc(sx.by)}</p>` : ''}` : '';
+  const tutorCard = (main || earlier || secC) ? `<div class="rt-card"><h3>From your tutor</h3>${main ? `<p class="rt-sayc">${nl2br(main)}</p>` : ''}${secBlock}${earlier ? (main || secC ? `<p class="rt-was">On your first submission</p><p class="rt-wasc">${nl2br(earlier)}</p>` : `<p class="rt-note">On your first submission</p><p class="rt-sayc">${nl2br(earlier)}</p>`) : ''}${by && !(secC && main) ? `<p class="rt-by">${esc(by)}</p>` : ''}</div>` : '';
 
   /* THE CRITERIA: every criterion with its mark as a word, the tutor's note on it, and what the tutor tied to it in
      the text. The same reading of the record as the old feedback card; not drawn when nothing has been marked. */
@@ -896,8 +932,13 @@ function render(){
 
   if (locked) html += `<div class="locked-banner sent"><span>${sub.stage==='closed'?'This assignment is closed.':sub.stage==='resubmitted'?'Resubmitted \u2014 waiting on your tutor.':'Submitted \u2014 waiting on your tutor.'}</span>${sub.stage==='resubmission_needed'?'':''}</div>`;
 
-  if (sub.feedback) {
-    const f = sub.feedback;
+  /* NOTHING BEFORE RETURN (24 Nov 2026). The record a trainee's browser holds carries the tutors' marking as it is
+     written: marks, comments and the overall comment are saved as the tutor types. This card drew them while the
+     work was still with the tutor (found building the marking page's double marking). While the work is submitted
+     the trainee is shown none of it; while a resubmission is with the tutor, only the first round as returned. */
+  const fbSeen = !sub.feedback || sub.stage === 'submitted' ? null : sub.stage === 'resubmitted' ? Object.assign({}, sub.feedback, { generalComment2: '' }) : sub.feedback;
+  if (fbSeen) {
+    const f = fbSeen;
     const cls = f.outcome==='Pass'||f.outcome==='Pass (on resubmission)' ? 'pass' : f.outcome==='Fail (on resubmission)'||f.outcome==='Fail' ? 'fail' : 'resub';
     html += `<div class="fb-card"><h2>Tutor's feedback <span class="outcome ${cls}">${esc(f.outcome)}</span></h2>
       <p class="guide" style="margin:0;">Comments on specific parts are shown inline next to the relevant section below.</p>
@@ -908,7 +949,7 @@ function render(){
         // round marked. A criterion tied to a section also shows inline there;
         // one that is not tied (FOL's are) showed nowhere before (trainee
         // walk, 20 Sep 2026).
-        const round = (sub.criteriaMarks.sub2||[]).some(m=>m===true||m===false) ? 'sub2' : 'sub1';
+        const round = sub.stage !== 'resubmitted' && (sub.criteriaMarks.sub2||[]).some(m=>m===true||m===false) ? 'sub2' : 'sub1';
         const marks = sub.criteriaMarks[round]||[], cms = (sub.criteriaComments&&sub.criteriaComments[round])||[];
         /* What the tutor tied to each criterion in her text (18 Oct 2026): the
            front page and her page agree. */
@@ -1633,6 +1674,13 @@ function lfcMount(){
   } catch (e) {}
 }
 (function(){ if (typeof render !== 'function') return; const r1 = render; render = function(){ r1.apply(this, arguments); lfcMount(); }; lfcMount(); })();
+</script>
+<script>
+/* the preview inside the marking page (24 Nov 2026): no boot ran, so the page's own script is run here, once */
+if (window.MK_PREVIEW && !window.MK_PREVIEW_EMPTY) {
+  [].slice.call(document.querySelectorAll('script[type="text/x-hub-app"]')).forEach(function(b){ var el = document.createElement('script'); el.textContent = b.textContent; b.parentNode.replaceChild(el, b); });
+  document.dispatchEvent(new Event('hub:ready'));
+}
 </script>
 </body>
 </html>

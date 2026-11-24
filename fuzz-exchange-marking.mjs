@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 const b = await chromium.launch();
 const p = await (await b.newContext()).newPage();
 p.on('pageerror', e => console.log('PAGE ERROR', e.message));
-await p.goto('http://127.0.0.1:8792/10_tutor_assignment_marking.html?k=tutor-key-1&trainee=' + process.argv[2] + '&a=lsrt', { waitUntil: 'domcontentloaded' });
+await p.goto('http://127.0.0.1:8792/10_tutor_assignment_marking.html?k=tutor-key-1&trainee=' + process.argv[2] + '&a=lsrt&old=1', { waitUntil: 'domcontentloaded' });
 await p.waitForTimeout(5000);
 const filled = await p.evaluate(() => {
   const brief = eval('xBrief(WORDING[CURRENT], subFor(CURRENT), "sub1")');

@@ -1031,7 +1031,9 @@
          days ago; nobody had reason to open this file as well, because every
          kind added before today -- celta5, celta5t, staffLinks -- had been
          added here in the same sitting as its store change. agreement was not. */
-      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, email: t.email || '', importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {}, agreement: r.agreement || {}, interview: r.interview || {} };
+      roster.trainees[t.token] = { id: t.token, name: t.name, group: t.group, email: t.email || '', importedAt: t.created, tp: { plan: r.plan || null, selfeval: r.selfeval || null, feedback: r.feedback || null, history: history }, assignments: r.assignments || {}, tracker: r.tracker || {}, observations: r.observations || {}, links: r.links || [], staffLinks: r.staffLinks || [], celta5: r.celta5 || {}, celta5t: r.celta5t || {}, agreement: r.agreement || {}, interview: r.interview || {},
+        /* what the trainee said about themselves (24 Nov 2026): read by the marking page for their pronouns, as the handover reads it; never written from here */
+        about: r.about || {} };
     });
     out['connect_roster_v1'] = JSON.stringify(roster);
     return out;

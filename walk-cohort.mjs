@@ -358,7 +358,7 @@ await step(`${TUTOR_2} marks an assignment and signs it as herself`, async () =>
   const cf = await A.p.$('.confirm-action'); if (cf) await cf.click(); await settle(A.p, 3000);
   await A.c.close(); delete PAGES.trainee;
 
-  await T2.p.goto(`${BASE}10_tutor_assignment_marking.html?k=${STORE.key}&trainee=${tokens[who]}&a=${assignKey}`, { waitUntil: 'domcontentloaded' }); await settle(T2.p, 3000);
+  await T2.p.goto(`${BASE}10_tutor_assignment_marking.html?k=${STORE.key}&trainee=${tokens[who]}&a=${assignKey}&old=1`, { waitUntil: 'domcontentloaded' }); await settle(T2.p, 3000);
   const marker = await T2.p.$('[data-role="marker1"], #marker1');
   if (marker) { await marker.fill(TUTOR_2); await settle(T2.p, 400); }
   /* render() rebuilds the criteria list on every click, so a handle taken

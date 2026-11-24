@@ -1696,10 +1696,15 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
           l.map(function (c) { if (c.tick) return '<div class="comment">\u2713' + ((c.n || 1) > 1 ? ' \u00d7' + c.n : '') + ' <em>\u201C' + esc(c.quote) + '\u201D</em>' + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + ')</span>' : '') + '</div>'; return '<div class="comment">' + (c.crit != null && c.crit !== '' ? '<span style="font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#777;">Criterion ' + (+c.crit + 1) + '</span><br>' : '') + (c.quote ? '<em>\u201C' + esc(c.quote) + '\u201D</em><br>' : '') + nl2br(c.text) + (c.by ? ' <span style="color:#777;">(' + esc(c.by) + (c.role === 'second' ? ', second marker' : '') + ')</span>' : '') + '</div>'; }).join('');
       }).join('') + '</div>';
     }
+    /* THE SECOND MARKER'S COMMENT (24 Nov 2026): written for the trainee, printed under the general comments with the
+       second marker's name, and only once signed. A draft never reaches the record. */
+    var SEC = sub.second || {}, signedR = function (r) { var x = SEC[r]; return x && typeof x === 'object' && (x.signed === true || x.done === true) ? x : null; };
+    var secC = ['sub1', 'sub2'].map(function (r) { var x = signedR(r); return x && x.signed === true && String(x.comment || '').trim() ? { r: r, x: x } : null; }).filter(Boolean);
     html += '<div class="section"><h2>Tutor\u2019s general comments</h2>'
       + (fb.generalComment1 ? '<div class="roundlabel">On the first submission</div><div class="comment">' + nl2br(fb.generalComment1) + '</div>' : '')
       + (fb.generalComment2 ? '<div class="roundlabel">On the resubmission</div><div class="comment">' + nl2br(fb.generalComment2) + '</div>' : '')
-      + ((!fb.generalComment1 && !fb.generalComment2) ? '<p class="readonly">No general comment \u2014 feedback is per-criterion above.</p>' : '')
+      + secC.map(function (c) { return '<div class="roundlabel">Second marker\u2019s comment' + (secC.length > 1 || sub.sub2 ? (c.r === 'sub1' ? ', on the first submission' : ', on the resubmission') : '') + '</div><div class="comment">' + nl2br(String(c.x.comment).trim()) + (c.x.by ? ' (' + esc(c.x.by) + ', second marker)' : '') + '</div>'; }).join('')
+      + ((!fb.generalComment1 && !fb.generalComment2 && !secC.length) ? '<p class="readonly">No general comment \u2014 feedback is per-criterion above.</p>' : '')
       + '</div>';
     /* Handbook 9.2.3: the record carries who marked it, and whether it was
        double-marked (found missing on the 20 Sep 2026 tutor walk). */
@@ -1713,8 +1718,18 @@ if (!window.HubStore) { if (document.readyState === 'loading') document.addEvent
         /* Double marking is not blind: the second marker saw the first's marks
            and agreed or disagreed with each (17 Oct 2026). */
         var sec = sub.second || {}, out = '';
+        var whenT = function (iso) { if (!iso) return ''; var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
         ['sub1', 'sub2'].forEach(function (r) {
-          var x = sec[r]; if (!x || !x.crit) return;
+          /* only a signed record is printed (24 Nov 2026): a comment still being written is not a signature */
+          var x = sec[r]; if (!x || !x.crit || !(x.signed === true || x.done === true)) return;
+          if (x.signed === true && !Object.keys(x.crit).length) {
+            /* a mark changed after the signature (24 Nov 2026): the signature stands, and the record says so in one line */
+            var nm = function (l) { return JSON.stringify((l || []).map(function (v) { return v === true ? 1 : v === false ? 0 : null; })); };
+            var moved = Array.isArray(x.marks) && nm(x.marks) !== nm((sub.criteriaMarks || {})[r]);
+            out += '<p class="readonly">' + (sec.sub1 && sec.sub2 ? (r === 'sub1' ? 'First submission: ' : 'Resubmission: ') : '') + esc(x.by || 'The second marker') + ' agreed and signed as 2nd marker' + (x.at ? ' \u00b7 ' + esc(whenT(x.at)) : '') + '.'
+              + (moved ? '<br>A mark changed after ' + esc(x.by || 'the second marker') + ' signed.' : '') + '</p>';
+            return;
+          }
           var n = (a.criteria || []).length, keys = Object.keys(x.crit).filter(function (i) { return typeof x.crit[i].agree === 'boolean'; });
           var dis = keys.filter(function (i) { return x.crit[i].agree === false; });
           out += '<p class="readonly">' + (sec.sub1 && sec.sub2 ? (r === 'sub1' ? 'First submission: ' : 'Resubmission: ') : '') + esc(x.by || 'The second marker') + ' agreed with ' + (keys.length - dis.length) + ' of ' + n + ' marks' + (dis.length ? '; disagreed on criterion ' + dis.map(function (i) { return +i + 1; }).join(' and ') : '') + '.' +

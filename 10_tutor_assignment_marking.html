@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611240910">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241322">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -190,8 +190,337 @@
   .mk-flag blockquote{border-left-color:var(--a-red);} .mk-where{font-size:0.86rem; color:var(--grey); margin-top:6px;}
   .mk-pair{margin-top:8px;} .mk-pair .note{display:block; margin-top:4px;}
   .mk-same{color:var(--brick); font-weight:700;}
+
+  /* ---- THE NEW LAYOUT: READ, MARK, RETURN (24 Nov 2026) ----
+     Agreed with the course tutor on 23 Nov 2026 and drawn by renderNew. Everything here is under body.mkn or a
+     class that starts .mkn-, so the layout tutors have used since October is not touched by a line of it.
+     Forest is the bar and a mark of Met; the mustard is the one thing to do next, Return; the red is Not met.
+     A status is always a word: the color only supports it. */
+  body.mkn{padding:0 !important; display:block;}
+  body.mkn .board{max-width:none !important; width:100%;}
+  /* the old doors and the assignment picker are not part of this layout: the bar carries the way back */
+  body.mkn .board > .back, body.mkn #picker{display:none !important;}
+  .mkn-sr{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;}
+  body.mkn [hidden]{display:none !important;}
+  /* the top bar */
+  .mkn-bar{position:sticky; top:0; z-index:45; display:flex; align-items:center; flex-wrap:wrap; gap:8px 16px; padding:10px 28px; background:var(--a-forest); color:var(--paper);}
+  .mkn-all{display:inline-flex; align-items:center; min-height:40px; padding:0 4px; color:var(--paper) !important; font-size:0.86rem; font-weight:700; text-decoration:none; white-space:nowrap;}
+  .mkn-all:hover{text-decoration:underline; text-underline-offset:3px;}
+  .mkn-avi{flex:none; display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:50%; background:var(--paper); color:var(--a-forest); font-size:0.86rem; font-weight:700;}
+  .mkn-who{min-width:0;}
+  .mkn-name{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; line-height:1.15; color:var(--paper);}
+  .mkn-what{margin:1px 0 0; font-size:0.82rem; color:color-mix(in oklab, var(--paper) 80%, transparent);}
+  .mkn-nav{display:inline-flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; white-space:nowrap;}
+  .mkn-go{display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; padding:0; border-radius:50%; border:1.5px solid color-mix(in oklab, var(--paper) 45%, transparent); background:transparent; color:var(--paper); cursor:pointer;}
+  .mkn-go:hover:not(:disabled){border-color:var(--paper); background:transparent !important; box-shadow:none !important;}
+  .mkn-go:disabled{opacity:.35; cursor:default;}
+  .mkn-gap{flex:1 1 0;}
+  .mkn-steps{display:flex; align-items:center; gap:10px; list-style:none; margin:0; padding:0; font-size:0.86rem; font-weight:600;}
+  .mkn-step{display:inline-flex; align-items:center; gap:8px; color:color-mix(in oklab, var(--paper) 62%, transparent); white-space:nowrap;}
+  .mkn-step + .mkn-step::before{content:''; width:28px; height:1.5px; margin-right:2px; background:color-mix(in oklab, var(--paper) 38%, transparent);}
+  .mkn-step i{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; border:1.5px solid currentColor; font-style:normal; font-size:0.78rem; font-weight:700;}
+  .mkn-step b{font-weight:600;}
+  .mkn-step.now{color:var(--paper);} .mkn-step.now i{background:var(--paper); border-color:var(--paper); color:var(--a-forest);}
+  .mkn-step.done{color:var(--paper);} .mkn-step.done i{background:var(--a-mustard); border-color:var(--a-mustard); color:var(--ink);}
+  .mkn-more{min-height:40px; padding:0 16px; border-radius:999px; border:1.5px solid color-mix(in oklab, var(--paper) 45%, transparent); background:transparent; color:var(--paper); font:700 0.86rem 'Karla',sans-serif; cursor:pointer;}
+  .mkn-more:hover{border-color:var(--paper); background:transparent !important; box-shadow:none !important;}
+  .mkn-return{min-height:44px; padding:0 24px; border-radius:999px; border:none; background:var(--a-mustard); color:var(--ink); font:700 0.95rem 'Karla',sans-serif; cursor:pointer; white-space:nowrap;}
+  .mkn-return:hover:not(:disabled){background:color-mix(in oklab, var(--a-mustard) 88%, var(--paper)) !important; box-shadow:none !important;}
+  .mkn-return:disabled{background:color-mix(in oklab, var(--paper) 16%, transparent); color:color-mix(in oklab, var(--paper) 72%, transparent); cursor:not-allowed;}
+  .mkn-bar :is(a, button):focus-visible{outline:2px solid var(--paper); outline-offset:2px;}
+  /* the second row: doors on the left, pills on the right */
+  .mkn-row{position:sticky; top:var(--mkn-bar-h, 64px); z-index:44; display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:10px 28px; background:var(--paper); border-bottom:1px solid var(--sand-line);}
+  .mkn-row.is-empty{display:none;}
+  .mkn-doors, .mkn-pills{display:flex; align-items:center; gap:8px; flex-wrap:wrap;} .mkn-pills{margin-left:auto; justify-content:flex-end;}
+  /* the work on the left, the panel on the right */
+  .mkn-main{display:grid; grid-template-columns:minmax(0,1fr); gap:20px; padding:20px 16px 96px;}
+  .mkn-work{min-width:0;}
+  .mkn-sec{margin:0 0 16px; padding:22px 26px; background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow);}
+  body.mkn .mkn-sec > .roundlabel{margin:0 0 12px; font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; line-height:1.25; letter-spacing:0; text-transform:none; color:var(--ink);}
+  .mkn-sec .mloc + .mloc{margin-top:10px;}
+  /* prose reads as prose; a table cell keeps its box */
+  .mkn-sec .readonly{margin:0; padding:0; background:none; border:none; border-radius:0; font-size:1rem; line-height:1.65; overflow-wrap:anywhere;}
+  .mkn-sec .readonly.mkn-box{padding:10px 12px; background:var(--sand); border-radius:var(--r-strip); font-size:0.9rem; line-height:1.6;}
+  .mkn-sec .hl{margin:16px 0 2px; color:var(--a-forest);} .mkn-sec .readonly > .hl:first-child{margin-top:0;}
+  .mkn-colon, .mkn-gapbr{display:none;}
+  .mkn-plain{margin:0; font-size:0.9rem; line-height:1.6; color:var(--grey);}
+  .mkn-sec .duerow{margin-top:14px;}
+  .mkn-work > details.card{margin:0 0 16px; border-left:none; background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow);}
+  .mkn-panel{min-width:0; padding:20px; background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow);}
+  .mkn-out{display:flex; align-items:center; gap:14px; margin:0 0 16px;}
+  .mkn-out p{margin:3px 0 0; font-size:0.86rem; line-height:1.4; color:var(--grey);}
+  .mkn-outcome{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.6rem; font-weight:600; line-height:1.15; color:var(--ink);}
+  .mkn-outcome.is-pass{color:var(--a-green);} .mkn-outcome.is-fail{color:var(--a-red);}
+  .mkn-ring{position:relative; flex:none; display:inline-flex; width:64px; height:64px;}
+  .mkn-ring svg{display:block;} .mkn-ring circle{fill:none; stroke-width:6;}
+  .mkn-ring .rg-bed{stroke:var(--sand-deep);} .mkn-ring .rg-arc{stroke:var(--a-forest); stroke-linecap:round; transition:stroke-dasharray .25s ease;}
+  .mkn-ring b{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:0.95rem; font-weight:700; color:var(--ink);}
+  @media (prefers-reduced-motion:reduce){ .mkn-ring .rg-arc{transition:none;} }
+  /* one card for each criterion; its edge is green once Met, red once Not met */
+  .critrow.mkn-card{display:block; margin:0 0 12px; padding:14px 16px; border:1.5px solid var(--sand-line); border-radius:var(--r-card); background:var(--paper);}
+  .critrow.mkn-card:last-child{border-bottom:1.5px solid var(--sand-line);}
+  .critrow.mkn-card.is-met{border-color:var(--a-green);} .critrow.mkn-card.is-not{border-color:var(--a-red);}
+  .mkn-ct{display:flex; align-items:flex-start; gap:10px; font-size:0.9rem; font-weight:600; line-height:1.45; color:var(--ink);}
+  .mkn-num{flex:none; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--sand-deep); font-size:0.78rem; font-weight:700;}
+  .mkn-first{margin:8px 0 0; padding:7px 10px; border-radius:var(--r-strip); background:var(--sand); font-size:0.82rem; line-height:1.5; color:var(--ink);}
+  .mkn-acts{display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:12px 0 0;}
+  .mkn-acts .mkn-met, .mkn-acts .mkn-not{width:auto; min-width:88px; min-height:40px; padding:0 16px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--grey); font:700 0.86rem 'Karla',sans-serif; cursor:pointer;}
+  .mkn-acts .mkn-met:hover, .mkn-acts .mkn-not:hover{border-color:var(--a-forest); box-shadow:none !important;}
+  .mkn-acts .mkn-met.on{background:var(--a-forest) !important; border-color:var(--a-forest); color:var(--paper);}
+  .mkn-acts .mkn-not.on{background:var(--a-red) !important; border-color:var(--a-red); color:var(--paper);}
+  .mkn-addc{min-height:40px; padding:0 8px; border:none; background:none; color:var(--a-forest); font:700 0.86rem 'Karla',sans-serif; text-decoration:underline; text-underline-offset:3px; cursor:pointer;}
+  .mkn-addc:hover{background:none !important; box-shadow:none !important; text-decoration-thickness:2px;}
+  .mkn-panel :is(button, textarea):focus-visible{outline:2px solid var(--a-forest); outline-offset:2px;}
+  .mkn-fixed{display:inline-flex; align-items:center; min-height:32px; padding:0 14px; border-radius:999px; background:var(--sand-deep); color:var(--grey); font-size:0.82rem; font-weight:700;}
+  .mkn-fixed.is-met{background:var(--a-forest); color:var(--paper);} .mkn-fixed.is-not{background:var(--a-red); color:var(--paper);}
+  .mkn-own{margin:12px 0 0; padding:9px 12px; border-left:3px solid var(--a-forest); border-radius:0 var(--r-strip) var(--r-strip) 0; background:var(--sand);}
+  .mkn-own p{margin:3px 0 0; font-size:0.9rem; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--ink);}
+  .mkn-cap{display:block; font-size:0.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--grey);}
+  .mkn-card textarea{margin-top:12px;}
+  .mkn-panel textarea{background:var(--field); border:1.5px solid var(--sand-line); border-radius:var(--r-strip);}
+  .mkn-ol{display:block; margin:18px 0 6px; font-size:0.9rem; font-weight:700; color:var(--ink);}
+  .mkn-quiet{margin:10px 0 0; font-size:0.82rem; color:var(--grey);}
+  .mkn-panel > .mkn-own{margin-top:14px;}
+  .mkn-panel > .duerow{margin-top:14px;}
+  /* the criterion the keys are on */
+  body.mkn .critrow.mkn-card.mk-cur{padding-left:16px !important; border-radius:var(--r-card); box-shadow:none;}
+  /* shown once a key has been used, so a tutor with a mouse sees four plain cards */
+  body.mkn.mkn-keys .critrow.mkn-card.mk-cur{box-shadow:0 0 0 3px color-mix(in oklab, var(--a-forest) 22%, transparent);}
+  @media (min-width:1080px){
+    .mkn-main{grid-template-columns:minmax(0,1fr) minmax(380px,30%); gap:28px; padding:24px 28px 60px; align-items:start;}
+    .mkn-main.mkn-solo{grid-template-columns:minmax(0,720px);}
+    /* the panel scrolls inside itself; the room at its foot lets the last line clear the round button in the corner */
+    .mkn-panel{position:sticky; top:calc(var(--mkn-top, 64px) + 16px); max-height:calc(100vh - var(--mkn-top, 64px) - 32px); overflow:auto; padding-bottom:72px;}
+    /* ONE LINE EACH ON A LAPTOP (24 Nov 2026, reviewers' findings). The bar does not wrap: a long name is cut with an
+       ellipsis, so Return keeps its place at the right. The doors and pills keep one line too: when the pills do not
+       fit, they slide sideways inside their own row, as they do on a phone. */
+    .mkn-bar{flex-wrap:nowrap;}
+    .mkn-who{flex:0 1 auto; min-width:0;}
+    .mkn-name, .mkn-what{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;} .mkn-name{padding-bottom:2px;}
+    .mkn-row{flex-wrap:nowrap;}
+    .mkn-doors{flex:none; flex-wrap:nowrap;}
+    .mkn-pills{flex:0 1 auto; min-width:0; flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; scrollbar-width:thin; padding:2px 0;}
+    .mkn-pills > *{flex:none;}
+    /* the 1st and 2nd marker pills stay in sight at the right while the others slide under them */
+    .mkn-mpills{position:sticky; right:0; z-index:1; display:flex; gap:8px; padding-left:10px; background:var(--paper); box-shadow:-12px 0 12px -6px var(--paper);}
+  }
+  .mkn-mpills{display:contents;}
+  @media (min-width:1080px){ .mkn-mpills{display:flex;} }
+  /* a narrow screen: one column, the panel under the work; the steps take a line of their own */
+  @media (max-width:1079px){
+    .mkn-bar{padding:8px 16px; gap:6px 10px;}
+    .mkn-name{font-size:1.05rem;} .mkn-avi{width:40px; height:40px;}
+    .mkn-who{flex:1 1 0;}
+    .mkn-gap{display:none;}
+    .mkn-steps{order:9; flex:1 1 100%; gap:6px; font-size:0.8rem;} .mkn-step + .mkn-step::before{width:12px;}
+    .mkn-row{padding:8px 16px;}
+    .mkn-sec{padding:18px 16px;}
+  }
+  @media (max-width:560px){
+    .mkn-step i{width:22px; height:22px;}
+  }
+  @media print{ .mkn-bar, .mkn-row{display:none !important;} .mkn-main{display:block; padding:0;} .mkn-panel{position:static; max-height:none; overflow:visible;} }
+
+  /* ---- THE DOORS, THE PILLS, THE MORE MENU AND THE SHEETS (24 Nov 2026) ----
+     A door opens something to read (the marking guidelines, the text the trainee chose, what they attached). A pill
+     says where one fact stands, always in words; the check and the color only support the words. A pill that can
+     be pressed is a button and looks pressable; one that cannot is plain. The More menu holds what is used now and
+     then. A sheet is the one box everything here opens in. */
+  .mkn-door{display:inline-flex; align-items:baseline; gap:10px; min-height:40px; padding:8px 14px; border:1.5px solid var(--a-forest); border-radius:var(--r-control); background:var(--paper); color:var(--ink); font:700 0.9rem 'Karla',sans-serif; cursor:pointer; white-space:nowrap;}
+  .mkn-door small{font-size:0.78rem; font-weight:500; color:var(--grey);}
+  .mkn-door:hover{background:color-mix(in oklab, var(--a-forest) 6%, var(--paper)) !important; box-shadow:none !important;}
+  .mkn-pill{display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:0 14px; border:1.5px solid transparent; border-radius:999px; background:var(--a-stone); color:var(--ink); font:700 0.86rem 'Karla',sans-serif; white-space:nowrap;}
+  .mkn-pill svg{flex:none;}
+  button.mkn-pill{cursor:pointer;}
+  button.mkn-pill:hover{border-color:var(--a-forest); background:var(--a-stone) !important; box-shadow:none !important;}
+  .mkn-pill.is-plain{background:var(--paper); border-color:var(--sand-line); color:var(--grey);}
+  .mkn-pill.is-dash{background:var(--paper); border:1.5px dashed color-mix(in oklab, var(--grey) 55%, transparent); color:var(--grey);}
+  button.mkn-pill.is-dash:hover{background:var(--paper) !important; border-style:solid;}
+  .mkn-pill.is-amber{background:color-mix(in oklab, var(--a-mustard) 20%, var(--paper)); color:var(--ink);}
+  button.mkn-pill.is-amber:hover{background:color-mix(in oklab, var(--a-mustard) 20%, var(--paper)) !important; border-color:var(--a-mustard);}
+  .mkn-pillact{min-height:40px; margin:0 -6px 0 2px; padding:0 6px; border:none; background:none; color:var(--a-forest); font:700 0.82rem 'Karla',sans-serif; text-decoration:underline; text-underline-offset:3px; cursor:pointer;}
+  .mkn-pillact:hover{background:none !important; box-shadow:none !important; text-decoration-thickness:2px;}
+  .mkn-row :is(button, a):focus-visible, .mkn-sheet :is(button, a, input, textarea):focus-visible, .mkn-menu :is(button, a):focus-visible{outline:2px solid var(--a-forest); outline-offset:2px;}
+  /* the More menu, under its button */
+  .mkn-morewrap{position:relative; display:inline-flex;}
+  .mkn-menu{position:absolute; right:0; top:calc(100% + 10px); z-index:60; width:min(340px, calc(100vw - 32px)); max-height:calc(100vh - var(--mkn-bar-h, 64px) - 24px); overflow:auto; padding:8px; background:var(--paper); border-radius:var(--r-card); box-shadow:0 18px 50px color-mix(in oklab, var(--ink) 28%, transparent); color:var(--ink);}
+  .mkn-mi{display:block; width:100%; min-height:44px; padding:9px 14px; border:none; border-radius:var(--r-strip); background:none; color:var(--ink); font:inherit; text-align:left; text-decoration:none; cursor:pointer;}
+  .mkn-mi b{display:block; font:700 0.95rem 'Karla',sans-serif; color:var(--ink);}
+  .mkn-mi span{display:block; margin-top:1px; font-size:0.82rem; font-weight:500; color:var(--grey);}
+  .mkn-mi:hover, .mkn-mi:focus-visible{background:var(--a-stone) !important; box-shadow:none !important; color:var(--ink);}
+  .mkn-mi.is-brick b{color:var(--a-red);}
+  .mkn-mi[aria-disabled="true"]{cursor:default;} .mkn-mi[aria-disabled="true"] b{color:var(--grey);} .mkn-mi[aria-disabled="true"]:hover{background:none !important;}
+  .mkn-menu hr{height:1px; margin:6px 8px; border:none; background:var(--sand-line);}
+  .mkn-menu .mkn-mi:focus-visible{outline-offset:-2px;}
+  /* a sheet: one box over the page, closed by Close, by Escape, or by a click outside it */
+  .mkn-sheetwrap{position:fixed; inset:0; z-index:80; display:flex; align-items:flex-start; justify-content:center; padding:5vh 16px; overflow:auto; background:color-mix(in oklab, var(--a-forest) 45%, transparent);}
+  .mkn-sheetwrap[hidden]{display:none !important;}
+  .mkn-sheet{width:min(880px, 100%); padding:28px 32px 26px; background:var(--paper); border-radius:var(--r-card); box-shadow:0 24px 70px color-mix(in oklab, var(--ink) 35%, transparent); color:var(--ink); font-family:'Karla',sans-serif;}
+  .mkn-sheet.is-narrow{width:min(560px, 100%);}
+  .mkn-sh-top{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin:0 0 14px;}
+  .mkn-sh-cap{margin:0 0 2px; font-size:0.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--a-forest);}
+  .mkn-sheet h2{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.6rem; font-weight:600; line-height:1.2; color:var(--ink);}
+  .mkn-sh-x{flex:none; min-height:40px; padding:0 8px; border:none; background:none; color:var(--grey); font:700 0.9rem 'Karla',sans-serif; cursor:pointer;}
+  .mkn-sh-x:hover{background:none !important; box-shadow:none !important; color:var(--ink); text-decoration:underline; text-underline-offset:3px;}
+  .mkn-sh-body{font-size:0.95rem; line-height:1.65; overflow-wrap:anywhere;}
+  .mkn-sh-body h3{margin:20px 0 6px; font:700 0.78rem 'Karla',sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--a-forest);}
+  .mkn-sh-body h3:first-child{margin-top:0;}
+  .mkn-sh-body h4{margin:12px 0 2px; font:700 0.95rem 'Karla',sans-serif; color:var(--ink);}
+  .mkn-sh-body p{margin:0 0 10px;} .mkn-sh-body ul{margin:4px 0 10px; padding-left:20px;} .mkn-sh-body li{margin:3px 0;}
+  .mkn-sh-body a{color:var(--a-forest); font-weight:700;}
+  .mkn-sh-foot{margin:16px 0 0; font-size:0.82rem; line-height:1.5; color:var(--grey);}
+  .mkn-sh-acts{display:flex; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin:16px 0 0;}
+  .mkn-btn{min-height:44px; padding:0 20px; border-radius:999px; border:1.5px solid var(--a-forest); background:var(--a-forest); color:var(--paper); font:700 0.9rem 'Karla',sans-serif; cursor:pointer;}
+  .mkn-btn:hover{background:var(--a-forest) !important; box-shadow:0 0 0 2px color-mix(in oklab, var(--a-forest) 30%, transparent) !important;}
+  .mkn-btn.is-quiet{background:var(--paper); color:var(--ink); border-color:var(--sand-line);}
+  .mkn-btn.is-quiet:hover{background:var(--paper) !important; border-color:var(--a-forest); box-shadow:none !important;}
+  .mkn-sheet textarea, .mkn-sheet input[type=text], .mkn-sheet input[type=datetime-local]{background:var(--field); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); font-family:'Karla',sans-serif; font-size:0.95rem; padding:9px 12px; color:var(--ink);}
+  .mkn-sheet #xText{font-family:ui-monospace,Menlo,monospace; font-size:0.82rem;}
+  .mkn-list{list-style:none; margin:0; padding:0;} .mkn-list li{margin:0; padding:11px 0; border-top:1px solid var(--sand-line);} .mkn-list li:first-child{border-top:none; padding-top:0;}
+  .mkn-list b{display:block; font-weight:700;} .mkn-list span{display:block; color:var(--grey); font-size:0.9rem;}
+  .mkn-dl{display:grid; grid-template-columns:minmax(120px,auto) minmax(0,1fr); gap:6px 16px; margin:0;} .mkn-dl dt{font-weight:700; color:var(--grey); font-size:0.86rem;} .mkn-dl dd{margin:0;}
+  .mkn-files{display:flex; flex-wrap:wrap; gap:8px; margin:0;}
+  .mkn-files a{display:inline-flex; align-items:center; min-height:44px; padding:0 16px; border:1.5px solid var(--a-forest); border-radius:999px; color:var(--a-forest); font-weight:700; text-decoration:none;}
+  .mkn-files a:hover{background:color-mix(in oklab, var(--a-forest) 6%, var(--paper));}
+  .mkn-sheet .duerow{margin:0;} .mkn-sheet .duerow .dueline{flex:1 1 100%;}
+  .mkn-sheet .xchg-acts{margin-top:10px;}
+  @media (max-width:1079px){
+    /* doors and pills are one line that slides sideways: the only sideways scroll on the page. It does not stick, so the
+       work keeps the screen. The menu opens across the screen, under the bar. */
+    .mkn-row{position:static; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;} .mkn-row::-webkit-scrollbar{display:none;}
+    .mkn-doors, .mkn-pills{flex-wrap:nowrap; flex:none;} .mkn-pills{margin-left:0;}
+    .mkn-morewrap{position:static;}
+    .mkn-menu{position:fixed; left:16px; right:16px; top:calc(var(--mkn-bar-h, 64px) + 6px); width:auto;}
+    .mkn-sheetwrap{padding:16px 10px;} .mkn-sheet{padding:20px 18px;} .mkn-sheet h2{font-size:1.3rem;}
+    .mkn-dl{grid-template-columns:1fr; gap:0;} .mkn-dl dd{margin:0 0 8px;}
+  }
+  @media print{ .mkn-sheetwrap, .mkn-menu{display:none !important;} }
+
+  /* ---- OWN WORK, A RESUBMISSION, THE SECOND MARKER (24 Nov 2026) ----
+     A small word tag says where a section or a pass stands (Unchanged, Changed, Nothing found). A found passage and
+     its card are mustard. The second marker's box has a forest edge and the one gold button on that screen. */
+  .mkn-tag{display:inline-flex; align-items:center; gap:5px; min-height:28px; padding:0 11px; border-radius:999px; background:var(--a-stone); color:var(--grey); font:700 0.82rem 'Karla',sans-serif; white-space:nowrap;}
+  .mkn-tag.is-gold{background:color-mix(in oklab, var(--a-mustard) 75%, var(--paper)); color:var(--ink);}
+  .mkn-tag.is-ok{background:var(--a-stone); color:var(--ink);}
+  /* a resubmission: one line for what did not change, the switch for what did */
+  .mkn-foldhead{display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px;}
+  body.mkn .mkn-foldhead .roundlabel{margin:0; font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; line-height:1.25; letter-spacing:0; text-transform:none; color:var(--ink);}
+  .mkn-sec.is-fold{padding-top:14px; padding-bottom:14px;}
+  .mkn-sec.is-fold .mkn-foldbody{margin-top:14px;}
+  .mkn-foldbtn{margin-left:auto; min-height:40px; padding:0 6px; border:none; background:none; color:var(--a-forest); font:700 0.9rem 'Karla',sans-serif; text-decoration:underline; text-underline-offset:3px; cursor:pointer;}
+  .mkn-foldbtn:hover{background:none !important; box-shadow:none !important; text-decoration-thickness:2px;}
+  .mkn-switch{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 16px;}
+  .mkn-switch button{min-height:40px; padding:0 16px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink); font:700 0.86rem 'Karla',sans-serif; cursor:pointer;}
+  .mkn-switch button:hover{border-color:var(--a-forest); background:var(--paper) !important; box-shadow:none !important;}
+  .mkn-switch button[aria-pressed="true"]{background:var(--a-forest) !important; border-color:var(--a-forest); color:var(--paper);}
+  .mkn-both{display:grid; grid-template-columns:minmax(0,1fr); gap:18px;}
+  .mkn-col{min-width:0;} .mkn-col + .mkn-col{padding-top:16px; border-top:1px solid var(--sand-line);}
+  .mkn-colcap{margin:0 0 10px; font-size:0.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);}
+  body.mkn .mkn-both .mloc.has-mc{display:block;} body.mkn .mkn-both .mloc.has-mc .mgut{margin:10px 0 0;}
+  @supports (container-type:inline-size){ @container (min-width:820px){ .mkn-both{grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:28px;} .mkn-col + .mkn-col{padding:0 0 0 28px; border-top:none; border-left:1px solid var(--sand-line);} body.mkn .mkn-both .mloc.has-mc{display:block;} } }
+  ins.mkn-ins{text-decoration:underline; text-decoration-color:var(--a-forest); text-decoration-thickness:2px; text-underline-offset:4px; background:color-mix(in oklab, var(--a-forest) 8%, transparent);}
+  /* own work, in its sheet */
+  .mkn-lead{margin:0 0 14px !important; color:var(--grey);}
+  .mkn-ownline{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0 4px; border-top:1px solid var(--sand-line);}
+  .mkn-ownline b{font-weight:700;}
+  .mkn-note{margin:2px 0 8px !important; font-size:0.86rem; line-height:1.5; color:var(--grey);}
+  .mkn-hit{margin:8px 0 12px; padding:12px 14px; border-radius:var(--r-strip); background:var(--a-stone);}
+  .mkn-hit.is-off{background:var(--paper); border:1px dashed var(--sand-line);}
+  .mkn-hitq{margin:0 0 4px !important; font-style:italic; overflow-wrap:anywhere;}
+  .mkn-where{margin:0 0 8px !important; font-size:0.86rem; line-height:1.5; color:var(--grey);}
+  .mkn-hitacts{display:flex; flex-wrap:wrap; align-items:center; gap:8px;}
+  .mkn-chip{display:inline-flex; align-items:center; min-height:40px; padding:0 14px; border-radius:999px; border:1.5px solid var(--sand-line); background:var(--paper); color:var(--ink) !important; font:700 0.86rem 'Karla',sans-serif; text-decoration:none; cursor:pointer;}
+  .mkn-chip:hover{border-color:var(--a-forest); background:var(--paper) !important; box-shadow:none !important;}
+  .mkn-decl{margin:14px 0 6px; padding:12px 14px; border:1px solid var(--sand-line); border-radius:var(--r-strip);}
+  .mkn-decl p{margin:4px 0 0 !important;}
+  .mkn-inline{display:inline-flex; align-items:center; min-height:40px; vertical-align:middle; padding:0; border:none; background:none; font:inherit; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer;}
+  .mkn-inline:hover{background:none !important; box-shadow:none !important;}
+  .mkn-inline.is-brick{color:var(--a-red);}
+  /* the second marker */
+  .mkn-caph{margin:4px 0 10px;}
+  .mkn-second{margin:18px 0 0; padding:16px 18px 18px; border:2px solid var(--a-forest); border-radius:var(--r-card); background:var(--paper);}
+  .mkn-second h3{margin:0 0 10px; font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:600; color:var(--ink);}
+  .mkn-second h3 label{font:inherit; color:inherit;}
+  .mkn-second textarea{width:100%;}
+  .mkn-sign{display:block; width:100%; min-height:48px; margin:12px 0 0; padding:0 20px; border:none; border-radius:999px; background:var(--a-mustard); color:var(--ink); font:700 1rem 'Karla',sans-serif; cursor:pointer;}
+  .mkn-sign:hover{background:color-mix(in oklab, var(--a-mustard) 88%, var(--paper)) !important; box-shadow:none !important;}
+  .mkn-sign:focus-visible{outline:2px solid var(--a-forest); outline-offset:2px;}
+  .mkn-sec-said{margin:0 0 12px; padding:10px 12px; border:1.5px solid var(--a-forest); border-radius:var(--r-strip); font-size:0.95rem; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere;}
+  .mkn-signed{display:flex; flex-direction:column; gap:4px; padding:12px 14px; border-radius:var(--r-strip); background:var(--a-stone); font-size:0.9rem; line-height:1.45;}
+  .mkn-script{font-family:'Newsreader',Georgia,serif; font-style:italic; font-size:1.3rem; color:var(--ink);}
+  .mkn-sec-msg{margin:0 0 10px; font-size:0.9rem; font-weight:700; color:var(--a-red);}
+  /* 24 Nov 2026: the quiet line under a signature when a mark changed after it */
+  .mkn-sec-moved{margin:8px 0 0; font-size:0.86rem; color:var(--grey);}
+  @media print{ .mkn-switch, .mkn-foldbtn, .mkn-foundacts, .mkn-sign{display:none !important;} .mkn-foldbody[hidden]{display:block !important;} }
+
+  /* ---- THE PHONE AND THE TABLET (24 Nov 2026) ----
+     Under 1080px of window the page is drawn as the phone drawing has it. The bar keeps the name, the assignment and
+     Previous / Next; the three steps become one thin line with one label. Doors and pills are one line that slides
+     sideways and stays under the bar. The work takes the whole width. A bar fixed at the foot holds the ring, how far
+     the marking has got and Return; a tap on it raises the whole panel as a sheet, closed by Done. The panel is the
+     same element as on a laptop, moved and not copied, so every box is still the one Return and a reload read.
+     The floating round button and the save notice ride above the foot bar (hubReserveForBar). */
+  .mkn-prog, .mkn-phead, .mkn-onphone{display:none;}
+  #mknFoot, #mknScrim{display:none;}
+  @media (max-width:1079px){
+    .mkn-bar{padding:8px 16px 10px; gap:8px 10px; flex-wrap:wrap;}
+    .mkn-who{flex:1 1 0; min-width:0;}
+    .mkn-name, .mkn-what{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .mkn-steps{display:none;}
+    .mkn-prog{display:flex; order:9; flex:1 1 100%; align-items:center; gap:6px; margin-top:2px;}
+    .mkn-prog-l{flex:none; margin-right:6px; font-size:0.82rem; font-weight:700; color:var(--paper); white-space:nowrap;}
+    .mkn-prog-s{flex:1 1 0; height:4px; border-radius:2px; background:color-mix(in oklab, var(--paper) 24%, transparent);}
+    .mkn-prog-s.on{background:var(--a-mustard);}
+    /* the doors and pills stay under the bar, as drawn */
+    .mkn-row{position:sticky; top:var(--mkn-bar-h, 64px);}
+    .mkn-main{padding:16px 16px calc(var(--mkn-foot-h, 80px) + 88px);}
+    /* the panel is a sheet from the bottom */
+    body.mkn .mkn-panel{position:fixed; left:0; right:0; bottom:var(--mkn-kb, 0px); z-index:895; max-height:calc(var(--mkn-vvh, 100vh) - 40px); overflow:auto; overscroll-behavior:contain;
+      padding:0 16px calc(28px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; box-shadow:0 -18px 50px color-mix(in oklab, var(--ink) 24%, transparent);
+      transform:translateY(105%); visibility:hidden; transition:transform .22s ease, visibility 0s linear .22s;}
+    body.mkn .mkn-panel.open{transform:none; visibility:visible; transition:transform .22s ease;}
+    .mkn-phead{position:sticky; top:0; z-index:2; display:flex; justify-content:flex-end; align-items:center; margin:0 -16px 10px; padding:8px 12px 4px; background:var(--paper);}
+    .mkn-phead::before{content:''; position:absolute; left:50%; top:7px; width:44px; height:4px; margin-left:-22px; border-radius:2px; background:var(--sand-deep);}
+    .mkn-done{min-height:44px; padding:0 14px; border:none; background:none; color:var(--a-forest); font:700 0.95rem 'Karla',sans-serif; cursor:pointer;}
+    .mkn-done:hover{background:none !important; box-shadow:none !important; text-decoration:underline; text-underline-offset:3px;}
+    body.mkn #mknScrim:not([hidden]){display:block; position:fixed; inset:0; z-index:894; background:color-mix(in oklab, var(--a-forest) 40%, transparent);}
+    html.mkn-pop, html.mkn-pop body{overflow:hidden;}
+    html.mkn-pop #hubSync{opacity:0 !important;}
+    /* the bar at the foot */
+    body.mkn #mknFoot:not([hidden]){position:fixed; left:0; right:0; bottom:0; z-index:70; display:flex; align-items:center; gap:10px; padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background:var(--paper); border-top:1px solid var(--sand-line); box-shadow:0 -8px 24px color-mix(in oklab, var(--ink) 8%, transparent);}
+    .mkn-open{flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:10px; min-height:56px; padding:6px 14px 6px 8px; border:none; border-radius:16px; background:var(--a-stone); color:var(--ink); font:inherit; text-align:left; cursor:pointer;}
+    .mkn-open:hover{background:var(--a-stone) !important; box-shadow:0 0 0 1.5px var(--a-forest) !important;}
+    .mkn-open:focus-visible, .mkn-done:focus-visible{outline:2px solid var(--a-forest); outline-offset:2px;}
+    .mkn-open .mkn-ring{width:44px; height:44px;} .mkn-open .mkn-ring svg{width:100%; height:100%;} .mkn-open .mkn-ring b{font-size:0.78rem;}
+    .mkn-opent{min-width:0;}
+    .mkn-opent b{display:block; font:700 0.95rem 'Karla',sans-serif; color:var(--ink);}
+    .mkn-opent span{display:block; font-size:0.78rem; line-height:1.3; color:var(--grey);}
+    #mknFoot .mkn-return{flex:none; max-width:44%; min-height:52px; padding:0 18px; white-space:normal; line-height:1.2;}
+    #mknFoot .mkn-return:disabled{background:var(--a-stone); color:color-mix(in oklab, var(--grey) 80%, transparent);}
+    #mknFoot .mkn-return:focus-visible{outline:2px solid var(--a-forest); outline-offset:2px;}
+    /* RETURN STAYS IN REACH WITH THE SHEET UP (24 Nov 2026, a reviewer's finding): the sheet ends at the top of the foot
+       bar, and the foot bar comes above the dimmed page, so Return can be pressed without putting the sheet away. A
+       comment box opened over them still comes on top. */
+    html.mkn-pop body.mkn #mknFoot:not([hidden]){z-index:895;}
+    html.mkn-pop body.mkn .mkn-panel.open{bottom:max(var(--mkn-kb, 0px), var(--mkn-foot-h, 0px)); max-height:calc(var(--mkn-vvh, 100vh) - 40px - var(--mkn-foot-h, 0px));}
+  }
+  /* the menu and the sheets come above the floating round button, and the save notice steps aside under them */
+  body.mkn .mkn-menu{z-index:897;}
+  body.mkn .mkn-sheetwrap{z-index:898;}
+  body.mkn:has(.mkn-sheetwrap:not([hidden])) #hubSync{opacity:0 !important;}
+  .mkn-prevframe{display:block; width:100%; height:min(72vh, 900px); border:1px solid var(--sand-line); border-radius:var(--r-strip); background:var(--paper);}
+  .mkn-sheet[data-sheet="preview"]{width:min(1180px, 100%);}
+  .mkn-printrow{margin:16px 0 0;} .mkn-printrow .mkn-btn{display:inline-flex; align-items:center; text-decoration:none;}
+  @media (max-width:560px){
+    .mkn-all{display:none;}
+    .mkn-of{position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap;}
+    .mkn-onphone{display:block;}
+    .mkn-nav{gap:6px;}
+  }
+  @media (prefers-reduced-motion:reduce){ body.mkn .mkn-panel, body.mkn .mkn-panel.open{transition:none;} }
+  @media print{ #mknFoot, #mknScrim, .mkn-phead{display:none !important;} body.mkn .mkn-panel{position:static !important; transform:none !important; visibility:visible !important; max-height:none !important; box-shadow:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611240910">
+<link rel="stylesheet" href="hub-house.css?v=202611241322">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -200,18 +529,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611240910"></script>
-<script src="assignment-history.js?v=202611240910"></script>
-<script src="hub-exchange.js?v=202611240910"></script>
-<script src="hub-docx.js?v=202611240910"></script>
-<script src="hub-marking.js?v=202611240910"></script>
-<script src="hub-due.js?v=202611240910"></script>
-<script src="hub-shared.js?v=202611240910"></script>
-<script src="hub-store.js?v=202611240910"></script>
-<script src="hub-say.js?v=202611240910"></script>
-<script src="hub-sync.js?v=202611240910"></script>
-<script src="hub-notebook.js?v=202611240910"></script>
-<script src="fol-interview.js?v=202611240910"></script>
+<script src="assignment-defaults.js?v=202611241322"></script>
+<script src="assignment-history.js?v=202611241322"></script>
+<script src="hub-exchange.js?v=202611241322"></script>
+<script src="hub-docx.js?v=202611241322"></script>
+<script src="hub-marking.js?v=202611241322"></script>
+<script src="hub-due.js?v=202611241322"></script>
+<script src="hub-shared.js?v=202611241322"></script>
+<script src="hub-store.js?v=202611241322"></script>
+<script src="hub-say.js?v=202611241322"></script>
+<script src="hub-sync.js?v=202611241322"></script>
+<script src="hub-notebook.js?v=202611241322"></script>
+<script src="fol-interview.js?v=202611241322"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -249,6 +578,39 @@ const params = new URLSearchParams(location.search);
 let CURRENT = params.get('a') || (hubAssignmentOrder(WORDING).filter(k => k !== 'a5')[0] || 'fol');
 const TRAINEE_ID = params.get('trainee') || '';
 let OUTCOME = '';
+
+/* WHICH LAYOUT (24 Nov 2026). The marking page has two layouts for one night: the one tutors have used since
+   October (render) and the new one, read, mark, return (renderNew, further down). They write the same record
+   through the same functions. MK_NEW_DEFAULT says which one a tutor gets; ?old=1 in the address asks for the old
+   one and ?new=1 for the new one, and the choice is kept for this tab only (sessionStorage 'mk:new', '1' or '0'),
+   so Previous and Next stay in the layout that was asked for. Nothing about the layout is ever stored on a record. */
+const MK_NEW_DEFAULT = true;
+const MK_NEW = (function(){
+  let kept = null;
+  try {
+    if (params.get('old') === '1') sessionStorage.setItem('mk:new', '0');
+    else if (params.get('new') === '1') sessionStorage.setItem('mk:new', '1');
+    kept = sessionStorage.getItem('mk:new');
+  } catch (e) { if (params.get('old') === '1') return false; if (params.get('new') === '1') return true; }
+  return kept === '1' ? true : kept === '0' ? false : MK_NEW_DEFAULT;
+})();
+/* What the page holds between draws, declared here because the first draw runs before the rest of this script is
+   read (24 Nov 2026). X_READ: the exchange card's reader, for the one paste listener. MKN_READ: step 1 has turned
+   gold (this page's life only, never stored). MKN_OPEN: the criterion whose comment box is open. MKN_END: the
+   watcher for the end of the work. */
+let X_READ = null, MKN_READ = false, MKN_OPEN = null, MKN_END = null;
+/* MKN_BRING: the sheet for comments brought back is open (it is drawn with the page, so the page must remember).
+   MKN_FOCUS: what the keyboard was on when a sheet opened, to go back to when it closes. */
+let MKN_BRING = false, MKN_FOCUS = null;
+/* Own work, a resubmission and the second marker (24 Nov 2026). MKN_OWN: the last own-work check of this script in
+   this tab (kept in sessionStorage too, never on the record); MKN_OWN_BUSY: a check is running. MKN_VER: for each
+   changed section of a resubmission, "new" or "both". MKN_SHOW: the unchanged sections a tutor has opened. MKN_DIFFS:
+   the words to underline, worked out while the page is drawn. MKN_VIEW2: this tutor has the second marker's page.
+   MKN_SEC_MSG: the one sentence said when the marks moved under a second marker before they signed. */
+let MKN_OWN = null, MKN_OWN_BUSY = false, MKN_VER = {}, MKN_SHOW = {}, MKN_DIFFS = [], MKN_VIEW2 = false, MKN_SEC_MSG = '';
+/* The phone (24 Nov 2026). MKN_PANEL: the panel is up as a sheet, kept across a redraw so a mark does not drop it.
+   MKN_NARROW: which way the page was last drawn, so a turn of the phone that crosses 1080px draws it again. */
+let MKN_PANEL = false, MKN_NARROW = null;
 
 /* Every door into this screen -- the dashboard's rows and the tracker's
    actions -- carries ?trainee=. Reached without one (a stale bookmark, a
@@ -335,6 +697,11 @@ function saveSubs(){
   if (TRAINEE_ID) {
     const roster = loadRoster();
     if (!roster.trainees[TRAINEE_ID]) roster.trainees[TRAINEE_ID] = { id:TRAINEE_ID, name:'Trainee', tp:{}, assignments:{} };
+    /* A SIGNATURE IS NEVER WRITTEN OVER (24 Nov 2026, the new layout). This tab's copy may be older than the stored
+       one: the 2nd marker can sign after this page was opened, and the course is taken again in the background. Before
+       this tab writes, a signed second marker's record and the 2nd marker's name that the stored copy has and this
+       copy lacks are carried into this copy, so a Return from a tab opened before the signature keeps it. */
+    if (document.body && document.body.classList.contains('mkn')) mknCarrySecond(roster.trainees[TRAINEE_ID].assignments || {});
     roster.trainees[TRAINEE_ID].assignments = SUBS;
     saveRoster(roster);
   } else {
@@ -575,6 +942,10 @@ function compareRounds(a, sub){
 }
 
 function render(){
+  /* the new layout draws itself and says so; where it does not (no trainee, an assignment not set up), the page
+     below draws as it always has (24 Nov 2026) */
+  if (MK_NEW && renderNew()) return;
+  document.body.classList.remove('mkn'); document.documentElement.classList.remove('mkn-pop');
   /* Every door into this screen -- the dashboard's rows, the tracker's actions
      -- carries ?trainee=. Reached without one (a stale bookmark, a hand-typed
      URL), this used to fall through to connect_assignment_submissions_v1, which
@@ -854,6 +1225,23 @@ function render(){
   });
 }
 
+/* A COMMENT IS READ FROM ITS BOX WHEN THE BOX IS THERE, AND FROM THE RECORD WHEN IT IS NOT (24 Nov 2026). Return
+   used to read every box straight from the page: a criterion whose box was not drawn came back empty and wiped the
+   comment saved as it was typed, and a page with no overall box stopped with an error. Both layouts read through
+   these two, so a missing box can never blank a saved comment. */
+function critCommentVal(round, i){
+  const el = document.querySelector(`[data-crit-comment="${i}"]`);
+  if (el) return el.value;
+  const sub = subFor(CURRENT);
+  return ((sub.criteriaComments || {})[round] || [])[i] || '';
+}
+function overallVal(round){
+  const el = $('comment');
+  if (el) return el.value;
+  const fb = subFor(CURRENT).feedback || {};
+  return (round === 'sub2' ? fb.generalComment2 : fb.generalComment1) || '';
+}
+
 function doSave(){
   const sub = subFor(CURRENT);
   const a = WORDING[CURRENT];
@@ -861,8 +1249,8 @@ function doSave(){
   const crit = (a.criteria||[]);
   const marks = sub.criteriaMarks[round];
   const allMet = crit.length>0 && crit.every((c,i)=>marks[i]===true);
-  const comment = $('comment').value;
-  sub.criteriaComments[round] = crit.map((c,i)=>{ const el=document.querySelector(`[data-crit-comment="${i}"]`); return el?el.value:''; });
+  const comment = overallVal(round);
+  sub.criteriaComments[round] = crit.map((c,i)=>critCommentVal(round, i));
   if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
 
   sub[round === 'sub2' ? 'marked2At' : 'marked1At'] = new Date().toISOString();
@@ -874,7 +1262,8 @@ function doSave(){
   /* MARKING IS FINAL: THE RECORD GOES TO THE CENTER'S FOLDER (21 Nov 2026). The finished record (the work, the criteria,
      the comments, who marked it) is filed as a PDF in this trainee's folder, as the store's fileDoc does it. Quiet:
      a course with no center folder, or a demo, files nothing. */
-  if (sub.stage === 'closed' && TRAINEE_ID && window.hubFileDoc && window.hubAssignmentRecordHTML) {
+  /* the new layout files from the store's copy once the store has answered (mknReturn, 24 Nov 2026) */
+  if (sub.stage === 'closed' && TRAINEE_ID && window.hubFileDoc && window.hubAssignmentRecordHTML && !document.body.classList.contains('mkn')) {
     try { const aDoc = WORDING[CURRENT]; hubFileDoc({ token: TRAINEE_ID, name: 'Assignment - ' + (aDoc && aDoc.title || CURRENT), html: hubAssignmentRecordHTML(aDoc, sub) }); } catch (e) {}
   }
   render();
@@ -930,11 +1319,13 @@ function outcomeFor(round, allMet, sub){
   return sub.usedResubmission ? 'Fail' : 'Resubmission needed';
 }
 
-function doReturnUnmarked(){
+/* The reason is whatever is in the overall comment box, as it always was. A caller may hand the reason over as
+   text instead (24 Nov 2026, for the new layout's own sheet); a click hands over an event, which is not a reason. */
+function doReturnUnmarked(reason){
   const sub = subFor(CURRENT);
-  const comment = $('comment').value;
-  if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
   const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
+  const comment = typeof reason === 'string' ? reason : overallVal(round);
+  if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
   // Returned unmarked does NOT spend the one resubmission (Handbook 9.2.3;
   // DESIGN-HANDOFF-README's core rule). It used to set resubmission_needed,
   // and the trainee's next submit then counted as their resubmission -- so an
@@ -955,6 +1346,1431 @@ function doReturnUnmarked(){
   sub.feedback.outcome = 'Returned unmarked';
   saveSubs();
   render();
+}
+
+/* ======================================================================================================
+   THE NEW LAYOUT: READ, MARK, RETURN (24 Nov 2026)
+
+   Agreed with the course tutor on 23 Nov 2026. One bar across the top (the door back, who and what, Previous and
+   Next, the three steps, one Return button), a second row for the doors and the pills, the trainee's own writing
+   on the left and nothing else, and one panel on the right: how far the marking has got, a card for each
+   criterion, the overall comment. Everything here is drawn by renderNew and the mkn helpers under it, in classes
+   that start .mkn-, with "mkn" on the body. The record is written by the same functions the old layout uses, so
+   a script marked in either layout is the same record.
+   ====================================================================================================== */
+
+/* ---- small facts, each worked out in one place (24 Nov 2026): the pills, the bar and the panel all read these,
+   so two parts of the page can never say two different things ---- */
+function mknTrainee(id){ return (loadRoster().trainees || {})[id || TRAINEE_ID] || {}; }
+function mknFirstName(id){ return String(mknTrainee(id).name || '').trim().split(/\s+/)[0] || ''; }
+function mknHasWork(snap){ return !!(snap && (Object.keys(snap.text || {}).length || Object.keys(snap.fields || {}).length || Object.keys(snap.picked || {}).length)); }
+/* HOW THE PAGE SPEAKS OF THE TRAINEE (24 Nov 2026). The rule the handover's "In short" uses: their own pronouns
+   where they wrote any; otherwise their own answer to the gender question (woman: she, man: he); otherwise the
+   first name, and "their" where a name will not fit. Never guessed from a name. Every phrase on this page that
+   needs one asks here. verb('see') gives "sees" after a name, she or he, and "see" after they. */
+function mknPro(id){
+  const tr = mknTrainee(id), ab = tr.about || (tr.records || {}).about || {};
+  const p = String(ab.pronouns || '').trim().toLowerCase();
+  let k = /^she\b/.test(p) ? 'she' : /^he\b/.test(p) ? 'he' : /^they\b/.test(p) ? 'they' : '';
+  if (!k) { const g = String(ab.gender || '').toLowerCase(); k = g === 'woman' ? 'she' : g === 'man' ? 'he' : ''; }
+  const first = mknFirstName(id), cap = w => w.charAt(0).toUpperCase() + w.slice(1);
+  const subj = k || first || 'the trainee';
+  return { known: !!k, first, subj, Subj: k || !first ? cap(subj) : first, poss: k === 'she' ? 'her' : k === 'he' ? 'his' : 'their',
+    verb: v => v + (k === 'they' ? '' : 's') };
+}
+/* the word count, in the figure the trainee was shown (the same sum as summarize and hubWorkChecks) */
+function mknWords(a, snap){
+  if (!a || !a.wordMin || !snap) return null;
+  const m = (Object.keys(snap.text || {}).map(i => hubBareText(snap.text[i], ((a.sections || [])[i] || {}).heads)).join(' ') + ' ' + Object.values(snap.fields || {}).join(' ')).match(/\S+/g);
+  const n = m ? m.length : 0;
+  return { n, min: a.wordMin, max: a.wordMax, state: n < a.wordMin ? 'under' : n > a.wordMax ? 'over' : 'in range' };
+}
+/* the deadline that applied to one round: the trainee's own, with any extension the tutor gave */
+function mknDueOf(a, sub, round){
+  const ext = extensionsOf();
+  if (round === 'sub2') return HubDue.forPerson(HubDue.resubFor(a, sub), ext['a:' + CURRENT + ':resub']).iso;
+  const base = window.hubDueFor ? hubDueFor(a, TRAINEE_ID, mknTrainee().group) : (a && a.dueAt) || '';
+  return HubDue.forPerson(base, ext['a:' + CURRENT]).iso;
+}
+/* when a round was turned in, and how early or late against that deadline, in words */
+function mknTurnedIn(a, sub, round){
+  const at = sub && sub[round === 'sub2' ? 'sub2At' : 'sub1At'], t = at ? new Date(at).getTime() : NaN;
+  if (!isFinite(t)) return null;
+  let zone = ''; try { zone = (JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).timeZone || ''; } catch (e) {}
+  let day = '';
+  try { day = new Date(t).toLocaleDateString('en-GB', Object.assign({ day: 'numeric', month: 'short' }, zone ? { timeZone: zone } : {})); }
+  catch (e) { day = new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
+  const due = HubDue.parse(mknDueOf(a, sub, round));
+  let how = '';
+  if (due !== null) {
+    const gap = Math.abs(due - t), days = Math.floor(gap / HubDue.DAY), hours = Math.floor(gap / HubDue.HOUR);
+    const span = days >= 1 ? days + (days === 1 ? ' day' : ' days') : hours >= 1 ? hours + (hours === 1 ? ' hour' : ' hours') : 'less than an hour';
+    how = span + (t <= due ? ' early' : ' late');
+  }
+  return { at, day, late: due !== null && t > due, how, text: (round === 'sub2' ? 'Resubmitted ' : 'Turned in ') + day + (how ? ' · ' + how : '') };
+}
+/* what the trainee declared: every box ticked or not, and what they said about AI */
+function mknDecl(a, snap){
+  const i = ((a && a.sections) || []).findIndex(s => s.type === 'declaration'); if (i < 0) return null;
+  const s = a.sections[i], d = ((snap || {}).decl || {})[i] || null, items = s.items || [];
+  if (!d) return { has: false, complete: false, ai: '', items, checks: items.map(() => false) };
+  const checks = items.map((it, ci) => !!(d.checks || [])[ci]);
+  const ai = !s.aiToggle ? 'not asked' : d.aiUsed === 'yes' ? 'yes' : d.aiUsed === 'no' ? 'no' : '';
+  return { has: true, complete: checks.every(Boolean) && ai !== '', ai, items, checks,
+    tool: d.aiTool || '', purpose: d.aiPurpose || '', material: d.aiMaterial || '', checked: d.aiChecked || '', link: d.aiLink || '' };
+}
+/* PREVIOUS AND NEXT (24 Nov 2026): everyone on the course who has submitted this assignment, returned scripts
+   included, by group and then by name. A draft is not in the list, and a trainee who has left is not. */
+function mknList(key){
+  const out = [];
+  Object.values(loadRoster().trainees || {}).forEach(tr => {
+    if (!tr || !tr.id) return;
+    if (tr.withdrawn === true || tr.withdrawn === 'true' || (tr.tracker && (tr.tracker.withdrawn === true || tr.tracker.withdrawn === 'true'))) return;
+    const s = (tr.assignments || {})[key];
+    if (!s || !s.stage || s.stage === 'draft') return;
+    out.push({ id: tr.id, name: tr.name || '', group: tr.group == null ? '' : String(tr.group) });
+  });
+  return out.sort((x, y) => x.group.localeCompare(y.group, undefined, { numeric: true }) || x.name.localeCompare(y.name));
+}
+
+/* ---- the three writers the new layout calls (24 Nov 2026). They do what the old layout's own lines do: put the
+   mark or the words on the record and save it. A mark is only taken while the script is waiting to be marked. ---- */
+function mkRound(sub){ return sub.stage === 'resubmitted' ? 'sub2' : 'sub1'; }
+function mkIsMarking(sub){ return sub.stage === 'submitted' || sub.stage === 'resubmitted'; }
+function mkSetMark(i, v){
+  const sub = subFor(CURRENT); if (!mkIsMarking(sub) || MKN_VIEW2) return;   /* never on the second marker's page */
+  const r = mkRound(sub); sub.criteriaMarks[r] = sub.criteriaMarks[r] || [];
+  sub.criteriaMarks[r][i] = v; saveSubs(); render();
+}
+function mkSetNote(i, v){
+  const sub = subFor(CURRENT); if (!mkIsMarking(sub) || MKN_VIEW2) return;
+  const r = mkRound(sub); sub.criteriaComments[r] = sub.criteriaComments[r] || [];
+  sub.criteriaComments[r][i] = v; saveSubs();
+}
+function mkSetOverall(v){
+  const sub = subFor(CURRENT); if (!mkIsMarking(sub) || MKN_VIEW2) return;
+  if (!sub.feedback) sub.feedback = { outcome:'', generalComment1:'', generalComment2:'' };
+  sub.feedback[mkRound(sub) === 'sub2' ? 'generalComment2' : 'generalComment1'] = v; saveSubs();
+}
+
+/* ---- where the script stands, worked out once for every part of the page (24 Nov 2026) ---- */
+function mknState(){
+  const a = WORDING && WORDING[CURRENT]; if (!a || !TRAINEE_ID) return null;
+  const sub = subFor(CURRENT), tr = mknTrainee();
+  const marking = mkIsMarking(sub);
+  /* the round on the page: the one being marked; on a returned script, the one the outcome was given on */
+  const onResub = /resubmission\)/i.test((sub.feedback && sub.feedback.outcome) || '');
+  const round = marking ? mkRound(sub) : (sub.stage === 'closed' && (onResub || (mknHasWork(sub.sub2) && (sub.criteriaMarks.sub2 || []).length)) ? 'sub2' : 'sub1');
+  const crit = a.criteria || [], marks = sub.criteriaMarks[round] || [], N = crit.length;
+  const met = crit.filter((c, i) => marks[i] === true).length, not = crit.filter((c, i) => marks[i] === false).length;
+  const list = mknList(CURRENT);
+  const st = { a, sub, tr, marking, round, crit, marks, N, met, not, done: met + not, allMarked: N > 0 && met + not === N, allMet: N > 0 && met === N,
+    snap: mknHasWork(sub[round]) ? sub[round] : sub.sub1, list, idx: list.findIndex(x => x.id === TRAINEE_ID), pro: mknPro(), first: mknFirstName() };
+  st.s2 = mknSecond(st);          /* who this tutor is to the script: the second marker's page or not (24 Nov 2026) */
+  return st;
+}
+
+const MKN_CHECK = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M3.2 8.6l3 3 6.4-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* ---- THE TOP BAR (24 Nov 2026): the door back to the list, who and what, Previous and Next over everyone who has
+   submitted, the three steps, and the one Return button. Return keeps the id and the disabled attribute it has
+   always had: it lights when every criterion has Met or Not met, and nothing else can hold it back. ---- */
+function mknStepsHTML(st){
+  const stage = st.sub.stage;
+  /* the second marker's two steps: read, then agree and sign (24 Nov 2026) */
+  if (st.s2 && st.s2.view) {
+    const read = MKN_READ || st.s2.signed, sg = st.s2.signed, now = !read ? 1 : !sg ? 2 : 0;
+    const two = (n, word, done) => `<li class="mkn-step${done ? ' done' : n === now ? ' now' : ''}"${!done && n === now ? ' aria-current="step"' : ''}><i aria-hidden="true">${done ? MKN_CHECK : n}</i><span>${word}${done ? '<span class="mkn-sr">, done</span>' : ''}</span></li>`;
+    return `<ol class="mkn-steps" id="mknSteps">${two(1, 'Read', read)}${two(2, 'Agree and sign', sg)}</ol>`;
+  }
+  if (!(st.marking || stage === 'closed' || stage === 'resubmission_needed')) return '';
+  const back = !st.marking;                                   /* already returned */
+  const read = back || MKN_READ || st.done > 0, mark = back || st.allMarked;
+  const now = !read ? 1 : !mark ? 2 : 3;
+  const one = (n, word, extra, done) => `<li class="mkn-step${done ? ' done' : n === now ? ' now' : ''}"${!done && n === now ? ' aria-current="step"' : ''}><i aria-hidden="true">${done ? MKN_CHECK : n}</i><span>${word}${extra ? ` <b>${extra}</b>` : ''}${done ? '<span class="mkn-sr">, done</span>' : ''}</span></li>`;
+  return `<ol class="mkn-steps" id="mknSteps">${one(1, 'Read', '', read)}${one(2, 'Mark', st.done + ' of ' + st.N, mark)}${one(3, 'Return', '', back)}</ol>`;
+}
+function mknBarHTML(st){
+  const name = st.tr.name || 'Trainee', g = st.tr.group == null ? '' : String(st.tr.group);
+  const what = esc(st.a.title || NAMES[CURRENT] || CURRENT) + (g ? ' · Group ' + esc(g) : '') + (st.marking && st.round === 'sub2' ? ' · resubmission' : '') + (st.s2 && st.s2.view ? ' · second marking' : '');
+  const L = st.list, i = st.idx;
+  const arrow = (dir, to) => `<button type="button" class="mkn-go" aria-label="${dir}" ${to ? `data-mkngo="${esc(to.id)}" title="${esc(to.name)}"` : 'disabled'}><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="${dir === 'Previous' ? 'M10 3L5 8l5 5' : 'M6 3l5 5-5 5'}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+  const nav = i >= 0 && st.sub.stage !== 'draft' ? `<div class="mkn-nav">${arrow('Previous', L[i - 1])}<span class="mkn-of">${i + 1} of ${L.length}</span>${arrow('Next', L[i + 1])}</div>` : '';
+  /* the second marker returns nothing: their one button is "I agree, and sign", in the panel */
+  /* on a phone or a tablet Return is in the bar at the foot instead, never in both (24 Nov 2026) */
+  const ret = mknNarrow() ? '' : mknReturnHTML(st);
+  /* More, and its menu under it; no menu where there is nothing to put in it */
+  const items = mknMoreHTML(st);
+  const more = items ? `<div class="mkn-morewrap"><button type="button" class="mkn-more" id="mknMore" aria-haspopup="true" aria-expanded="false" aria-controls="mknMenu">More</button><div class="mkn-menu" id="mknMenu" role="menu" aria-label="More" hidden>${items}</div></div>` : '';
+  return `<header class="mkn-bar" id="mknBar">
+    <a class="mkn-all" id="mknAll" href="5_tutor_dashboard.html#assignments">All ${esc(NAMES[CURRENT] || CURRENT.toUpperCase())}</a>
+    <span class="mkn-avi" aria-hidden="true">${esc(window.hubInitials ? hubInitials(name) : name.slice(0, 2).toUpperCase())}</span>
+    <div class="mkn-who"><h1 class="mkn-name">${esc(name)}</h1><p class="mkn-what">${what}</p></div>
+    ${nav}<span class="mkn-gap"></span>${mknStepsHTML(st)}${more}${ret}${mknProgHTML(st)}
+  </header>`;
+}
+/* THE ONE RETURN BUTTON (24 Nov 2026): drawn in the top bar on a laptop and in the bar at the foot on a phone. */
+function mknReturnHTML(st){
+  return st.marking && !(st.s2 && st.s2.view) ? `<button type="button" class="mkn-return" id="saveBtn" ${st.allMarked ? '' : 'disabled'}>${st.allMarked && st.first ? 'Return to ' + esc(st.first) : 'Return'}</button>` : '';
+}
+function mknNarrow(){ try { return matchMedia('(max-width:1079px)').matches; } catch (e) { return innerWidth < 1080; } }
+/* THE STEPS AS ONE LINE, ON A PHONE (24 Nov 2026): the step the tutor is on, in words, and a segment for each step,
+   gold up to that step. The same reading as mknStepsHTML, so the two can never disagree. */
+function mknProgHTML(st){
+  const s = document.createElement('div');
+  s.innerHTML = mknStepsHTML(st);
+  const items = [].slice.call(s.querySelectorAll('.mkn-step')); if (!items.length) return '';
+  let now = items.findIndex(x => x.classList.contains('now'));
+  const all = now < 0;                                     /* every step done */
+  if (all) now = items.length - 1;
+  const word = items[now].querySelector('span').cloneNode(true); [].forEach.call(word.querySelectorAll('.mkn-sr'), x => x.remove());
+  const label = (now + 1) + ' ' + word.textContent.replace(/\s+/g, ' ').trim().replace(/^Mark (\d+ of \d+)$/, 'Mark · $1');
+  return `<div class="mkn-prog" id="mknProg"><span class="mkn-prog-l">${esc(label)}${all ? '<span class="mkn-sr">, done</span>' : ''}</span>${items.map((x, k) => `<span class="mkn-prog-s${k <= now || x.classList.contains('done') ? ' on' : ''}" aria-hidden="true"></span>`).join('')}</div>`;
+}
+
+/* ---- THE WORK (24 Nov 2026): only what the trainee wrote. Each written section and the bibliography is a card
+   with its title; the heads inside it are small captions; a table (the language analysis) is drawn as it always
+   was. The brief, the class profile, the texts to choose from and the declaration are not here. The blocks keep
+   the names the comments on the text are stored against (.mloc, data-loc, data-round, data-sec, .readonly, .mgut). ---- */
+/* A head is a caption on its own line: its colon is not shown and the two line breaks before it give way to the
+   caption's own space. The characters stay in the page, so the words a comment was stored against still match. */
+function mknHeads(html){ return String(html).replace(/<br><br>(?=<span class="hl">)/g, '<br class="mkn-gapbr"><br class="mkn-gapbr">').replace(/(<span class="hl">)([^<]*?): (<\/span>)/g, '$1$2<i class="mkn-colon">: </i>$3'); }
+function mknWorkHTML(a, snap, round){
+  if (!mknHasWork(snap)) return '<div class="mkn-sec"><p class="mkn-plain">Nothing submitted yet.</p></div>';
+  let out = '';
+  (a.sections || []).forEach((s, i) => {
+    if (s.type === 'text' && !hubIsReference(s) && snap.text && snap.text[i]) {
+      out += `<section class="mkn-sec"><h2 class="roundlabel" data-sec="${i}">${esc(s.label)}</h2><div class="mloc" data-loc="t${i}" data-round="${round || ''}" data-sec="${i}"><div class="readonly">${mknHeads(hubHeadHTML(snap.text[i], s.heads))}</div><div class="mgut"></div></div></section>`;
+    } else if (s.type === 'picker' && snap.picked && snap.picked[i]) {
+      const p = snap.picked[i] || {};
+      out += `<section class="mkn-sec"><h2 class="roundlabel">${esc(s.label)}</h2><div class="readonly mkn-box">${hubPickerCats(s).map(c =>
+        `${esc(c.label)}: ${((c.fixed ? c.options : (p[c.key] || [])).map(esc).join(', ')) || '—'}`).join('\n')}</div></section>`;
+    } else if (s.type === 'fields' && snap.fields) {
+      const items = (snap.picked && (function(){ for (let j = i - 1; j >= 0; j--) { if (a.sections[j].type === 'picker') return hubPickedItems(a.sections[j], snap.picked[j]); } return []; })());
+      (items || []).forEach((item, ii) => {
+        out += `<section class="mkn-sec"><h2 class="roundlabel" data-sec="${i}">${esc(s.label)} — ${esc(item)}</h2>`;
+        s.fields.forEach((f, fi) => {
+          const v = snap.fields[`s${i}_i${ii}_f${fi}`];
+          if (v) out += `<div class="mloc" data-loc="f:s${i}_i${ii}_f${fi}" data-round="${round || ''}" data-sec="${i}" data-field="${esc(f.label)}"><div class="readonly mkn-box"><strong>${esc(f.label)}:</strong> ${nl2br(v)}</div><div class="mgut"></div></div>`;
+        });
+        out += '</section>';
+      });
+    }
+  });
+  return out || '<div class="mkn-sec"><p class="mkn-plain">Nothing submitted yet.</p></div>';
+}
+
+/* ---- THE PANEL (24 Nov 2026): a ring that fills as criteria are marked, the outcome in words with one sentence,
+   a card for each criterion, the overall comment, and one line saying the trainee sees nothing yet. The outcome
+   is outcomeFor's, the rule Return uses, so the panel cannot promise one thing and record another. ---- */
+function mknRingHTML(n, N){
+  const R = 26, C = 2 * Math.PI * R, part = N ? Math.min(1, n / N) : 0;
+  return `<span class="mkn-ring${N && n === N ? ' full' : ''}" role="img" aria-label="${n} of ${N} criteria marked"><svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><circle class="rg-bed" cx="32" cy="32" r="${R}"/><circle class="rg-arc" cx="32" cy="32" r="${R}"${n ? '' : ' visibility="hidden"'} stroke-dasharray="${(C * part).toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 32 32)"/></svg><b aria-hidden="true">${n}/${N}</b></span>`;
+}
+function mknOutcome(st){
+  const sub = st.sub;
+  if (!st.marking) {
+    const out = (sub.feedback && sub.feedback.outcome) || (sub.stage === 'closed' ? 'Closed' : 'Returned');
+    return { head: out, cls: /^Pass/.test(out) ? 'is-pass' : /^(Fail|Resubmission)/.test(out) ? 'is-fail' : '',
+      line: sub.stage === 'closed' ? 'This assignment is finished. The work and the feedback are kept here as the record.'
+        : sub.stage === 'returned_unmarked' ? 'Waiting on the trainee to submit again.'
+        : 'Waiting on the trainee to resubmit. Nothing more to mark until then.' };
+  }
+  if (!st.allMarked) return { head: st.done > 0 ? 'Marking' : 'Not marked yet', cls: '',
+    line: st.round === 'sub2' ? 'Mark the resubmission. Any Not met now is a Fail.'
+      : sub.usedResubmission ? 'The one resubmission is used. Any Not met now is a Fail.' : 'Met or Not met for each criterion.' };
+  const head = outcomeFor(st.round, st.allMet, sub);
+  const tally = st.allMet ? (st.N === 1 ? 'The criterion is met.' : 'All ' + st.N + ' met.') : st.met + ' met, ' + st.not + ' not met.';
+  /* Assignment 5's brief gives one chance, so the sentence about a resubmission is left off there */
+  const more = head === 'Resubmission needed' && CURRENT !== 'a5' ? ' ' + st.pro.Subj + ' ' + st.pro.verb('get') + ' one resubmission.' : '';
+  return { head, cls: /^Pass/.test(head) ? 'is-pass' : 'is-fail', line: tally + more };
+}
+function mknCardHTML(st, c, i){
+  const sub = st.sub, m = st.marks[i], cm = ((sub.criteriaComments || {})[st.round] || [])[i] || '';
+  const edge = m === true ? ' is-met' : m === false ? ' is-not' : '';
+  /* marking a resubmission is checking whether what was flagged got fixed: the first round's mark and comment sit on the card */
+  const pm = st.round === 'sub2' ? (sub.criteriaMarks.sub1 || [])[i] : undefined, pc = st.round === 'sub2' ? (((sub.criteriaComments || {}).sub1 || [])[i] || '') : '';
+  const first = pm === undefined && !pc ? '' : `<p class="mkn-first"><b>First round: ${pm === true ? 'Met' : pm === false ? 'Not met' : 'not marked'}</b>${pc ? ' · ' + nl2br(pc) : ''}</p>`;
+  const head = `<div class="mkn-ct"><span class="mkn-num" aria-hidden="true">${i + 1}</span><span class="mkn-ctext"><span class="mkn-sr">Criterion ${i + 1}: </span>${esc(c.text)}</span></div>${first}`;
+  if (!st.marking) {
+    return `<div class="critrow mkn-card${edge}" data-row="${i}">${head}
+      <div class="mkn-acts"><span class="mkn-fixed${edge}">${m === true ? 'Met' : m === false ? 'Not met' : 'Not marked'}</span></div>
+      ${cm.trim() ? `<div class="mkn-own"><span class="mkn-cap">Comment on this criterion</span><p>${esc(cm.trim())}</p></div>` : ''}
+      <div class="mk-linked" data-linked="${i}"></div></div>`;
+  }
+  const open = MKN_OPEN === i, has = !!cm.trim();
+  return `<div class="critrow mkn-card${edge}" data-row="${i}">${head}
+    <div class="mkn-acts">
+      <button type="button" class="crit-toggle mkn-met${m === true ? ' on' : ''}" data-crit="${i}" data-v="met" aria-pressed="${m === true}">Met</button>
+      <button type="button" class="mkn-not${m === false ? ' on' : ''}" data-critno="${i}" aria-pressed="${m === false}">Not met</button>
+      <button type="button" class="mkn-addc" data-mkncomment="${i}">${has ? 'Edit comment' : 'Add a comment'}</button>
+    </div>
+    <div class="mkn-own" data-own="${i}"${has && !open ? '' : ' hidden'}><span class="mkn-cap">Your comment on this criterion</span><p>${esc(cm.trim())}</p></div>
+    <textarea data-crit-comment="${i}" rows="3" aria-label="Your comment on criterion ${i + 1}" placeholder="Why, in a sentence or two. ${esc(st.pro.Subj)} ${st.pro.verb('read')} this."${open ? '' : ' hidden'}>${esc(cm)}</textarea>
+    <div class="mk-linked" data-linked="${i}"></div></div>`;
+}
+function mknPanelHTML(st){
+  const sub = st.sub, o = mknOutcome(st), fb = sub.feedback || {};
+  let h = `<div class="mkn-out">${mknRingHTML(st.done, st.N)}<div><h2 class="mkn-outcome ${o.cls}">${esc(o.head)}</h2><p>${esc(o.line)}</p></div></div>`;
+  h += st.N ? st.crit.map((c, i) => mknCardHTML(st, c, i)).join('') : '<p class="mkn-plain">No marking criteria are set for this assignment yet. Add them in the assignment builder.</p>';
+  if (st.marking) {
+    const cur = (st.round === 'sub2' ? fb.generalComment2 : fb.generalComment1) || '';
+    h += `<label class="mkn-ol" for="comment">Overall comment</label>
+      <textarea id="comment" rows="4" placeholder="Write to ${esc(st.first || 'the trainee')}: what ${st.pro.known ? esc(st.pro.subj) + ' did' : 'went'} well and what to take forward.">${esc(cur)}</textarea>
+      <p class="mkn-quiet">${esc(st.pro.Subj)} ${st.pro.verb('see')} nothing until you press Return.</p>`;
+  } else {
+    const g1 = (fb.generalComment1 || '').trim(), g2 = (fb.generalComment2 || '').trim();
+    const two = st.round === 'sub2' && g1 && g2;
+    if (g1) h += `<div class="mkn-own"><span class="mkn-cap">Overall comment${two ? ', first round' : ''}</span><p>${esc(g1)}</p></div>`;
+    if (g2) h += `<div class="mkn-own"><span class="mkn-cap">Overall comment${two ? ', resubmission' : ''}</span><p>${esc(g2)}</p></div>`;
+    /* giving more time stays where the script is back with the trainee, as on the page before */
+    if (sub.stage === 'resubmission_needed' || sub.stage === 'returned_unmarked') h += dueRowHTML(st.a, sub);
+    /* A CLOSED SCRIPT IS A RECORD (24 Nov 2026): its print sits under it, in place of Return, and is not gold */
+    if (sub.stage === 'closed') h += `<p class="mkn-printrow"><a class="mkn-btn is-quiet" id="mknPrint" href="11_assignment_record.html?trainee=${encodeURIComponent(TRAINEE_ID)}&a=${encodeURIComponent(CURRENT)}" target="_blank" rel="noopener">Print / Save as PDF</a></p>`;
+  }
+  return h;
+}
+
+/* ---- a criterion's comment box (24 Nov 2026): closed, the comment reads as text in its card and the link says
+   Edit comment; open, it is the box. The box is always in the page, hidden when closed, so Return, a reload and
+   comments brought back all find the words in it. A click anywhere else on the page closes it. ---- */
+function mknCommentOpen(i, focus){
+  const ta = document.querySelector(`#mkPanel textarea[data-crit-comment="${i}"]`); if (!ta) return;
+  if (MKN_OPEN != null && MKN_OPEN !== i) mknCommentClose(MKN_OPEN);
+  MKN_OPEN = i; ta.hidden = false;
+  const own = document.querySelector(`#mkPanel [data-own="${i}"]`); if (own) own.hidden = true;
+  if (focus) { ta.focus(); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {} }
+}
+function mknCommentClose(i){
+  if (MKN_OPEN === i) MKN_OPEN = null;
+  const ta = document.querySelector(`#mkPanel textarea[data-crit-comment="${i}"]`); if (!ta) return;
+  ta.hidden = true;
+  const v = ta.value.trim(), own = document.querySelector(`#mkPanel [data-own="${i}"]`), link = document.querySelector(`#mkPanel [data-mkncomment="${i}"]`);
+  if (own) { own.querySelector('p').textContent = v; own.hidden = !v; }
+  if (link) link.textContent = v ? 'Edit comment' : 'Add a comment';
+}
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('mkn')) return;
+  const t = e.target; if (!t || !t.closest) return;
+  const go = t.closest('[data-mkngo]');
+  if (go && !go.disabled) { location.search = '?a=' + encodeURIComponent(CURRENT) + '&trainee=' + encodeURIComponent(go.dataset.mkngo); return; }
+  /* the door back opens the list on this assignment, as the dashboard remembers it */
+  if (t.closest('#mknAll, #mknAll2')) { try { localStorage.setItem('chub:asgOpen', CURRENT); } catch (err) {} return; }
+  const met = t.closest('#mkPanel button[data-crit]'), not = t.closest('#mkPanel button[data-critno]');
+  if (met || not) {
+    const st = mknState(); if (!st || !st.marking) return;
+    const i = +(met ? met.dataset.crit : not.dataset.critno), v = !!met;
+    mkSetMark(i, st.marks[i] === v ? null : v);        /* a second press on the same word takes the mark off */
+    return;
+  }
+  const cb = t.closest('[data-mkncomment]');
+  if (cb) { const i = +cb.dataset.mkncomment; if (MKN_OPEN === i) mknCommentClose(i); else mknCommentOpen(i, true); return; }
+  if (MKN_OPEN != null && t.closest('#app') && !t.closest(`#mkPanel [data-row="${MKN_OPEN}"]`)) mknCommentClose(MKN_OPEN);
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || MKN_OPEN == null || !document.body.classList.contains('mkn')) return;
+  const t = e.target; if (t && t.matches && t.matches('#mkPanel textarea[data-crit-comment]')) { const i = MKN_OPEN; mknCommentClose(i); const l = document.querySelector(`#mkPanel [data-mkncomment="${i}"]`); if (l) l.focus(); }
+});
+
+/* how tall the two rows at the top are, for everything that sticks under them */
+function mknSetTop(){
+  const bar = $('mknBar'), row = $('mknRow'); if (!bar) return;
+  const bh = Math.ceil(bar.getBoundingClientRect().height), rh = row && !row.classList.contains('is-empty') && getComputedStyle(row).position === 'sticky' ? Math.ceil(row.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty('--mkn-bar-h', bh + 'px');
+  document.documentElement.style.setProperty('--mkn-top', (bh + rh) + 'px');
+  /* the bar at the foot, on a phone (24 Nov 2026): the work leaves room for it, the selection bar stays above it */
+  const ft = $('mknFoot'), fh = ft && !ft.hidden && getComputedStyle(ft).position === 'fixed' ? Math.ceil(ft.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty('--mkn-foot-h', fh + 'px');
+}
+addEventListener('resize', () => { if (document.body.classList.contains('mkn')) mknSetTop(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (document.body.classList.contains('mkn')) mknSetTop(); }).catch(() => {});
+
+/* STEP 1, READ (24 Nov 2026): gold once the end of the work has been on screen, or a first mark is made. Held for
+   this page's life only; nothing is stored. */
+function mknWatchEnd(st){
+  if (MKN_END) { try { MKN_END.disconnect(); } catch (e) {} MKN_END = null; }
+  const end = $('mknEnd'); if (!end || MKN_READ || !st.marking || !('IntersectionObserver' in window)) return;
+  MKN_END = new IntersectionObserver(es => {
+    if (!es.some(x => x.isIntersecting)) return;
+    MKN_READ = true; try { MKN_END.disconnect(); } catch (e) {} MKN_END = null;
+    const s = $('mknSteps'), now = mknState(); if (s && now) s.outerHTML = mknStepsHTML(now);
+    const pg = $('mknProg'); if (pg && now) pg.outerHTML = mknProgHTML(now);      /* the phone's line too (24 Nov 2026) */  });
+  MKN_END.observe(end);
+}
+
+function renderNew(){
+  if (!TRAINEE_ID) return false;                                   /* "Which trainee's work?" is the old card */
+  const a = WORDING && WORDING[CURRENT]; if (!a) return false;     /* not set up: the old card */
+  if (CURRENT === 'a5' && !a5InPlay(SUBS)) return false;           /* Assignment 5 not set: the old card */
+  const st = mknState(), sub = st.sub;
+  MKN_VIEW2 = !!st.s2.view;                                        /* the second marker's page: nothing here marks */
+  OUTCOME = (sub.feedback && sub.feedback.outcome) || OUTCOME;
+  document.body.className = document.body.className.replace(/\bas-\w+/g, '').trim() + ' as-' + CURRENT;
+  document.body.classList.add('mkn');
+  /* what to put back after the draw: the panel's own scroll, and the button the keyboard was on */
+  const was = $('mkPanel'), keepTop = was ? was.scrollTop : 0, ae = document.activeElement;
+  const focusOn = ae && ae.closest && ae.closest('#mkPanel') && ae.dataset ? (ae.dataset.crit != null ? `button[data-crit="${ae.dataset.crit}"]` : ae.dataset.critno != null ? `button[data-critno="${ae.dataset.critno}"]` : '') : '';
+  const CX = !!(window.hubIsConnectsAsg && hubIsConnectsAsg(CURRENT, a));
+  /* the doors and the pills are drawn by their own functions (a later part of this build); with neither, no row */
+  const doors = mknDoorsHTML(st), pills = mknPillsHTML(st);
+  let html = mknBarHTML(st) + `<div class="mkn-row${doors || pills ? '' : ' is-empty'}" id="mknRow"><div class="mkn-doors" id="mknDoors">${doors}</div><div class="mkn-pills" id="mknPills">${pills}</div></div>`;
+  if (sub.stage === 'draft') {
+    html += `<div class="mkn-main mkn-solo"><div class="mkn-sec"><p class="mkn-plain">Nothing to mark yet. ${esc(st.first || 'The trainee')} has not submitted this assignment.</p>${dueRowHTML(a, sub)}</div></div>`;
+  } else {
+    /* a resubmission is read against the first round (24 Nov 2026); everything else as it was written */
+    MKN_DIFFS = [];
+    const work = st.round === 'sub2' && mknHasWork(sub.sub1) && mknHasWork(sub.sub2) ? mknResubHTML(a, sub) : mknWorkHTML(a, st.snap, st.round);
+    /* what happened to a signature that was not taken stays on screen when there is no box to show it in (24 Nov 2026) */
+  const secMsg = MKN_SEC_MSG && !st.s2.canSign ? `<p class="mkn-sec-msg" role="status">${esc(MKN_SEC_MSG)}</p>` : '';
+  const panel = secMsg + (st.s2.view ? mknSecondPanelHTML(st) : mknPanelHTML(st) + mknSignedHTML(st));
+    /* on a phone the panel is a sheet, and Done at its top puts it away (24 Nov 2026) */
+    const up = MKN_PANEL && mknNarrow();
+    html += `<div class="mkn-main"><div class="mk-work mkn-work" id="mkWork">${work}<div id="mknEnd"></div></div>
+      <aside class="mkn-panel${up ? ' open' : ''}" id="mkPanel" aria-label="Marking"><div class="mkn-phead"><button type="button" class="mkn-done" id="mknDone">Done</button></div>${panel}</aside></div>`;
+  }
+  MKN_NARROW = mknNarrow();
+  mknFootFill(sub.stage === 'draft' ? null : st);                 /* the bar at the foot, on a phone (24 Nov 2026) */
+  html += mknBringHTML(st);
+  if (CX) html += hubConnectFooter();
+  $('app').innerHTML = html;
+  mknApplyDiffs();                                                 /* the changed words of a resubmission, underlined */
+  /* the same helper the old layout calls. Off a script that is waiting to be marked, marking is false: no key, no
+     selection and no comment box can write. On the second marker's page it is false too (24 Nov 2026): M and N and a
+     selection do nothing there. paintMore draws what own work found, after the comments on the text. */
+  if (window.hubMarking) hubMarking.afterRender({ key: CURRENT, trainee: TRAINEE_ID, a, sub, round: st.round, marking: st.marking && !st.s2.view, guide: window.hubGuidance ? hubGuidance(CURRENT) : null, save: saveSubs, rerender: render,
+    setNote: mkSetNote, setMark: mkSetMark, poss: st.pro.poss, paintMore: mknPaintOwn,
+    outcome: () => { const now = mknState(); return now && now.marking && now.allMarked ? outcomeFor(now.round, now.allMet, now.sub) : ''; },
+    me: (function(){ try { return localStorage.getItem('chub:tutorName') || ''; } catch (e) { return ''; } })() });
+  const saveBtn = $('saveBtn'); if (saveBtn) saveBtn.addEventListener('click', mknReturn);   /* doSave, with the store read before and after (24 Nov 2026) */
+  wireExchange();
+  const extBtn = $('extSet');
+  if (extBtn) extBtn.addEventListener('click', () => { const v = ($('extAt') || {}).value; if (!v) return; setExtension(subFor(CURRENT), HubDue.fromLocalInput(v)); });
+  const extClr = $('extClear'); if (extClr) extClr.addEventListener('click', () => setExtension(subFor(CURRENT), ''));
+  /* comments keep as they are typed, as they always have */
+  document.querySelectorAll('#mkPanel textarea[data-crit-comment]').forEach(el => el.addEventListener('input', () => mkSetNote(+el.dataset.critComment, el.value)));
+  const gc = $('comment'); if (gc) gc.addEventListener('input', () => mkSetOverall(gc.value));
+  /* the second marker's comment keeps as it is typed, as a draft only its writer sees (24 Nov 2026) */
+  const sc = $('mknSecond'); if (sc) sc.addEventListener('input', () => mknSecondType(sc.value));
+  const now = $('mkPanel'); if (now && keepTop) now.scrollTop = keepTop;
+  if (focusOn) { const b = document.querySelector('#mkPanel ' + focusOn); if (b) try { b.focus({ preventScroll: true }); } catch (e) {} }
+  mknPanelShow(MKN_PANEL && !!$('mkPanel'), false);                /* the sheet stays up across a redraw (24 Nov 2026) */
+  mknSetTop(); mknWatchEnd(st);
+  return true;
+}
+
+/* ======================================================================================================
+   THE DOORS, THE PILLS, THE MORE MENU (24 Nov 2026)
+
+   The second row of the new layout, and the menu in the bar. Doors on the left open something to read. Pills on
+   the right each say one fact in words. More holds what a tutor uses now and then. Nothing here writes to the
+   record except three things, each on a click and each through a writer the page already had: the 1st marker
+   (the tutor's own name, on a click and never by opening the page), Return unmarked (doReturnUnmarked), and
+   Assignment 5 (the same lines and the same question as before). Giving more time is setExtension, as before.
+   ====================================================================================================== */
+
+/* who is at this screen: the name the tutor gave on the dashboard, tidied. Two names are the same person when
+   they match apart from capitals and spaces. */
+function mknTutor(){ try { return String(localStorage.getItem('chub:tutorName') || '').replace(/\s+/g, ' ').trim(); } catch (e) { return ''; } }
+function mknSame(x, y){ const n = v => String(v || '').replace(/\s+/g, ' ').trim().toLowerCase(); return !!n(x) && n(x) === n(y); }
+/* CLOSE ENOUGH TO BE THE SAME TUTOR (24 Nov 2026, a reviewer's finding). The name on this computer is typed by hand,
+   so the 1st marker who typed only a first name, or made a slip, was offered the second marker's box on their own
+   script and could sign it: one person's marking would then count as double-marked. A name counts as the 1st marker's
+   when it is the same, when one is the other's first name, or when it is one letter away (two in a long name). Two
+   real tutors this close get the marking page instead of the box, which loses nothing. */
+function mknNear(x, y){
+  const n = v => String(v || '').replace(/\s+/g, ' ').trim().toLowerCase(), a = n(x), b = n(y);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const wa = a.split(' '), wb = b.split(' ');
+  if ((wa.length === 1 || wb.length === 1) && wa[0] === wb[0]) return true;
+  if (Math.abs(a.length - b.length) > 2) return false;
+  let prev = Array.from({ length: b.length + 1 }, (v, j) => j);
+  for (let i = 1; i <= a.length; i++) { const cur = [i]; for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+  return prev[b.length] <= (Math.min(a.length, b.length) >= 10 ? 2 : 1);
+}
+/* only a web address is ever made into a link: what a trainee typed is never trusted to be one */
+function mknLink(u){ u = String(u || '').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
+/* she, he or they for a short phrase where a name will not fit ("the text they chose") */
+function mknThey(st){ return st.pro.known ? st.pro.subj : 'they'; }
+function mknCap(w){ w = String(w || ''); return w.charAt(0).toUpperCase() + w.slice(1); }
+
+/* ---- the facts the doors and pills stand on (24 Nov 2026), each worked out in one place ---- */
+/* the one text the trainee chose, where the assignment has texts to choose from and the choice can be told */
+function mknChosenText(st){
+  if (!window.hubTexts) return null;
+  const texts = hubTexts.of(st.a); if (!texts.length) return null;
+  const ch = hubTexts.chosen(st.snap);
+  return texts.filter(x => x.id === ch)[0] || null;
+}
+/* what the trainee attached: one link and any files */
+function mknMaterials(snap){
+  const link = mknLink((snap || {}).materialsLink);
+  const files = (Array.isArray((snap || {}).materialsFiles) ? snap.materialsFiles : []).filter(f => f && mknLink(f.url));
+  return { link, files, any: !!link || files.length > 0 };
+}
+/* Handbook 9.2.1, the same materials in an assignment and an assessed lesson: the test the page has made since
+   29 Sep 2026, here as a list for the Requirements pill */
+function mknOverlap(sub){
+  const hits = [];
+  try {
+    if (!/^(lrt|lsrt)$/.test(CURRENT)) return hits;
+    const tr = mknTrainee();
+    const norm = v => String(v || '').trim().replace(/[?#].*$/, '').replace(/\/+$/, '').toLowerCase();
+    const lessons = [], live = (tr.tp || {}).plan;
+    const liveLink = live && live.state && live.state.plan && live.state.plan.matsLink;
+    if (liveLink) lessons.push({ tp: (live.state.meta || {}).tp || 'the current plan', link: liveLink });
+    const hist = (tr.tp || {}).history || {};
+    Object.keys(hist).forEach(n => { const l = ((((hist[n] || {}).state || {}).doc || {}).plan || {}).matsLink; if (l) lessons.push({ tp: 'TP' + n, link: l }); });
+    [['First submission', sub.sub1], ['Resubmission', sub.sub2]].forEach(([label, r]) => {
+      const sl = norm(r && r.materialsLink); if (!sl) return;
+      lessons.forEach(L => { if (norm(L.link) === sl) hits.push(label + ': the same materials as ' + L.tp); });
+    });
+  } catch (e) {}
+  return hits;
+}
+/* WHAT LITE'S OWN CHECKS FLAG (24 Nov 2026): sources, phonemic script, materials missing, the declaration, the same
+   materials used twice, an older brief. Only what is flagged; the word count has its own pill and is not said
+   twice. A requirement, never a mark: the list is for the tutor to read. */
+function mknRequirements(st){
+  const out = [], a = st.a, sub = st.sub;
+  if (!mknHasWork(st.snap)) return out;
+  try { if (window.hubWorkChecks) hubWorkChecks(a, st.snap, CURRENT, 'tutor').forEach(x => { if (x.state === 'look' && !/^\d+ words$/.test(x.label)) out.push({ label: x.label, detail: x.detail || '' }); }); } catch (e) {}
+  const twice = mknOverlap(sub);
+  if (twice.length) out.push({ label: 'The same materials used twice', detail: twice.join('. ') + '.', html: 'Handbook 9.2.1: materials prepared for the language related task and the language skills task <b>should</b> not be used as the basis for assessed TP lessons, or vice versa. A recommendation. The call is yours.' });
+  const rec = st.round === 'sub2' ? sub.brief2 : sub.brief1;
+  try { if (rec && rec.h && window.hubBriefKey && rec.h !== hubBriefKey(a)) out.push({ label: 'An earlier version of the brief', detail: 'This work answers the brief as it was before it was last changed.', brief: true }); } catch (e) {}
+  try { if (a.trap && window.hubTrapFound && hubTrapFound(a.trap, sub)) out.push({ label: 'The hidden word is used in this work', detail: 'The trainee is not told.' }); } catch (e) {}
+  return out;
+}
+
+/* ---- THE DOORS (24 Nov 2026) ---- */
+function mknDoorsHTML(st){
+  if (st.sub.stage === 'draft') return '';
+  let h = '<button type="button" class="mkn-door" id="mknGuide"><b>Marking guidelines</b><small>tutors only</small></button>';
+  const tx = mknChosenText(st);
+  if (tx) h += `<button type="button" class="mkn-door" id="mknText"><b>Text ${esc(tx.id)}</b><small>the text ${esc(mknThey(st))} chose</small></button>`;
+  if (mknMaterials(st.snap).any) h += `<button type="button" class="mkn-door" id="mknTasks"><b>${esc(mknCap(st.pro.poss))} tasks and answer keys</b><small>attached</small></button>`;
+  return h;
+}
+
+/* ---- THE PILLS (24 Nov 2026). A check stands beside words that say all is well; the words say it either way. ---- */
+function mknPillsHTML(st){
+  const sub = st.sub, a = st.a;
+  if (sub.stage === 'draft' || !mknHasWork(st.snap)) return '';
+  const out = [], pill = (text, cls, ok) => `<span class="mkn-pill${cls ? ' ' + cls : ''}">${ok ? MKN_CHECK : ''}${text}</span>`;
+  if (st.round === 'sub2') {
+    const m1 = sub.criteriaMarks.sub1 || [], met = st.crit.filter((c, i) => m1[i] === true).length, not = st.crit.filter((c, i) => m1[i] === false).length;
+    if (met + not) out.push(pill('First round: ' + met + ' met, ' + not + ' not met', 'is-plain'));
+  }
+  const ti = mknTurnedIn(a, sub, st.round);
+  if (ti) out.push(pill(esc(ti.text), ti.late ? 'is-amber' : '', !ti.late));
+  const w = mknWords(a, st.snap);
+  if (w) out.push(pill(w.n + ' words · ' + w.state, w.state === 'in range' ? '' : 'is-amber', w.state === 'in range'));
+  /* own work: the check runs only when a tutor presses this pill (24 Nov 2026) */
+  out.push(mknOwnPillHTML(st));
+  const d = mknDecl(a, st.snap);
+  if (d && d.has && (d.ai === 'yes' || d.ai === 'no')) out.push(`<button type="button" class="mkn-pill" id="mknDecl">${d.ai === 'no' ? MKN_CHECK + 'Declared: did not use AI' : 'Declared: used AI'}</button>`);
+  const req = mknRequirements(st);
+  if (req.length) out.push(`<button type="button" class="mkn-pill is-amber" id="mknReq">Requirements · ${req.length} to look at</button>`);
+  /* THE 1ST MARKER IS WHOEVER PRESSES THIS. Opening the page never sets it. Any tutor may take a script, and any
+     tutor may change the name, while the script is with the tutors (the store keeps a tutor's write only then). */
+  const first = String((sub.markers || {}).first || '').replace(/\s+/g, ' ').trim(), can = st.marking || sub.stage === 'closed';
+  /* the markers' pills are held together, so on a laptop they stay in sight at the right of the one line (24 Nov 2026) */
+  const lead = out.length; 
+  if (first) out.push(`<span class="mkn-pill" id="mknFirstIs">${MKN_CHECK}1st marker · ${esc(first)}${can ? '<button type="button" class="mkn-pillact" id="mknFirstChange">Change</button>' : ''}</span>`);
+  else if (can) out.push('<button type="button" class="mkn-pill is-dash" id="mknFirst" data-role="marker1">1st marker · take it</button>');
+  /* THE 2ND MARKER (24 Nov 2026): signed, with the name and the day; a name recorded by hand, with the name; and, to a
+     tutor who is not the 1st marker on a fully marked script, a pill that takes them to the box where they sign */
+  const s2 = st.s2;
+  if (s2.signed) out.push(pill('2nd marker · ' + esc(s2.by) + (s2.at ? ' · ' + esc(mknWhen(s2.at, false, true)) : ''), '', true));
+  else if (s2.typedName) out.push(pill('2nd marker · ' + esc(s2.by), '', true));
+  else if (s2.canSign) out.push('<button type="button" class="mkn-pill is-dash" id="mknToSecond">2nd marker · not signed</button>');
+  const marker = out.splice(lead);
+  return out.join('') + (marker.length ? `<span class="mkn-mpills">${marker.join('')}</span>` : '');
+}
+
+/* ---- THE 1ST MARKER, BY A CLICK (24 Nov 2026). "Take it" puts the tutor's own name. "Change" on another tutor's
+   name puts your own; on your own name it takes the name off again. No question is asked. A tutor Lite has no
+   name for is asked for it once, and it is kept as the dashboard keeps it. ---- */
+function mknSetFirst(name){
+  /* from the second marker's page, write on the store's copy, never an old one (24 Nov 2026) */
+  if (MKN_VIEW2) { mknFresh().then(() => mknSetFirstNow(name)); return; }
+  mknSetFirstNow(name);
+}
+function mknSetFirstNow(name){
+  const sub = subFor(CURRENT);
+  if (!(mkIsMarking(sub) || sub.stage === 'closed')) return;
+  sub.markers.first = name; saveSubs(); render();
+}
+function mknTakeFirst(change){
+  const me = mknTutor(), sub = subFor(CURRENT);
+  if (!me) { mknAskName(); return; }
+  mknSetFirst(change && mknSame(sub.markers.first, me) ? '' : me);
+}
+function mknAskName(){
+  mknSheet({ id: 'name', narrow: true, sticky: true, title: 'Your name',
+    html: `<p>Lite has no name for you on this computer yet. It goes on the record as the 1st marker.</p>
+      <input type="text" id="mknNameIn" aria-label="Your name" autocomplete="name" style="width:100%;">
+      <div class="mkn-sh-acts"><button type="button" class="mkn-btn" id="mknNameSave">Save and take it</button></div>` });
+  const i = $('mknNameIn'); if (i) i.focus();
+}
+
+/* ---- A SHEET (24 Nov 2026): the one box the doors, the pills and the menu open. It sits outside the page's own
+   draw, so marking a criterion behind it cannot wipe what is typed in it. Close, Escape or a click outside it
+   close it; one that holds typed words (sticky) is not closed by a click outside. ---- */
+function mknSheet(o){
+  let w = $('mknSheet');
+  if (!w) { w = document.createElement('div'); w.id = 'mknSheet'; w.className = 'mkn-sheetwrap'; document.body.appendChild(w); }
+  if (w.hidden !== false || !MKN_FOCUS) MKN_FOCUS = document.activeElement;
+  w.dataset.sticky = o.sticky ? '1' : '';
+  w.innerHTML = `<div class="mkn-sheet${o.narrow ? ' is-narrow' : ''}" role="dialog" aria-modal="true" aria-labelledby="mknSheetT" data-sheet="${esc(o.id)}">
+    <div class="mkn-sh-top"><div>${o.cap ? `<p class="mkn-sh-cap">${o.cap}</p>` : ''}<h2 id="mknSheetT">${o.title}</h2></div><button type="button" class="mkn-sh-x" data-mknclose>Close</button></div>
+    <div class="mkn-sh-body">${o.html}</div>${o.foot ? `<p class="mkn-sh-foot">${o.foot}</p>` : ''}</div>`;
+  w.hidden = false; w.scrollTop = 0;
+  const x = w.querySelector('[data-mknclose]'); if (x) try { x.focus({ preventScroll: true }); } catch (e) {}
+}
+function mknSheetClose(){
+  const w = $('mknSheet'); if (w && !w.hidden) { w.hidden = true; w.innerHTML = ''; }
+  const b = $('mknBring'); if (b && !b.hidden) { b.hidden = true; MKN_BRING = false; }
+  const f = MKN_FOCUS; MKN_FOCUS = null;
+  if (f && f.id && $(f.id)) try { $(f.id).focus({ preventScroll: true }); } catch (e) {}
+}
+function mknSheetOpen(){ const w = $('mknSheet'), b = $('mknBring'); return !!((w && !w.hidden) || (b && !b.hidden)); }
+
+/* ---- what each door and pill opens (24 Nov 2026) ---- */
+/* MARKING GUIDELINES: the course's own guidance for this assignment, whole and in one place: how to mark it,
+   criterion by criterion, section by section. Tutors only. The Handbook's sentence on double marking, which stood
+   beside the marker boxes on the page before, closes it. */
+function mknGuideSheet(){
+  const st = mknState(); if (!st) return;
+  const g = window.hubGuidance ? hubGuidance(CURRENT) : null, G = t => window.hubGuidanceHTML ? hubGuidanceHTML(t) : nl2br(t);
+  let h = '';
+  if (g && g.general) h += '<h3>How to mark this assignment</h3>' + G(g.general);
+  if (g && g.crit && g.crit.some(Boolean)) h += '<h3>Criterion by criterion</h3>' + st.crit.map((c, i) => g.crit[i] ? `<h4>${i + 1}. ${esc(c.text)}</h4>${G(g.crit[i])}` : '').join('');
+  if (g && g.sections) h += '<h3>Section by section</h3>' + G(g.sections);
+  if (!h) h = '<p>No marking guidelines are written for this assignment yet.</p>';
+  mknSheet({ id: 'guide', cap: 'Tutors only · never shown to a trainee', title: 'Marking guidelines: ' + esc(NAMES[CURRENT] || CURRENT.toUpperCase()), html: h,
+    foot: 'Handbook 9.2.3: a proportion of each assignment <b>must</b> be double-marked (3 up to 9 trainees, 4 up to 16, 5 up to 24); double-marked ones <b>should</b> be initialled by both tutors.' });
+}
+/* THE TEXT THEY CHOSE: that text and no other. No tabs: the other texts stay with the brief. */
+function mknTextSheet(){
+  const st = mknState(); if (!st) return; const tx = mknChosenText(st); if (!tx) return;
+  const body = esc(tx.body).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').split(/\n{2,}/).map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('');
+  mknSheet({ id: 'text', cap: 'The text ' + esc(mknThey(st)) + ' chose', title: 'Text ' + esc(tx.id) + (tx.title ? ' — ' + esc(tx.title) : ''), html: body,
+    foot: 'Only the text ' + esc(mknThey(st)) + ' chose is shown. The others stay with the brief.' });
+}
+/* WHAT THEY ATTACHED: the materials link and each file, to open */
+function mknTasksSheet(){
+  const st = mknState(); if (!st) return; const m = mknMaterials(st.snap); if (!m.any) return;
+  const links = (m.link ? [`<a href="${esc(m.link)}" target="_blank" rel="noopener">Open the materials</a>`] : [])
+    .concat(m.files.map(f => `<a href="${esc(mknLink(f.url))}" target="_blank" rel="noopener">${esc(f.name || 'Attached file')}</a>`));
+  mknSheet({ id: 'tasks', narrow: true, title: esc(mknCap(st.pro.poss)) + ' tasks and answer keys', html: `<p class="mkn-files">${links.join('')}</p>`, foot: 'Each one opens in a new tab.' });
+}
+/* WHAT THEY DECLARED: each line of the declaration, ticked or not, and the AI-use record as they filled it in */
+function mknDeclSheet(){
+  const st = mknState(); if (!st) return; const d = mknDecl(st.a, st.snap); if (!d || !d.has) return;
+  const link = mknLink(d.link), row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : '';
+  let h = '<h3>The declaration</h3><ul class="mkn-list">' + d.items.map((it, i) => `<li><b>${d.checks[i] ? 'Ticked' : 'Not ticked'}</b><span>${esc(it)}</span></li>`).join('') + '</ul>';
+  h += '<h3>AI</h3>' + (d.ai === 'yes'
+    ? '<dl class="mkn-dl">' + row('Declared', 'Used AI') + row('Tool', esc(d.tool)) + row('What for', esc(d.purpose)) + row('What was used', esc(d.material)) + row('What was checked or changed', esc(d.checked))
+      + row('Link', link ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>` : esc(d.link)) + '</dl>'
+    : '<p>Declared: did not use AI.</p>');
+  mknSheet({ id: 'decl', narrow: true, title: 'What ' + esc(st.first || 'the trainee') + ' declared', html: h });
+}
+/* REQUIREMENTS: the list behind the pill */
+function mknReqSheet(){
+  const st = mknState(); if (!st) return; const req = mknRequirements(st); if (!req.length) return;
+  const h = '<ul class="mkn-list">' + req.map(x => `<li><b>${esc(x.label)}</b>${x.detail ? `<span>${esc(x.detail)}</span>` : ''}${x.html ? `<span>${x.html}</span>` : ''}${x.brief ? '<div class="mk-brief" id="briefLine"></div>' : ''}</li>`).join('') + '</ul>';
+  mknSheet({ id: 'req', narrow: true, title: 'Requirements to look at', html: h, foot: 'Requirements, not criteria. They say whether the work is ready to mark, not whether it passes.' });
+  if ($('briefLine')) { briefLine(st.a, st.sub); const hd = $('briefLine').querySelector('h2'); if (hd) hd.remove(); }
+}
+
+/* ---- THE MORE MENU (24 Nov 2026). Each item does what its control on the page before did, to the letter: the
+   same function, the same question where there was one. Return unmarked opens with the overall comment as the
+   reason, because that box was always the reason; an empty reason is allowed, as it was. ---- */
+function mknMoreHTML(st){
+  const sub = st.sub, name = esc(st.first || 'the trainee'), they = esc(mknThey(st)), poss = esc(st.pro.poss);
+  const row = (attrs, title, line, cls) => `<button type="button" role="menuitem" class="mkn-mi${cls ? ' ' + cls : ''}" ${attrs}><b>${title}</b>${line ? `<span${/id="xCopy"/.test(attrs) ? ' class="tk-state"' : ''}>${line}</span>` : ''}</button>`;
+  const groups = [[], [], []];
+  /* the second marker's page writes nothing but the second marker's own record (24 Nov 2026): no Return unmarked, no
+     preview of a return, no bringing marks back */
+  const marking = st.marking && !(st.s2 && st.s2.view);
+  /* on a phone the door back to the list has no room in the bar, so it is the menu's first item (24 Nov 2026) */
+  groups[0].push(`<a role="menuitem" class="mkn-mi mkn-onphone" id="mknAll2" href="5_tutor_dashboard.html#assignments"><b>All ${esc(NAMES[CURRENT] || CURRENT.toUpperCase())}</b><span>Back to the list</span></a>`);
+  if (marking) {
+    groups[0].push(row('data-mknmenu="unmarked"', 'Return unmarked', 'Send it straight back with a reason'));
+    groups[0].push(row('data-mknmenu="preview"', 'Preview as ' + name, 'See what ' + they + ' will get'));
+  }
+  const settled = sub.stage === 'submitted' || sub.stage === 'resubmitted' || sub.stage === 'closed';
+  groups[0].push(settled ? row('data-mknmenu="" aria-disabled="true"', 'Give more time', 'The work is in') : row('data-mknmenu="time"', 'Give more time', 'Move ' + poss + ' deadline'));
+  if (marking) {
+    groups[1].push(row('id="xCopy"', 'Copy the work', 'To read or mark it elsewhere'));
+    groups[1].push(row('data-mknmenu="bring"', 'Bring comments back', 'Paste them, or a Word file'));
+  }
+  /* on a closed script the print is in the panel, one door for one thing (24 Nov 2026); the second marker's page has no such panel */
+  if (sub.stage !== 'draft' && (sub.stage !== 'closed' || (st.s2 && st.s2.view))) groups[1].push(`<a role="menuitem" class="mkn-mi" id="mknPrint" href="11_assignment_record.html?trainee=${encodeURIComponent(TRAINEE_ID)}&a=${encodeURIComponent(CURRENT)}" target="_blank" rel="noopener"><b>Print / Save as PDF</b></a>`);
+  if (CURRENT !== 'a5') {
+    if (!a5InPlay(SUBS)) groups[2].push(row('id="a5SetBtn"', 'Set Assignment 5', 'Only where plagiarism is found', 'is-brick'));
+    else if (SUBS.a5 && SUBS.a5.stage === 'draft') groups[2].push(row('id="a5WithdrawBtn"', 'Withdraw Assignment 5', 'It is set, and nothing is submitted for it', 'is-brick'));
+  }
+  return groups.filter(g => g.length).map(g => g.join('')).join('<hr>');
+}
+function mknMenuShow(on){
+  const m = $('mknMenu'), b = $('mknMore'); if (!m || !b) return;
+  m.hidden = !on; b.setAttribute('aria-expanded', on ? 'true' : 'false');
+  if (on) { const f = [].find.call(m.querySelectorAll('.mkn-mi'), x => x.getClientRects().length); if (f) try { f.focus({ preventScroll: true }); } catch (e) {} }
+}
+/* RETURN UNMARKED asks for the reason. The box opens holding the overall comment, so nothing typed there is lost. */
+function mknUnmarkedSheet(){
+  const st = mknState(); if (!st || !st.marking || st.s2.view) return;
+  mknSheet({ id: 'unmarked', narrow: true, sticky: true, title: 'Return unmarked',
+    html: `<p>${esc(st.first || 'The trainee')} gets it straight back with your reason, and sends it again. It does not use ${esc(st.pro.poss)} one resubmission.</p>
+      <label class="mkn-ol" for="mknWhy" style="margin-top:0;">The reason</label>
+      <textarea id="mknWhy" rows="4" style="width:100%;">${esc(overallVal(st.round))}</textarea>
+      <div class="mkn-sh-acts"><button type="button" class="mkn-btn is-quiet" data-mknclose>Cancel</button><button type="button" class="mkn-btn" id="unmarkedBtn">Return unmarked</button></div>` });
+  const t = $('mknWhy'); if (t) { t.focus(); try { t.setSelectionRange(t.value.length, t.value.length); } catch (e) {} }
+}
+/* GIVE MORE TIME: the deadline line and the date box the page has always used for it, in a sheet. The same
+   function writes it (setExtension), to the same place. */
+function mknTimeSheet(){
+  const st = mknState(); if (!st) return;
+  const h = dueRowHTML(st.a, st.sub).replace('id="extAt"', 'id="mknExtAt" aria-label="The new deadline"').replace('id="extSet"', 'id="mknExtSet"').replace('id="extClear"', 'id="mknExtClear"');
+  if (!h) return;
+  mknSheet({ id: 'time', narrow: true, sticky: true, title: 'Give ' + esc(st.first || 'the trainee') + ' more time', html: h, foot: 'For this trainee only. The deadline for everyone else stays as it is.' });
+}
+/* ASSIGNMENT 5: the same question and the same lines as the page before */
+async function mknA5Set(){
+  if (!(await confirmModal('Set Assignment 5, the plagiarism reflection, for this trainee? It appears in their assignment list once you return this file to them.', 'Set Assignment 5'))) return;
+  const a5 = subFor('a5');
+  a5.assigned = true; a5.assignedAt = new Date().toISOString(); a5.assignedAfter = CURRENT;
+  saveSubs(); renderPicker(); render();
+}
+async function mknA5Withdraw(){
+  if (!(await confirmModal('Withdraw Assignment 5 for this trainee? Nothing has been submitted for it.', 'Withdraw'))) return;
+  delete SUBS.a5;
+  saveSubs(); renderPicker(); render();
+}
+/* BRING COMMENTS BACK: the exchange the page has always had (wireExchange, further down), in a sheet. It is drawn
+   with the page, so the reader finds its boxes by the ids it always used. */
+function mknBringHTML(st){
+  if (!st.marking || (st.s2 && st.s2.view)) return '';
+  return `<div class="mkn-sheetwrap" id="mknBring"${MKN_BRING ? '' : ' hidden'}><div class="mkn-sheet is-narrow" role="dialog" aria-modal="true" aria-labelledby="mknBringT">
+    <div class="mkn-sh-top"><div><h2 id="mknBringT">Bring comments back</h2></div><button type="button" class="mkn-sh-x" data-mknclose>Close</button></div>
+    <div class="mkn-sh-body" id="xchg">
+      <p>Paste a marked reply here, or bring a Word file with comments on the side. Marks and comments go to their criteria, and comments on the work go beside their words. The outcome is still worked out from the marks.</p>
+      <div id="xPaste"><textarea id="xText" rows="6" aria-label="Paste the marked reply here" placeholder="Paste here."></textarea></div>
+      <div class="xchg-acts"><button type="button" class="mkn-btn is-quiet" id="xDocx">Bring back a Word file</button>
+        <input type="file" id="xDocxFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden><button type="button" id="xPasteToggle" hidden></button></div>
+      <p class="mkn-sh-foot" id="xDone" style="display:none;"></p>
+    </div></div></div>`;
+}
+function mknBringOpen(){ const b = $('mknBring'); if (!b) return; MKN_BRING = true; MKN_FOCUS = document.activeElement; b.hidden = false; const t = $('xText'); if (t) t.focus(); }
+
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('mkn')) return;
+  const t = e.target; if (!t || !t.closest) return;
+  /* the menu */
+  if (t.closest('#mknMore')) { mknMenuShow($('mknMenu') && $('mknMenu').hidden); return; }
+  const mi = t.closest('#mknMenu .mkn-mi');
+  if (mi) {
+    if (mi.getAttribute('aria-disabled') === 'true') return;
+    const what = mi.dataset.mknmenu;
+    if (mi.id === 'xCopy') return;                       /* the exchange copies; the word "Copied" shows on the item */
+    mknMenuShow(false);
+    if (what === 'unmarked') mknUnmarkedSheet();
+    else if (what === 'preview') mknPreviewOpen();
+    else if (what === 'time') mknTimeSheet();
+    else if (what === 'bring') mknBringOpen();
+    else if (mi.id === 'a5SetBtn') mknA5Set();
+    else if (mi.id === 'a5WithdrawBtn') mknA5Withdraw();
+    return;
+  }
+  if ($('mknMenu') && !$('mknMenu').hidden && !t.closest('#mknMenu')) mknMenuShow(false);
+  /* the doors and the pills */
+  if (t.closest('#mknGuide')) { mknGuideSheet(); return; }
+  if (t.closest('#mknText')) { mknTextSheet(); return; }
+  if (t.closest('#mknTasks')) { mknTasksSheet(); return; }
+  if (t.closest('#mknDecl')) { mknDeclSheet(); return; }
+  if (t.closest('#mknReq')) { mknReqSheet(); return; }
+  if (t.closest('#mknFirst')) { mknTakeFirst(false); return; }
+  if (t.closest('#mknFirstChange')) { mknTakeFirst(true); return; }
+  /* inside a sheet */
+  if (t.closest('#mknNameSave')) {
+    const v = String(($('mknNameIn') || {}).value || '').replace(/\s+/g, ' ').trim(); if (!v) { if ($('mknNameIn')) $('mknNameIn').focus(); return; }
+    try { localStorage.setItem('chub:tutorName', v); } catch (err) {}
+    mknSheetClose(); mknSetFirst(v); return;
+  }
+  if (t.closest('#mknSheet #unmarkedBtn')) { const why = ($('mknWhy') || {}).value || ''; mknSheetClose(); doReturnUnmarked(why); return; }
+  if (t.closest('#mknExtSet')) { const v = ($('mknExtAt') || {}).value; if (!v) return; mknSheetClose(); setExtension(subFor(CURRENT), HubDue.fromLocalInput(v)); return; }
+  if (t.closest('#mknExtClear')) { mknSheetClose(); setExtension(subFor(CURRENT), ''); return; }
+  if (t.closest('[data-mknclose]')) { mknSheetClose(); return; }
+  if (t.classList && t.classList.contains('mkn-sheetwrap') && t.dataset.sticky !== '1') mknSheetClose();
+});
+document.addEventListener('keydown', e => {
+  if (!document.body.classList.contains('mkn')) return;
+  if (e.key === 'Escape') {
+    if ($('mknMenu') && !$('mknMenu').hidden) { mknMenuShow(false); const b = $('mknMore'); if (b) b.focus(); return; }
+    if (mknSheetOpen() && !document.querySelector('.confirm-overlay')) mknSheetClose();
+    return;
+  }
+  if (e.key === 'Enter' && e.target && e.target.id === 'mknNameIn') { e.preventDefault(); const b = $('mknNameSave'); if (b) b.click(); }
+});
+
+/* ======================================================================================================
+   OWN WORK, A RESUBMISSION, THE SECOND MARKER (24 Nov 2026)
+
+   Three parts of the new layout. Own work runs the page's own three checks when a tutor presses the pill, and
+   only then; what it finds is for the tutor to read, and nothing reaches the trainee unless the tutor attaches it.
+   A resubmission is read against the first round: what did not change folds to one line, what changed shows its
+   new words underlined, and the first round's comments sit beside it, faded. The second marker reads the 1st
+   marker's marks and comments, writes one comment for the trainee and signs; they never mark. Every write here
+   goes through a writer the page already had (addFlag, removeFlag, saveSubs) or patches only the second marker's
+   own record on the stored copy.
+   ====================================================================================================== */
+
+/* ---- dates said the way the course says them (its time zone, its 12 or 24 hour clock) ---- */
+function mknWhen(iso, withTime, short){
+  const t = new Date(iso); if (!iso || !isFinite(t.getTime())) return '';
+  let S = {}; try { S = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  const o = short ? { day: 'numeric', month: 'short' } : { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+  if (withTime) Object.assign(o, { hour: 'numeric', minute: '2-digit', hour12: String(S.clock) === '12' });
+  const make = z => { const p = {}; new Intl.DateTimeFormat('en-GB', Object.assign({}, o, z ? { timeZone: z } : {})).formatToParts(t).forEach(x => { p[x.type] = x.value; }); return p; };
+  let p; try { p = make(S.timeZone || ''); } catch (e) { p = make(''); }
+  const day = [p.weekday, p.day, p.month, p.year].filter(Boolean).join(' ');
+  return day + (withTime ? ', ' + p.hour + ':' + p.minute + (p.dayPeriod ? ' ' + p.dayPeriod.toUpperCase() : '') : '');
+}
+
+/* ======================= THE SECOND MARKER ======================= */
+/* A second marker's record counts as signed when it says so (signed), or in the older shape when it is done. */
+function mknSigned(x){ return !!(x && typeof x === 'object' && (x.signed === true || x.done === true)); }
+/* WHO GETS THE SECOND MARKER'S PAGE (spec part 9, decisions Q4 and Q5, critique A5). A tutor whose name Lite knows,
+   who is not the 1st marker, on a script with a 1st marker and every criterion of its round marked, while the script
+   is with the tutors (submitted, resubmitted or closed; the store keeps no tutor write in the other stages). A 2nd
+   marker recorded by name only, with no record of a signature, counts as signed: nobody is offered the box then. */
+function mknSecond(st){
+  const sub = st.sub, r = st.round, all = sub.second && typeof sub.second === 'object' ? sub.second : {};
+  const rec = all[r] && typeof all[r] === 'object' ? all[r] : null;
+  const first = String((sub.markers || {}).first || '').replace(/\s+/g, ' ').trim(), me = mknTutor();
+  const named = String((sub.markers || {}).second || '').replace(/\s+/g, ' ').trim();
+  const signed = mknSigned(rec), anyRec = Object.keys(all).some(k => mknSigned(all[k]));
+  const typedName = !signed && !anyRec && !!named;
+  const view = !!first && st.allMarked && !!me && !mknNear(me, first) && /^(submitted|resubmitted|closed)$/.test(sub.stage);
+  /* the draft is kept in this browser (mknDraftKey); one an earlier build wrote on the record is still read */
+  const kept = mknDraftGet(r, sub);
+  const mine = kept && mknSame(kept.by, me) ? kept : rec && rec.drafts ? (Object.keys(rec.drafts).filter(k => mknSame(k, me)).map(k => rec.drafts[k])[0] || null) : null;
+  return { round: r, rec, signed, typedName, view, canSign: view && !signed && !typedName, me, first,
+    by: signed ? String(rec.by || named || '') : typedName ? named : '', at: signed ? (rec.at || '') : '', draft: mine ? String(mine.text || '') : '' };
+}
+/* CARRY A SIGNATURE (critique A1). Called by saveSubs under the new layout with the stored copy, before this tab's
+   copy is written. A signed record this copy lacks comes over whole; so does the 2nd marker's name. An unsigned draft
+   keeps every other writer's words from the stored copy and this tab's own writer's words from this copy. */
+function mknCarrySecond(stored){
+  const me = mknTutor();
+  Object.keys(SUBS || {}).forEach(k => {
+    const m = SUBS[k], s = stored && stored[k];
+    if (!m || !s || typeof m !== 'object' || typeof s !== 'object') return;
+    const ss = s.second && typeof s.second === 'object' ? s.second : {};
+    Object.keys(ss).forEach(r => {
+      const x = ss[r]; if (!x || typeof x !== 'object') return;
+      if (!m.second || typeof m.second !== 'object') m.second = {};
+      const y = m.second[r];
+      if (mknSigned(x) && !mknSigned(y)) { m.second[r] = x; return; }
+      if (mknSigned(y) || !x.drafts) return;
+      const d = Object.assign({}, x.drafts);
+      Object.keys((y && y.drafts) || {}).forEach(n => { if (mknSame(n, me) || !(n in d)) d[n] = y.drafts[n]; });
+      m.second[r] = Object.assign({}, x, y || {}, { drafts: d });
+    });
+    const sn = String((s.markers || {}).second || '').trim();
+    if (sn && !String((m.markers || {}).second || '').trim()) {
+      m.markers = Object.assign({ first: '', second: '', doubleMarked: false }, m.markers || {});
+      m.markers.second = s.markers.second; m.markers.doubleMarked = true;
+    }
+  });
+}
+/* ======================= THE STORED COPY, READ FROM THE STORE (24 Nov 2026) =======================
+   Reviewers found that "the stored copy" this page read was only this browser's copy of the course. Once a page has
+   written a trainee's assignments, the background refresh keeps that page's own copy, so it can be an hour old. A
+   second marker writing from it put back marks the 1st marker had changed since; a signature made from a page opened
+   before the Return was dropped by the store while the screen said signed; and the record filed on a Return was built
+   before the store had merged the 2nd marker's signature in. So the second marker's writes, and the record filed on a
+   Return, now start from the store's own answer (the tutor's get, which the store already answers) and end by reading
+   it again. On a demo, in a trainee view, or with no store, this browser's copy is the course, as before. */
+function mknLive(){ try { return !!(TRAINEE_ID && window.HubStore && HubStore.get && HubStore.isTutor && HubStore.isTutor() && !window.HUB_DEMO && !(HubStore.isTemplate && HubStore.isTemplate())); } catch (e) { return false; } }
+function mknLocalAll(){ const tr = (loadRoster().trainees || {})[TRAINEE_ID]; return JSON.parse(JSON.stringify((tr && tr.assignments) || {})); }
+/* this trainee's assignments as the store holds them; null when the store could not be reached */
+async function mknStored(){
+  if (!mknLive()) return mknLocalAll();
+  try { const d = await HubStore.get('assignments', TRAINEE_ID); return d && typeof d === 'object' ? JSON.parse(JSON.stringify(d)) : {}; } catch (e) { return null; }
+}
+/* send what this tab has waiting and wait for the store's answer; true when it answered */
+async function mknFlush(){ if (!window.HubSync || !HubSync.flushNow) return true; try { await HubSync.flushNow(true); return true; } catch (e) { return false; } }
+/* which round a stored copy is on */
+function mknRoundOf(rec){ return rec && (rec.stage === 'resubmitted' || (rec.stage !== 'submitted' && rec.sub2)) ? 'sub2' : 'sub1'; }
+
+/* THE SECOND MARKER'S DRAFT stays in this browser (24 Nov 2026). It used to go on the record as it was typed, and
+   every keystroke sent this page's whole copy of the script: marks the 1st marker changed after this page opened were
+   put back. Nobody else is ever shown a draft, so it does not need the course. It survives a reload on this computer.
+   It is kept under chub:, so it goes with the rest of this link's data when another link is opened here. */
+function mknDraftKey(r, sub){ return 'chub:mkn2:' + TRAINEE_ID + ':' + CURRENT + ':' + r + ':' + String((sub && sub[r + 'At']) || ''); }
+function mknDraftGet(r, sub){ try { const d = JSON.parse(localStorage.getItem(mknDraftKey(r, sub)) || 'null'); return d && typeof d === 'object' ? d : null; } catch (e) { return null; } }
+function mknSecondType(text){
+  const st = mknState(); if (!st || !st.s2.canSign) return;
+  try { localStorage.setItem(mknDraftKey(st.s2.round, st.sub), JSON.stringify({ by: st.s2.me, text: String(text || ''), at: new Date().toISOString() })); } catch (e) {}
+}
+/* the second marker's page takes a stored copy into this tab: in memory only, so nothing is sent back */
+function mknAdopt(all){ if (all && all[CURRENT]) SUBS = all; }
+/* a write made from the second marker's page (Change on the 1st marker pill, own work) starts from the store's copy */
+async function mknFresh(){ if (!MKN_VIEW2) return; await mknFlush(); const all = await mknStored(); if (all) mknAdopt(all); }
+
+/* I AGREE, AND SIGN. The name and the time are taken here, never typed. The script is read from the store first. It is
+   signed only when the store's copy has the marks, the 1st marker and the submission this page shows, and nobody has
+   signed it. Then only the second marker's part is changed on the store's copy, it is sent, and the store is read
+   again: the page says signed only when the store holds the signature. Otherwise it says plainly that it was not
+   signed, and shows the script as the store holds it. A script the 1st marker has already returned as a Pass can still
+   be signed; one sent back to the trainee cannot (the store keeps no tutor write then). */
+let MKN_SIGNING = false;
+async function mknSign(){
+  if (MKN_SIGNING) return;
+  const st = mknState(); if (!st || !st.s2.canSign) return;
+  const r = st.s2.round, me = st.s2.me, first = st.first || 'the trainee';
+  const ta = $('mknSecond'), text = String(ta ? ta.value : st.s2.draft).trim();
+  const norm = l => JSON.stringify(((l || [])).map(v => v === true ? 1 : v === false ? 0 : null));
+  const shown = norm((st.sub.criteriaMarks || {})[r]), shownFirst = st.s2.first, shownAt = String(st.sub[r + 'At'] || '');
+  const btn = $('mknSign'); MKN_SIGNING = true; if (btn) { btn.disabled = true; btn.textContent = 'Signing…'; }
+  let msg = '', signed = false;
+  try {
+    await mknFlush();
+    const all = await mknStored(), rec = all && all[CURRENT];
+    if (!all) msg = 'Not signed. Lite could not reach the course. Try again.';
+    else if (!rec) msg = 'Not signed. The course has no copy of this script.';
+    else {
+      const sec = rec.second && typeof rec.second === 'object' ? rec.second : {};
+      const other = sec[r], typed = String((rec.markers || {}).second || '').trim() && !Object.keys(sec).some(k => mknSigned(sec[k]));
+      if (mknSigned(other)) msg = 'Not signed. ' + (other.by || 'Another tutor') + ' has signed it already.';
+      else if (typed) msg = 'Not signed. The course already names a 2nd marker.';
+      else if (!/^(submitted|resubmitted|closed)$/.test(String(rec.stage))) msg = 'Not signed. It has gone back to ' + first + '.';
+      else if (mknRoundOf(rec) !== r || String(rec[r + 'At'] || '') !== shownAt || norm((rec.criteriaMarks || {})[r]) !== shown || !mknSame((rec.markers || {}).first, shownFirst)) msg = 'The marks changed since this page opened. Read them again before you sign.';
+      if (msg) mknAdopt(all);
+      else {
+        rec.second = Object.assign({}, sec);
+        rec.second[r] = { by: me, at: new Date().toISOString(), comment: text, signed: true, done: true, crit: {}, marks: ((rec.criteriaMarks || {})[r] || []).slice() };
+        rec.markers = Object.assign({ first: '', second: '', doubleMarked: false }, rec.markers || {});
+        rec.markers.second = me; rec.markers.doubleMarked = true;
+        SUBS = all; saveSubs();
+        const sent = await mknFlush();
+        const back = mknLive() ? await mknStored() : mknLocalAll(), bx = back && back[CURRENT] && (back[CURRENT].second || {})[r];
+        if (bx && mknSigned(bx) && mknSame(bx.by, me)) { signed = true; mknAdopt(back); try { localStorage.removeItem(mknDraftKey(r, st.sub)); } catch (e) {} }
+        else if (!back || !sent) msg = 'Not signed yet. Lite could not reach the course. Check this page again before you sign again.';
+        else { msg = 'Not signed. The course did not keep the signature. Read the script again.'; mknAdopt(back); }
+      }
+    }
+  } catch (e) { msg = 'Not signed. ' + String((e && e.message) || e); }
+  MKN_SIGNING = false;
+  MKN_SEC_MSG = msg;
+  render();
+  /* a script already closed is filed again, so the folder's copy carries the signature (the store replaces the file of the same name) */
+  const sub = subFor(CURRENT);
+  if (signed && sub.stage === 'closed' && TRAINEE_ID && window.hubFileDoc && window.hubAssignmentRecordHTML) {
+    try { const aDoc = WORDING[CURRENT]; hubFileDoc({ token: TRAINEE_ID, name: 'Assignment - ' + (aDoc && aDoc.title || CURRENT), html: hubAssignmentRecordHTML(aDoc, sub) }); } catch (e) {}
+  }
+  const b = $('mknSecondBox'); if (b) try { b.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+}
+
+/* RETURN, IN THE NEW LAYOUT (24 Nov 2026). The same doSave as the old layout, with the store read on both sides of it.
+   Before: a signed 2nd marker's record the store has and this tab lacks is carried into this tab's copy (critique
+   A1; the store keeps it too, v301). This waits a few seconds at most: if the store is slow, Return goes ahead and the
+   store's own guard keeps the signature. After: once the store has taken the Return, it is read again and the record
+   filed to the center's folder is built from the store's copy, so it carries the 2nd marker's name, comment and
+   signature. That part runs behind the page; the browser asks before the tab is closed while it is still going. If the
+   store cannot be read, the record is filed from this tab's copy, as before. */
+let MKN_RETURNING = false, MKN_FILING = 0;
+function mknWithin(p, ms){ return Promise.race([p, new Promise(r => setTimeout(() => r(undefined), ms))]); }
+async function mknReturn(){
+  const b = $('saveBtn'); if (MKN_RETURNING || !b || b.disabled) return;
+  MKN_RETURNING = true; b.disabled = true; b.textContent = 'Returning…';
+  let at = '', done = false;
+  try {
+    if (mknLive()) { await mknWithin(mknFlush(), 4000); const all = await mknWithin(mknStored(), 6000); if (all) mknCarrySecond(all); }
+    const was = subFor(CURRENT); at = String(was[mknRoundOf(was) + 'At'] || '');
+    /* RETURN TAKES THE 1ST MARKER (Ramy, 24 Nov 2026): when nobody pressed "1st marker · take it", the tutor who
+       returns it is the 1st marker. Lite with no name for this tutor asks for it first, and nothing is returned yet. */
+    if (!was.markers) was.markers = {};
+    if (!String(was.markers.first || '').trim()) {
+      const me = mknTutor();
+      if (!me) { mknAskName(); return; }
+      was.markers.first = me;
+    }
+    doSave(); done = true;
+  } finally { MKN_RETURNING = false; if (!done) render(); }
+  const sub = subFor(CURRENT);
+  if (sub.stage === 'closed' && TRAINEE_ID && window.hubFileDoc && window.hubAssignmentRecordHTML) mknFileAfter(at);
+}
+async function mknFileAfter(at){
+  MKN_FILING++;
+  try {
+    const sub = subFor(CURRENT);
+    let use = sub;
+    if (mknLive()) {
+      await mknFlush();
+      const back = await mknWithin(mknStored(), 15000), rec = back && back[CURRENT];
+      if (back) use = rec && rec.stage === 'closed' && String(rec[mknRoundOf(rec) + 'At'] || '') === at ? rec : null;
+      if (use && use !== sub) {
+        const before = JSON.stringify([sub.second || null, sub.markers || null]);
+        if (use.second) sub.second = use.second;
+        if (use.markers) sub.markers = use.markers;
+        if (JSON.stringify([sub.second || null, sub.markers || null]) !== before && document.body.classList.contains('mkn')) render();
+      }
+    }
+    if (use) try { const aDoc = WORDING[CURRENT]; await hubFileDoc({ token: TRAINEE_ID, name: 'Assignment - ' + (aDoc && aDoc.title || CURRENT), html: hubAssignmentRecordHTML(aDoc, use) }); } catch (e) {}
+  } finally { MKN_FILING--; }
+}
+window.addEventListener('beforeunload', e => { if (MKN_FILING > 0) { e.preventDefault(); e.returnValue = ''; return ''; } });
+/* true when the marks of the round are not the ones the 2nd marker signed (a signature from before 24 Nov has no marks kept: false) */
+function mknMovedAfterSign(rec, now){
+  if (!rec || !Array.isArray(rec.marks)) return false;
+  const n = l => JSON.stringify((l || []).map(v => v === true ? 1 : v === false ? 0 : null));
+  return n(rec.marks) !== n(now);
+}
+/* the signed block: the comment as it was signed, the name in script, the words and the time. Old records (agree or
+   disagree on each criterion) say what they said. */
+function mknSignedBlock(st){
+  const s2 = st.s2, rec = s2.rec || {};
+  const dis = Object.keys(rec.crit || {}).filter(i => rec.crit[i] && rec.crit[i].agree === false);
+  const said = rec.signed === true || !dis.length ? 'Agreed and signed as 2nd marker' : 'Second-marked: disagreed on criterion ' + dis.map(i => +i + 1).join(' and ');
+  const cm = String(rec.comment || '').trim();
+  /* A MARK CHANGED AFTER THE SIGNATURE (24 Nov 2026): the signature stays and nothing is blocked; one quiet line says it */
+  const moved = mknMovedAfterSign(rec, (st.sub.criteriaMarks || {})[s2.round]);
+  return `${cm ? `<p class="mkn-sec-said">${esc(cm)}</p>` : ''}<div class="mkn-signed"><span class="mkn-script">${esc(s2.by || 'The 2nd marker')}</span><span>${esc(said)}${s2.at ? ' · ' + esc(mknWhen(s2.at, true)) : ''}</span></div>${moved ? `<p class="mkn-sec-moved">A mark changed after ${esc(s2.by || 'the 2nd marker')} signed.</p>` : ''}`;
+}
+/* under the 1st marker's panel, and on every read-only page: the signed block when there is one, and nothing else */
+function mknSignedHTML(st){
+  if (!st.s2.signed) return '';
+  return `<div class="mkn-second is-signed" id="mknSecondBox"><h3>Second marker</h3>${mknSignedBlock(st)}</div>`;
+}
+/* THE SECOND MARKER'S PANEL (drawing v4-10 and v4-second-box): the 1st marker's outcome, marks and comments, read
+   only; then the box headed "Second marker" with one comment and one gold button, or the signed block. */
+function mknSecondPanelHTML(st){
+  const sub = st.sub, fb = sub.feedback || {}, s2 = st.s2;
+  const head = st.marking ? outcomeFor(st.round, st.allMet, sub) : (fb.outcome || 'Closed');
+  const tally = st.allMet ? (st.N === 1 ? 'the criterion is met.' : 'all ' + st.N + ' met.') : st.met + ' met, ' + st.not + ' not met.';
+  let h = `<div class="mkn-out">${mknRingHTML(st.done, st.N)}<div><h2 class="mkn-outcome ${/^Pass/.test(head) ? 'is-pass' : /^(Fail|Resubmission)/.test(head) ? 'is-fail' : ''}">${esc(head)}</h2><p>The 1st marker’s outcome: ${esc(tally)}</p></div></div>`;
+  const ro = Object.assign({}, st, { marking: false });
+  h += '<h3 class="mkn-cap mkn-caph">The 1st marker’s marks</h3>' + st.crit.map((c, i) => mknCardHTML(ro, c, i)).join('');
+  const gc = String((st.round === 'sub2' ? fb.generalComment2 : fb.generalComment1) || '').trim();
+  if (gc) h += `<div class="mkn-own"><span class="mkn-cap">The 1st marker’s overall comment</span><p>${esc(gc)}</p></div>`;
+  if (s2.signed) return h + mknSignedHTML(st);
+  if (!s2.canSign) return h;
+  return h + `<div class="mkn-second" id="mknSecondBox"><h3><label for="mknSecond">Second marker</label></h3>
+    ${MKN_SEC_MSG ? `<p class="mkn-sec-msg" role="status">${esc(MKN_SEC_MSG)}</p>` : ''}
+    <textarea id="mknSecond" rows="4" placeholder="Write a comment here.">${esc(s2.draft)}</textarea>
+    <button type="button" class="mkn-sign" id="mknSign">I agree, and sign</button></div>`;
+}
+
+/* ======================= A RESUBMISSION ======================= */
+/* Where the resubmission added words: character ranges in the new text, from a word by word comparison with the
+   first round (the same comparison the old layout's side by side view makes). Spaces between two added words join
+   them into one underline. */
+function mknInsRanges(v1, v2){
+  const A = String(v1 || '').split(/(\s+)/), B = String(v2 || '').split(/(\s+)/), n = A.length, m = B.length;
+  if (n * m > 4000000) return [];
+  const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = []; let i = 0, j = 0, pos = 0;
+  const add = (t) => { if (!/^\s*$/.test(t)) { const last = out[out.length - 1]; if (last && /^\s*$/.test(String(v2).slice(last[1], pos))) last[1] = pos + t.length; else out.push([pos, pos + t.length]); } };
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { pos += B[j].length; i++; j++; }
+    else if (L[i + 1][j] >= L[i][j + 1]) i++;
+    else { add(B[j]); pos += B[j].length; j++; }
+  }
+  while (j < m) { add(B[j]); pos += B[j].length; j++; }
+  return out;
+}
+/* underline those ranges in a drawn block, but only when the block reads exactly as the text it was drawn from */
+function mknApplyDiffs(){
+  (MKN_DIFFS || []).forEach((d, n) => {
+    const box = document.querySelector(`#mkWork [data-mknins="${n}"]`); if (!box || !window.hubFlat) return;
+    const flat = hubFlat(box).all, want = String(d.v2 || '').replace(/\n/g, ' ');
+    if (flat.slice(d.off) !== want) return;                        /* drawn differently (an old answer's heads): no underline rather than a wrong one */
+    mknInsRanges(d.v1, d.v2).forEach(([x, y]) => {
+      const f = hubFlat(box), at = d.off + x, end = d.off + y;
+      f.nodes.forEach(pair => {
+        const node = pair[0], s0 = pair[1], s1 = s0 + node.nodeValue.length;
+        if (s1 <= at || s0 >= end) return;
+        const a = Math.max(0, at - s0), b = Math.min(node.nodeValue.length, end - s0);
+        const mid = node.splitText(a); mid.splitText(b - a);
+        const ins = document.createElement('ins'); ins.className = 'mkn-ins'; mid.parentNode.insertBefore(ins, mid); ins.appendChild(mid);
+      });
+    });
+  });
+}
+/* one block of words, in a round, with its comment gutter. first: the first round's comments are drawn beside it
+   (faded); firstLoc: where those comments were stored, when a table row moved. ins: underline the added words. */
+function mknBlock(o){
+  const n = o.ins ? MKN_DIFFS.push({ v1: o.v1, v2: o.text, off: o.off || 0 }) - 1 : -1;
+  return `<div class="mloc" data-loc="${esc(o.loc)}" data-round="${o.round}" data-sec="${o.sec}"${o.field ? ` data-field="${esc(o.field)}"` : ''}${o.first ? ' data-first="1"' : ''}${o.firstLoc ? ` data-firstloc="${esc(o.firstLoc)}"` : ''}>`
+    + `<div class="readonly${o.field ? ' mkn-box' : ''}"${n >= 0 ? ` data-mknins="${n}"` : ''}>${o.html}</div><div class="mgut"></div></div>`;
+}
+function mknFoldHead(id, title, word, cls, open){
+  return `<div class="mkn-foldhead"><h2 class="roundlabel">${title}</h2><span class="mkn-tag${cls ? ' ' + cls : ''}">${word}</span>`
+    + (open == null ? '' : `<button type="button" class="mkn-foldbtn" data-mknfold="${esc(id)}" aria-expanded="${open ? 'true' : 'false'}">${open ? 'Hide' : 'Show'}</button>`) + '</div>';
+}
+function mknSwitch(id, v){
+  return `<div class="mkn-switch" role="group" aria-label="Which version"><button type="button" data-mknver="${esc(id)}" data-v="new" aria-pressed="${v !== 'both'}">The new version</button><button type="button" data-mknver="${esc(id)}" data-v="both" aria-pressed="${v === 'both'}">Both versions side by side</button></div>`;
+}
+/* THE RESUBMISSION, SECTION BY SECTION (spec part 8; critique 14 and 17). A section the trainee did not change folds
+   to one line ("Unchanged", Show); its words stay in the page, so a comment brought back can still find them. A
+   changed section says so, shows the new version with the added words underlined and the heads as captions, and
+   can show both versions side by side. A section missing from the resubmission is unchanged and shows the first
+   round's words. Table rows (the language analysis) are matched by the item they are about, not by their place. */
+function mknResubHTML(a, sub){
+  const s1 = sub.sub1 || {}, s2 = sub.sub2 || {};
+  const d1 = mknWhen(sub.sub1At, false, true), d2 = mknWhen(sub.sub2At, false, true);
+  const col = (lab, d, body) => `<div class="mkn-col"><p class="mkn-colcap">${lab}${d ? ' · ' + esc(d) : ''}</p>${body}</div>`;
+  let out = '';
+  (a.sections || []).forEach((s, i) => {
+    if (s.type === 'text' && !hubIsReference(s)) {
+      const v1 = (s1.text || {})[i], v2 = (s2.text || {})[i], id = 't' + i, label = esc(s.label);
+      if (!v1 && !v2) return;
+      const H = v => mknHeads(hubHeadHTML(v, s.heads));
+      if (!v2 || v1 === v2) {
+        const open = !!MKN_SHOW[id], txt = v2 || v1;
+        out += `<section class="mkn-sec is-fold" data-mknsec="${id}">${mknFoldHead(id, label, 'Unchanged', '', open)}<div class="mkn-foldbody"${open ? '' : ' hidden'}>`
+          + mknBlock({ loc: id, round: v2 ? 'sub2' : 'sub1', sec: i, html: H(txt), first: !!v2 }) + '</div></section>';
+        return;
+      }
+      const v = MKN_VER[id] === 'both' ? 'both' : 'new';
+      out += `<section class="mkn-sec is-changed" data-mknsec="${id}">${mknFoldHead(id, label, 'Changed', 'is-gold', null)}${mknSwitch(id, v)}`;
+      if (v === 'both') out += `<div class="mkn-both">${col('First submission', d1, v1 ? mknBlock({ loc: id, round: 'sub1', sec: i, html: H(v1) }) : '<p class="mkn-plain">Nothing written.</p>')}${col('Resubmission', d2, mknBlock({ loc: id, round: 'sub2', sec: i, html: H(v2), text: v2, ins: true, v1 }))}</div>`;
+      else out += mknBlock({ loc: id, round: 'sub2', sec: i, html: H(v2), text: v2, ins: true, v1, first: true });
+      out += '</section>';
+    } else if (s.type === 'picker' && ((s1.picked || {})[i] || (s2.picked || {})[i])) {
+      const box = p => `<div class="readonly mkn-box">${hubPickerCats(s).map(c => `${esc(c.label)}: ${((c.fixed ? c.options : ((p || {})[c.key] || [])).map(esc).join(', ')) || '—'}`).join('\n')}</div>`;
+      const set = p => JSON.stringify(Object.keys(p || {}).sort().map(k => [k, [].concat((p || {})[k] || []).slice().sort()])), p1 = (s1.picked || {})[i], p2 = (s2.picked || {})[i] || p1, same = set(p1) === set(p2), id = 'p' + i, open = !!MKN_SHOW[id];
+      if (same) out += `<section class="mkn-sec is-fold" data-mknsec="${id}">${mknFoldHead(id, esc(s.label), 'Unchanged', '', open)}<div class="mkn-foldbody"${open ? '' : ' hidden'}>${box(p2)}</div></section>`;
+      else out += `<section class="mkn-sec is-changed" data-mknsec="${id}">${mknFoldHead(id, esc(s.label), 'Changed', 'is-gold', null)}<div class="mkn-both">${col('First submission', d1, box(p1))}${col('Resubmission', d2, box(p2))}</div></section>`;
+    } else if (s.type === 'fields') {
+      const itemsOf = snap => { for (let j = i - 1; j >= 0; j--) if (a.sections[j].type === 'picker') return hubPickedItems(a.sections[j], (snap.picked || {})[j]) || []; return []; };
+      const it1 = itemsOf(s1), it2raw = itemsOf(s2), two = it2raw.length ? it2raw : it1;
+      two.forEach((item, ii2) => {
+        const ii1 = it1.indexOf(item), id = 'f' + i + '_' + ii2, title = esc(s.label) + ' — ' + esc(item);
+        const rows = s.fields.map((f, fi) => {
+          const k2 = `s${i}_i${ii2}_f${fi}`, k1 = ii1 >= 0 ? `s${i}_i${ii1}_f${fi}` : '';
+          const v2 = (s2.fields || {})[k2], v1 = k1 ? (s1.fields || {})[k1] : undefined;
+          return { f, fi, k1, k2, v1, v2: v2 == null || v2 === '' ? (it2raw.length ? v2 : v1) : v2 };
+        }).filter(x => x.v1 || x.v2);
+        if (!rows.length) return;
+        const same = ii1 >= 0 && rows.every(x => String(x.v1 || '') === String(x.v2 || ''));
+        const lab = x => `<strong>${esc(x.f.label)}:</strong> `, off = x => x.f.label.length + 2;
+        const fblock = (x, round, v, extra) => v ? mknBlock(Object.assign({ loc: 'f:' + (round === 'sub1' ? x.k1 : x.k2), round, sec: i, field: x.f.label, html: lab(x) + nl2br(v), text: v }, extra || {})) : '';
+        if (same) {
+          const open = !!MKN_SHOW[id];
+          out += `<section class="mkn-sec is-fold" data-mknsec="${id}">${mknFoldHead(id, title, 'Unchanged', '', open)}<div class="mkn-foldbody"${open ? '' : ' hidden'}>`
+            + rows.map(x => fblock(x, 'sub2', x.v2, { first: true, firstLoc: 'f:' + x.k1 })).join('') + '</div></section>';
+          return;
+        }
+        const v = MKN_VER[id] === 'both' ? 'both' : 'new';
+        out += `<section class="mkn-sec is-changed" data-mknsec="${id}">${mknFoldHead(id, title, ii1 >= 0 ? 'Changed' : 'New in the resubmission', 'is-gold', null)}${ii1 >= 0 ? mknSwitch(id, v) : ''}`;
+        if (v === 'both' && ii1 >= 0) out += `<div class="mkn-both">${col('First submission', d1, rows.map(x => fblock(x, 'sub1', x.v1)).join('') || '<p class="mkn-plain">Nothing written.</p>')}${col('Resubmission', d2, rows.map(x => fblock(x, 'sub2', x.v2, { ins: true, v1: x.v1, off: off(x) })).join(''))}</div>`;
+        else out += rows.map(x => fblock(x, 'sub2', x.v2, Object.assign({ ins: ii1 >= 0, v1: x.v1, off: off(x) }, ii1 >= 0 ? { first: true, firstLoc: 'f:' + x.k1 } : {}))).join('');
+        out += '</section>';
+      });
+      /* a row the trainee took out of the table: said, with the first round's words behind Show */
+      if (it2raw.length) it1.filter(item => two.indexOf(item) < 0).forEach(item => {
+        const ii1 = it1.indexOf(item), id = 'g' + i + '_' + ii1, open = !!MKN_SHOW[id];
+        const body = s.fields.map((f, fi) => { const v = (s1.fields || {})[`s${i}_i${ii1}_f${fi}`]; return v ? mknBlock({ loc: `f:s${i}_i${ii1}_f${fi}`, round: 'sub1', sec: i, field: f.label, html: `<strong>${esc(f.label)}:</strong> ` + nl2br(v) }) : ''; }).join('');
+        if (body) out += `<section class="mkn-sec is-fold" data-mknsec="${id}">${mknFoldHead(id, esc(s.label) + ' — ' + esc(item), 'Not in the resubmission', '', open)}<div class="mkn-foldbody"${open ? '' : ' hidden'}>${body}</div></section>`;
+      });
+    }
+  });
+  return out || '<div class="mkn-sec"><p class="mkn-plain">Nothing submitted yet.</p></div>';
+}
+
+/* ======================= OWN WORK ======================= */
+function mknOwnKey(round){ return 'mk:own:' + TRAINEE_ID + ':' + CURRENT + ':' + round; }
+/* the last check of this script in this tab; never on the record */
+function mknOwnGet(round){
+  const k = mknOwnKey(round);
+  if (MKN_OWN && MKN_OWN.key === k) return MKN_OWN;
+  try { const o = JSON.parse(sessionStorage.getItem(k) || 'null'); if (o && o.key === k) { MKN_OWN = o; return o; } } catch (e) {}
+  return null;
+}
+/* "Not a concern", remembered with the record so the other tutor sees it too: sub.flags.notConcern[round][key] */
+function mknOffOf(sub, round){ const n = (sub.flags || {}).notConcern; return (n && typeof n === 'object' && n[round] && typeof n[round] === 'object') ? n[round] : {}; }
+/* what the checks found, and what is attached to the record, as one list. Each passage has a key (its kind and its
+   words) for "Not a concern", and says whether it is attached. */
+function mknOwnList(st){
+  const o = mknOwnGet(st.round), fl = flagsOf(st.sub, st.round), off = mknOffOf(st.sub, st.round), list = [];
+  if (o) ['course', 'web', 'para'].forEach(p => ((o[p] || {}).items || []).forEach(x => list.push(Object.assign({ part: p }, x, { whereH: esc(x.where || '') }))));
+  fl.forEach(f => { if (!list.some(x => x.kind === f.kind && x.quote === f.quote)) list.push({ part: f.kind === 'web' ? 'web' : f.kind === 'paraphrase' ? 'para' : 'course', kind: f.kind, quote: f.quote, whereH: whereHTML(f), link: f.link || '', flag: f, fromRecord: true }); });
+  list.forEach((x, n) => { x.n = n; x.key = x.kind + '|' + (x.quote || x.where || ''); x.att = fl.findIndex(f => f.kind === x.kind && f.quote === x.quote); x.off = !!off[x.key]; x.offBy = (off[x.key] || {}).by || ''; });
+  return list;
+}
+/* THE PILL. Never green before the check has run, and never green when a pass did not run. */
+function mknOwnPillHTML(st){
+  if (MKN_OWN_BUSY) return '<span class="mkn-pill is-dash" id="mknOwn" role="status">Own work · checking</span>';
+  const o = mknOwnGet(st.round), list = mknOwnList(st), open = list.filter(x => !x.off && x.att < 0).length, att = flagsOf(st.sub, st.round).length;
+  if (!o) return att ? `<button type="button" class="mkn-pill is-amber" id="mknOwn">Own work · ${att} attached</button>` : '<button type="button" class="mkn-pill is-dash" id="mknOwn">Own work · not checked</button>';
+  const part = ['course', 'web', 'para'].some(p => /^(off|error)$/.test((o[p] || {}).state));
+  if (open) return `<button type="button" class="mkn-pill is-amber" id="mknOwn">Own work · ${open} to look at</button>`;
+  if (att) return `<button type="button" class="mkn-pill is-amber" id="mknOwn">Own work · ${att} attached</button>`;
+  if (part) return '<button type="button" class="mkn-pill is-plain" id="mknOwn">Own work · checked in part</button>';
+  return `<button type="button" class="mkn-pill" id="mknOwn">${MKN_CHECK}Own work</button>`;
+}
+/* THE CHECK: the same three passes the page has always run, when pressed (every other assignment on Lite, the web,
+   paraphrase between the pairs the first pass finds). It reads; it writes nothing to the record. */
+async function mknOwnRun(){
+  const st = mknState(); if (!st || MKN_OWN_BUSY || !mknHasWork(st.snap)) return;
+  const S = window.HubStore, round = st.round, body = { code: CURRENT, round, token: TRAINEE_ID };
+  const name = c => NAMES[c] || String(c || '').toUpperCase();
+  const o = { key: mknOwnKey(round), at: '', course: { state: '', note: '', items: [] }, web: { state: '', note: '', items: [] }, para: { state: '', note: '', items: [] } };
+  const call = op => { if (!S || !S.call) return Promise.reject(new Error('Lite cannot reach the check from this page.')); return S.call(Object.assign({ op }, body)); };
+  const why = e => String((e && e.message) || e || 'No answer.');
+  MKN_OWN_BUSY = true; mknSheetClose(); { const p = $('mknOwn'); if (p) p.outerHTML = mknOwnPillHTML(st); }
+  let sim = null;
+  try {
+    sim = await call('similar');
+    ((sim && sim.matches) || []).forEach(m => {
+      const where = 'Also in ' + name(m.code) + ' on ' + (m.course || 'another course') + (m.centre ? ' (' + m.centre + ')' : '') + (m.round === 'sub2' ? ', the resubmission' : '') + (m.pct ? ' · ' + m.pct + '% of this text shared' : '') + (m.sameCourse ? ' · this course' : '');
+      const ps = (m.passages || []).filter(Boolean);
+      if (!ps.length) o.course.items.push({ kind: 'lite', quote: '', where });
+      ps.forEach(x => o.course.items.push({ kind: 'lite', quote: x, where, flag: { kind: 'lite', quote: x, course: m.course, centre: m.centre || '', code: m.code, round: m.round, pct: m.pct } }));
+    });
+    o.course.state = o.course.items.length ? 'found' : 'clear';
+    o.course.note = 'Compared with ' + ((sim && sim.compared) || 0) + ' other submission' + (sim && sim.compared === 1 ? '' : 's') + '. Shared runs of eight words or more.';
+  } catch (e) { o.course.state = 'error'; o.course.note = why(e); }
+  try {
+    const w = await call('webCheck');
+    if (w && w.off) { o.web.state = 'off'; o.web.note = 'Web search is not switched on. The owner adds a search key in the console.'; }
+    else if (!w || !w.found) { o.web.state = 'clear'; o.web.note = ((w && w.checked) || 0) + ' distinctive sentences searched. None was found on a page in Brave Search’s index.'; }
+    else {
+      (w.sentences || []).filter(x => x && (x.hits || []).length).forEach(x => { const h = x.hits[0];
+        o.web.items.push({ kind: 'web', quote: x.sentence, where: 'On the web: ' + (h.title || h.link || ''), link: h.link || '', flag: { kind: 'web', quote: x.sentence, link: h.link || '', title: h.title || '' } }); });
+      o.web.state = o.web.items.length ? 'found' : 'clear';
+      o.web.note = w.found + ' of ' + w.checked + ' sentences found. A lead, not proof: open the page and read it. Web results by Brave Search.';
+    }
+  } catch (e) { o.web.state = 'error'; o.web.note = why(e); }
+  if (!sim) { o.para.state = 'error'; o.para.note = 'It reads the passages the first pass finds, and the first pass could not run.'; }
+  else if (!(sim.matches || []).length) { o.para.state = 'skip'; o.para.note = 'It reads the passages the first pass finds, and the first pass found none.'; }
+  else {
+    try {
+      const ai = await call('aiCheck');
+      if (ai && ai.off) { o.para.state = 'off'; o.para.note = 'The paraphrase pass is not switched on. The owner adds a key in the console.'; }
+      else {
+        let errs = 0;
+        ((ai && ai.results) || []).forEach(r => { if (r.error) errs++;
+          (r.pairs || []).forEach(x => o.para.items.push({ kind: 'paraphrase', quote: x.a, where: 'Says the same, in other words, as a passage in ' + (r.course || 'another course') + ' (' + name(r.code) + '): “' + (x.b || '') + '”' + (x.note ? ' ' + x.note : ''), flag: { kind: 'paraphrase', quote: x.a, pair: x.b, note: x.note || '', course: r.course, centre: r.centre || '', code: r.code, round: r.round } })); });
+        o.para.state = o.para.items.length ? 'found' : errs ? 'error' : 'clear';
+        o.para.note = o.para.items.length ? '' : errs ? 'A pair could not be read.' : ((ai && ai.note) || 'Nothing beyond the brief.');
+      }
+    } catch (e) { o.para.state = 'error'; o.para.note = why(e); }
+  }
+  o.at = new Date().toISOString(); MKN_OWN = o; MKN_OWN_BUSY = false;
+  try { sessionStorage.setItem(o.key, JSON.stringify(o)); } catch (e) {}
+  render(); mknOwnSheet();
+}
+/* THE OWN-WORK SHEET (drawing v4-12) */
+function mknOwnSheet(keep){
+  const st = mknState(); if (!st) return;
+  const o = mknOwnGet(st.round), list = mknOwnList(st), can = st.marking || st.sub.stage === 'closed', poss = st.pro.poss, name = st.first || 'the trainee';
+  const word = { found: n => n + (n === 1 ? ' passage' : ' passages'), clear: () => 'Nothing found', off: () => 'Not switched on', error: () => 'Could not be read', skip: () => 'Not needed' };
+  const tag = (p) => { const s = (o[p] || {}).state || 'error', n = list.filter(x => x.part === p && !x.fromRecord).length; return `<span class="mkn-tag${s === 'found' ? ' is-gold' : s === 'clear' ? ' is-ok' : ''}">${s === 'clear' ? MKN_CHECK : ''}${(word[s] || word.error)(n)}</span>`; };
+  const findable = x => !!(x.quote && window.hubMarking && hubMarking.findWords && hubMarking.findWords(x.quote));
+  const hit = x => x.off
+    ? `<div class="mkn-hit is-off"><p class="mkn-hitq">“${esc(x.quote || x.where)}”</p><p class="mkn-where">Not a concern${x.offBy ? ' · ' + esc(x.offBy) : ''}</p>${can ? `<div class="mkn-hitacts"><button type="button" class="mkn-chip" data-mknon="${x.n}">Look again</button></div>` : ''}</div>`
+    : `<div class="mkn-hit">${x.quote ? `<p class="mkn-hitq">“${esc(x.quote)}”</p>` : ''}<p class="mkn-where">${x.whereH}</p><div class="mkn-hitacts">`
+      + (findable(x) ? `<button type="button" class="mkn-chip" data-mknshow="${x.n}">Show in ${esc(poss)} text</button>` : '')
+      + (mknLink(x.link) ? `<a class="mkn-chip" href="${esc(mknLink(x.link))}" target="_blank" rel="noopener">Open the source</a>` : '')
+      + (can && x.quote && x.flag ? (x.att >= 0 ? `<span class="mkn-tag is-ok">${MKN_CHECK}Attached</span>` : `<button type="button" class="mkn-chip" data-mknattach="${x.n}">Attach to the record</button>`) : '')
+      + (can && x.att < 0 ? `<button type="button" class="mkn-chip" data-mknoff="${x.n}">Not a concern</button>` : '') + '</div></div>';
+  let h = `<p class="mkn-lead">Lite reads. You decide. Nothing here reaches ${esc(name)} unless you attach it.</p>`;
+  if (!o) h += `<div class="mkn-ownline"><b>Not checked yet</b></div><p class="mkn-note">Three passes: other work on Lite, the web, then close paraphrase. They mark nothing and name nobody.</p><div class="mkn-sh-acts" style="justify-content:flex-start;"><button type="button" class="mkn-btn" id="mknOwnRun">Check now</button></div>`;
+  else {
+    [['course', 'Other work on Lite'], ['web', 'The web'], ['para', 'Close paraphrase']].forEach(([p, lab]) => {
+      h += `<div class="mkn-ownline"><b>${lab}</b>${tag(p)}</div>${(o[p] || {}).note ? `<p class="mkn-note">${esc(o[p].note)}</p>` : ''}` + list.filter(x => x.part === p && !x.fromRecord).map(hit).join('');
+    });
+    h += `<p class="mkn-note">Checked ${esc(mknWhen(o.at, true))}.</p><div class="mkn-sh-acts" style="justify-content:flex-start;"><button type="button" class="mkn-btn is-quiet" id="mknOwnRun">Check again</button></div>`;
+  }
+  const fl = flagsOf(st.sub, st.round);
+  if (fl.length) h += `<h3>Attached to the record · ${fl.length}</h3><p class="mkn-note">These go back with the assignment: marked in the text on the record, listed under the feedback for ${esc(name)}, counted in the assessor’s pack.</p>`
+    + fl.map((f, i) => `<div class="mkn-hit"><p class="mkn-hitq">“${esc(f.quote)}”</p><p class="mkn-where">${whereHTML(f)}</p>${can ? `<div class="mkn-hitacts"><button type="button" class="mkn-chip" data-mknunflag="${i}">Take it off the record</button></div>` : ''}</div>`).join('');
+  const d = mknDecl(st.a, st.snap);
+  if (d && d.has) h += `<div class="mkn-decl"><span class="mkn-cap">${esc(mknCap(poss))} declaration</span><p>${d.items.map((it, i) => esc(it) + ': ' + (d.checks[i] ? 'ticked' : 'not ticked') + '.').join(' ')}${d.ai === 'yes' ? ' AI: used.' : d.ai === 'no' ? ' AI: did not use AI.' : ''}</p></div>`;
+  if (CURRENT !== 'a5') h += a5InPlay(SUBS) ? '<p class="mkn-note">Assignment 5 is set.</p>' : (can ? '<p class="mkn-note">If you judge it plagiarism: <button type="button" class="mkn-inline is-brick" id="mknOwnA5">Set Assignment 5</button>. That is your decision.</p>' : '');
+  const w = $('mknSheet'), top = keep && w ? w.scrollTop : 0;
+  mknSheet({ id: 'own', title: 'Is it ' + esc(poss) + ' own work?', html: h });
+  if (keep && $('mknSheet')) $('mknSheet').scrollTop = top;
+}
+/* the writes, each through the writer the page already had; the sheet is drawn again where it was */
+function mknOwnAct(fn){ const go = () => { fn(); render(); mknOwnSheet(true); }; if (MKN_VIEW2) mknFresh().then(go); else go(); }
+function mknOwnAttach(n){ const st = mknState(), x = mknOwnList(st)[n]; if (!x || !x.flag || x.att >= 0) return; mknOwnAct(() => addFlag(Object.assign({}, x.flag, { round0: st.round }))); }
+function mknOwnUnflag(i){ mknOwnAct(() => removeFlag(i)); }
+function mknOwnOff(n, on){
+  const st = mknState(), x = mknOwnList(st)[n]; if (!x) return;
+  mknOwnAct(() => {
+    const sub = subFor(CURRENT), r = st.round;
+    sub.flags = sub.flags || {}; sub.flags.notConcern = sub.flags.notConcern && typeof sub.flags.notConcern === 'object' ? sub.flags.notConcern : {};
+    const m = sub.flags.notConcern[r] = sub.flags.notConcern[r] && typeof sub.flags.notConcern[r] === 'object' ? sub.flags.notConcern[r] : {};
+    if (on) m[x.key] = { by: mknTutor(), at: new Date().toISOString() }; else delete m[x.key];
+    saveSubs();
+  });
+}
+/* A FOUND PASSAGE IN THE TEXT (drawing v4-13): mustard, a dotted underline, and its card beside the words. Drawn after
+   the comments on the text on every draw, from the check and the record; a passage marked "Not a concern" is not. */
+function mknPaintOwn(){
+  const st = mknState(); if (!st || !window.hubMarking || !hubMarking.findWords) return;
+  const can = st.marking || st.sub.stage === 'closed';
+  mknOwnList(st).filter(x => !x.off && x.quote).forEach(x => {
+    const hit = hubMarking.findWords(x.quote); if (!hit) return;
+    const loc = [].filter.call(document.querySelectorAll(`#mkWork .mloc[data-round="${st.round}"]`), l => l.getAttribute('data-loc') === hit.loc)[0]; if (!loc) return;
+    const box = loc.querySelector('.readonly'), gut = loc.querySelector('.mgut'); if (!box || !gut) return;
+    if (hubHighlight(box, hit.quote, 'own' + x.n, 'mkn-found') < 0) return;
+    loc.classList.add('has-mc');
+    const say = x.kind === 'web' ? 'These words are close to a published page.' : x.kind === 'paraphrase' ? 'These words say the same as a passage in another assignment.' : 'These words are also in another assignment on Lite.';
+    gut.insertAdjacentHTML('beforeend', `<div class="mcard mkn-foundcard" data-mcard="own${x.n}"><span class="mc-crit">Own work${x.att >= 0 ? ' · attached' : ''}</span><p>${say} Lite found it. You decide.</p>`
+      + `<span class="mkn-foundacts">${mknLink(x.link) ? `<a href="${esc(mknLink(x.link))}" target="_blank" rel="noopener">Open the source</a>` : ''}${can && x.flag && x.att < 0 ? `<button type="button" data-mknattach="${x.n}">Attach to the record</button><button type="button" data-mknoff="${x.n}">Not a concern</button>` : ''}</span></div>`);
+  });
+}
+/* Show in their text: close the sheet, open a folded section if the words are in one, and go to them */
+function mknOwnShow(n){
+  const go = () => { const m = document.querySelector(`#mkWork mark.mkn-found[data-mc="own${n}"]`); if (!m || !m.getClientRects().length) return false; m.scrollIntoView({ block: 'center', behavior: 'smooth' }); m.classList.remove('mc-hit'); void m.offsetWidth; m.classList.add('mc-hit'); return true; };
+  mknSheetClose();
+  if (go()) return;
+  const m = document.querySelector(`#mkWork mark.mkn-found[data-mc="own${n}"]`), sec = m && m.closest('[data-mknsec]');
+  if (sec) { MKN_SHOW[sec.getAttribute('data-mknsec')] = true; render(); go(); }
+}
+
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('mkn')) return;
+  const t = e.target; if (!t || !t.closest) return;
+  /* own work */
+  if (t.closest('#mknOwn')) { if (MKN_OWN_BUSY) return; const st = mknState(); if (st && !mknOwnGet(st.round) && !flagsOf(st.sub, st.round).length) mknOwnRun(); else mknOwnSheet(); return; }
+  if (t.closest('#mknOwnRun')) { mknOwnRun(); return; }
+  const at = t.closest('[data-mknattach]'); if (at) { mknOwnAttach(+at.getAttribute('data-mknattach')); return; }
+  const uf = t.closest('[data-mknunflag]'); if (uf) { mknOwnUnflag(+uf.getAttribute('data-mknunflag')); return; }
+  const of = t.closest('[data-mknoff]'); if (of) { mknOwnOff(+of.getAttribute('data-mknoff'), true); return; }
+  const on = t.closest('[data-mknon]'); if (on) { mknOwnOff(+on.getAttribute('data-mknon'), false); return; }
+  const sh = t.closest('[data-mknshow]'); if (sh) { mknOwnShow(+sh.getAttribute('data-mknshow')); return; }
+  if (t.closest('#mknOwnA5')) { mknSheetClose(); mknA5Set(); return; }
+  /* a resubmission */
+  const fo = t.closest('[data-mknfold]'); if (fo) { const id = fo.getAttribute('data-mknfold'); MKN_SHOW[id] = !MKN_SHOW[id]; render(); const b = document.querySelector(`[data-mknfold="${id}"]`); if (b) try { b.focus({ preventScroll: true }); } catch (err) {} return; }
+  const sv = t.closest('[data-mknver]'); if (sv) { const id = sv.getAttribute('data-mknver'); MKN_VER[id] = sv.getAttribute('data-v') === 'both' ? 'both' : 'new'; render(); const b = document.querySelector(`[data-mknver="${id}"][data-v="${MKN_VER[id]}"]`); if (b) try { b.focus({ preventScroll: true }); } catch (err) {} return; }
+  /* the second marker */
+  if (t.closest('#mknSign')) { mknSign(); return; }
+  if (t.closest('#mknToSecond')) { if (mknNarrow()) mknPanelShow(true, false); const b = $('mknSecond'); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); try { b.focus({ preventScroll: true }); } catch (err) {} } return; }
+}, true);
+
+/* ======================================================================================================
+   THE PHONE AND THE TABLET (24 Nov 2026)
+
+   Under 1080px of window the panel is a sheet from the bottom and a bar at the foot opens it. The foot holds the
+   ring, how far the marking has got and the one Return button (#saveBtn is drawn here on a phone and in the top bar
+   on a laptop, never both). The foot sits outside the page's own draw, like the sheets, so the floating round
+   button and the save notice can be lifted above it once (hubReserveForBar) and stay lifted. Nothing here writes.
+   ====================================================================================================== */
+function mknFootEl(){
+  let f = $('mknFoot');
+  if (!f) {
+    f = document.createElement('div'); f.id = 'mknFoot'; f.hidden = true; document.body.appendChild(f);
+    const s = document.createElement('div'); s.id = 'mknScrim'; s.hidden = true; document.body.appendChild(s);
+    if (window.hubReserveForBar) try { hubReserveForBar('#mknFoot'); } catch (e) {}
+  }
+  return f;
+}
+function mknFootFill(st){
+  const f = mknFootEl();
+  if (!st) { f.hidden = true; f.innerHTML = ''; return; }
+  let head, line;
+  if (st.s2 && st.s2.view) { head = st.s2.signed ? 'Signed' : 'Agree and sign'; line = 'The 1st marker’s marks · tap to open'; }
+  else if (st.marking) { head = 'Mark'; line = st.done ? st.done + ' of ' + st.N + ' marked · tap to open' : 'Tap to open the ' + st.N + (st.N === 1 ? ' criterion' : ' criteria'); }
+  else { head = mknOutcome(st).head; line = 'The marks and comments · tap to open'; }
+  f.hidden = false;
+  f.innerHTML = `<button type="button" class="mkn-open" id="mknOpen" aria-controls="mkPanel" aria-expanded="false">${mknRingHTML(st.done, st.N)}<span class="mkn-opent"><b>${esc(head)}</b><span>${esc(line)}</span></span></button>${mknNarrow() ? mknReturnHTML(st) : ''}`;
+}
+/* the panel up or down. `focus` moves the keyboard to Done when it comes up and back to the foot when it goes. */
+function mknPanelShow(on, focus){
+  MKN_PANEL = !!on;
+  const p = $('mkPanel'), o = $('mknOpen'), sc = $('mknScrim'), up = MKN_PANEL && !!p && mknNarrow();
+  if (p) p.classList.toggle('open', up);
+  if (sc) sc.hidden = !up;
+  document.documentElement.classList.toggle('mkn-pop', up);
+  if (o) o.setAttribute('aria-expanded', up ? 'true' : 'false');
+  if (focus && up) { const d = $('mknDone'); if (d) try { d.focus({ preventScroll: true }); } catch (e) {} }
+  if (focus && !up && o) try { o.focus({ preventScroll: true }); } catch (e) {}
+}
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('mkn')) return;
+  const t = e.target; if (!t || !t.closest) return;
+  if (t.closest('#mknOpen')) { mknPanelShow(true, true); return; }
+  if (t.closest('#mknDone') || t.id === 'mknScrim') { mknPanelShow(false, true); return; }
+  /* a comment on their text, from the sheet: the sheet goes down first, then the words come into view */
+  if (MKN_PANEL && mknNarrow() && t.closest('#mkPanel [data-goto]')) mknPanelShow(false, false);
+}, true);
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !MKN_PANEL || !document.body.classList.contains('mkn') || !mknNarrow()) return;
+  const t = e.target;
+  if (t && t.matches && t.matches('#mkPanel textarea[data-crit-comment]')) return;     /* Escape first closes the box */
+  if (mknSheetOpen() || ($('mknMenu') && !$('mknMenu').hidden) || ($('mkEditor') && !$('mkEditor').hidden) || document.querySelector('.confirm-overlay')) return;
+  mknPanelShow(false, true);
+});
+/* a phone turned, or a window narrowed past 1080px: Return moves between the two bars, so the page is drawn again */
+addEventListener('resize', () => {
+  if (!document.body.classList.contains('mkn') || MKN_NARROW === null || MKN_NARROW === mknNarrow()) return;
+  const ae = document.activeElement; if (ae && ae.matches && ae.matches('textarea, input')) return;   /* never under a hand that is typing */
+  render();
+});
+/* THE KEYBOARD ON A PHONE (24 Nov 2026): the visible part of the screen, so the panel sheet and the comment box
+   keep their buttons above the keyboard. --mkn-kb is how much the keyboard covers; --mkn-vvh what is left. */
+(function(){
+  const vv = window.visualViewport; if (!vv) return;
+  const fit = () => { const kb = Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop));
+    document.documentElement.style.setProperty('--mkn-kb', kb + 'px'); document.documentElement.style.setProperty('--mkn-vvh', Math.round(vv.height) + 'px'); };
+  vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); fit();
+})();
+
+/* ======================================================================================================
+   PREVIEW AS THE TRAINEE (24 Nov 2026)
+
+   Once every criterion is marked, Preview shows the trainee's own page as it will look after Return: the real
+   returned view of 9_assignment_submission.html, in a frame, fed the record Return would write (the same lines as
+   doSave, on a copy). Nothing is saved. The frame's page is told it is a preview (?mkpreview=1): its storage reads
+   go to the copy handed over here, its storage writes stay in its own memory, and it cannot reach the network. Before
+   every criterion is marked there is no outcome to show, so Preview is the summary it has always been.
+   ====================================================================================================== */
+function mknPendingRecord(){
+  const st = mknState(); if (!st || !st.marking || st.s2.view || !st.allMarked) return null;
+  const rec = JSON.parse(JSON.stringify(st.sub)), round = st.round, crit = st.a.criteria || [];
+  /* exactly what doSave does, on the copy */
+  rec.criteriaComments = rec.criteriaComments || { sub1: [], sub2: [] };
+  rec.criteriaComments[round] = crit.map((c, i) => critCommentVal(round, i));
+  if (!rec.feedback) rec.feedback = { outcome: '', generalComment1: '', generalComment2: '' };
+  rec[round === 'sub2' ? 'marked2At' : 'marked1At'] = new Date().toISOString();
+  rec.feedback[round === 'sub2' ? 'generalComment2' : 'generalComment1'] = overallVal(round);
+  rec.feedback.outcome = outcomeFor(round, st.allMet, rec);
+  rec.stage = rec.feedback.outcome === 'Resubmission needed' ? 'resubmission_needed' : 'closed';
+  /* a signature made in another tab since this one opened goes with it, as saveSubs would carry it */
+  try {
+    const stored = (((loadRoster().trainees || {})[TRAINEE_ID] || {}).assignments || {})[CURRENT];
+    const x = stored && stored.second && stored.second[round];
+    if (mknSigned(x) && !mknSigned((rec.second || {})[round])) { rec.second = Object.assign({}, rec.second || {}, { [round]: x }); }
+  } catch (e) {}
+  return rec;
+}
+/* what the frame reads in place of the browser's storage: this trainee's records only, the tutor's never */
+function mknPreviewData(){
+  const rec = mknPendingRecord(); if (!rec) return null;
+  const tr = mknTrainee(), j = v => JSON.stringify(v == null ? null : v);
+  return { keys: {
+    connect_assignment_submissions_v1: j(Object.assign({}, JSON.parse(JSON.stringify(SUBS || {})), { [CURRENT]: rec })),
+    'chub:tracker': j(tr.tracker || {}), connect_fol_interview_v1: j(tr.interview || null), 'chub:about': j(tr.about || {}),
+    'chub:tpHistory': j({}), connect_observations_v1: j({}), connect_notes_v1: j([]), connect_peer_sheets_v1: j([]),
+    'hub:me': j({ name: tr.name || '' }), connect_user_name: String(tr.name || ''), 'hub:name': String(tr.name || '') } };
+}
+window.mknPreviewData = mknPreviewData;
+function mknPreviewOpen(){
+  if (!mknPendingRecord()) { if (window.hubMarking && hubMarking.preview) hubMarking.preview(); return; }
+  const st = mknState(), name = esc(st.first || 'the trainee');
+  mknSheet({ id: 'preview', cap: 'Preview', title: 'What ' + name + ' will get',
+    html: `<iframe class="mkn-prevframe" id="mknPrevFrame" title="${name}’s page after Return" src="9_assignment_submission.html?a=${encodeURIComponent(CURRENT)}&mkpreview=1"></iframe>` });
 }
 
 renderPicker();
@@ -996,7 +2812,29 @@ function xBrief(a, sub, round){
   md.push('<!-- lite:slots ' + JSON.stringify(sl.map(s=>[s.id,s.heading])) + ' -->');
   return md.join('\n');
 }
+/* ONE PASTE LISTENER FOR THE PAGE (24 Nov 2026). It used to be added again on every draw, so after ten clicks one
+   paste was read ten times, nine of them by a draw that was gone. It is added once, here, and reads through
+   whichever exchange card is on the page now (X_READ, set by wireExchange; declared at the top of this script, before
+   the first draw); with no card it does nothing. */
+document.addEventListener('paste', (e)=>{
+  if (!X_READ || !$('xText') || !$('xPaste')) return;
+  const t = e.target; if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
+  const txt = (e.clipboardData||window.clipboardData).getData('text/plain');
+  /* A model that bolds its headings writes a reply with no '#' in it, and
+     this gate swallowed the paste silently even though the reader handles
+     bold (24 Sep 2026). Same two shapes the reader accepts. */
+  if (!txt) return;
+  if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt) && !/^\s*>>/m.test(txt) && !/[\u2713\u2714\u221a]/.test(txt)) {
+    /* Said out loud, not ignored (Ramy, 18 Oct 2026: "I pasted and nothing happened"). */
+    if (txt.length > 20) { const d = $('xDone'); if (d) { if (document.body.classList.contains('mkn')) mknBringOpen();   /* the new layout keeps the exchange in a sheet: open it, so the sentence is seen (24 Nov 2026) */ d.style.display = ''; d.textContent = 'That paste did not look like a marked reply, so nothing was filled in. A marked reply keeps its headings (\u201CCriterion 1 \u2014 \u2026\u201D, \u201CGeneral comment\u201D), and each criterion starts with Met or Not met.'; $('xchg').scrollIntoView({block:'center', behavior:'smooth'}); } }
+    return;
+  }
+  e.preventDefault(); if (document.body.classList.contains('mkn')) mknBringOpen();
+  if ($('xPaste').style.display==='none' && $('xPasteToggle')) $('xPasteToggle').click();
+  $('xText').value = txt; X_READ(); if ($('xchg')) $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
+});
 function wireExchange(){
+  X_READ = null;
   const card = $('xchg'); if (!card || !window.HubExchange) return;
   const a = WORDING[CURRENT], sub = subFor(CURRENT);
   const round = sub.stage==='resubmitted' ? 'sub2' : 'sub1';
@@ -1018,21 +2856,7 @@ function wireExchange(){
   });
   let readTimer = null;
   $('xText').addEventListener('input', ()=>{ clearTimeout(readTimer); readTimer = setTimeout(readNow, 250); });
-  document.addEventListener('paste', (e)=>{
-    const t = e.target; if (t && t.closest && t.closest('input, textarea, [contenteditable]')) return;
-    const txt = (e.clipboardData||window.clipboardData).getData('text/plain');
-    /* A model that bolds its headings writes a reply with no '#' in it, and
-       this gate swallowed the paste silently even though the reader handles
-       bold (24 Sep 2026). Same two shapes the reader accepts. */
-    if (!txt) return;
-    if (!/^\s*#/m.test(txt) && !/^\s*(?:\*\*|__).+(?:\*\*|__)\s*:?\s*$/m.test(txt) && !/^\s*>>/m.test(txt) && !/[\u2713\u2714\u221a]/.test(txt)) {
-      /* Said out loud, not ignored (Ramy, 18 Oct 2026: "I pasted and nothing happened"). */
-      if (txt.length > 20) { const d = $('xDone'); if (d) { d.style.display = ''; d.textContent = 'That paste did not look like a marked reply, so nothing was filled in. A marked reply keeps its headings (\u201CCriterion 1 \u2014 \u2026\u201D, \u201CGeneral comment\u201D), and each criterion starts with Met or Not met.'; $('xchg').scrollIntoView({block:'center', behavior:'smooth'}); } }
-      return;
-    }
-    e.preventDefault(); if ($('xPaste').style.display==='none') $('xPasteToggle').click();
-    $('xText').value = txt; readNow(); $('xchg').scrollIntoView({block:'start', behavior:'smooth'});
-  });
+  /* the paste listener is the page's one, above; it reads through X_READ, set once readNow exists */
   /* Lines that start with >> are comments on the work: >> "the words": the comment,
      or >> the comment, right under the paragraph it is about (19 Oct 2026). */
   /* Ticks typed INTO the paragraph (Ramy, 19 Oct 2026: a trainer who marks in
@@ -1067,6 +2891,7 @@ function wireExchange(){
     });
     return out;
   }
+  X_READ = () => readNow();
   function readNow(srcText, sideComments){
     const txt = typeof srcText === 'string' ? srcText : $('xText').value; if (!txt.trim()) return;
     const notes = (sideComments || []).concat(markerComments(txt), inlineTicks(txt));
@@ -1119,12 +2944,14 @@ function wireExchange(){
     const d2 = $('xDone'); d2.style.display = '';
     const nc = ids.filter(id => /^crit/.test(id)).length, gc = ids.indexOf('comment') >= 0;
     const parts = [];
-    if (nc || gc) parts.push('filled ' + (nc ? nc + (nc === 1 ? ' criterion' : ' criteria') : '') + (nc && gc ? ' and ' : '') + (gc ? 'the general comment' : ''));
+    /* the new layout calls that box the overall comment, and has no Save: the two sentences follow it (24 Nov 2026) */
+    const NEW = document.body.classList.contains('mkn');
+    if (nc || gc) parts.push('filled ' + (nc ? nc + (nc === 1 ? ' criterion' : ' criteria') : '') + (nc && gc ? ' and ' : '') + (gc ? (NEW ? 'the overall comment' : 'the general comment') : ''));
     const nTk = notes.filter(n => /^[\u2713\u2714\u221a]+$/.test(String(n.text||'').trim())).length, nPl = put.placed - Math.min(put.placed, nTk);
-    if (nPl) parts.push('placed ' + nPl + (nPl === 1 ? ' comment' : ' comments') + ' in the margin');
+    if (nPl) parts.push('placed ' + nPl + (nPl === 1 ? ' comment' : ' comments') + (NEW ? ' on the text' : ' in the margin'));
     if (put.placed && nTk) parts.push('put ' + Math.min(put.placed, nTk) + (Math.min(put.placed, nTk) === 1 ? ' tick' : ' ticks') + ' on the work');
     const said = parts.join(', and ');
-    d2.innerHTML = (said ? said.charAt(0).toUpperCase() + said.slice(1) + '. Check them, then save.' : '')
+    d2.innerHTML = (said ? said.charAt(0).toUpperCase() + said.slice(1) + (NEW ? '. Check them before you return it.' : '. Check them, then save.') : '')
       + (put.unplaced.length ? ' <span class="x-unplaced">' + (put.unplaced.length === 1 ? 'One comment' : put.unplaced.length + ' comments') + ' could not be matched to the words in the work, so ' + (put.unplaced.length === 1 ? 'it is' : 'they are') + ' here to add by hand: ' + put.unplaced.map(t => '\u201c' + esc(t.length > 90 ? t.slice(0, 88) + '\u2026' : t) + '\u201d').join('; ') + '.</span>' : '')
       + (unplaced.length ? ' Headings not recognized: ' + unplaced.map(esc).join(', ') + '.' : '') + ' <button type="button" class="example-btn" id="xUndo">Undo</button>';
     $('xUndo').addEventListener('click', ()=>{
@@ -1151,7 +2978,10 @@ function folIvMount(){
     if (!inner && !pool.length) return;
     const box = document.createElement('details'); box.id = 'folIv'; box.className = 'card'; box.style.marginTop = '14px';
     box.innerHTML = '<summary style="cursor:pointer;font-weight:700">From their student interview</summary><div style="margin-top:8px;font-size:.9rem;line-height:1.55">' + (inner || '<p class="note" style="margin:0">They have not written their interview yet.</p>') + '<p style="margin:14px 0 4px;font-weight:700">The pool, the whole course</p>' + window.CONNECT_HUB_FOL.poolHtml(pool) + '</div>';
-    const app = document.getElementById('app'); if (app) app.insertBefore(box, app.firstChild);
+    /* under the new layout the fold sits at the foot of the work, never above the bar (24 Nov 2026) */
+    const app = document.getElementById('app');
+    if (document.body.classList.contains('mkn')) { const foot = document.getElementById('mkWork') || app; if (foot) foot.appendChild(box); }
+    else if (app) app.insertBefore(box, app.firstChild);
     window.CONNECT_HUB_FOL.wirePlay(box);
   } catch (e) {}
 }

@@ -151,6 +151,33 @@
         });
       });
       var cm = items.filter(function (c) { return !c.tick; });
+      /* THE NEW LAYOUT'S COMMENT CARD (24 Nov 2026): the cards stand in the order of the words they are about, each
+         headed by its criterion and its kind ("Criterion 1 · Good", "To work on", or just "Comment"), with Edit and
+         Delete under your own. The writer's name shows only when the writer is somebody else. */
+      if (MKN()) {
+        var placed = cm.map(function (c) { return { c: c, at: hubHighlight(box, c.quote, c.id, 'mc' + (c.tone ? ' mc-' + c.tone : '')) }; });
+        /* THE FIRST ROUND BESIDE A RESUBMISSION (24 Nov 2026). Where the page shows only the new version (data-first),
+           the comments of the first round stand beside it too, faded and headed "First round", with no Edit or Delete.
+           Their words are highlighted where the resubmission still has them; the card is drawn either way. A table row
+           that moved keeps its first-round comments by data-firstloc. First-round ticks are not drawn here. */
+        if (loc.hasAttribute('data-first') && round !== 'sub1') {
+          var fl = loc.getAttribute('data-firstloc') || here;
+          list('sub1').filter(function (c) { return c.loc === fl && !c.tick && c.text; }).forEach(function (c) {
+            placed.push({ c: c, first: true, at: hubHighlight(box, c.quote, c.id, 'mc mc-first') });
+          });
+        }
+        placed.sort(function (x, y) { return (x.at < 0 ? 1e9 : x.at) - (y.at < 0 ? 1e9 : y.at); });
+        gut.innerHTML = placed.map(function (w) {
+          var c = w.c, head = [w.first ? 'First round' : '', c.crit != null && c.crit !== '' ? 'Criterion ' + (+c.crit + 1) : '', c.tone === 'good' ? 'Good' : c.tone === 'fix' ? 'To work on' : ''].filter(Boolean).join(' \u00b7 ') || 'Comment';
+          return '<div class="mcard' + (c.tone ? ' tone-' + c.tone : '') + (c.role === 'second' ? ' by-second' : '') + (w.first ? ' is-first' : '') + '" data-mcard="' + c.id + '">' +
+            '<span class="mc-crit">' + head + '</span><p>' + esc(c.text) + '</p>' +
+            (c.by && c.by !== CTX.me ? '<span class="mc-by">' + esc(c.by) + '</span>' : '') +
+            (!w.first && canWrite(round) && mine(c) ? '<span class="mc-acts"><button type="button" data-medit="' + c.id + '">Edit</button><i aria-hidden="true">\u00b7</i><button type="button" data-mdel="' + c.id + '">Delete</button></span>' : '') +
+            '</div>';
+        }).join('');
+        loc.classList.toggle('has-mc', placed.length > 0);
+        return;
+      }
       gut.innerHTML = cm.map(function (c) {
         hubHighlight(box, c.quote, c.id, 'mc' + (c.tone ? ' mc-' + c.tone : ''));
         return '<div class="mcard' + (c.tone ? ' tone-' + c.tone : '') + (c.role === 'second' ? ' by-second' : '') + '" data-mcard="' + c.id + '">' +
@@ -164,11 +191,51 @@
     });
     paintEvidence();
   }
+  /* BESIDE THE WORDS (24 Nov 2026, the new layout). Where the column is wide enough for a comment to stand beside the
+     work, each card is moved down to the line its words are on, and never onto the card above it. Where the comments
+     sit under the section instead, nothing is moved. Worked out again when the window changes size. */
+  function mknBeside() {
+    if (!MKN()) return;
+    [].forEach.call(document.querySelectorAll('#mkWork .mloc.has-mc'), function (loc) {
+      var gut = loc.querySelector('.mgut'); if (!gut) return;
+      var cards = gut.querySelectorAll('.mcard');
+      [].forEach.call(cards, function (c) { c.style.marginTop = ''; });
+      if (getComputedStyle(loc).display !== 'grid') return;
+      [].forEach.call(cards, function (c) {
+        var m = loc.querySelector('mark[data-mc="' + c.getAttribute('data-mcard') + '"]'); if (!m) return;
+        var want = m.getBoundingClientRect().top, at = c.getBoundingClientRect().top;
+        if (want > at + 1) c.style.marginTop = Math.round(want - at) + 'px';
+      });
+    });
+  }
+  var BESIDE_T = 0;
+  addEventListener('resize', function () { if (!MKN()) return; clearTimeout(BESIDE_T); BESIDE_T = setTimeout(mknBeside, 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { mknBeside(); }).catch(function () {});
+  /* how far down the two rows that stay at the top of the new layout reach: the bar over a selection keeps clear of them */
+  function mknTopPx() { var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mkn-top')); return isFinite(v) && v > 0 ? v : 70; }
+  /* the bar at the foot of a phone, and whether the page is in its phone shape (24 Nov 2026) */
+  function mknFootPx() { var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mkn-foot-h')); return isFinite(v) && v > 0 ? v : 0; }
+  function mknPhone() { try { return matchMedia('(max-width:1079px)').matches; } catch (e) { return false; } }
+  /* something is open over the page (a sheet, the More menu, a question, the texts, the preview): the marking keys
+     must not reach the criteria behind it */
+  function mknCovered() { return !!document.querySelector('.mkn-sheetwrap:not([hidden]), #mknMenu:not([hidden]), .confirm-overlay, #hubTexts:not([hidden]), #mkPreview:not([hidden])'); }
+
   /* under each criterion on the front page: what you tied to it, as you read */
   function paintEvidence() {
     [].forEach.call(document.querySelectorAll('[data-linked]'), function (el) {
       var i = el.getAttribute('data-linked'), ev = evidenceFor(i);
       if (!ev.length) { el.innerHTML = ''; return; }
+      /* THE NEW LAYOUT (24 Nov 2026): one quiet line, "2 comments on her text", then each comment's first words as a
+         door to the place. The word is "comment". Whose text it is comes from the page (ctx.poss). */
+      if (MKN()) {
+        var cmn = ev.filter(function (c) { return !c.tick; }), tkn = ev.filter(function (c) { return c.tick; }), ntk = tkn.reduce(function (a, c) { return a + (c.n || 1); }, 0);
+        var cut = function (t) { t = String(t || ''); return esc(t.length > 44 ? t.slice(0, 42) + '\u2026' : t); };
+        var say = [cmn.length ? cmn.length + ' comment' + (cmn.length > 1 ? 's' : '') : '', tkn.length ? ntk + ' tick' + (ntk > 1 ? 's' : '') : ''].filter(Boolean).join(' and ') + ' on ' + esc(CTX.poss || 'their') + ' text';
+        el.innerHTML = '<div class="mkn-tied"><b>' + say + '</b>' +
+          cmn.map(function (c) { return '<button type="button" data-goto="' + c.id + '">' + cut(c.text) + '</button>'; }).join('') +
+          tkn.map(function (c) { return '<button type="button" data-goto="' + c.id + '">' + hubTickSVG() + ' \u201C' + cut(c.quote) + '\u201D' + ((c.n || 1) > 1 ? ' \u00d7' + c.n : '') + '</button>'; }).join('') + '</div>';
+        return;
+      }
       var cm = ev.filter(function (c) { return !c.tick; }), tk = ev.filter(function (c) { return c.tick; });
       var nt = tk.reduce(function (a, c) { return a + (c.n || 1); }, 0);
       var head = [cm.length ? cm.length + ' comment' + (cm.length > 1 ? 's' : '') : '', tk.length ? nt + ' tick' + (nt > 1 ? 's' : '') : ''].filter(Boolean).join(', ') + ' under this criterion';
@@ -212,7 +279,9 @@
     b.hidden = false;
     var rr = r.getBoundingClientRect(), w = Math.min(b.offsetWidth, innerWidth - 24);
     b.style.left = Math.max(12, Math.min(rr.left, innerWidth - w - 12)) + 'px';
-    b.style.top = (rr.bottom + 8 + b.offsetHeight > innerHeight ? Math.max(70, rr.top - b.offsetHeight - 8) : rr.bottom + 8) + 'px';
+    /* in the new layout the bar stays between the rows at the top and the bar at the foot of a phone (24 Nov 2026) */
+    var floor = innerHeight - (MKN() ? mknFootPx() : 0);
+    b.style.top = (rr.bottom + 8 + b.offsetHeight > floor ? Math.max(MKN() ? mknTopPx() + 8 : 70, rr.top - b.offsetHeight - 8) : rr.bottom + 8) + 'px';
   }
   function onSelect() {
     var s = window.getSelection(), b = bar();
@@ -300,7 +369,7 @@
     ed.innerHTML = '<div class="me-h">' + (opts.id ? 'Edit your comment' : 'Your comment') + '</div>' +
       '<blockquote class="me-q">\u201C' + esc(opts.quote.length > 240 ? opts.quote.slice(0, 238) + '\u2026' : opts.quote) + '\u201D</blockquote>' +
       '<textarea id="meText" rows="8" placeholder="Write it to the trainee, in your own words. They read it beside these words.">' + esc(opts.text || '') + '</textarea>' +
-      (opts.fromBar
+      (opts.fromBar && !(MKN() && mknPhone())   /* on a phone the comment box covers the dark bar, so its criterion chips come with it (24 Nov 2026, as drawn) */
         ? ''   /* the chips in the dark box already did it (Ramy, 18 Oct 2026: "keep the one in the chip, delete the one in the comment box") */
         : (crit.length ? '<div class="me-chips"><span>Tied to criterion</span>' + crit.map(function (c, i) { return '<button type="button" class="sb-c' + (tied === i ? ' on' : '') + '" data-mecrit="' + i + '" title="' + esc(critShort(i)) + '">' + (i + 1) + '</button>'; }).join('') + '</div>' : '')) +
       '<div class="me-foot"><div class="me-tone" role="group" aria-label="What kind of comment"><button type="button" class="tn-good' + (opts.tone === 'good' ? ' on' : '') + '" data-tone="good"><i></i>Good</button><button type="button" class="tn-fix' + (opts.tone === 'fix' ? ' on' : '') + '" data-tone="fix"><i></i>To work on</button></div>' +
@@ -360,7 +429,7 @@
     if (ed) { var c = list(writeRound()).filter(function (x) { return x.id === ed.getAttribute('data-medit'); })[0]; if (c) editor({ id: c.id, loc: c.loc, quote: c.quote, text: c.text, crit: c.crit, tone: c.tone }); return; }
     var del = t.closest('[data-mdel]'); if (del) { remove(del.getAttribute('data-mdel')); return; }
     var go = t.closest('[data-goto]');
-    if (go) { DROP = null; paintDrop(); var m = document.querySelector('mark[data-mc="' + go.getAttribute('data-goto') + '"]'); if (m) { m.scrollIntoView({ block: 'center', behavior: 'smooth' }); m.classList.remove('mc-hit'); void m.offsetWidth; m.classList.add('mc-hit'); } return; }
+    if (go) { if (!MKN()) { DROP = null; paintDrop(); } var m = document.querySelector('mark[data-mc="' + go.getAttribute('data-goto') + '"]'); if (m) { m.scrollIntoView({ block: 'center', behavior: 'smooth' }); m.classList.remove('mc-hit'); void m.offsetWidth; m.classList.add('mc-hit'); } return; }
     var mk = t.closest('mark.mc');
     if (mk) { var card = document.querySelector('[data-mcard="' + mk.dataset.mc + '"]'); if (card) { card.classList.remove('mc-hit'); void card.offsetWidth; card.classList.add('mc-hit'); card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } return; }
     var add = t.closest('[data-addnote]');
@@ -381,6 +450,7 @@
   }
   document.addEventListener('click', function (e) {
     var t = e.target; if (!t || !t.closest) return;
+    if (MKN()) return;   /* the new layout opens and closes a criterion's comment box itself (24 Nov 2026) */
     [].forEach.call(document.querySelectorAll('[data-crit-comment]:not([hidden])'), function (ta) {
       var i = ta.getAttribute('data-crit-comment');
       if (t === ta || t.closest('.dictbar') || t.closest('[data-addnote="' + i + '"], [data-tip="' + i + '"]') || (String(OPENTIP) === i && t.closest('.mk-tipin'))) return;
@@ -389,6 +459,7 @@
   });
   document.addEventListener('focusout', function (e) {
     var ta = e.target.closest && e.target.closest('[data-crit-comment]');
+    if (MKN()) return;
     if (ta && e.relatedTarget && !e.relatedTarget.closest('[data-tip="' + ta.getAttribute('data-crit-comment') + '"], .mk-tipin')) foldNote(ta);
   });
 
@@ -446,7 +517,11 @@
     return allMarked('sub1') ? 'sub1' : null;
   }
   function modeKey() { return 'mk2:' + (CTX.trainee || '') + ':' + CTX.key; }
-  function secondMode() { try { return sessionStorage.getItem(modeKey()) === '1'; } catch (e) { return false; } }
+  /* THE NEW LAYOUT HAS NO SECOND-MARKING MODE HERE (24 Nov 2026). Under body.mkn the page decides who may write and
+     says so in ctx.marking; a flag left in this tab by the old layout must not turn a comment into the second
+     marker's or let a key through. MKN() is the one test every new behaviour in this file is guarded by. */
+  function MKN() { return !!(document.body && document.body.classList.contains('mkn')); }
+  function secondMode() { if (MKN()) return false; try { return sessionStorage.getItem(modeKey()) === '1'; } catch (e) { return false; } }
   function setSecondMode(on) { try { on ? sessionStorage.setItem(modeKey(), '1') : sessionStorage.removeItem(modeKey()); } catch (e) {} }
   function secRec(r) { var s = CTX.sub; s.second = s.second || {}; return (s.second[r] = s.second[r] || { by: '', at: '', crit: {}, done: false }); }
   function secondHTML() {
@@ -507,10 +582,13 @@
   function markCur() { [].forEach.call(document.querySelectorAll('.critrow.mk-cur'), function (r) { r.classList.remove('mk-cur'); }); var b = document.querySelector('.crit-toggle[data-crit="' + CURI + '"]'); if (b) { var row = b.closest('.critrow'); row.classList.add('mk-cur'); } }
   document.addEventListener('keydown', function (e) {
     if (!CTX || !CTX.marking || secondMode()) return;
+    if (MKN() && mknCovered()) return;
     var t = e.target; if (t && (t.matches('input, textarea, select, [contenteditable]') || (t.closest && t.closest('#mkEditor')))) return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     var n = (CTX.a.criteria || []).length; if (!n) return;
     var key = e.key.toLowerCase();
+    /* the new layout rings the current criterion only once a key has been used (24 Nov 2026) */
+    if (MKN() && /^[mnjk]$/.test(key)) document.body.classList.add('mkn-keys');
     if (key === 'm' || key === 'n') { e.preventDefault(); var v = key === 'm'; var i = CURI; var next = i; var marks = CTX.sub.criteriaMarks[CTX.round] || []; for (var k = 1; k <= n; k++) { var j = (i + k) % n; if (j !== i && marks[j] !== true && marks[j] !== false) { next = j; break; } } CURI = next; CTX.setMark(i, v); return; }
     if (key === 'j' || e.key === 'ArrowDown') { if (key !== 'j' && !document.querySelector('.critrow.mk-cur')) return; e.preventDefault(); CURI = Math.min(n - 1, CURI + 1); markCur(); var r1 = document.querySelector('.critrow.mk-cur'); if (r1) r1.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
     if (key === 'k' || e.key === 'ArrowUp') { if (key !== 'k' && !document.querySelector('.critrow.mk-cur')) return; e.preventDefault(); CURI = Math.max(0, CURI - 1); markCur(); var r2 = document.querySelector('.critrow.mk-cur'); if (r2) r2.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
@@ -525,12 +603,12 @@
     var ov = $('mkPreview'); if (!ov) { ov = document.createElement('div'); ov.id = 'mkPreview'; ov.className = 'mk-prev-wrap'; document.body.appendChild(ov); }
     ov.className = 'mk-prev-wrap as-' + CTX.key;
     ov.innerHTML = '<div class="mk-prev" role="dialog" aria-label="What the trainee will see">' +
-      '<div class="mkp-top"><span>What the trainee will see when you save and return it</span><button type="button" data-prevclose>Close</button></div>' +
+      '<div class="mkp-top"><span>' + (MKN() ? 'What the trainee will see when you return it' : 'What the trainee will see when you save and return it') + '</span><button type="button" data-prevclose>Close</button></div>' +
       '<div class="mkp-band"><p>' + esc(a.title) + '</p><h3>' + (out ? esc(out) : 'Not decided yet: mark every criterion first') + '</h3></div>' +
       (gen ? '<div class="mkp-gen">' + esc(gen).replace(/\n/g, '<br>') + '</div>' : '') +
       '<ul class="mkp-crit">' + cr.map(function (c, i) { return '<li><span class="crit-toggle ' + (m[i] === true ? 'met' : m[i] === false ? 'not' : '') + '" style="cursor:default">' + (m[i] === true ? 'Met' : m[i] === false ? 'Not met' : 'Not marked') + '</span><div><b>' + esc(c.text || c) + '</b>' + (notes[i] ? '<p>' + esc(notes[i]) + '</p>' : '') + '</div></li>'; }).join('') + '</ul>' +
       (ticks.length ? '<h4>Ticked</h4><ul class="mkp-mc">' + ticks.map(function (c) { return '<li><q class="tk">' + esc(c.quote) + '</q>' + (window.hubTickSVG ? hubTickSVG() : ' \u2713') + ((c.n || 1) > 1 ? ' \u00d7' + c.n : '') + '</li>'; }).join('') + '</ul>' : '') +
-      (mc.length ? '<h4>Comments on her text</h4><ul class="mkp-mc">' + mc.map(function (c) { return '<li><q>' + esc(c.quote) + '</q><p>' + esc(c.text) + '</p></li>'; }).join('') + '</ul>' : '') +
+      (mc.length ? '<h4>' + (MKN() ? 'Comments on ' + esc(CTX.poss || 'their') + ' text' : 'Comments on her text') + '</h4><ul class="mkp-mc">' + mc.map(function (c) { return '<li><q>' + esc(c.quote) + '</q><p>' + esc(c.text) + '</p></li>'; }).join('') + '</ul>' : '') +
       '</div>';
     ov.hidden = false;
   }
@@ -558,6 +636,8 @@
     if (t.closest('#mkPrevBtn')) { preview(); return; }
     if (t.closest('[data-prevclose]') || t.id === 'mkPreview') { var ov = $('mkPreview'); if (ov) ov.hidden = true; return; }
     var crit = t.closest('.crit-toggle[data-crit]'); if (crit) CURI = +crit.getAttribute('data-crit');
+    /* the new layout's Not met is a button of its own: the keys follow it too (24 Nov 2026) */
+    var critNo = MKN() ? t.closest('[data-critno]') : null; if (critNo) CURI = +critNo.getAttribute('data-critno');
   });
   document.addEventListener('input', function (e) {
     var ta = e.target.closest && e.target.closest('[data-snotebox]'); if (!ta) return;
@@ -763,8 +843,30 @@
   window.hubMarking = {
     placeComments: function (items) { return CTX ? placeComments(items) : { placed: 0, unplaced: [], ids: [] }; },
     removeIds: function (ids) { if (CTX) removeIds(ids); },
+    /* the new layout opens the preview from its More menu (24 Nov 2026) */
+    preview: function () { if (CTX && CTX.marking) preview(); },
+    /* where some words are in the work, as a comment brought back is placed (24 Nov 2026: own work's Show in their text) */
+    findWords: function (w) { return CTX ? findWords(w) : null; },
     afterRender: function (ctx) {
       CTX = ctx;
+      /* THE NEW LAYOUT DRAWS ITS OWN PANEL (24 Nov 2026). Under body.mkn only these run: the comments on the text, the
+         links to the texts, the mic, the criterion the keys are on, and the reselect. The old second-marking card, the
+         help row, the "While you read" boxes, the guidance panel and the bar of chips are the old layout's and are
+         not painted. */
+      if (MKN()) {
+        [].forEach.call(document.querySelectorAll('#mkDock, #mkDrop, #mkDockTab'), function (x) { x.hidden = true; });
+        document.body.classList.remove('mk-nohelp');
+        paintMargin();
+        linkTexts();
+        /* what the page draws on the work after the comments (24 Nov 2026: the passages own work found) */
+        if (typeof ctx.paintMore === 'function') { try { ctx.paintMore(); } catch (e) {} }
+        if (window.hubMic) hubMic.bar('#meText, #comment, [data-crit-comment], #mknSecond');
+        if (CURI >= ((ctx.a && ctx.a.criteria) || []).length) CURI = 0;
+        markCur();
+        mknBeside();
+        if (RESEL) { var idn = RESEL; RESEL = null; reselect(idn); }
+        return;
+      }
       paintMargin();
       linkTexts();
       if (window.hubMic) hubMic.bar('#meText, #comment, [data-crit-comment], [data-drnotebox]');
@@ -942,6 +1044,43 @@
       '.mk-sbox:not([open]) > summary:hover{border-color:var(--as, var(--teal)) !important;}',
       '.mk-sbox[open] > summary{background:var(--as, var(--teal)); border-color:var(--as, var(--teal)) !important; color:var(--paper) !important;} .mk-sbox[open] > summary::after{border-color:var(--paper) !important;}',
       '.mk-sbox > .gb{margin-top:8px; background:var(--gold-wash); border:1px solid var(--amber-edge); border-radius:var(--r-strip); padding:12px 20px 14px !important; column-width:340px; column-gap:36px; column-rule:1px solid color-mix(in oklab, var(--sand-line) 70%, transparent);} .mk-sbox > .gb li, .mk-sbox > .gb p{break-inside:avoid;} .mk-sbox > .gb h4{break-after:avoid;}',
+      /* THE NEW LAYOUT (24 Nov 2026): the quiet line under a criterion's card, what was tied to it on the text */
+      '.mkn-tied{margin:10px 0 0; font-size:0.82rem; line-height:1.5; color:var(--grey);} .mkn-tied b{color:var(--ink); font-weight:700; margin-right:6px;}',
+      '.mkn-tied button{display:inline; background:none; border:none; padding:2px 0; margin:0 10px 0 0; font:inherit; color:var(--grey); text-align:left; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px; cursor:pointer;} .mkn-tied button:hover{background:none !important; box-shadow:none !important; color:var(--ink);}',
+      '.mkn-tied svg.hub-tick{width:1em; height:1em; vertical-align:-0.18em; margin:0 2px 0 0; filter:none;}',
+      'body.mkn .hub-brand-foot{margin-bottom:24px;}',
+      /* THE NEW LAYOUT'S COMMENTS ON THE TEXT (24 Nov 2026). A comment stands beside its words when the COLUMN of work is
+         wide enough, and under the section when it is not: the column is measured, not the window, because the panel
+         takes a third of a laptop. Green is good, the red is to work on; the head says which in words. */
+      'body.mkn .mcard{background:var(--a-stone); border:none; border-left:4px solid var(--grey); border-radius:0 var(--r-strip) var(--r-strip) 0; box-shadow:none; padding:10px 14px 6px; font-size:0.9rem; line-height:1.5;}',
+      'body.mkn .mcard.tone-good{border-left-color:var(--a-forest);} body.mkn .mcard.tone-fix{border-left-color:var(--a-red);}',
+      'body.mkn .mcard .mc-crit{display:block; color:var(--grey); font-size:0.72rem; letter-spacing:.08em;} body.mkn .mcard p{margin:3px 0 0; white-space:pre-wrap; overflow-wrap:anywhere;}',
+      'body.mkn .mcard .mc-by{display:block; margin-top:4px;}',
+      'body.mkn .mc-acts{float:none; display:flex; align-items:center; gap:6px; margin:0;} body.mkn .mc-acts i{font-style:normal; color:var(--grey);}',
+      'body.mkn .mc-acts button{min-height:40px; padding:0 2px; font:700 0.82rem Karla,sans-serif; color:var(--a-forest); text-decoration:underline; text-decoration-color:currentColor; text-underline-offset:3px;}',
+      'body.mkn mark.mc{background:color-mix(in oklab, var(--grey) 16%, transparent); border-bottom-color:var(--grey);}',
+      'body.mkn mark.mc.mc-good, body.mkn mark.mc-tick{background:color-mix(in oklab, var(--a-green) 18%, transparent); border-bottom-color:var(--a-green);}',
+      'body.mkn mark.mc.mc-fix{background:color-mix(in oklab, var(--a-red) 14%, transparent); border-bottom-color:var(--a-red);}',
+      'body.mkn .mloc.has-mc .mgut{margin:10px 0 0;}',
+      /* the first round beside a resubmission, faded; a passage own work found, mustard with a dotted line (24 Nov 2026) */
+      'body.mkn .mcard.is-first{background:color-mix(in oklab, var(--a-stone) 60%, var(--paper)); border-left-style:dashed; color:color-mix(in oklab, var(--ink) 72%, var(--paper));}',
+      'body.mkn mark.mc.mc-first{background:none; border-bottom:2px dashed color-mix(in oklab, var(--grey) 70%, transparent);}',
+      'body.mkn mark.mkn-found{background:color-mix(in oklab, var(--a-mustard) 26%, transparent); color:inherit; border-bottom:2px dotted var(--a-mustard); border-radius:2px; padding:0 1px;}',
+      'body.mkn mark.mkn-found.mc-hit{animation:mcWords .9s ease-out 1;} @media (prefers-reduced-motion: reduce){ body.mkn mark.mkn-found.mc-hit{animation:none;} }',
+      'body.mkn .mcard.mkn-foundcard{border-left-color:var(--a-mustard); background:color-mix(in oklab, var(--a-mustard) 10%, var(--paper));}',
+      'body.mkn .mkn-foundacts{display:flex; flex-wrap:wrap; gap:0 12px;} body.mkn .mkn-foundacts :is(a, button){display:inline-flex; align-items:center; min-height:40px; padding:0; border:none; background:none; font:700 0.82rem Karla,sans-serif; color:var(--a-forest); text-decoration:underline; text-underline-offset:3px; cursor:pointer;}',
+      'body.mkn .mkn-foundacts button:hover{background:none !important; box-shadow:none !important;}',
+      '@supports (container-type:inline-size){ body.mkn .mkn-work{container-type:inline-size;} body.mkn .mloc.has-mc{display:block;}',
+      '  @container (min-width:820px){ body.mkn .mloc.has-mc{display:grid; grid-template-columns:minmax(0,1fr) minmax(240px,32%); gap:20px; align-items:start;} body.mkn .mloc.has-mc .mgut{margin:0;} } }',
+      'body.mkn .mk-editor{border-top-color:var(--a-forest);} body.mkn .me-acts .me-save{background:var(--a-forest); border-color:var(--a-forest);} body.mkn .me-acts .me-save:hover{background:var(--a-forest) !important; border-color:var(--a-forest) !important; box-shadow:0 0 0 2px color-mix(in oklab, var(--a-forest) 30%, transparent) !important;}',
+      /* THE NEW LAYOUT ON A PHONE (24 Nov 2026): the comment box is a sheet from the bottom that keeps above the keyboard
+         (--mkn-kb, set by the page), with the page dimmed behind it; the dark bar and the box sit above the floating
+         round button, which sits above the bar at the foot. */
+      /* 24 Nov 2026: on a phone the dark bar's buttons are 40px tall, as every other tap target in the layout (a reviewer's finding) */
+      '@media (max-width:1079px){ body.mkn .mk-selbar{z-index:890;} body.mkn .mk-selbar button{min-height:40px; min-width:40px;}',
+      '  body.mkn .mk-editor{left:0; right:0; top:auto; bottom:var(--mkn-kb, 0px); transform:none; width:auto; max-width:none; max-height:calc(var(--mkn-vvh, 100vh) - 24px); z-index:896; border-radius:20px 20px 0 0; border-top-width:4px; padding:18px 16px calc(16px + env(safe-area-inset-bottom, 0px)); box-shadow:0 0 0 100vmax color-mix(in oklab, var(--ink) 32%, transparent);}',
+      '  body.mkn:has(#mkEditor:not([hidden])) #hubSync{opacity:0 !important;}',
+      '  body.mkn .mk-editor textarea{min-height:120px; height:9.5em;} body.mkn .mk-editor .me-chips .sb-c, body.mkn .mk-editor .me-tone button, body.mkn .mk-editor .me-acts button{min-height:40px; min-width:40px;} }',
       '@media print{ .mk-dock-tab,.mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help,.mk-help-panel,.mk-sbox,.mk-texts-wrap,.mk-tiplink,.mk-tipin,.mk-addnote{display:none !important;} }'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);

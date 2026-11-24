@@ -649,7 +649,7 @@ async function submitAssignment(name, key, text) {
 async function markAssignment(T, name, key, round, notMetIndex, comment) {
   { const r = await recordOf(name); const sub = (r.assignments || {})[key] || {}; const marks = (sub.criteriaMarks || {})[round] || []; if (marks.length && marks.every(m => m === true || m === false)) { log(name + ': ' + key.toUpperCase() + ' ' + round + ' already marked'); return marks; } }
   const tp = T.p;
-  await gotoSettled(tp, url('10_tutor_assignment_marking.html', 'k=' + K + '&trainee=' + tokens[name] + '&a=' + key), '[data-crit]');
+  await gotoSettled(tp, url('10_tutor_assignment_marking.html', 'k=' + K + '&trainee=' + tokens[name] + '&a=' + key + '&old=1'), '[data-crit]');
   await tp.waitForFunction(nm => (document.body.innerText || '').includes(nm), name, { timeout: 30000 }).catch(() => {});
   await settle(tp, 1500);
   const marker = await tp.$('[data-role="marker1"], #marker1, [data-role="marker2"], #marker2'); if (marker) { await marker.fill(T.name); await settle(tp, 300); }
@@ -706,14 +706,14 @@ log(E + ': ' + A3.toUpperCase() + ' resubmission needed, not yet resubmitted');
 await submitAssignment(N, A1, FOL_TEXT.replace('Selin', 'Youssef').replace('her ', 'his ').replace('She ', 'He '));
 await markAssignment(T1, N, A1, 'sub1', -1, 'Thorough and thoughtful. The strongest section is the reflection, which reads as something you actually learned rather than something you were told to say. Passed.');
 {
-  await gotoSettled(T1.p, url('10_tutor_assignment_marking.html', 'k=' + K + '&trainee=' + tokens[N] + '&a=' + A2), '#extSet'); await settle(T1.p, 800); await T1.p.click('#extSet'); await settle(T1.p, 3500);
+  await gotoSettled(T1.p, url('10_tutor_assignment_marking.html', 'k=' + K + '&trainee=' + tokens[N] + '&a=' + A2 + '&old=1'), '#extSet'); await settle(T1.p, 800); await T1.p.click('#extSet'); await settle(T1.p, 3500);
   await untilRec(N, 'the extension', r => ((r.tracker || {}).extensions || {})['a:' + A2], 12, 4000);
 }
 log(N + ': ' + A1.toUpperCase() + ' closed; extension on ' + A2.toUpperCase());
 // Yuki: submitted, and returned unmarked -- "submit it again" on her side
 await submitAssignment(Y, A1, FOL_TEXT.replace('Selin', 'Kenji').replace('her ', 'his ').replace('She ', 'He ').slice(0, 900));
 {
-  await gotoSettled(T1.p, url('10_tutor_assignment_marking.html', 'k=' + K + '&trainee=' + tokens[Y] + '&a=' + A1), '#unmarkedBtn'); await settle(T1.p, 800);
+  await gotoSettled(T1.p, url('10_tutor_assignment_marking.html', 'k=' + K + '&trainee=' + tokens[Y] + '&a=' + A1 + '&old=1'), '#unmarkedBtn'); await settle(T1.p, 800);
   await clickAndConfirm(T1.p, '#unmarkedBtn'); await settle(T1.p, 1500);
   await untilRec(Y, 'the unmarked return', r => ((r.assignments || {})[A1] || {}).stage === 'returned_unmarked', 12, 4000);
 }

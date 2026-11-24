@@ -470,11 +470,21 @@
     if (typeof g('render') === 'function') g('render')();
     await sleep(200);
     var list = [];
+    /* THE NEW MARKING LAYOUT (24 Nov 2026): a criterion's comment box is closed until it is opened, so all are shown
+       to be typed in; the 1st marker is a click on the pill, not a box, so it is set the way that click sets it. */
+    var NEW = document.body.classList.contains('mkn');
+    if (NEW) document.querySelectorAll('#mkPanel textarea[data-crit-comment]').forEach(function(t){ t.hidden = false; });
     (P.marking.comments || []).forEach(function(t, i){ var el = document.querySelector('[data-crit-comment="' + i + '"]'); if (el) list.push({ el: el, text: t }); });
     if ($('comment')) list.push({ el: $('comment'), text: P.marking.general });
-    var m1 = $('marker1'); if (m1 && !m1.value.trim()) list.push({ el: m1, text: (P.course.tutorNames || 'Jordan Blake').split(',')[0].trim() });
+    var first = (P.course.tutorNames || 'Jordan Blake').split(',')[0].trim();
+    var m1 = $('marker1'); if (m1 && !m1.value.trim()) list.push({ el: m1, text: first });
     await typeAll(list);
-    say('Marked. Save it, and it goes back to the trainee.');
+    if (NEW) {
+      var cur = g('subFor')(P.assignment.key);
+      if (!String((cur.markers || {}).first || '').trim() && typeof g('mknSetFirst') === 'function') g('mknSetFirst')(first);
+      else if (typeof g('render') === 'function') g('render')();
+    }
+    say(NEW ? 'Marked. Return it, and it goes back to the trainee.' : 'Marked. Save it, and it goes back to the trainee.');
   }};
 
   FILL['20_celta5.html'] = { who: 'both', label: 'Fill in', run: async function(P){
