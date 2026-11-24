@@ -3025,12 +3025,20 @@ window.hubHeadHTML = function (text, heads) {
     on = true; try { rec.start(); } catch (x) {}
     paint();
   }
-  function bar(scope){
+  /* opts.under (24 Nov 2026, Ramy: "the dictate button ... is covering the comment box. It should sit at the bottom"):
+     the bar is not fixed to the corner of the screen but sits just under the box being written in, at its right. */
+  var UNDER = false;
+  function place(t){
+    if (!UNDER || !BAR || !t || !t.isConnected) return;
+    if (BAR.previousElementSibling !== t) t.insertAdjacentElement('afterend', BAR);
+  }
+  function bar(scope, opts){
     if (!OK || BAR) return;
+    UNDER = !!(opts && opts.under);
     /* tutors only (16 Nov 2026): a trainee or a student gets no dictation, as they get no spell check */
     try { if (window.HubStore && (HubStore.isTrainee() || HubStore.isVolunteer())) return; } catch (e) {}
     SCOPE = scope || 'textarea';
-    BAR = document.createElement('div'); BAR.className = 'dictbar';
+    BAR = document.createElement('div'); BAR.className = 'dictbar' + (UNDER ? ' dict-under' : '');
     BAR.innerHTML = '<span class="dict-hint" hidden>Click into a box first</span>' +
       '<select title="Dictation language: English (UK), (US) or (Australia)" aria-label="Dictation language"><option value="en-GB">UK</option><option value="en-US">US</option><option value="en-AU">AU</option></select>' +
       '<button type="button" class="dictbtn" title="Say the punctuation: comma, full stop, question mark, colon, dash, open bracket, close bracket, new line, new paragraph"><span class="dot"></span><span class="lbl">Dictate</span></button>';
@@ -3046,6 +3054,7 @@ window.hubHeadHTML = function (text, heads) {
     document.addEventListener('focusin', function(e){
       var t = e.target; if (!t.matches || !t.matches(SCOPE)) return;
       if (on && target !== t) { target = t; t.setAttribute('lang', LANG); } else target = t;
+      place(t);
       BAR.hidden = false;
     });
     document.addEventListener('focusout', function(){
@@ -3056,7 +3065,9 @@ window.hubHeadHTML = function (text, heads) {
   if (OK) {
     var st = document.createElement('style');
     st.textContent = '.dictbar .dict-hint{font:600 0.78rem Karla,sans-serif; color:var(--ink); background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:6px 10px;}' +
-      '.dictbar .dict-hint[hidden]{display:none;} .dictbar[hidden]{display:none !important;}';
+      '.dictbar .dict-hint[hidden]{display:none;} .dictbar[hidden]{display:none !important;}' +
+      '.dictbar.dict-under{position:static !important; inset:auto !important; justify-content:flex-end; margin:6px 0 0; z-index:auto;}' +
+      '.dictbar.dict-under select{width:auto !important; flex:none; min-width:0;} .dictbar.dict-under .dictbtn{flex:none;}';
     (document.head || document.documentElement).appendChild(st);
   }
   window.hubMic = { ok: OK, bar: bar, stop: stop };
