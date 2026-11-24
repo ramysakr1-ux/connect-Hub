@@ -1079,7 +1079,7 @@
       /* 24 Nov 2026: on a phone the dark bar's buttons are 40px tall, as every other tap target in the layout (a reviewer's finding) */
       '@media (max-width:1079px){ body.mkn .mk-selbar{z-index:890;} body.mkn .mk-selbar button{min-height:40px; min-width:40px;}',
       '  body.mkn .mk-editor{left:0; right:0; top:auto; bottom:var(--mkn-kb, 0px); transform:none; width:auto; max-width:none; max-height:calc(var(--mkn-vvh, 100vh) - 24px); z-index:896; border-radius:20px 20px 0 0; border-top-width:4px; padding:18px 16px calc(16px + env(safe-area-inset-bottom, 0px)); box-shadow:0 0 0 100vmax color-mix(in oklab, var(--ink) 32%, transparent);}',
-      '  body.mkn:has(#mkEditor:not([hidden])) #hubSync{opacity:0 !important;}',
+      '  body.mkn:has(#mkEditor:not([hidden])) #hubSync{opacity:0 !important; transition:none !important;}',
       '  body.mkn .mk-editor textarea{min-height:120px; height:9.5em;} body.mkn .mk-editor .me-chips .sb-c, body.mkn .mk-editor .me-tone button, body.mkn .mk-editor .me-acts button{min-height:40px; min-width:40px;} }',
       '@media print{ .mk-dock-tab,.mk-selbar,.mk-editor,.mk-tip,.mk-dock,.mk-drop,.mk-prev-wrap,.mk-checks,.mk-keys,.mk-help,.mk-help-panel,.mk-sbox,.mk-texts-wrap,.mk-tiplink,.mk-tipin,.mk-addnote{display:none !important;} }'
     ].join('\n');
