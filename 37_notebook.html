@@ -23,7 +23,7 @@
 <title>Your notebook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611241459">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241557">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:36px 20px 120px; display:flex; justify-content:center;}
@@ -99,7 +99,7 @@
   .empty-all b{color:var(--ink);}
   .namecard{background:var(--paper); border-radius:var(--r-card); box-shadow:var(--nb-shadow); padding:22px 24px; margin-top:24px;}
   .namecard p{margin:0 0 12px; font-size:0.92rem; line-height:1.55; color:var(--grey);}
-  .namecard input{width:100%; max-width:360px; font:400 1rem 'Karla',sans-serif; padding:10px 14px; border:1.5px solid var(--sand-line); border-radius:10px; margin-right:10px; margin-bottom:10px;}
+  .namecard input, .namecard select{width:100%; max-width:360px; font:400 1rem 'Karla',sans-serif; padding:10px 14px; border:1.5px solid var(--sand-line); border-radius:10px; margin-right:10px; margin-bottom:10px;}
   .note.mine.editing .text{display:none;}
   .pill-ask{font-size:0.84rem; color:var(--a-red); font-weight:700;}
   .note .reply{margin:10px 0 0; padding:8px 12px; border-left:3px solid var(--a-mustard); background:var(--sand); border-radius:0 8px 8px 0; font-size:0.9rem; line-height:1.5;}
@@ -147,18 +147,18 @@
   }
   @media print{ .back, .title .write, .tabs, .acts, .nbk-arc{display:none !important;} body{background:#fff; padding:0;} .note, .thread{box-shadow:none; border:1px solid #ddd;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611241459">
+<link rel="stylesheet" href="hub-house.css?v=202611241557">
 </head>
 <body data-say-pill="off">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-shared.js?v=202611241459"></script>
-<script src="hub-store.js?v=202611241459"></script>
-<script src="hub-say.js?v=202611241459"></script>
-<script src="hub-sync.js?v=202611241459"></script>
-<script src="hub-notebook.js?v=202611241459"></script>
+<script src="hub-shared.js?v=202611241557"></script>
+<script src="hub-store.js?v=202611241557"></script>
+<script src="hub-say.js?v=202611241557"></script>
+<script src="hub-sync.js?v=202611241557"></script>
+<script src="hub-notebook.js?v=202611241557"></script>
 <script type="text/x-hub-app">
 /* Two people have a notebook: a trainee and a tutor. Nobody else has a door. */
 (function(){
@@ -328,7 +328,9 @@ function render(){
   /* one line: the name of the page, and whose it is beside it (Ramy, 22 Nov 2026: "too many writings" down the top) */
   const head = '<div class="title"><h1>Notebook</h1>' + (TUTOR && !NB.who() ? '' : '<span class="sub">' + esc([who.split(/\s+/)[0], count + (count === 1 ? ' note' : ' notes')].filter(Boolean).join(' · ')) + '</span>') + '</div>';
   if (TUTOR && !NB.who()) {
-    $('app').innerHTML = head + '<div class="namecard"><p>The notebook is yours alone, so it needs your name once: the same one the dashboard asks for.</p><input type="text" id="whoIn" placeholder="Your name" autocomplete="name"><button type="button" class="btn primary" id="whoGo">Open my notebook</button></div>';
+    $('app').innerHTML = head + '<div class="namecard"><p>The notebook is yours alone, so it needs your name once: the same one the dashboard asks for.</p><input type="text" id="whoIn" placeholder="Your name" aria-label="Your name" autocomplete="name"><button type="button" class="btn primary" id="whoGo">Open my notebook</button></div>';
+    /* chosen from Course admin's tutors where the course lists them (24 Nov 2026) */
+    if (window.hubTutorNameField) hubTutorNameField($('whoIn'));
     $('whoGo').addEventListener('click', () => { const v = $('whoIn').value.trim(); if (!v) return; try { localStorage.setItem('chub:tutorName', v); } catch (e) {} loadTutor(); });
     $('whoIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('whoGo').click(); });
     return;

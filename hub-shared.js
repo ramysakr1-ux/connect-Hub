@@ -1251,6 +1251,119 @@ window.hubTutorNames = function(cs){
   (Array.isArray(cs.tutorContacts) ? cs.tutorContacts : []).forEach(function(c){ if (c) add(c.name); });
   return out;
 };
+/* YOUR NAME IS CHOSEN, NOT TYPED (Ramy, 24 Nov 2026: "why is the name becoming a problem all of a sudden? this comes
+   from course admin"). Every tutor opens the same link, so the only way Lite knows who is at a browser is the name kept
+   in it (chub:tutorName). It was typed by hand, so one tutor could be "belma " on one computer and "Belma" on another,
+   and the marking page had to guess whether two names were one person. Now, where Course admin lists the course's
+   tutors, the name is chosen from that list, so every name Lite keeps for a tutor is Course admin's own spelling.
+   A course with no list yet (a new course, a demo with none) keeps the typed box exactly as before.
+   - hubTutorNameList(): Course admin's tutors (hubTutorNames over connect_course_settings), [] when none.
+   - hubTutorNameMatch(name, list): the one listed tutor a kept name clearly is (the same apart from capitals and
+     spaces, that tutor's first name, or the start of that tutor's full name), or '' when it is none or more than one.
+   - hubTutorNameSettle(): a kept name that clearly is one listed tutor is stored in the listed spelling at once.
+     Anything else is left as it is: never wiped, only replaced when the tutor chooses.
+   - hubTutorNameField(input, opts): swaps a name <input> for a <select> of the listed names (same id, class, title),
+     first line "Choose your name" while none is chosen. It fires 'input' and 'change' as the box did, so every reader
+     of .value and every 'input' listener keeps working. With no list it hands back the input untouched. It returns
+     the element now on the page.
+   - hubKeepTutorName(name): what a signing page calls where it used to write chub:tutorName itself. A listed name
+     already chosen is never overwritten; a signer's name that is a listed tutor is kept in the listed spelling. */
+(function(){
+  var KEY = 'chub:tutorName';
+  var norm = function(v){ return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().toLowerCase(); };
+  var get = function(){ try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } };
+  window.hubTutorNameList = function(cs){
+    if (!cs) { try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { cs = {}; } }
+    try { return (window.hubTutorNames(cs) || []).slice(); } catch (e) { return []; }
+  };
+  window.hubTutorNameMatch = function(name, list){
+    var n = norm(name); list = list || window.hubTutorNameList();
+    if (!n || !list.length) return '';
+    var exact = list.filter(function(t){ return norm(t) === n; });
+    if (exact.length) return exact.length === 1 ? exact[0] : '';
+    /* that tutor's first name, whole, first: "ramy" is Ramy Sakr even when Ramyar Ali is listed too */
+    var firsts = list.filter(function(t){ return norm(t).split(' ')[0] === n; });
+    if (firsts.length) return firsts.length === 1 ? firsts[0] : '';
+    /* only then the start of a full name, and never from one or two letters */
+    if (n.length < 3) return '';
+    var hits = list.filter(function(t){ return norm(t).indexOf(n) === 0; });
+    return hits.length === 1 ? hits[0] : '';
+  };
+  /* is this exactly one of the listed names, as Course admin spells it */
+  window.hubTutorNameListed = function(name, list){
+    list = list || window.hubTutorNameList(); var v = String(name == null ? '' : name);
+    return !!v && list.indexOf(v) >= 0;
+  };
+  window.hubTutorNameSettle = function(list){
+    list = list || window.hubTutorNameList();
+    var cur = get(); if (!list.length || !cur || list.indexOf(cur) >= 0) return cur;
+    var m = window.hubTutorNameMatch(cur, list);
+    if (m) { try { localStorage.setItem(KEY, m); } catch (e) {} return m; }
+    return cur;
+  };
+  window.hubKeepTutorName = function(name){
+    name = String(name == null ? '' : name).replace(/\s+/g, ' ').trim(); if (!name) return;
+    var list = window.hubTutorNameList(), cur = get();
+    if (!list.length) { try { localStorage.setItem(KEY, name); } catch (e) {} return; }
+    if (list.indexOf(cur) >= 0) return;                       /* a listed name, chosen: it stays */
+    var m = window.hubTutorNameMatch(name, list);
+    if (m) { try { localStorage.setItem(KEY, m); } catch (e) {} }
+    else if (!String(cur).trim()) { try { localStorage.setItem(KEY, name); } catch (e) {} }
+  };
+  /* settled once as soon as any tutor page loads, so a page that reads chub:tutorName itself (the handover, TP
+     feedback, the registers, the letters) signs with the listed spelling too, not only the dashboard and marking.
+     Only in a tutor's browser: a trainee's, an assessor's, a volunteer's and the trainee-view tab are left alone. */
+  try {
+    var q = new URLSearchParams(location.search);
+    var tutorHere = (q.get('k') || localStorage.getItem('hub:k')) && !q.get('t') && !q.get('ak') && !q.get('v')
+      && !localStorage.getItem('hub:t') && !localStorage.getItem('hub:a') && sessionStorage.getItem('liteTraineeViewTab') !== '1';
+    if (tutorHere && get()) window.hubTutorNameSettle();
+  } catch (e) {}
+  var styled = false;
+  var addStyle = function(){
+    if (styled || !document.head) return; styled = true;
+    var s = document.createElement('style');
+    s.textContent = 'select.hub-namepick{min-height:44px;max-width:100%;box-sizing:border-box;cursor:pointer;}'
+      + 'select.hub-namepick.is-unchosen{color:var(--gold-deep,#8a6a1f);font-weight:600;}'
+      + 'select.hub-namepick option{color:var(--ink,#1f2a2a);font-weight:400;}';
+    document.head.appendChild(s);
+  };
+  window.hubTutorNameField = function(input, opts){
+    opts = opts || {};
+    if (!input) return input;
+    var list = opts.list || window.hubTutorNameList(opts.settings);
+    if (!list.length) return input;                            /* no tutors on Course admin: the typed box, as before */
+    addStyle();
+    var kept = window.hubTutorNameSettle(list);
+    var pre = opts.value != null ? String(opts.value) : kept;
+    var chosen = list.indexOf(pre) >= 0 ? pre : (window.hubTutorNameMatch(pre, list) || '');
+    var sel = document.createElement('select');
+    ['id', 'class', 'title', 'aria-label', 'style', 'aria-describedby'].forEach(function(a){ var v = input.getAttribute(a); if (v != null) sel.setAttribute(a, v); });
+    /* a select has no placeholder: a box named only by its placeholder keeps that name for a screen reader */
+    if (!sel.getAttribute('aria-label') && !input.getAttribute('aria-labelledby') && !(input.closest && input.closest('label')) && !(input.id && document.querySelector('label[for="' + input.id + '"]'))) {
+      var ph = input.getAttribute('placeholder'); if (ph) sel.setAttribute('aria-label', ph);
+    }
+    sel.classList.add('hub-namepick');
+    sel.setAttribute('autocomplete', 'off');
+    var first = document.createElement('option'); first.value = ''; first.textContent = opts.choose || 'Choose your name';
+    sel.appendChild(first);
+    list.forEach(function(n){ var o = document.createElement('option'); o.value = n; o.textContent = n; sel.appendChild(o); });
+    sel.value = chosen;
+    var paint = function(){ sel.classList.toggle('is-unchosen', !sel.value); if (sel.value) first.disabled = true; };
+    paint();
+    /* a choice made fires 'input' then 'change' in every browser Lite runs in; one that fires only 'change' gets an
+       'input' sent for it, so a listener written for the typed box still hears it */
+    var heard = false;
+    sel.addEventListener('input', function(){ heard = true; paint(); });
+    sel.addEventListener('change', function(){ if (!heard) sel.dispatchEvent(new Event('input', { bubbles: true })); heard = false; paint(); });
+    /* the dashboard's other boxes set this one's value by hand: keep the look in step */
+    var desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    if (desc && desc.set) Object.defineProperty(sel, 'value', { configurable: true, get: function(){ return desc.get.call(sel); },
+      set: function(v){ var x = String(v == null ? '' : v); if (x && list.indexOf(x) < 0) x = window.hubTutorNameMatch(x, list) || ''; desc.set.call(sel, x); paint(); } });
+    if (input.parentNode) input.parentNode.replaceChild(sel, input);
+    return sel;
+  };
+})();
 /* THE CLASSES (Ramy, 7 Nov 2026: "after TP4 they change level and they swap trainers ... so TP points now will also be
    different ... different contact person. And Lite will be able to read this. Send them to the right door").
    A CLASS is a level with its book's TP point set, its tutor and its room. Each group is in one class for the first half

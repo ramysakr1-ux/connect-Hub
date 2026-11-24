@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611241459">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241557">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -375,7 +375,7 @@
   .mkn-btn:hover{background:var(--a-forest) !important; box-shadow:0 0 0 2px color-mix(in oklab, var(--a-forest) 30%, transparent) !important;}
   .mkn-btn.is-quiet{background:var(--paper); color:var(--ink); border-color:var(--sand-line);}
   .mkn-btn.is-quiet:hover{background:var(--paper) !important; border-color:var(--a-forest); box-shadow:none !important;}
-  .mkn-sheet textarea, .mkn-sheet input[type=text], .mkn-sheet input[type=datetime-local]{background:var(--field); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); font-family:'Karla',sans-serif; font-size:0.95rem; padding:9px 12px; color:var(--ink);}
+  .mkn-sheet textarea, .mkn-sheet input[type=text], .mkn-sheet input[type=datetime-local], .mkn-sheet select.hub-namepick{background:var(--field); border:1.5px solid var(--sand-line); border-radius:var(--r-strip); font-family:'Karla',sans-serif; font-size:0.95rem; padding:9px 12px; color:var(--ink);}
   .mkn-sheet #xText{font-family:ui-monospace,Menlo,monospace; font-size:0.82rem;}
   .mkn-list{list-style:none; margin:0; padding:0;} .mkn-list li{margin:0; padding:11px 0; border-top:1px solid var(--sand-line);} .mkn-list li:first-child{border-top:none; padding-top:0;}
   .mkn-list b{display:block; font-weight:700;} .mkn-list span{display:block; color:var(--grey); font-size:0.9rem;}
@@ -524,7 +524,7 @@
   @media (prefers-reduced-motion:reduce){ body.mkn .mkn-panel, body.mkn .mkn-panel.open{transition:none;} }
   @media print{ #mknFoot, #mknScrim, .mkn-phead{display:none !important;} body.mkn .mkn-panel{position:static !important; transform:none !important; visibility:visible !important; max-height:none !important; box-shadow:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611241459">
+<link rel="stylesheet" href="hub-house.css?v=202611241557">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -533,18 +533,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611241459"></script>
-<script src="assignment-history.js?v=202611241459"></script>
-<script src="hub-exchange.js?v=202611241459"></script>
-<script src="hub-docx.js?v=202611241459"></script>
-<script src="hub-marking.js?v=202611241459"></script>
-<script src="hub-due.js?v=202611241459"></script>
-<script src="hub-shared.js?v=202611241459"></script>
-<script src="hub-store.js?v=202611241459"></script>
-<script src="hub-say.js?v=202611241459"></script>
-<script src="hub-sync.js?v=202611241459"></script>
-<script src="hub-notebook.js?v=202611241459"></script>
-<script src="fol-interview.js?v=202611241459"></script>
+<script src="assignment-defaults.js?v=202611241557"></script>
+<script src="assignment-history.js?v=202611241557"></script>
+<script src="hub-exchange.js?v=202611241557"></script>
+<script src="hub-docx.js?v=202611241557"></script>
+<script src="hub-marking.js?v=202611241557"></script>
+<script src="hub-due.js?v=202611241557"></script>
+<script src="hub-shared.js?v=202611241557"></script>
+<script src="hub-store.js?v=202611241557"></script>
+<script src="hub-say.js?v=202611241557"></script>
+<script src="hub-sync.js?v=202611241557"></script>
+<script src="hub-notebook.js?v=202611241557"></script>
+<script src="fol-interview.js?v=202611241557"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -1781,6 +1781,11 @@ function renderNew(){
 
 /* who is at this screen: the name the tutor gave on the dashboard, tidied. Two names are the same person when
    they match apart from capitals and spaces. */
+/* CHOSEN FROM COURSE ADMIN (24 Nov 2026): a kept name that clearly is one of the course's tutors is kept in Course
+   admin's spelling as the page opens, and a name the course does not list is asked for again, from the list, before
+   it goes on the record (mknNoName). A course with no tutor list asks only when there is no name at all. */
+if (window.hubTutorNameSettle) { try { hubTutorNameSettle(); } catch (e) {} }
+function mknNoName(me){ if (!me) return true; const L = window.hubTutorNameList ? hubTutorNameList() : []; return L.length > 0 && !(window.hubTutorNameListed && hubTutorNameListed(me, L)); }
 function mknTutor(){ try { return String(localStorage.getItem('chub:tutorName') || '').replace(/\s+/g, ' ').trim(); } catch (e) { return ''; } }
 function mknSame(x, y){ const n = v => String(v || '').replace(/\s+/g, ' ').trim().toLowerCase(); return !!n(x) && n(x) === n(y); }
 /* CLOSE ENOUGH TO BE THE SAME TUTOR (24 Nov 2026, a reviewer's finding). The name on this computer is typed by hand,
@@ -1932,15 +1937,19 @@ function mknSetFirstNow(name){
 }
 function mknTakeFirst(change){
   const me = mknTutor(), sub = subFor(CURRENT);
-  if (!me) { mknAskName(); return; }
+  if (mknNoName(me)) { mknAskName(); return; }
   mknSetFirst(change && mknSame(sub.markers.first, me) ? '' : me);
 }
-function mknAskName(){
+/* asked for by Return: once the name is chosen, the script is returned as the tutor asked (a reviewer's nit, 24 Nov 2026) */
+let MKN_NAME_THEN_RETURN = false;
+function mknAskName(thenReturn){
+  MKN_NAME_THEN_RETURN = !!thenReturn;
+  const pick = !!(window.hubTutorNameList && hubTutorNameList().length);
   mknSheet({ id: 'name', narrow: true, sticky: true, title: 'Your name',
-    html: `<p>Lite has no name for you on this computer yet. It goes on the record as the 1st marker.</p>
+    html: `<p>${pick ? 'Choose your name from the course\u2019s tutors.' : 'Lite has no name for you on this computer yet.'} It goes on the record as the 1st marker.${thenReturn ? ' Then the script is returned.' : ''}</p>
       <input type="text" id="mknNameIn" aria-label="Your name" autocomplete="name" style="width:100%;">
-      <div class="mkn-sh-acts"><button type="button" class="mkn-btn" id="mknNameSave">Save and take it</button></div>` });
-  const i = $('mknNameIn'); if (i) i.focus();
+      <div class="mkn-sh-acts"><button type="button" class="mkn-btn" id="mknNameSave">${thenReturn ? 'Save and return it' : 'Save and take it'}</button></div>` });
+  const i = window.hubTutorNameField ? hubTutorNameField($('mknNameIn')) : $('mknNameIn'); if (i) i.focus();
 }
 
 /* ---- A SHEET (24 Nov 2026): the one box the doors, the pills and the menu open. It sits outside the page's own
@@ -2126,7 +2135,8 @@ document.addEventListener('click', e => {
   if (t.closest('#mknNameSave')) {
     const v = String(($('mknNameIn') || {}).value || '').replace(/\s+/g, ' ').trim(); if (!v) { if ($('mknNameIn')) $('mknNameIn').focus(); return; }
     try { localStorage.setItem('chub:tutorName', v); } catch (err) {}
-    mknSheetClose(); mknSetFirst(v); return;
+    const thenReturn = MKN_NAME_THEN_RETURN; MKN_NAME_THEN_RETURN = false;
+    mknSheetClose(); mknSetFirst(v); if (thenReturn) mknReturn(); return;
   }
   if (t.closest('#mknSheet #unmarkedBtn')) { const why = ($('mknWhy') || {}).value || ''; mknSheetClose(); doReturnUnmarked(why); return; }
   if (t.closest('#mknExtSet')) { const v = ($('mknExtAt') || {}).value; if (!v) return; mknSheetClose(); setExtension(subFor(CURRENT), HubDue.fromLocalInput(v)); return; }
@@ -2266,7 +2276,7 @@ async function mknSign(){
   const shown = norm((st.sub.criteriaMarks || {})[r]), shownFirst = st.s2.first, shownAt = String(st.sub[r + 'At'] || '');
   /* a name that is not one of the course's tutors is asked about once, with the 1st marker named, before it signs:
      the same person under a nickname would otherwise count as double-marking their own script (24 Nov 2026) */
-  if (!mknListed(me) && window.confirmModal) {
+  if (!(window.hubTutorNameListed && hubTutorNameListed(me)) && !mknListed(me) && window.confirmModal) {
     MKN_SIGNING = true;
     let go = false; try { go = await confirmModal(st.s2.first + ' is the 1st marker. Sign as 2nd marker as ' + me + '?', 'Sign'); } finally { MKN_SIGNING = false; }
     if (!go) return;
@@ -2334,7 +2344,7 @@ async function mknReturn(){
     if (!was.markers) was.markers = {};
     if (!String(was.markers.first || '').trim()) {
       const me = mknTutor();
-      if (!me) { mknAskName(); return; }
+      if (mknNoName(me)) { mknAskName(true); return; }
       was.markers.first = me;
     }
     doSave(); done = true;

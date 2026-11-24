@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611241459">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241557">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -56,7 +56,7 @@
        the one the screen asks you to fill (Ramy, 24 Sep 2026). */
     #tutorName{min-height:44px;}
     /* once it holds a name, the bar already says it ("RAMY · TUTOR"): the box steps out of the way on a phone; empty, it still asks (23 Nov 2026) */
-    #tutorName:not(:placeholder-shown):not(:focus){display:none;}
+    input#tutorName:not(:placeholder-shown):not(:focus), select#tutorName:not(.is-unchosen):not(:focus){display:none;}
     .btn{min-height:44px; display:inline-flex; align-items:center; justify-content:center;}
     .rowbtn{min-height:44px;}
     .tab{padding-top:4px; padding-bottom:14px; min-height:44px;}
@@ -73,6 +73,9 @@
     border-left-width:4px; background:var(--gold-wash);}
   #tutorName:placeholder-shown::placeholder{color:var(--gold-deep); opacity:1; font-weight:600;}
   #tutorName:focus{outline:none; border-color:var(--gold);}
+  /* chosen from Course admin's tutors (24 Nov 2026): the same box, and while none is chosen it asks the way the empty box did */
+  select#tutorName{font-family:'Karla',sans-serif; color:var(--ink);}
+  select#tutorName.is-unchosen{border:1.5px solid var(--gold); border-left-width:4px; background-color:var(--gold-wash); color:var(--gold-deep); font-weight:600;}
   /* Ramy, 21 Sep 2026: the credit sits at the foot, as on the trainee home.
      hub-shared hides .hub-credit under 768px because a header band has no room
      for it; the foot does, so this wins on specificity rather than !important. */
@@ -136,7 +139,7 @@
      to a course with people on it is off until then. */
   body.firstrun .title, body.firstrun .titleacts, body.firstrun #onlineRooms, body.firstrun #stream,
   body.firstrun #shelf, body.firstrun #installHint, body.firstrun #queue, body.firstrun #stageDue, body.firstrun #comingLine,
-  body.firstrun .chrome .right input{display:none !important;}
+  body.firstrun .chrome .right input, body.firstrun .chrome .right select{display:none !important;}
   .welcome{background:var(--surface); border-radius:var(--r-card); border-top:3px solid var(--teal);
     padding:26px 28px 24px; max-width:640px; margin:22px auto 0;}
   .welcome .eyebrow{font-family:'Instrument Sans','Karla',sans-serif; font-weight:600; font-size:10px;
@@ -146,12 +149,13 @@
   .wname{display:block; margin:20px 0 24px; max-width:460px;}
   .wname > span:not(.wsig){display:block; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
     letter-spacing:0.1em; text-transform:uppercase; color:var(--grey); margin-bottom:5px;}
-  .wname input{width:100%; box-sizing:border-box; font-family:'Karla',sans-serif; font-size:1rem; padding:10px 12px;
+  .wname input, .wname select{width:100%; box-sizing:border-box; font-family:'Karla',sans-serif; font-size:1rem; padding:10px 12px;
     border:1.5px solid var(--sand-line); border-radius:var(--r-control); background:var(--field); color:var(--ink);}
-  .wname input:focus{outline:none; border-color:var(--teal); background:#fff; box-shadow:0 0 0 3px rgba(31,111,107,0.12);}
+  .wname select{min-height:44px;}
+  .wname input:focus, .wname select:focus{outline:none; border-color:var(--teal); background:#fff; box-shadow:0 0 0 3px rgba(31,111,107,0.12);}
   .wname small{display:block; margin-top:5px; font-size:0.78rem; color:var(--grey);}
   .welcome.join{margin-bottom:22px;}
-  body.joining .chrome .right input{display:none !important;}
+  body.joining .chrome .right input, body.joining .chrome .right select{display:none !important;}
   .welcome.join .wgo{display:flex; gap:16px; align-items:center; flex-wrap:wrap;}
   .welcome .linkbtn{background:none; border:none; padding:0; font:inherit; font-size:0.85rem; font-weight:600; color:var(--teal); cursor:pointer; text-decoration:underline; text-decoration-color:var(--sand-line); text-underline-offset:3px;}
   .welcome .linkbtn:hover{text-decoration-color:var(--teal);}
@@ -235,9 +239,13 @@
   .wv2-name{display:block;}
   .wv2-name > span{display:block; font-family:'Instrument Sans','Karla',sans-serif; font-size:10px; font-weight:600;
     letter-spacing:0.14em; text-transform:uppercase; color:var(--grey); margin-bottom:6px;}
-  .wv2-name input{width:100%; font-family:'Newsreader',Georgia,serif; font-size:24px; font-weight:600; color:var(--ink);
+  .wv2-name input, .wv2-name select{width:100%; font-family:'Newsreader',Georgia,serif; font-size:24px; font-weight:600; color:var(--ink);
     padding:6px 0 8px; border:0; border-bottom:1.5px solid var(--sand-line); background:transparent; border-radius:0;}
-  .wv2-name input:focus{outline:none; border-bottom-color:var(--teal);}
+  .wv2-name select{min-height:48px; cursor:pointer;}
+  /* the choice shows focus by its teal underline alone, like the line it sits on; no box round it (24 Nov 2026) */
+  .wv2-name select:focus{box-shadow:none !important;}
+  @media (max-width:560px){ .wv2-name select{font-size:21px; padding-right:22px;} }
+  .wv2-name input:focus, .wv2-name select:focus{outline:none; border-bottom-color:var(--teal);}
   .wv2-name input::placeholder{color:var(--field-ph);}
   .wv2-name small{display:block; margin-top:7px; font-size:13px; color:var(--grey);}
   .wv2 .wsig{margin-top:22px; background:var(--surface); border:0; box-shadow:none; border-radius:10px; padding:16px 22px 14px;}
@@ -712,7 +720,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611241459">
+<link rel="stylesheet" href="hub-house.css?v=202611241557">
 </head>
 <body>
 <div class="board">
@@ -844,27 +852,27 @@
 
 </div>
 
-<script src="hub-due.js?v=202611241459"></script>
-<script src="observation-defaults.js?v=202611241459"></script>
-<script src="hub-rotation.js?v=202611241459"></script>
-<script src="hub-peers.js?v=202611241459"></script>
-<script src="hub-shared.js?v=202611241459"></script>
+<script src="hub-due.js?v=202611241557"></script>
+<script src="observation-defaults.js?v=202611241557"></script>
+<script src="hub-rotation.js?v=202611241557"></script>
+<script src="hub-peers.js?v=202611241557"></script>
+<script src="hub-shared.js?v=202611241557"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611241459"></script>
-<script src="hub-say.js?v=202611241459"></script>
-<script src="hub-hand.js?v=202611241459"></script>
-<script src="hub-ink.js?v=202611241459"></script>
-<script src="hub-shelf.js?v=202611241459"></script>
+<script src="hub-store.js?v=202611241557"></script>
+<script src="hub-say.js?v=202611241557"></script>
+<script src="hub-hand.js?v=202611241557"></script>
+<script src="hub-ink.js?v=202611241557"></script>
+<script src="hub-shelf.js?v=202611241557"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611241459"></script>
-<script src="hub-sync.js?v=202611241459"></script>
-<script src="hub-notebook.js?v=202611241459"></script>
-<script src="hub-tracker.js?v=202611241459"></script>
-<script src="hub-feedback.js?v=202611241459"></script>
+<script src="assignment-defaults.js?v=202611241557"></script>
+<script src="hub-sync.js?v=202611241557"></script>
+<script src="hub-notebook.js?v=202611241557"></script>
+<script src="hub-tracker.js?v=202611241557"></script>
+<script src="hub-feedback.js?v=202611241557"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -902,6 +910,8 @@ function saveRoster(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
    they submitted the self-eval"). The row said Returned and stayed grey, so nothing showed that there was something
    new to read. Until this tutor opens it, the row is lit and its button reads Read their self-evaluation. What has
    been read is remembered in this browser (chub:selfRead:<trainee>), by the time the self-evaluation was turned in. */
+/* a kept name that clearly is one of Course admin's tutors is kept in Course admin's spelling before anything reads it (24 Nov 2026) */
+if (window.hubTutorNameSettle) { try { hubTutorNameSettle(); } catch (e) {} }
 let ME_TUTOR = ''; try { ME_TUTOR = (localStorage.getItem('chub:tutorName') || '').trim(); } catch (e) {}
 /* a self-evaluation filed with a past TP: read by this tutor? An old mark with no name on it counts for everyone. */
 function lateSelfRead(ls){
@@ -1429,6 +1439,8 @@ function paintSetup(s){
      yet (Ramy, 6 Oct 2026) -- unchanged from v1. */
   const stored = localStorage.getItem('chub:tutorName') || '';
   const name = s.named ? stored : '';
+  /* chosen, not typed, where Course admin lists the tutors (24 Nov 2026) */
+  const pickName = !!(window.hubTutorNameList && hubTutorNameList().length);
   const nextIdx = steps.findIndex(x => !x.done), next = steps[nextIdx];
   /* "Start" until the center has done one of its own -- the two that come
      ready do not count (v1 tested done === 0, which two ready steps made
@@ -1475,7 +1487,7 @@ function paintSetup(s){
           '<p class="wv2-lede">For now it sets the course up. The moment the trainees are on it, it becomes your working list: the teaching practices waiting for your feedback, the assignments waiting to be marked, what is due today.</p>' +
         '</div>' +
         '<div class="wv2-sheet">' +
-          '<label class="wv2-name"><span>Your name</span><input id="welcomeName" type="text" value="' + esc(name) + '" placeholder="Type your name" autocomplete="name"><small>Typed once. It signs your posts, your feedback and your marking.</small></label>' +
+          '<label class="wv2-name"><span>Your name</span><input id="welcomeName" type="text" value="' + esc(name) + '" placeholder="Type your name" autocomplete="name"><small>' + (pickName ? 'Chosen once from the course\u2019s tutors.' : 'Typed once.') + ' It signs your posts, your feedback and your marking.</small></label>' +
           '<span class="wsig" id="welcomeSig"></span>' +
           '<span class="wv2-sigph" id="welcomeSigPh"><i>Your signature appears here as you type</i></span>' +
         '</div>' +
@@ -1506,10 +1518,11 @@ function paintSetup(s){
      is what every other screen reads */
   const skip = document.getElementById('wv2Skip');
   if (skip) skip.addEventListener('click', () => { try { localStorage.setItem('chub:setupSkipped', '1'); } catch (e) {} paint(); });
-  const w = document.getElementById('welcomeName');
+  const w = window.hubTutorNameField ? hubTutorNameField(document.getElementById('welcomeName'), { value: name }) : document.getElementById('welcomeName');
   const sig = document.getElementById('welcomeSig'), ph = document.getElementById('welcomeSigPh');
   const draw = v => { drawSig(sig, v); ph.hidden = !sig.hidden; };
-  w.addEventListener('input', () => { nameInput.value = w.value; localStorage.setItem('chub:tutorName', w.value); draw(w.value); });
+  if (pickName) { const t = ph.querySelector('i'); if (t) t.textContent = 'Your signature appears here when you choose your name'; }
+  w.addEventListener('input', () => { nameInput.value = w.value; localStorage.setItem('chub:tutorName', w.value); headerHeard(); draw(w.value); });
   draw(w.value);
   if (!name) setTimeout(() => { try { w.focus({ preventScroll: true }); } catch (e) {} }, 60);
 }
@@ -1526,7 +1539,7 @@ function paintJoin(s){
     /* a name given on the tutors' card greets them here (Ramy, 25 Oct 2026) */
     '<h2>Welcome' + (stored ? ', ' + esc(String(stored).trim().split(/\s+/)[0]) + '.' : s.named ? ' to ' + oneLine(esc(s.cs.courseName)) : '') + '</h2>' +
     '<p class="wnow"><b>This is the tutors\u2019 page for the course.</b> Everything waiting for you lands here: the teaching practices waiting for your feedback, the assignments waiting to be marked, the noticeboard, and the trainees\u2019 records, one click each. One person sets the course up, in Course admin under the Course menu. Everyone else simply works in it.</p>' +
-    '<label class="wname"><span>Your name</span><input id="joinName" type="text" value="' + esc(stored) + '" placeholder="As it will sign your feedback" autocomplete="name"><small>Typed once in this browser. It signs your posts, your feedback and your marking.</small><span class="wsig" id="joinSig"></span></label>' +
+    '<label class="wname"><span>Your name</span><input id="joinName" type="text" value="' + esc(stored) + '" placeholder="As it will sign your feedback" autocomplete="name"><small>' + (window.hubTutorNameList && hubTutorNameList().length ? 'Chosen once from the course\u2019s tutors.' : 'Typed once in this browser.') + ' It signs your posts, your feedback and your marking.</small><span class="wsig" id="joinSig"></span></label>' +
     '<div class="wgo"><button class="btn primary" type="button" id="joinGo">Take me to the page</button>' +
     /* Ramy, 17 Oct 2026: on a course that was already set up this promised
        "the setup steps" and then just landed on the page -- there were none
@@ -1534,10 +1547,10 @@ function paintJoin(s){
     (setupSteps(s).some(x => !x.done)
       ? '<button class="linkbtn" type="button" id="joinSetup">Setting this course up yourself? See the setup steps</button></div>'
       : '<a class="linkbtn" href="6_centre_admin_dashboard.html" id="joinAdmin">Changing a setting? Open Course admin</a></div>');
-  const j = document.getElementById('joinName');
-  j.addEventListener('input', () => { nameInput.value = j.value; try { localStorage.setItem('chub:tutorName', j.value); } catch (e) {} drawSig(document.getElementById('joinSig'), j.value); });
+  const j = window.hubTutorNameField ? hubTutorNameField(document.getElementById('joinName')) : document.getElementById('joinName');
+  j.addEventListener('input', () => { nameInput.value = j.value; try { localStorage.setItem('chub:tutorName', j.value); } catch (e) {} headerHeard(); drawSig(document.getElementById('joinSig'), j.value); });
   drawSig(document.getElementById('joinSig'), j.value);
-  if (!stored) setTimeout(() => { try { j.focus({ preventScroll: true }); } catch (e) {} }, 60);
+  if (!j.value) setTimeout(() => { try { j.focus({ preventScroll: true }); } catch (e) {} }, 60);
   document.getElementById('joinGo').addEventListener('click', () => { try { localStorage.setItem('chub:welcomed', '1'); } catch (e) {} document.body.classList.remove('joining'); (window.hubFadeAway || (el => el.remove()))(host); });
   const ja = document.getElementById('joinAdmin'); if (ja) ja.addEventListener('click', () => { try { localStorage.setItem('chub:welcomed', '1'); } catch (e) {} });
   const js = document.getElementById('joinSetup'); if (js) js.addEventListener('click', () => { try { localStorage.setItem('chub:setsUp', '1'); localStorage.removeItem('chub:joined'); } catch (e) {} document.body.classList.remove('joining'); host.remove(); paint(); });
@@ -1844,7 +1857,7 @@ function paintBrief(){
 /* the line and Your sessions follow the day: redrawn at each session's start and end (hub-shared, 9 Nov 2026) */
 if (window.hubAtBoundaries) hubAtBoundaries(() => { if (document.getElementById('dv6Brief') && !document.getElementById('dv6Brief').hidden) paintBrief(); });
 /* the course moved while this page was open (hub-sync took it in the background): draw it in place, no reload (18 Nov 2026) */
-window.HUB_REDRAW = () => { const a = document.activeElement; if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return; paint(); };
+window.HUB_REDRAW = () => { const a = document.activeElement; if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return; try { fitHeaderName(); paintRole(); } catch (e) {} paint(); };
 /* "Open what is waiting" and the waiting pill show this tutor's own group's rows (18 Nov 2026) */
 document.addEventListener('click', e => {
   const a = e.target.closest('a[href="#queue"]'); if (!a) return;
@@ -1884,14 +1897,32 @@ try{
 }catch(e){}
 
 if (window.hubInstallHint) hubInstallHint(document.getElementById('installHint'), 'tutor');
-const nameInput=document.getElementById('tutorName');
-nameInput.value = localStorage.getItem('chub:tutorName') || '';
+/* THE HEADER'S NAME (24 Nov 2026): chosen from Course admin's tutors where the course lists them, typed where it does
+   not (hubTutorNameField). It keeps the id #tutorName and fires 'input' as the box did. The course can arrive or
+   change under the page (HUB_REDRAW), so the box is drawn again then, and what listens to it listens on the page. */
+let nameInput = document.getElementById('tutorName');
+function fitHeaderName(){
+  const el = document.getElementById('tutorName'); if (!el) return;
+  if (document.activeElement === el) { nameInput = el; return; }
+  const want = !!(window.hubTutorNameList && hubTutorNameList().length);
+  if (want && window.hubTutorNameField) nameInput = hubTutorNameField(el);
+  else { nameInput = el; if (nameInput.tagName === 'INPUT') nameInput.value = localStorage.getItem('chub:tutorName') || ''; }
+}
+fitHeaderName();
 /* greeted by name, from the card or the box (Ramy, 25 Oct 2026) */
-(function(){ const r = document.querySelector('.role'); const paintRole = () => { const n = (localStorage.getItem('chub:tutorName') || '').trim(); if (r) r.textContent = n ? n.split(/\s+/)[0] + ' \u00b7 Tutor' : 'Tutor'; }; paintRole(); nameInput.addEventListener('input', paintRole); })();
+const paintRole = () => { const r = document.querySelector('.role'); const n = (localStorage.getItem('chub:tutorName') || '').trim(); ME_TUTOR = n; if (r) r.textContent = n ? n.split(/\s+/)[0] + ' \u00b7 Tutor' : 'Tutor'; };
+paintRole();
+/* the welcome's and the join card's boxes set this one: the role line and the composer follow them too */
+function headerHeard(){ try { paintRole(); const w = document.querySelector('#stream .compose .who'); if (w && window.hubInitials) w.textContent = hubInitials(nameInput.value); } catch (e) {} }
 /* The header's box is a plain name; the signature is shown where the name is
    first typed, on the welcome card (8 Oct 2026). Typing here keeps the
    signature kept against the new name, so the CELTA 5 still signs with a click. */
-nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName', nameInput.value); try { if (nameInput.value.trim()) localStorage.setItem('chub:tutorSigKept', nameInput.value.trim()); } catch (e) {} });
+document.addEventListener('input', e => {
+  if (!e.target || e.target.id !== 'tutorName') return;
+  nameInput = e.target;
+  localStorage.setItem('chub:tutorName', nameInput.value); try { if (nameInput.value.trim()) localStorage.setItem('chub:tutorSigKept', nameInput.value.trim()); } catch (err) {}
+  paintRole();
+});
 
 /* ---- the course stream ----------------------------------------------------
    Posts go to the store one at a time (op 'post'); the store appends under
@@ -2036,7 +2067,7 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
   function post(){
     const ta = host.querySelector('#streamText'), sel = host.querySelector('#streamTo');
     const text = ta.value.trim(); const by = nameInput.value.trim();
-    if (!by) { nameInput.focus(); note = 'Type your name at the top first — it signs the post.'; draw(); return; }
+    if (!by) { nameInput.focus(); note = (nameInput.tagName === 'SELECT' ? 'Choose your name at the top first' : 'Type your name at the top first') + ' — it signs the post.'; draw(); return; }
     if (!text) { ta.focus(); return; }
     localStorage.setItem('chub:streamTo', sel.value);
     const dueEl = host.querySelector('#streamDue'); const due = dueEl && dueEl.value && window.HubDue ? HubDue.fromLocalInput(dueEl.value) : '';
@@ -2056,7 +2087,7 @@ nameInput.addEventListener('input', ()=>{ localStorage.setItem('chub:tutorName',
   draw();
   /* The composer's tile follows the name as it is typed (Ramy, 28 Sep 2026:
      "fix the avatar in the course stream"). */
-  nameInput.addEventListener('input', () => { const w = host.querySelector('.compose .who'); if (w) w.textContent = hubInitials(nameInput.value); });
+  document.addEventListener('input', e => { if (!e.target || e.target.id !== 'tutorName') return; const w = host.querySelector('.compose .who'); if (w) w.textContent = hubInitials(e.target.value); });
 })();
 
 /* From the course: a tutor puts up the demonstration lesson and GTKY

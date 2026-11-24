@@ -223,7 +223,7 @@
     + '.nbk-carry ul{margin:0 0 6px;padding-left:18px;} .nbk-carry li{margin:2px 0;} .nbk-carry .q{margin:0;font-style:italic;color:var(--a-forest);font-family:Newsreader,Georgia,serif;font-size:1rem;}'
     + '.nbk-sheet textarea{width:100%;box-sizing:border-box;min-height:150px;resize:vertical;font:400 1rem/1.55 Karla,sans-serif;color:var(--ink);background:var(--paper);border:1.5px solid var(--sand-line);border-radius:10px;padding:12px 14px;}'
     + '.nbk-sheet textarea:focus{outline:none;border-color:var(--a-forest);box-shadow:0 0 0 3px rgba(30,59,47,.12);}'
-    + '.nbk-sheet input.nbk-name{width:100%;box-sizing:border-box;font:400 1rem/1.4 Karla,sans-serif;border:1.5px solid var(--sand-line);border-radius:10px;padding:10px 14px;margin:0 0 12px;}'
+    + '.nbk-sheet input.nbk-name,.nbk-sheet select.nbk-name{width:100%;box-sizing:border-box;font:400 1rem/1.4 Karla,sans-serif;border:1.5px solid var(--sand-line);border-radius:10px;padding:10px 14px;margin:0 0 12px;}'
     + '.nbk-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;}'
     + '.nbk-btn{font:700 .88rem Karla,sans-serif;padding:11px 18px;border-radius:10px;border:0;cursor:pointer;background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(35,34,32,.05),0 10px 30px -14px rgba(35,34,32,.18);}'
     + '.nbk-btn:hover{color:var(--a-forest);} .nbk-btn:disabled{opacity:.5;cursor:default;}'
@@ -408,6 +408,8 @@
       + '<div class="nbk-row">' + (canRec ? '<button type="button" class="nbk-btn rec" aria-label="Record a voice note"><span class="dot"></span><span class="lbl">Voice</span></button>' : '') + '<button type="button" class="nbk-btn go" disabled>Save</button></div>'
       + '<div class="nbk-audio" hidden></div><p class="nbk-msg" aria-live="polite"></p></div>';
     var ta = sheet.querySelector('textarea'), go = sheet.querySelector('.nbk-btn.go'), rb = sheet.querySelector('.nbk-btn.rec'), au = sheet.querySelector('.nbk-audio'), nm = sheet.querySelector('.nbk-name'), msg = sheet.querySelector('.nbk-msg'), whoBox = sheet.querySelector('.nbk-who');
+    /* chosen from Course admin's tutors where the course lists them (24 Nov 2026) */
+    if (nm && window.hubTutorNameField) nm = window.hubTutorNameField(nm);
     function ready(){ go.disabled = !(ta.value.trim() || recBlob) || !!(nm && !nm.value.trim()) || cur.k === 'pick'; go.textContent = goLabel(cur); }
     function chips(){
       whoBox.innerHTML = list.map(function(p, i){ return '<button type="button" data-i="' + i + '" class="' + (p === cur ? 'on' : '') + '" aria-pressed="' + (p === cur) + '">' + esc(p.label) + '</button>'; }).join('')
