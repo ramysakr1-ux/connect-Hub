@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611250050">
+<link rel="stylesheet" href="hub-tokens.css?v=202611250112">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -239,7 +239,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611250050">
+<link rel="stylesheet" href="hub-house.css?v=202611250112">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -252,20 +252,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611250050"></script>
-<script src="hub-hand.js?v=202611250050"></script>
-<script src="hub-ink.js?v=202611250050"></script>
-<script src="assignment-defaults.js?v=202611250050"></script>
-<script src="celta5-text.js?v=202611250050"></script>
-<script src="celta5-appendix.js?v=202611250050"></script>
-<script src="celta5-criteria.js?v=202611250050"></script>
-<script src="hub-tracker.js?v=202611250050"></script>
-<script src="observation-defaults.js?v=202611250050"></script>
-<script src="hub-shared.js?v=202611250050"></script>
-<script src="hub-store.js?v=202611250050"></script>
-<script src="hub-say.js?v=202611250050"></script>
-<script src="hub-sync.js?v=202611250050"></script>
-<script src="hub-notebook.js?v=202611250050"></script>
+<script src="celta5-pdf.js?v=202611250112"></script>
+<script src="hub-hand.js?v=202611250112"></script>
+<script src="hub-ink.js?v=202611250112"></script>
+<script src="assignment-defaults.js?v=202611250112"></script>
+<script src="celta5-text.js?v=202611250112"></script>
+<script src="celta5-appendix.js?v=202611250112"></script>
+<script src="celta5-criteria.js?v=202611250112"></script>
+<script src="hub-tracker.js?v=202611250112"></script>
+<script src="observation-defaults.js?v=202611250112"></script>
+<script src="hub-shared.js?v=202611250112"></script>
+<script src="hub-store.js?v=202611250112"></script>
+<script src="hub-say.js?v=202611250112"></script>
+<script src="hub-sync.js?v=202611250112"></script>
+<script src="hub-notebook.js?v=202611250112"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -1395,6 +1395,20 @@ function bind(){
     if ((stage === 'stage1' || stage === 'stage3') && !['yes', 'no', true, false].includes((TT[stage] || {}).tutorialGiven)) {
       const need = $('tutNeed-' + stage); if (need) { need.hidden = false; need.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
       return;
+    }
+    /* v305 (25 Nov 2026): a tab open since before another tutor's Return still shows this button. The store keeps that
+       Return (celta5tKeep_), so this tab asks first: a return it has not seen means nothing is signed and nothing is filed,
+       or the centre's folder would get a booklet the store does not hold. No answer from the store: as before. */
+    if (TOKEN && window.HubStore) {
+      b.disabled = true; let st = null;
+      try { const r = await window.HubStore.call({ op: 'get', token: TOKEN, kind: 'celta5t' }, 20000); st = ((r && r.data) || {})[stage] || null; } catch (e) {}
+      b.disabled = false;
+      const mine = TT[stage] || {};
+      if (st && st.returnedAt && String(st.returnedAt) !== String(mine.returnedAt || '') && String(st.returnedAt) !== String(mine.reopenedFrom || '')) {
+        const by = ((st.signedBy || {}).name || '').trim();
+        alert(stage.replace('stage', 'Stage ') + ' was already returned' + (by ? ' by ' + by : '') + ' on another screen. This return was not made. Copy anything you wrote here that you want to keep, then reload the page.');
+        return;
+      }
     }
     if (stage === 'stage2' && !(C.stage2 || {}).submittedAt && !confirm(who.name + ' has not submitted their half yet. Return anyway?')) return;
     /* A tutor who saw and kept their signature on the dashboard signs with

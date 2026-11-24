@@ -6283,6 +6283,7 @@ function stage2ClosePrompt_(name, hasVoice) {
     + 'Its shape: first how far the trainee has come over the first half of the course, with their first name' + (name ? ' (' + name + ')' : '') + ' once in that opening sentence; '
     + 'then what is consistently working in their planning and teaching; then what to keep their attention on in the second half of the course, when they teach a new level and the later criteria come in, as instructions. '
     + 'Draw it from "lessonComments" (the overall comments the tutors wrote on this trainee\'s lessons in this stage) and from the strengths and action points you give above, and from nothing else. '
+    + '"lessonComments" give only what to say about this trainee: never their wording, never a whole sentence of theirs, and never their voice; the voice is only the one described at the end. '
     + 'Make it this trainee\'s own: what is said of them could not be said of every trainee. Write to the trainee as "you". '
     + 'The same rules as the points: general and criteria-referenced, no single lessons, no TP numbers, no topics or materials, no students\' names, no codes, no lists. '
     + 'Never give a grade, a standard or a result, and never promise or predict one (not "pass", not "to standard", not "on track for"). '
@@ -6298,8 +6299,10 @@ function stage2CloseTidy_(v, name) {
     .replace(/[←-⇿➡➔➜]/g, '').replace(/[ \t]+/g, ' ').replace(/\n\s*\n[\s\n]*/g, '\n\n').trim();
   if (!t || /^[\[{]/.test(t)) return '';
   t = name ? t.replace(/\bNAME\b/g, name) : t.replace(/,?\s*\bNAME\b/g, '');
-  var grade = /\bPass(\s+[AB])?\b|\bwill pass\b|\b(above|below|to|at) (the )?(expected )?standard\b|\bon track (for|to)\b|\bfail/i;
-  t = t.split(/\n\n/).map(function (p) { return (p.match(/[^.!?]+[.!?]+["”']?\s*|[^.!?]+$/g) || []).filter(function (s) { return !grade.test(s); }).join('').trim(); })
+  /* v305: only a grade sense of pass or fail; "pass the question on" or "when an activity fails" is a teaching sentence */
+  var grade = /\bPass\b(?! (the|it|them|this|that|these|those|out|round|around|on|back|over|along|across)\b)|\b(a|will|to|should|would|could|can|likely to) pass\b(?! (the|it|them|out|round|around|on|back|over|along|across)\b)|\bpass(es|ed|ing)? ((the|this) (course|stage)|CELTA)\b|\bPass grade\b|\bfail(s|ed|ing)? (the course|CELTA|this stage|the stage|to reach|to meet)\b|\b(a|the) [Ff]ail\b|\bFail\b(?! to)/;
+  var gradeI = /\b(above|below|to|at|reach|reaches|meet|meets|meeting) (the )?(required |expected )?standard\b|\bon track (for|to)\b/i;
+  t = t.split(/\n\n/).map(function (p) { return (p.match(/[^.!?]+[.!?]+["”']?\s*|[^.!?]+$/g) || []).filter(function (s) { return !grade.test(s) && !gradeI.test(s); }).join('').trim(); })
     .filter(Boolean).join('\n\n');
   if (t.split(/\s+/).filter(Boolean).length < 25) return '';
   if (t.length > 2000) { var cut = t.slice(0, 2000), at = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! ')); t = at > 1000 ? cut.slice(0, at + 1) : cut; }
