@@ -2734,12 +2734,13 @@ window.hubPaintMargin = function (root, margin, opts) {
   var beside = !!(opts && opts.beside);
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   [].forEach.call(root.querySelectorAll('.tmloc[data-loc]'), function (loc) {
-    var items = (margin[loc.getAttribute('data-round')] || []).filter(function (c) { return c.loc === loc.getAttribute('data-loc') && (c.text || c.tick); });
+    var items = (margin[loc.getAttribute('data-round')] || []).filter(function (c) { return c.loc === loc.getAttribute('data-loc') && (c.text || c.tick || c.typo); });
     if (!items.length) return;
     var box = loc.querySelector('.readonly'), gut = loc.querySelector('.tmgut');
     items.forEach(function (c, n) {
       var id = c.id || ('n' + n);
-      var at = hubHighlight(box, c.quote, id, c.tick ? 'tmc tmc-tick' : 'tmc' + (c.tone ? ' tmc-' + c.tone : ''), 'tmc', c.occ);
+      var at = hubHighlight(box, c.quote, id, c.typo ? 'tmc tmc-typo' : c.tick ? 'tmc tmc-tick' : 'tmc' + (c.tone ? ' tmc-' + c.tone : ''), 'tmc', c.occ);
+      if (c.typo) return;   /* a typo is the yellow on the words alone (24 Nov 2026) */
       if (at >= 0 && c.tick) hubTickSpots(c.quote, c.n || 1).forEach(function (sp) {
         var span = document.createElement('span'); span.className = 'tmc-mark'; span.setAttribute('role', 'img'); span.setAttribute('aria-label', 'ticked by your tutor');
         span.innerHTML = hubTickSVG('draw'); hubInsertAt(box, at + sp, span);
@@ -2758,6 +2759,7 @@ window.hubPaintMargin = function (root, margin, opts) {
     st.textContent = 'mark.tmc{background:oklch(72% 0.035 250 / .2); color:inherit; border-bottom:2px solid oklch(52% 0.045 250); border-radius:2px; padding:0 1px;}' +
       'mark.tmc.tmc-good{background:oklch(70% 0.1 158 / .22); border-bottom-color:oklch(46% 0.1 158);} mark.tmc.tmc-fix{background:oklch(72% 0.11 40 / .24); border-bottom-color:oklch(52% 0.13 40);}' +
       /* the trainee sees only the ticks, not a highlight under them (Ramy, 18 Oct 2026: "the trainees should only see the ticks... highlight will either go for the good comments or the action points"); the tutor's marking page keeps the highlight */ 'mark.tmc-tick{background:none !important; border-bottom:0 !important; padding:0 !important;} .tmc-mark{white-space:nowrap;}' +
+      'mark.tmc.tmc-typo, body.rt-on mark.tmc.tmc-typo{background:oklch(92% 0.15 98) !important; border-bottom:0 !important; box-shadow:none !important; color:inherit;}' +
       '.tmgut:empty{display:none;} .tmgut{display:flex; flex-direction:column; gap:8px; margin:6px 0 10px;}' +
       '.tmcard{background:var(--paper); border:1px solid var(--sand-line); border-left:3px solid oklch(52% 0.045 250); border-radius:10px; padding:8px 11px; font-size:0.86rem; line-height:1.5;}' +
       '.tmcard.tone-good{border-left-color:oklch(46% 0.1 158);} .tmcard.tone-fix{border-left-color:oklch(52% 0.13 40);}' +

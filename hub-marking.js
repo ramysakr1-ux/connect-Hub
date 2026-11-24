@@ -150,7 +150,10 @@
           span.innerHTML = hubTickSVG(c.id === JUST_TICKED ? 'draw' : ''); hubInsertAt(box, at + sp, span);
         });
       });
-      var cm = items.filter(function (c) { return !c.tick; });
+      /* A TYPO IS A HIGHLIGHT (Ramy, 24 Nov 2026: "I don't want to comment on every single typo. I want to highlight it,
+         like a highlighter ... just yellow"): the words in yellow, no comment, no criterion, no card. */
+      items.filter(function (c) { return c.typo; }).forEach(function (c) { hubHighlight(box, c.quote, c.id, 'mc mc-typo', null, c.occ); });
+      var cm = items.filter(function (c) { return !c.tick && !c.typo; });
       /* THE NEW LAYOUT'S COMMENT CARD (24 Nov 2026): the cards stand in the order of the words they are about, each
          headed by its criterion and its kind ("Criterion 1 · Good", "To work on", or just "Comment"), with Edit and
          Delete under your own. The writer's name shows only when the writer is somebody else. */
@@ -277,7 +280,8 @@
     var b = bar(), cr = CTX.a.criteria || [], ex = tickRec(), n = ex ? (ex.n || 1) : 0;
     b.innerHTML = '<div class="sb-row"><button type="button" class="sb-main" data-sb="">Comment</button>' +
       '<button type="button" class="sb-good" data-tick>' + hubTickSVG() + ' Good' + (n ? '<span class="sb-n">×' + n + '</span>' : '') + '</button>' +
-      (n ? '<button type="button" class="sb-minus" data-untick title="One tick fewer" aria-label="One tick fewer">−</button>' : '') + '</div>' +
+      (n ? '<button type="button" class="sb-minus" data-untick title="One tick fewer" aria-label="One tick fewer">−</button>' : '') +
+      '<button type="button" class="sb-typo" data-typo title="Highlight in yellow: no comment">' + (SEL && SEL.typoId ? 'Remove typo' : 'Typo') + '</button>' + '</div>' +
       (cr.length ? '<div class="sb-row sb-ties"><span class="sb-lab">Tie to criterion</span>' + cr.map(function (c, i) { return '<button type="button" class="sb-c' + (SEL.crit === i ? ' on' : '') + '" data-bcrit="' + i + '" title="' + esc(critShort(i)) + '">' + (i + 1) + '</button>'; }).join('') + '</div>' : '');
     b.hidden = false;
     var rr = r.getBoundingClientRect(), w = Math.min(b.offsetWidth, innerWidth - 24);
@@ -291,11 +295,13 @@
     if (!CTX || !s || s.isCollapsed || !s.rangeCount) { b.hidden = true; return; }
     var r = s.getRangeAt(0), info = selectionInfo(r);
     if (!info || !canWrite(info.loc.getAttribute('data-round'))) { b.hidden = true; return; }
-    SEL = { loc: info.loc, quote: info.quote, occ: info.occ, crit: null, tickId: null };
+    SEL = { loc: info.loc, quote: info.quote, occ: info.occ, crit: null, tickId: null, typoId: null };
     /* the same words already ticked: Good adds another tick to them (the same place, not the same words elsewhere) */
     var here = info.loc.getAttribute('data-loc');
     var ex = list(writeRound()).filter(function (c) { return c.tick && c.loc === here && c.quote === info.quote && (+c.occ || 0) === (+info.occ || 0); })[0];
     if (ex) { SEL.tickId = ex.id; SEL.crit = ex.crit == null || ex.crit === '' ? null : +ex.crit; }
+    var ty = list(writeRound()).filter(function (c) { return c.typo && c.loc === here && c.quote === info.quote && (+c.occ || 0) === (+info.occ || 0); })[0];
+    if (ty) SEL.typoId = ty.id;
     showBar(r);
   }
   /* after a redraw, the same words are selected again so Good can be pressed again */
@@ -408,6 +414,13 @@
       if (rec) rec.n = Math.min(9, (rec.n || 1) + 1);
       else { rec = { id: newId('t'), loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, occ: +SEL.occ || 0, text: '', tick: true, n: 1, crit: SEL.crit == null ? null : SEL.crit, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() }; wl.push(rec); }
       JUST_TICKED = rec.id; RESEL = rec.id; CTX.save(); CTX.rerender(); return;
+    }
+    var tyb = t.closest('[data-typo]');
+    if (tyb && SEL) {
+      if (SEL.typoId) { bar().hidden = true; remove(SEL.typoId); }
+      else { list(writeRound()).push({ id: newId('y'), loc: SEL.loc.getAttribute('data-loc'), quote: SEL.quote, occ: +SEL.occ || 0, text: '', typo: true, crit: null, by: CTX.me, role: secondMode() ? 'second' : 'first', at: new Date().toISOString() });
+        bar().hidden = true; window.getSelection().removeAllRanges(); CTX.save(); CTX.rerender(); }
+      return;
     }
     var ut = t.closest('[data-untick]');
     if (ut && SEL) { var r0 = tickRec(); if (r0) { if ((r0.n || 1) > 1) { r0.n--; RESEL = r0.id; CTX.save(); CTX.rerender(); } else { bar().hidden = true; remove(r0.id); } } return; }
@@ -602,7 +615,7 @@
     var a = CTX.a, r = CTX.round, cr = a.criteria || [], m = CTX.sub.criteriaMarks[r] || [];
     var notes = cr.map(function (c, i) { var ta = document.querySelector('[data-crit-comment="' + i + '"]'); return ta ? ta.value.trim() : (((CTX.sub.criteriaComments || {})[r] || [])[i] || ''); });
     var gen = (($('comment') || {}).value || '').trim(), out = CTX.outcome();
-    var mc = list(r).filter(function (c) { return !c.tick; }), ticks = list(r).filter(function (c) { return c.tick; });
+    var mc = list(r).filter(function (c) { return !c.tick && !c.typo; }), ticks = list(r).filter(function (c) { return c.tick; });
     var ov = $('mkPreview'); if (!ov) { ov = document.createElement('div'); ov.id = 'mkPreview'; ov.className = 'mk-prev-wrap'; document.body.appendChild(ov); }
     ov.className = 'mk-prev-wrap as-' + CTX.key;
     ov.innerHTML = '<div class="mk-prev" role="dialog" aria-label="What the trainee will see">' +
@@ -1097,6 +1110,8 @@
       'body.mkn .mc-acts button{min-height:40px; padding:0 2px; font:700 0.82rem Karla,sans-serif; color:var(--a-forest); text-decoration:underline; text-decoration-color:currentColor; text-underline-offset:3px;}',
       'body.mkn mark.mc{background:color-mix(in oklab, var(--grey) 16%, transparent); border-bottom-color:var(--grey);}',
       'body.mkn mark.mc.mc-good{background:color-mix(in oklab, var(--a-green) 18%, transparent); border-bottom-color:var(--a-green);}',
+      'mark.mc.mc-typo, body.mkn mark.mc.mc-typo{background:oklch(92% 0.15 98) !important; border-bottom:0 !important; box-shadow:none !important; color:inherit; border-radius:2px;}',
+      '.mk-selbar .sb-typo{background:oklch(92% 0.15 98) !important; color:var(--ink) !important; border-color:transparent !important;}',
       /* A TICK IS A TICK (Ramy, 24 Nov 2026: "can we not highlight when it's only good"): ticked words keep their place
          for a click (another tick, or the minus) but carry no colour; the green tick after them is the mark. A Good
          comment with words keeps its highlight. */
