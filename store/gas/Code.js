@@ -442,7 +442,15 @@ function versionStamp_(id) {
 }
 function bumpVersion_(id) {
   var props = PropertiesService.getScriptProperties();
-  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  var lock = LockService.getScriptLock();
+  /* the version always moves (v303, 24 Nov 2026): a bump that timed out behind a long save was skipped, and other devices
+     then took their copy as current. Without the lock the stamp is still written; "before" is then unknown, so the
+     caller never takes the new version as its own and its next page boots. */
+  try { lock.waitLock(10000); } catch (lk) {
+    var stamp = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    props.setProperty(verKey_(id), stamp);
+    return { before: '?', after: stamp };
+  }
   try {
     var before = props.getProperty(verKey_(id)) || '0';
     var after = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -1930,8 +1938,10 @@ case 'inbox': {
         return { saved: true };
       }
       if (k2 === 'assignments') return putAssignments_(course.id, me.token, req.data, 'trainee');
-      /* v299 (23 Nov 2026): a self-evaluation is filed with its TP before it is cleared or replaced (fileLateSelf_) */
-      if (k2 === 'selfeval') { try { fileLateSelf_(course.id, me.token, req.data); } catch (lsErr) {} }
+      /* v303 (24 Nov 2026): a turned-in plan or self-evaluation, and the tutor's feedback, are not undone by an older copy
+         from another device, and moving on to the next TP is done whole or not at all (putTurnedIn_). v299's filing of a
+         self-evaluation (fileLateSelf_) runs in there. */
+      if (k2 === 'plan' || k2 === 'selfeval' || (k2 === 'feedback' && req.data == null)) return putTurnedIn_(course.id, me.token, k2, req.data);
       write_(course.id, me.token, k2, req.data);
       return { saved: true };
     }
@@ -4522,7 +4532,7 @@ function courseWriteRaw_(courseId, kind, data) { try { var out = courseWriteRawI
 function writeInner_(courseId, token, kind, data) {
   markChanged_(courseId);
   if (kind === 'tpHistory') return writeHistory_(courseId, token, data);
-  var lock = LockService.getScriptLock(), had = lock.hasLock();   // v258: a caller that reads, changes and writes under the lock keeps it
+  var lock = LockService.getScriptLock(), had = LOCK_DEPTH_ > 0 || lock.hasLock();   // v258: a caller that reads, changes and writes under the lock keeps it (v303: LOCK_DEPTH_ says so without asking Apps Script)
   if (!had) lock.waitLock(10000);
   try {
     var sh = sheet_(SHEET_RECORDS);
@@ -5521,12 +5531,12 @@ function traineeCelta5t_(t) {
    another TP's, and that TP's filed record has no self-evaluation, the answers go onto the filed record as lateSelf.
    The pages draw it under the returned document (hubLateSelfHTML). */
 function selfTp_(rec) { var m = /\d+/.exec(String((rec && rec.state && rec.state.doc && rec.state.doc.meta && rec.state.doc.meta.tp) || (rec && rec.label) || '')); return m ? String(parseInt(m[0], 10)) : ''; }
-function fileLateSelf_(courseId, token, incoming) {
-  var was = read_(courseId, token, 'selfeval');
+function fileLateSelf_(courseId, token, incoming, known, ctx) {
+  var was = known !== undefined ? known : read_(courseId, token, 'selfeval');   // putTurnedIn_ has just read it (v303)
   if (!was || was.status !== 'turned_in' || !was.state) return false;
   var n = selfTp_(was); if (!n) return false;
   if (incoming && selfTp_(incoming) === n) return false;   // still this TP's sheet: edited, taken back, or turned in again
-  var h = read_(courseId, token, 'tpHistory') || {}, rec = h[n];
+  var h = ctx ? readHistory_(courseId, token, ctx) : (read_(courseId, token, 'tpHistory') || {}), rec = h[n];   // v303: under putTurnedIn_'s lock, her own rows only
   if (!rec || rec.lateSelf) return false;
   if (/self-?evaluation/i.test(String(rec.docHTML || '')) || (rec.state && rec.state.doc && rec.state.doc.self)) return false;
   var ans = was.state.self || was.state, keep = {};
@@ -5534,6 +5544,202 @@ function fileLateSelf_(courseId, token, incoming) {
   rec.lateSelf = { self: keep, turnedInAt: was.turnedInAt || null };
   var one = {}; one[n] = rec; writeHistory_(courseId, token, one);
   return true;
+}
+/* A TURNED-IN PLAN IS NOT UNDONE BY AN OLDER COPY (v303, 24 Nov 2026). On the morning of a TP a trainee's turned-in TP3
+   plan was replaced by a nearly blank TP3 draft. Her phone still held her records from TP2. Opening the plan page there,
+   the page ran from that copy before the store answered: it filed TP2 away, cleared the plan, the self-evaluation and the
+   feedback, and saved an empty form for TP3, and the store took all of it. The pages now wait for the store before they
+   move on (hub-sync). The store also judges a trainee's plan, self-evaluation and clearing of the feedback by their shape,
+   under the script lock, against what it holds:
+     over a TURNED-IN plan or self-evaluation of TP n,
+     - the same turn-in again, or a newer turn-in of TP n, is taken (a retry, or turned in again after a take-back);
+     - a draft of TP n is taken only when it took back THAT turn-in: it names it (backFrom equal to the stored
+       turnedInAt), or its takenBackAt or givenBackAt is later than it, or it is the stored words with a takenBackAt up to
+       ten minutes before it (a device whose clock is behind);
+     - clearing it (null), or a copy for a later TP, is taken only when TP n is over: moving on is due (below), or TP n is
+       filed in the history and no feedback for TP n is waiting;
+     - and a DRAFT plan or self-evaluation is never cleared by a trainee's save: no page clears one (moving on clears only
+       what is turned in), and an old copy moving on, or signing out, could otherwise wipe a draft written elsewhere;
+     - anything else (a draft with no take-back, an earlier TP, an older turn-in) is refused.
+     A trainee's clearing of the feedback is taken only when moving on is due.
+   MOVING ON IS DONE WHOLE OR NOT AT ALL. Moving on is due when the store holds what the page's hubMoveOn asks for: the
+   feedback returned (with its document), the self-evaluation turned in, and the plan either for a later TP, or turned in
+   for this TP (or with no TP number), or gone. The first clear of the three that the store takes then does all of it at
+   once, under the lock: the TP is filed in the history if it is not there yet, the self-evaluation is filed with it
+   (fileLateSelf_) and cleared, the plan is cleared unless it is for a later TP, and the feedback is cleared last. The
+   other two clears then find nothing to clear. So a trainee is never left with one record of the old TP that nothing
+   will ever clear.
+   A REFUSAL WRITES NOTHING. It answers ok with { saved: false, kept, data }, where data is what the trainee's own boot
+   would hand her. The page before v303 takes that as saved, so its write leaves its ledger and is never sent again; the
+   course's version moves at once, inside the request, so that page's next boot sees the store's copy.
+   And whatever a trainee's save replaces that was turned in, or that was much longer, is kept first in planPrior or
+   selfevalPrior: the last three, { at, was }. No page reads them; they are there so a lost plan can be put back by hand.
+   A demo or a presented day writes as before: nothing a visitor writes reaches the store. */
+var LOCK_DEPTH_ = 0;   // the script lock held by this execution (putTurnedIn_): writeInner_ and writeHistoryInner_ do not take it again or let it go
+var PRIOR_KEEP_ = 3;
+var TAKEBACK_SKEW_ = 600000;   // ten minutes
+function turnTp_(kind, rec) {
+  if (kind === 'selfeval') return parseInt(selfTp_(rec), 10) || 0;
+  var m = /\d+/.exec(String((rec && rec.state && rec.state.meta && rec.state.meta.tp) || (rec && rec.state && rec.state.f && rec.state.f.fTP) || (rec && rec.label) || ''));
+  return m ? parseInt(m[0], 10) : 0;
+}
+/* One trainee's few records, and a record that is there but cannot be read is not taken as nothing: the save stops with
+   an error, writes nothing, and stays in the page's ledger to go again. read_ answers null for a cell it could not read,
+   and the guard would then take a blank over a turned-in plan as if nothing were stored. { kind: data or null } */
+function readMany_(courseId, token, kinds) {
+  var sh = sheet_(SHEET_RECORDS), last = sh.getLastRow(), at = {}, out = {};
+  kinds.forEach(function (k) { out[k] = null; });
+  if (last < 2) return out;
+  var keys = sh.getRange(2, 1, last - 1, 3).getValues(), want = {};
+  kinds.forEach(function (k) { want[k] = 1; });
+  for (var i = 0; i < keys.length; i++) {   // the last row for a kind, as read_ takes it
+    if (String(keys[i][0]) === String(courseId) && String(keys[i][1]) === token && want[String(keys[i][2])]) at[String(keys[i][2])] = i + 2;
+  }
+  kinds.forEach(function (k) {
+    if (!at[k]) return;
+    var cell = sh.getRange(at[k], 4).getValue();
+    if (cell === '' || cell == null) return;
+    try { out[k] = JSON.parse(unpackRecord_(cell)); }
+    catch (e) { throw new Error('Your saved copy could not be read just now, so nothing was changed. It will be sent again.'); }
+  });
+  return out;
+}
+/* this trainee's filed TPs, from the key columns and her own history cells only (read_ pulls every row and cell of every
+   course: two of those under the lock made a move-on hold it for seconds, review 24 Nov 2026). Read once a save (ctx). */
+function readHistory_(courseId, token, ctx) {
+  if (ctx && ctx.h !== undefined) return ctx.h;
+  var sh = sheet_(SHEET_RECORDS), last = sh.getLastRow(), rows = [];
+  if (last >= 2) {
+    var keys = sh.getRange(2, 1, last - 1, 3).getValues();
+    for (var i = 0; i < keys.length; i++) {
+      var k = String(keys[i][2]);
+      if (String(keys[i][0]) === String(courseId) && String(keys[i][1]) === token && (k === 'tpHistory' || tpOf_(k))) rows.push([keys[i][0], keys[i][1], k, sh.getRange(i + 2, 4).getValue()]);
+    }
+  }
+  var h = historyFromRows_(rows, courseId, token) || {};
+  if (ctx) ctx.h = h;
+  return h;
+}
+/* the feedback as the trainee's own boot hands it to her (recordsFor_ with TRAINEE_READS) */
+function traineeFeedbackView_(courseId, token, was, selfeval) {
+  var set = null; try { set = courseRead_(courseId, 'settings'); } catch (e) {}
+  if (courseDay_(set)) return was;
+  return traineeHold_({ feedback: was, selfeval: selfeval }).feedback;
+}
+/* moving on is due: the same test as hubMoveOn (hub-shared.js), on the store's records. { n, later } or null */
+function moveOnDue_(got) {
+  var fb = got.feedback, se = got.selfeval, plan = got.plan;
+  if (!fb || typeof fb !== 'object' || fb.status !== 'returned' || !fb.docHTML) return null;
+  if (!se || typeof se !== 'object' || se.status !== 'turned_in') return null;
+  var nF = turnTp_('plan', fb); if (!nF) return null;
+  var nP = plan ? turnTp_('plan', plan) : 0, later = !!(plan && nP > nF);
+  if (plan && !later && !(plan.status === 'turned_in' && (!nP || nP === nF))) return null;
+  return { n: nF, later: later };
+}
+/* TP n is over and nothing of it is waiting: filed in the history, and the feedback held is not TP n's */
+function tpOver_(courseId, token, n, fb, ctx) {
+  if (fb && typeof fb === 'object' && turnTp_('plan', fb) === n) return false;
+  var h = readHistory_(courseId, token, ctx);
+  return !!(h[n] || h[String(n)]);
+}
+/* a save of the same TP over a turned-in record: is it the same turn-in, a newer one, or a take-back of that one? */
+function sameTpTaken_(was, now, nW, nN) {
+  var at = Number(was.turnedInAt || 0);
+  if (nN && nN !== nW) return false;
+  if (now.status === 'turned_in') {
+    var t = Number(now.turnedInAt || 0);
+    if (t !== at) return t > at;   // a newer turn-in is taken, an older one is not
+    /* the same turn-in again is taken only with the same words: a page that laid the store's turned-in copy under a form
+       drawn from an older one would otherwise send its old words under the turn-in's own stamp (review, 24 Nov 2026) */
+    return JSON.stringify(now.state == null ? null : now.state) === JSON.stringify(was.state == null ? null : was.state) && String(now.docHTML || '') === String(was.docHTML || '');
+  }
+  if (now.backFrom != null) return Number(now.backFrom) === at;   // it names the turn-in it took back: that alone decides
+  if (Math.max(Number(now.takenBackAt || 0), Number(now.givenBackAt || 0)) > at) return true;
+  /* the same words, taken back on a device whose clock is a few minutes behind (a page from before backFrom) */
+  return !!(now.takenBackAt && Number(now.takenBackAt) > at - TAKEBACK_SKEW_ && JSON.stringify(now.state) === JSON.stringify(was.state));
+}
+function shrunk_(was, data) {
+  var a = JSON.stringify(was).length, b = JSON.stringify(data == null ? null : data).length;
+  return b < a - Math.max(200, Math.round(a / 10));
+}
+/* the record a save replaces, kept beside it: the last PRIOR_KEEP_ of them. A big list is packed or put in a Drive file
+   by packRecord_ like any record. Keeping it never stops the save. */
+function keepPrior_(courseId, token, kind, was) {
+  var pk = kind + 'Prior', list = [];
+  try { var cur = readMany_(courseId, token, [pk])[pk]; if (Array.isArray(cur)) list = cur; else if (cur && cur.was) list = [cur]; }
+  catch (e) { pk = kind + 'PriorAlso'; }   // the list could not be read: it is left as it is, and this one goes beside it
+  list.push({ at: Date.now(), was: was });
+  if (list.length > PRIOR_KEEP_) list = list.slice(list.length - PRIOR_KEEP_);
+  try { write_(courseId, token, pk, list); } catch (e) { try { Logger.log('keepPrior_ ' + kind + ': ' + e); } catch (e2) {} }
+}
+function needsPrior_(was, data) {
+  if (!was || typeof was !== 'object') return false;
+  if (JSON.stringify(was) === JSON.stringify(data == null ? null : data)) return false;
+  return was.status === 'turned_in' || shrunk_(was, data);
+}
+/* write a trainee's plan or self-evaluation, keeping what it replaces when that matters */
+function putOne_(courseId, token, kind, data, was, ctx) {
+  if (needsPrior_(was, data)) keepPrior_(courseId, token, kind, was);
+  if (kind === 'selfeval') { try { fileLateSelf_(courseId, token, data, was, ctx); } catch (lsErr) {} }
+  write_(courseId, token, kind, data);
+}
+/* MOVING ON, WHOLE: file the TP, file and clear the self-evaluation, clear the plan unless it is for a later TP, clear the
+   feedback last. A run cut short leaves the feedback returned, so the trainee is asked for her self-evaluation again;
+   she is never left with one record of the old TP that nothing will clear. */
+function moveOnWhole_(courseId, token, got, mo, ctx) {
+  ctx = ctx || {};
+  var h = readHistory_(courseId, token, ctx);
+  if (!h[mo.n] && !h[String(mo.n)]) { var one = {}; one[mo.n] = got.feedback; writeHistory_(courseId, token, one); h[mo.n] = got.feedback; }
+  if (!mo.later && got.plan) putOne_(courseId, token, 'plan', null, got.plan, ctx);
+  if (got.selfeval) putOne_(courseId, token, 'selfeval', null, got.selfeval, ctx);
+  write_(courseId, token, 'feedback', null);
+}
+function refuseTurnedIn_(courseId, token, kind, was, got) {
+  markChanged_(courseId);
+  /* the version moves now as well as at the end of the request, so the version the store answers with is never the
+     caller's own: its copy is behind, and its next page boots */
+  try { PropertiesService.getScriptProperties().setProperty(verKey_(String(courseId)), Date.now().toString(36) + Math.random().toString(36).slice(2, 6)); } catch (pv) {}
+  var view = kind === 'feedback' ? traineeFeedbackView_(courseId, token, was, got.selfeval) : was;
+  return { saved: false, kept: kind, data: view == null ? null : view };
+}
+function putTurnedIn_(courseId, token, kind, data) {
+  var set = null; try { set = courseRead_(courseId, 'settings'); } catch (e) {}
+  if (courseDay_(set)) {   // a demo or a presented day: as before
+    if (kind === 'selfeval') { try { fileLateSelf_(courseId, token, data); } catch (lsErr) {} }
+    write_(courseId, token, kind, data);
+    return { saved: true };
+  }
+  var lock = LockService.getScriptLock(), had = LOCK_DEPTH_ > 0 || lock.hasLock();
+  if (!had) lock.waitLock(20000);
+  LOCK_DEPTH_++;
+  try {   // read, compare and write as one step, so two saves cannot cross
+    var ctx = {};   // her history, read once
+    var got = readMany_(courseId, token, data == null ? ['plan', 'selfeval', 'feedback'] : [kind]);
+    var was = got[kind];
+    if (JSON.stringify(was == null ? null : was) === JSON.stringify(data == null ? null : data)) return { saved: true };   // already what the store holds
+    var turned = !!(was && typeof was === 'object' && was.status === 'turned_in');
+    var nW = turned ? turnTp_(kind, was) : 0, mo;
+    if (data == null) {   // a clear: moving on (got holds all three)
+      mo = moveOnDue_(got);
+      if (mo && !(kind === 'plan' && mo.later)) moveOnWhole_(courseId, token, got, mo, ctx);
+      else if (kind === 'feedback' || (kind === 'plan' && mo)) return refuseTurnedIn_(courseId, token, kind, was, got);   // the plan of a later TP stays when moving on
+      else if (turned && (!nW || tpOver_(courseId, token, nW, got.feedback, ctx))) putOne_(courseId, token, kind, null, was, ctx);   // an old record with no TP, or a TP already over
+      else return refuseTurnedIn_(courseId, token, kind, was, got);   // a draft is never cleared by a trainee's page: moving on clears only what is turned in
+    } else if (!nW) {
+      putOne_(courseId, token, kind, data, was, ctx);   // nothing turned in, or an old record with no TP: as before
+    } else if (!(turnTp_(kind, data) > nW)) {
+      if (!sameTpTaken_(was, data, nW, turnTp_(kind, data))) return refuseTurnedIn_(courseId, token, kind, was, got);
+      putOne_(courseId, token, kind, data, was, ctx);
+    } else {   // the next TP's copy over a turned-in one: only once that TP is over
+      var all = readMany_(courseId, token, ['plan', 'selfeval', 'feedback']);
+      mo = moveOnDue_(all);
+      if (mo && (kind === 'selfeval' || !mo.later)) { moveOnWhole_(courseId, token, all, mo, ctx); write_(courseId, token, kind, data); }
+      else if (tpOver_(courseId, token, nW, all.feedback, ctx)) putOne_(courseId, token, kind, data, was, ctx);
+      else return refuseTurnedIn_(courseId, token, kind, was, all);
+    }
+    try { SpreadsheetApp.flush(); } catch (fl) {}
+  } finally { LOCK_DEPTH_--; if (!had) lock.releaseLock(); }
+  return { saved: true };
 }
 function tpNumOf_(rec) { var m = /\d+/.exec(String((rec && rec.state && rec.state.f && rec.state.f.fTP) || (rec && rec.label) || '')); return m ? String(parseInt(m[0], 10)) : ''; }
 function traineeHold_(b) {
@@ -5584,8 +5790,10 @@ function historyFromRows_(rows, courseId, token) {
 // sheet's key columns, one write per TP sent, one append for the new ones.
 function writeHistoryInner_(courseId, token, data) {
   markChanged_(courseId);
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);
+  /* a caller that already holds the lock keeps it (v303, 24 Nov 2026): putTurnedIn_ files a TP and a late self-evaluation
+     from inside its own read-compare-write, and the script lock is not re-entrant */
+  var lock = LockService.getScriptLock(), had = LOCK_DEPTH_ > 0 || lock.hasLock();
+  if (!had) lock.waitLock(10000);
   try {
     var sh = sheet_(SHEET_RECORDS);
     var last = sh.getLastRow();
@@ -5611,7 +5819,7 @@ function writeHistoryInner_(courseId, token, data) {
     });
     if (appends.length) sh.getRange(sh.getLastRow() + 1, 1, appends.length, 5).setValues(appends);
     if (legacy !== 'null') sh.getRange(rowOf['tpHistory'], 4, 1, 2).setValues([['null', new Date()]]);
-  } finally { lock.releaseLock(); }
+  } finally { if (!had) lock.releaseLock(); }
 }
 
 // ---- the owner ---------------------------------------------------------------

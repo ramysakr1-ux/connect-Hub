@@ -960,6 +960,10 @@ window.hubReadableHistory = function(h){
 window.hubMoveOn = function(page){
   try {
     if (!(window.HubSync && HubSync.mode === 'trainee')) return false;
+    /* NEVER FROM AN OLD COPY (24 Nov 2026). A phone holding the last TP's records moved on from them before the store had
+       answered, and its empty plan replaced the one turned in on the laptop. Until the store has answered for this page
+       (HubSync.isFresh, hub-sync.js), nothing moves on; the page is drawn again once it has. (The test is made below, once
+       this copy says moving on is due, so a page only owes a move-on it would have made.) */
     var rd = function(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
     var num = function(r){ var m = String((r && r.state && r.state.meta && r.state.meta.tp) || (r && r.state && r.state.f && r.state.f.fTP) || (r && r.label) || '').match(/\d+/); return m ? parseInt(m[0], 10) : 0; };
     var plan = rd('chub:plan'), se = rd('chub:selfeval'), fb = rd('chub:feedback');
@@ -969,6 +973,7 @@ window.hubMoveOn = function(page){
     var later = !!(plan && nP > nF);
     if (page === 'self' && !later) return false;
     if (plan && !later && !(plan.status === 'turned_in' && (!nP || nP === nF))) return false;
+    if (HubSync.isFresh && !HubSync.isFresh()) { if (HubSync.owe) HubSync.owe(page); return false; }
     var h = rd('chub:tpHistory') || {};
     if (!h[nF]) h[nF] = fb;
     /* THE SELF-EVALUATION IS FILED WITH ITS TP, NEVER JUST CLEARED (Ramy, 23 Nov 2026: "some of the trainees submitted
@@ -2437,6 +2442,9 @@ window.hubNoticeText = function(p){
     return false;
   }
   function leave(){
+    /* the browser forgets; nothing taken away here is sent to the course as a deletion (24 Nov 2026: removing the plan
+       through localStorage asked the course to clear it) */
+    try { if (window.HubSync && HubSync.forget) HubSync.forget(); } catch (e) {}
     try { var gone = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && KEEP_NOT.test(k)) gone.push(k); } gone.forEach(function(k){ localStorage.removeItem(k); }); } catch (e) {}
     try { sessionStorage.clear(); } catch (e) {}
     location.replace(/14_owner\.html$/.test(location.pathname) ? '14_owner.html' : 'index.html');

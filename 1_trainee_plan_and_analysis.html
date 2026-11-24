@@ -16,7 +16,7 @@
 <title>1 · Lesson Plan &amp; Language Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611242124">
+<link rel="stylesheet" href="hub-tokens.css?v=202611242212">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -509,7 +509,7 @@
   .rehbox a{color:var(--teal); font-weight:600; font-size:.84rem;}
   @media print{ .rehbox{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611242124">
+<link rel="stylesheet" href="hub-house.css?v=202611242212">
 </head>
 <body>
 <div class="board">
@@ -743,14 +743,14 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611242124"></script>
-<script src="hub-shared.js?v=202611242124"></script>
-<script src="hub-rotation.js?v=202611242124"></script>
-<script src="hub-store.js?v=202611242124"></script>
-<script src="hub-drive-pick.js?v=202611242124"></script>
-<script src="hub-say.js?v=202611242124"></script>
-<script src="hub-sync.js?v=202611242124"></script>
-<script src="hub-notebook.js?v=202611242124"></script>
+<script src="hub-due.js?v=202611242212"></script>
+<script src="hub-shared.js?v=202611242212"></script>
+<script src="hub-rotation.js?v=202611242212"></script>
+<script src="hub-store.js?v=202611242212"></script>
+<script src="hub-drive-pick.js?v=202611242212"></script>
+<script src="hub-say.js?v=202611242212"></script>
+<script src="hub-sync.js?v=202611242212"></script>
+<script src="hub-notebook.js?v=202611242212"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -2452,16 +2452,19 @@ function loadPlanRecord(){ if(!CAN_STORE) return null; try{ return JSON.parse(lo
 function savePlanRecord(patch){
   if(!CAN_STORE) return;
   const cur=loadPlanRecord()||{status:'draft'};
+  /* a turned-in record changes only by turning it in again or taking it back (24 Nov 2026): a form drawn from an older
+     copy, under which the store's turned-in copy was laid, must not send its words as that turn-in */
+  if(cur.status==='turned_in' && !('status' in patch)) return false;
   Object.assign(cur,patch);
   try{ localStorage.setItem(PLAN_KEY,JSON.stringify(cur)); }catch(e){}
+  return true;
 }
 let saveTimer=null, locked=false;
 function autosave(){
   if(!CAN_STORE||locked) return;
   clearTimeout(saveTimer);
   saveTimer=setTimeout(function(){
-    savePlanRecord({ label:draftLabel(), state:draftState(), centreName:$('fCentreName').value });
-    setStatus('Saved automatically');
+    if (savePlanRecord({ label:draftLabel(), state:draftState(), centreName:$('fCentreName').value }) !== false) setStatus('Saved automatically');
   },800);
 }
 document.addEventListener('input',autosave);
@@ -2544,7 +2547,11 @@ async function takeBack(){
   }
   const MAT = isMatOnly();
   if (!await confirmModal((MAT ? 'Take your material back? ' : 'Take your plan back? ') + 'Your tutor stops seeing it as sent until you send it again.', 'Take it back')) return;
-  savePlanRecord({ status: 'draft', turnedInAt: null, takenBackAt: Date.now() });
+  /* backFrom names the turn-in taken back (24 Nov 2026): the store keeps a turned-in plan from older copies and takes a
+     draft over it only when it was taken back after that turn-in. The time alone could be wrong on a second device whose
+     clock is behind; the turn-in's own stamp cannot. */
+  const was = loadPlanRecord() || {};
+  savePlanRecord({ status: 'draft', turnedInAt: null, takenBackAt: Date.now(), backFrom: was.turnedInAt || null });
   renderTurnStatus();
   setStatus(MAT ? 'Taken back. Send it again when it is ready.' : 'Taken back. Turn it in again when it is ready.');
 }
@@ -2573,6 +2580,8 @@ async function takeBack(){
   function tpNumberFill(){
     const f = $('fTP');
     if (!f || f.disabled || String(f.value || '').trim()) return;
+    /* not from this device's copy alone (24 Nov 2026): the number is filled, and saved, once the store has answered */
+    if (window.HubSync && HubSync.isFresh && !HubSync.isFresh()) { HubSync.whenFresh().then(tpNumberFill); return; }
     let n = parseInt(new URLSearchParams(location.search).get('tp'), 10) || 0;
     if (!n) { try {
       const me = JSON.parse(localStorage.getItem('hub:me') || 'null'), P = JSON.parse(localStorage.getItem('connect_tp_points_v1') || 'null');

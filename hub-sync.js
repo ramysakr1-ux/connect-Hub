@@ -363,7 +363,7 @@
     if (!keys.length) return Promise.resolve();
     if (DEMO) { status('Demo \u00b7 kept on this device', 'demo'); return Promise.resolve(); }   /* stays in this tab's ledger; never sent */
     // One at a time: Apps Script copes badly with a burst.
-    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(wire(jobs[k])).then(function(r){ if (r && r.stale) return onStale(k, jobs[k], r); confirmed(k); afterPut(jobs[k], r); return r; }, function(err){
+    var all = keys.reduce(function(chain, k){ return chain.then(function(){ return S.call(wire(jobs[k])).then(function(r){ if (r && r.stale) return onStale(k, jobs[k], r); if (r && r.saved === false && r.kept) return onKept(k, jobs[k], r); confirmed(k); afterPut(jobs[k], r); return r; }, function(err){
       if (err && err.transient) throw err;          // stays in the ledger; the next page sends it again
       if (note(k, jobs[k], err) >= RETRIES) {       // recorded either way -- the record is the point
         var l = ledger(); if (l[k]) { delete l[k]; ledgerSet(l); }  // stop re-sending, KEEP the record
@@ -371,8 +371,36 @@
       showUnsaved();
       throw err;
     }); }); }, Promise.resolve());
-    all.then(function(){ status('Saved to the course', 'ok'); markVer(); if (MERGED.length) mergedReload(); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
+    all.then(function(){ if (KEPT.length) { keptShow(); return; } status('Saved to the course', 'ok'); markVer(); if (MERGED.length) mergedReload(); }).catch(function(err){ status('Not saved \u2014 ' + (err && err.message || err), 'error'); });
     return all;
+  }
+  /* THE STORE KEPT ITS COPY (store v303, 24 Nov 2026). A trainee's plan, self-evaluation or clearing of the feedback that
+     would undo something newer from another device (a turn-in, the tutor's feedback) is refused: the store writes
+     nothing and answers with what it holds (saved: false, kept, data). That copy is laid down here, the job is done with
+     (sending it again would be refused again), and what this page had is kept in this browser (hub:refused:...) so it
+     can be put back by hand. A page that writes these records then shows the store's copy, with one line saying why. */
+  var KEPT = [], KEPT_KEYS = {};
+  var REFUSED = 'hub:refused:' + identityOf();
+  function identityOf(){ return mode + ':' + (!S ? '' : mode === 'tutor' ? S.key() : mode === 'assessor' ? S.assessorKey() : mode === 'volunteer' ? S.volunteerToken() : S.token()); }
+  function onKept(id, job, r){
+    /* words typed while the refused copy was on its way are kept as well (review, 24 Nov 2026) */
+    var newer = queue[id] && queue[id] !== job ? queue[id] : null;
+    confirmed(id); delete queue[id];
+    try { var list = parse(origGet(REFUSED)) || []; list.push({ at: Date.now(), kind: job.kind, data: job.data }); if (newer) list.push({ at: Date.now(), kind: newer.kind, data: newer.data }); origSet(REFUSED, JSON.stringify(list.slice(-5))); } catch (e) {}
+    var key = keyOfJob(id);
+    /* a page that is drawn again with the store's copy sends nothing more for that record before it goes: a save made in
+       between from its old form would be the old words over the store's copy (review, 24 Nov 2026) */
+    if (key && WAIT && started) KEPT_KEYS[key] = 1;
+    if (key) { delete dirty[key]; try { if (r.data == null) origRemove(key); else origSet(key, JSON.stringify(r.data)); } catch (e) {} }
+    KEPT.push(job.kind);
+    return r;
+  }
+  function keptShow(){
+    var kinds = KEPT.filter(function(k, i){ return KEPT.indexOf(k) === i; }); KEPT = [];
+    /* never "Saved" for a refused save (review, 24 Nov 2026): a page that is not drawn again says so in one line */
+    if (!(WAIT && started)) { status('Up to date with the course', 'ok'); keptLine(kinds.join(','), false); return; }
+    try { sessionStorage.setItem('hub:kept', kinds.join(',')); sessionStorage.setItem(KEEP_Y, String(window.scrollY || 0)); } catch (e) {}
+    location.reload();
   }
   // A page about to navigate awaits this, so nothing is left to the beacon.
   // A page about to navigate waits up to 2.5 s for the store; after that the
@@ -382,6 +410,42 @@
   // and a 2.5 s cap would have let the screen say "Returned" with a 100 KB
   // document still on its way (26 Sep 2026).
   window.HubSync = { flushNow: function(wait){ var f = flush(); return wait ? f : Promise.race([f, new Promise(function(r){ setTimeout(r, 2500); })]); }, mode: mode };
+  /* PAGES THAT WAIT FOR THE STORE (24 Nov 2026). A trainee's turned-in TP3 plan was replaced by a blank: her phone still
+     held her TP2 records, and the plan page ran from that copy before the store answered, filed TP2 away, cleared the
+     plan, the self-evaluation and the feedback (hubMoveOn), and saved an empty TP3 form over the plan she had turned in on
+     her laptop. The pages that write these records, or move on to the next TP when they open -- the plan, the
+     self-evaluation, the returned feedback -- now ask the store first, every time (the one-minute "same copy" shortcut
+     does not apply), and draw only once it has answered, under a quiet "Getting your latest copy...". If it has not
+     answered in eight seconds, the page is drawn from this browser's copy so she can read and type, and says that
+     moving on to the next TP waits until the store answers; hubMoveOn does nothing until then.
+       HubSync.isFresh()    true once the store has answered for this page (always true on every other page)
+       HubSync.whenFresh()  a promise, resolved then
+       HubSync.owe(page)    hubMoveOn was held back; the page is drawn again once the store answers, if nobody is at work */
+  var WAIT = mode === 'trainee' && !DEMO && /(?:^|\/)(?:1_trainee_plan_and_analysis|2_trainee_self_evaluation|4_feedback_returned)\.html$/.test(location.pathname);
+  var FRESH = !WAIT, FRESH_WAITERS = [], MOVE_OWED = false, LEAVING = false, DREW_STALE = false;
+  /* the record this page's own form writes: when the store's copy of it is laid down under a form already drawn, the page
+     is drawn again, even with somebody at work on it (review, 24 Nov 2026) -- its form shows an older copy, and a word typed
+     into it would go out as that older copy */
+  var OWN_KEY = !WAIT ? '' : /2_trainee_self_evaluation/.test(location.pathname) ? 'chub:selfeval' : /1_trainee_plan_and_analysis/.test(location.pathname) ? 'chub:plan' : '';
+  function ownRedraw(ch){
+    if (!(WAIT && started && OWN_KEY && (ch || []).indexOf(OWN_KEY) >= 0)) return false;
+    try { sessionStorage.setItem('hub:kept', 'changed:' + OWN_KEY.slice(5)); sessionStorage.setItem(KEEP_Y, String(window.scrollY || 0)); } catch (e) {}
+    flushBeacon(); location.reload();
+    return true;
+  }
+  function markFresh(){
+    if (FRESH) return; FRESH = true;
+    /* this tab's answer is carried over a reload made in the next few seconds (below, JUST_ANSWERED): a page drawn again
+       because the store answered does not wait for it a second time (on a slow store it would be drawn from the cache again) */
+    try { sessionStorage.setItem('hub:answered', JSON.stringify({ p: location.pathname, at: Date.now() })); } catch (e) {}
+    try { var ln = document.getElementById('hubStaleLine'); if (ln) ln.remove(); } catch (e) {}
+    FRESH_WAITERS.splice(0).forEach(function(fn){ try { fn(true); } catch (e) {} });
+  }
+  window.HubSync.isFresh = function(){ return FRESH; };
+  window.HubSync.whenFresh = function(){ return FRESH ? Promise.resolve(true) : new Promise(function(r){ FRESH_WAITERS.push(r); }); };
+  window.HubSync.owe = function(){ MOVE_OWED = true; };
+  /* signing out empties this browser's storage: those removals are not the trainee clearing her records (hub-shared.js) */
+  window.HubSync.forget = function(){ LEAVING = true; queue = {}; clearTimeout(timer); timer = null; };
   /* A QUIET REFRESH (3 Nov 2026). A roster write (Add all, Remove, Rename) leaves this browser's copy behind, and the
      next page used to boot from scratch: it showed the old copy ("No trainees on the roster yet" on TP points), then
      reloaded itself a few seconds later, and a click made in between was lost (Ramy: "I have to click four or five
@@ -392,9 +456,9 @@
       if (boot && boot.__ver && S.verPut && S.cred) S.verPut({ cred: S.cred(), v: boot.__ver, at: Date.now() }); markVer();
       var p = plan(boot);
       if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
-      apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
+      var ch = apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
       rebuildSnapshot();
-      return true;
+      return ch;   // the keys it changed (truthy, as before)
     });
   };
   function flushBeacon(){
@@ -468,6 +532,8 @@
   }
   function route(key, value){
     if (mode === 'assessor' || mode === 'volunteer') return; // read-only: nothing this browser does reaches the course
+    if (LEAVING) return;   // signing out: the browser forgets, the course keeps everything
+    if (KEPT_KEYS[key]) return;   // the store kept its copy and this page is being drawn again with it (onKept)
     var data = value == null ? null : parse(value);
     if (mode === 'trainee' && TRAINEE_KEYS[key]) {
       if (!S.token()) return; // the link is gone from this browser: nothing to write to
@@ -737,8 +803,13 @@
          page whenever anybody on the course had saved: place, open sections and cursor gone. Once a person has typed or
          changed anything on a page, coming back to it takes the newer course in the background and leaves the page as it
          is. A page nobody has touched is still drawn again, quietly, with the reader kept where they were. */
-      return window.HubSync.refresh().then(function(){
+      return window.HubSync.refresh().then(function(ch){
         markVer();
+        if (ownRedraw(ch)) return;
+        /* a page that waits for the store (WAIT), woken with the plan, self-evaluation or feedback changed elsewhere and
+           nothing typed on it since it opened, is drawn again at once: its form was filled from the old copy, so the
+           "words not sent" test below would hold it on that copy (24 Nov 2026) */
+        if (WAIT && !TOUCHED && quiet() && (ch || []).some(function(k){ return /^chub:(plan|selfeval|feedback|tpHistory)$/.test(k); })) { quietReload(); return; }
         if (typeof window.HUB_REDRAW === 'function') { try { window.HUB_REDRAW(); return; } catch (e) {} }
         if (TOUCHED) return;
         if (!idle()) { OWED = true; return; }
@@ -800,6 +871,32 @@
     try { sessionStorage.setItem('hub:merged', what); sessionStorage.setItem('hub:glanceY:' + location.pathname, String(window.scrollY || 0)); } catch (e) {}
     setTimeout(function(){ location.reload(); }, 150);
   }
+  /* After the store kept its copy (onKept): one line, once. Drawn again: it says the page now shows the saved copy.
+     Not drawn again (another page, or one not started yet): it says what this device had was not used. */
+  function keptLine(kinds, redrawn){
+    if (!kinds) return;
+    var name = /plan/.test(kinds) ? 'Your plan' : /selfeval/.test(kinds) ? 'Your self-evaluation' : 'Your TP record';
+    var said = /^changed:/.test(kinds) ? name + ' was changed on another device after this page opened. This page now shows the newest copy.'
+      : redrawn ? name + ' was saved on another device after this page opened. This page now shows the saved copy.'
+      : name + ' was saved on another device, so the changes made on this device were not used.';
+    var show = function(){
+      var old = document.getElementById('hubKept'); if (old) old.remove();
+      var el = document.createElement('div');
+      el.id = 'hubKept'; el.setAttribute('role', 'status');
+      el.style.cssText = 'position:fixed;left:16px;right:16px;margin:0 auto;top:14px;z-index:2147483000;max-width:560px;box-sizing:border-box;' +
+        'background:oklch(97% 0.02 195);border:1px solid oklch(37.5% 0.058 195);border-top:3px solid oklch(37.5% 0.058 195);border-radius:12px;' +
+        'color:oklch(23.5% 0.017 65);font:500 14px/1.5 Karla,Helvetica,sans-serif;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 10px 30px -14px rgba(35,34,32,.35);';
+      el.innerHTML = '<span style="flex:1">' + said + '</span>' +
+        '<button type="button" style="font:700 12px Karla,sans-serif;padding:6px 12px;border-radius:20px;border:1.5px solid oklch(37.5% 0.058 195);background:none;color:oklch(37.5% 0.058 195);cursor:pointer;">OK</button>';
+      el.querySelector('button').onclick = function(){ el.remove(); };
+      document.body.appendChild(el);
+    };
+    if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+  }
+  (function(){
+    var kinds = ''; try { kinds = sessionStorage.getItem('hub:kept') || ''; if (kinds) sessionStorage.removeItem('hub:kept'); } catch (e) {}
+    keptLine(kinds, true);
+  })();
   /* After the reload: say what happened, once, in plain words. */
   (function(){
     var what = ''; try { what = sessionStorage.getItem('hub:merged') || ''; if (what) sessionStorage.removeItem('hub:merged'); } catch (e) {}
@@ -1085,15 +1182,76 @@
   /* A refusal is the store's answer, not a bad minute: it is not retried.
      (With PINs, v87, a retry re-asked for the PIN after the person had given
      up, and the sheet came back over the refusal.) */
-  function bootWithRetries(){
-    function again(err){ if (err && err.refused) throw err; return S.boot(); }
-    return S.boot().catch(again).catch(function(err){ if (err && err.refused) throw err; return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); });
+  function bootWithRetries(onFail){
+    function again(err){ if (err && err.refused) throw err; if (onFail) onFail(err); return S.boot(); }
+    /* with onFail (a waiting page), the first try is a single one, so a store that cannot be reached is known at once */
+    var first = onFail && S.call ? S.call({ op: 'boot', token: S.token() || undefined, noRetry: 1 }, 60000) : S.boot();
+    return first.catch(again).catch(function(err){ if (err && err.refused) throw err; return new Promise(function(res){ setTimeout(res, 1500); }).then(function(){ return S.boot(); }); });
   }
   function start(){ started = true; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runApp); else runApp(); }
+  /* A page that waits for the store (WAIT): covered until the store answers, so nothing on it can be typed into or moved
+     on from this browser's copy; drawn from that copy after eight seconds, or at once when the store cannot be reached. */
+  var waitEl = null;
+  function waitCover(){
+    try {
+      waitEl = document.createElement('div');
+      waitEl.id = 'hubWaiting'; waitEl.setAttribute('role', 'status'); waitEl.setAttribute('aria-live', 'polite');
+      waitEl.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:#F3F3F7;display:flex;align-items:center;justify-content:center;font:500 0.95rem/1.5 Karla,Helvetica,sans-serif;color:oklch(42% 0.02 68);';
+      waitEl.textContent = 'Getting your latest copy\u2026';
+      (document.body || document.documentElement).appendChild(waitEl);
+    } catch (e) { waitEl = null; }
+  }
+  function waitUncover(){ if (waitEl && waitEl.parentNode) waitEl.parentNode.removeChild(waitEl); waitEl = null; }
+  function staleLine(){
+    var put = function(){
+      if (FRESH || document.getElementById('hubStaleLine')) return;
+      var el = document.createElement('div');
+      el.id = 'hubStaleLine'; el.setAttribute('role', 'status');
+      el.style.cssText = 'position:relative;z-index:5;margin:0;padding:9px 16px;background:oklch(95% 0.03 80);border-bottom:1px solid oklch(80% 0.05 80);color:oklch(23.5% 0.017 65);font:500 13px/1.5 Karla,Helvetica,sans-serif;';
+      el.textContent = 'The course could not be reached yet, so this is the copy kept on this device. You can read and type. Moving on to your next TP waits until the course answers.';
+      document.body.insertBefore(el, document.body.firstChild);
+    };
+    if (document.body) put(); else document.addEventListener('DOMContentLoaded', put);
+  }
+  function drawStale(){ if (STOPPED || started) return; DREW_STALE = true; waitUncover(); start(); staleLine(); }
+  /* the store has answered for this page */
+  var LATE_CH = [];
+  function answered(){
+    if (!WAIT || FRESH) return;
+    markFresh();
+    if (!started) { exposeMeta(); rebuildSnapshot(); waitUncover(); start(); return; }
+    /* drawn from this browser's copy while the store was slow: once it answers, a page with a move-on held back is drawn
+       again (if nobody is at work on it), and moves on then */
+    /* (not idle(): the plan page's boxes are filled by script, so its "words not sent" test always holds it; TOUCHED is
+       what says somebody typed or pressed something here) */
+    var a0 = document.activeElement, t0 = a0 && a0.tagName;
+    var busy = t0 === 'INPUT' || t0 === 'TEXTAREA' || t0 === 'SELECT' || !!(a0 && a0.isContentEditable) || !!document.querySelector('.confirm-overlay, dialog[open], [aria-modal="true"]:not([hidden])');
+    if (MOVE_OWED && quiet() && !busy && !TOUCHED) { quietReload(); return; }
+    /* somebody is at work on it: it stays, and one line says a newer copy is waiting, with a button to show it (review,
+       24 Nov 2026: the line saying "this is the copy on this device" went, and the page stayed on that copy in silence) */
+    if (DREW_STALE && (MOVE_OWED || (LATE_CH || []).some(function(k){ return /^chub:(plan|selfeval|feedback|tpHistory)$/.test(k); }))) newerLine();
+  }
+  function newerLine(){
+    var put = function(){
+      if (document.getElementById('hubNewerLine')) return;
+      var el = document.createElement('div');
+      el.id = 'hubNewerLine'; el.setAttribute('role', 'status');
+      el.style.cssText = 'position:relative;z-index:5;margin:0;padding:9px 16px;background:oklch(95% 0.03 80);border-bottom:1px solid oklch(80% 0.05 80);color:oklch(23.5% 0.017 65);font:500 13px/1.5 Karla,Helvetica,sans-serif;display:flex;gap:12px;align-items:center;flex-wrap:wrap;';
+      var newer = (LATE_CH || []).some(function(k){ return /^chub:(plan|selfeval|feedback|tpHistory)$/.test(k); });
+      el.innerHTML = '<span style="flex:1;min-width:200px">' + (newer ? 'The course has a newer copy of your TP records than this page shows.' : 'The course has answered, so your next TP can start now.') + '</span>' +
+        '<button type="button" style="font:700 12px Karla,sans-serif;padding:6px 12px;border-radius:20px;border:1.5px solid oklch(37.5% 0.058 195);background:none;color:oklch(37.5% 0.058 195);cursor:pointer;">Show the latest copy</button>';
+      el.querySelector('button').onclick = function(){ window.HubSync.flushNow().then(quietReload, quietReload); };
+      document.body.insertBefore(el, document.body.firstChild);
+    };
+    if (document.body) put(); else document.addEventListener('DOMContentLoaded', put);
+  }
+  function unanswered(){ if (WAIT && !started) drawStale(); }
 
   if (cached) {
     // Instant: the page runs from this browser's copy; the course is checked behind it.
-    exposeMeta(); rebuildSnapshot(); start();
+    // (A page that waits for the store -- WAIT, above -- is drawn once the store has answered, or after eight seconds.)
+    exposeMeta(); rebuildSnapshot();
+    if (!WAIT) start(); else waitCover();
     /* THE VERSION FIRST (v179, 29 Oct 2026; Ramy: "it's been a little bit slow"). The whole course is 2.5 MB and
        4 to 6 seconds to boot; its version is a few bytes. A page opened within a minute of the last check does not
        ask at all; otherwise it asks for the version, and boots only when the course has moved since this copy. */
@@ -1104,6 +1262,7 @@
       mayaSigned();
       afterBoot();
       status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
+      answered();
     };
     var sameCopy = !!(V0 && V0.cred === CRED && V0.v && !Object.keys(held).length);
     /* a tutor's or assessor's copy with no trainees in it is never taken as current (3 Nov 2026): the roster only
@@ -1126,18 +1285,39 @@
         var ask9 = +(sessionStorage.getItem('hub:heldAsk') || 0);
         if (Date.now() - ask9 > 60000) { sessionStorage.setItem('hub:heldAsk', String(Date.now())); sameCopy = false; }
       } } catch (e) {} }
-    if (sameCopy && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
-    status('Checking the course\u2026', 'busy');
-    (sameCopy && S.version ? S.version().then(function(r){ return r && r.ver === V0.v; }, function(){ return false; /* any trouble, an older store included: boot as before, and the boot says if the link is dead */ }) : Promise.resolve(false)).then(function(fresh){
-      if (fresh) { if (S.verPut) S.verPut({ cred: CRED, v: V0.v, at: Date.now() }); settledQuietly(); return; }
-      return fullBoot();
-    }).catch(function(err){
-      if (err && err.refused) { if (err.pin) { pinRefused(err); return; } gate(err.message); return; }
-      status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
-    });
+    var JUST_ANSWERED = false;
+    if (WAIT) { try { var ja = parse(sessionStorage.getItem('hub:answered')); sessionStorage.removeItem('hub:answered');
+      JUST_ANSWERED = !!(ja && ja.p === location.pathname && Date.now() - ja.at < 15000 && Date.now() - (V0 && V0.at || 0) < 15000 && !Object.keys(ledger()).length); } catch (e) {} }
+    if (sameCopy && (!WAIT || JUST_ANSWERED) && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
+    var ASKING = false;
+    var ask = function(){
+      if (ASKING || STOPPED) return; ASKING = true;
+      status('Checking the course\u2026', 'busy');
+      var same = sameCopy && !Object.keys(ledger()).length;
+      /* a waiting page asks once without the store door's own retries: a store that cannot be reached at all (no
+         connection) draws this browser's copy at once, and the asking goes on behind it */
+      var ver1 = function(){ return WAIT && S.call ? S.call({ op: 'version', token: S.token() || undefined, noRetry: 1 }, 20000) : S.version(); };
+      (same && S.version ? ver1().then(function(r){ return r && r.ver === V0.v; }, function(err){ if (err && err.transient) unanswered(); return false; /* any trouble, an older store included: boot as before, and the boot says if the link is dead */ }) : Promise.resolve(false)).then(function(fresh){
+        if (fresh) { if (S.verPut) S.verPut({ cred: CRED, v: V0.v, at: Date.now() }); settledQuietly(); return; }
+        return fullBoot();
+      }).catch(function(err){
+        if (err && err.refused) { if (err.pin) { pinRefused(err); return; } gate(err.message); return; }
+        status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
+        unanswered();
+      }).then(function(){ ASKING = false; });
+    };
+    /* what this browser still has to send goes out beside the ask (the held jobs, above); its keys stay this browser's
+       until the store has answered them, and an answer that keeps the store's copy lays that down (onKept) */
+    ask();
+    if (WAIT) {
+      setTimeout(function(){ if (!started && !STOPPED) drawStale(); }, 8000);
+      /* ...and asked again when the connection or the tab comes back */
+      window.addEventListener('online', function(){ if (!FRESH) ask(); });
+      document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && !FRESH) ask(); });
+    }
     return;
     function fullBoot(){
-    return bootWithRetries().then(function(boot){
+    return bootWithRetries(WAIT ? unanswered : null).then(function(boot){
       if (boot && boot.__ver && S.verPut) S.verPut({ cred: CRED, v: boot.__ver, at: Date.now() }); markVer();
       var p = plan(boot);
       if (p['connect_roster_v1'] != null) p['connect_roster_v1'] = mergeRoster(p['connect_roster_v1']);
@@ -1151,17 +1331,21 @@
            browser for its next save and the next page. A page nobody has started on is still drawn again. */
         var el0 = document.activeElement, tg0 = el0 && el0.tagName;
         var atWork = TOUCHED || tg0 === 'INPUT' || tg0 === 'TEXTAREA' || tg0 === 'SELECT' || !!(el0 && el0.isContentEditable) || !!document.querySelector('.confirm-overlay, dialog[open], [aria-modal="true"]:not([hidden])');
-        if (changed.length && !atWork) { status('The course has moved on \u2014 refreshing', 'busy'); flushBeacon(); try { sessionStorage.setItem('hub:glanceY:' + location.pathname, String(window.scrollY || 0)); } catch (e) {} setTimeout(function(){ location.reload(); }, 150); return; }
+        if (ownRedraw(changed)) return;
+        if (changed.length && !atWork && started) { status('The course has moved on \u2014 refreshing', 'busy'); flushBeacon(); try { sessionStorage.setItem('hub:glanceY:' + location.pathname, String(window.scrollY || 0)); } catch (e) {} setTimeout(function(){ location.reload(); }, 150); return; }
         if (changed.length) { rebuildSnapshot(); if (typeof window.HUB_REDRAW === 'function') { try { window.HUB_REDRAW(); } catch (e) {} } }
       } else {
         // The roster goes in merged: this page's own records are already laid over it.
-        apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
+        var changed = apply(p, function(k){ return !dirty[k] || k === 'connect_roster_v1'; }); noteBoot(p);
         rebuildSnapshot();
+        if (ownRedraw(changed)) return;
       }
+      LATE_CH = changed;
       try { localStorage.setItem('hub:booted', identity); } catch (e) {}
       mayaSigned();
       afterBoot();
       status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
+      answered();
     }, function(err){
       // The store answering "no" is not the network failing. An expired
       // assessor link, a rotated tutor key, a trainee removed from the course:
@@ -1174,6 +1358,7 @@
          link: the card says the link also has a PIN and stays drawn (v87). */
       if (err && err.refused) { if (err.pin) { pinRefused(err); return; } gate(err.message); return; }
       status('Could not reach the course \u2014 ' + (err && err.message || err) + ' (showing this browser\u2019s copy)', 'error');
+      unanswered();
     });
     }
     return;
@@ -1210,9 +1395,11 @@
     try { localStorage.setItem('hub:booted', identity); } catch (e) {}
     afterBoot();
     status(DEMO ? 'Demo \u00b7 kept on this device' : mode === 'assessor' ? 'Assessor view \u2014 read-only' : mode === 'volunteer' ? 'Your page' : 'Live \u2014 saved to the course as you go', DEMO ? 'demo' : 'ok');
+    markFresh();
   }, function(err){
     if (err && err.refused) { if (err.pin) { return pinRefused(err); } gate(err.message); return 'gated'; }
     status('Could not reach the course \u2014 ' + (err && err.message || err), 'error');
+    if (WAIT) staleLine();
   })
     .then(function(gated){ if (gated !== 'gated') { uncover(); start(); } });
 })();

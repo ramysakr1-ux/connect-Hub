@@ -158,6 +158,8 @@ window.HubStore = (function(){
     /* a recording is megabytes and a transcript is minutes: sent once. A retry nobody asked for was nine minutes of "Saving",
        copies left in Drive, and the paid transcript run three times (18 Nov 2026). The person's own second press is the retry. */
     var onlyOnce = /^(deleteCourse|undeleteCourse|purgeCourse|restoreFromBackup|putInterviewAudio|transcribeInterview)$/.test(payload.op);
+    /* a read that only asks whether the store can be reached at all (hub-sync's waiting pages, 24 Nov 2026): tried once */
+    if (payload.noRetry) { onlyOnce = true; delete payload.noRetry; }
     for (;;) {
       try { out = await once(payload, timeoutMs); }
       catch (e) { if (!e.transient || onlyOnce || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }

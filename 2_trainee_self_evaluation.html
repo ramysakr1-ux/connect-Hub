@@ -16,7 +16,7 @@
 <title>2 · Self-evaluation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611242124">
+<link rel="stylesheet" href="hub-tokens.css?v=202611242212">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -239,7 +239,7 @@
   .prev-pill:hover{background:var(--fb-act-wash);} .prev-pill:disabled{opacity:.5; cursor:default;}
   @media print{ .prev-pill{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611242124">
+<link rel="stylesheet" href="hub-house.css?v=202611242212">
 </head>
 <body>
 <div class="board">
@@ -381,12 +381,12 @@
   </div>
 </div>
 
-<script src="hub-due.js?v=202611242124"></script>
-<script src="hub-shared.js?v=202611242124"></script>
-<script src="hub-store.js?v=202611242124"></script>
-<script src="hub-say.js?v=202611242124"></script>
-<script src="hub-sync.js?v=202611242124"></script>
-<script src="hub-notebook.js?v=202611242124"></script>
+<script src="hub-due.js?v=202611242212"></script>
+<script src="hub-shared.js?v=202611242212"></script>
+<script src="hub-store.js?v=202611242212"></script>
+<script src="hub-say.js?v=202611242212"></script>
+<script src="hub-sync.js?v=202611242212"></script>
+<script src="hub-notebook.js?v=202611242212"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -741,16 +741,19 @@ function loadSelfRecord(){ if(!CAN_STORE) return null; try{ return JSON.parse(lo
 function saveSelfRecord(patch){
   if(!CAN_STORE) return;
   const cur=loadSelfRecord()||{status:'draft'};
+  /* a turned-in record changes only by turning it in again or taking it back (24 Nov 2026): a form drawn from an older
+     copy, under which the store's turned-in copy was laid, must not send its words as that turn-in */
+  if(cur.status==='turned_in' && !('status' in patch)) return false;
   Object.assign(cur,patch);
   try{ localStorage.setItem(SELF_KEY,JSON.stringify(cur)); }catch(e){}
+  return true;
 }
 let saveTimer=null, locked=false;
 function autosave(){
   if(!CAN_STORE||locked) return;
   clearTimeout(saveTimer);
   saveTimer=setTimeout(function(){
-    saveSelfRecord({ label:draftLabel(), state:collectSelf() });
-    setStatus('Saved automatically');
+    if (saveSelfRecord({ label:draftLabel(), state:collectSelf() }) !== false) setStatus('Saved automatically');
   },800);
 }
 document.addEventListener('input',autosave);
