@@ -5530,9 +5530,10 @@ function traineeCelta5t_(t) {
        back herself before her tutor returned it: takenBackFrom names that submission), Stage 1, 2 and 3 and the final
        declaration whole once signed, each confirmation, each written-assignment signature and each signed letter. A
        newer signature is taken (signing again after a tutor reopened a stage).
-     the tutors' half (celta5t): a returned stage is kept as returned when the copy coming in has not seen that return
-       (no returnedAt, or an older one), unless it is that return being reopened (reopenedFrom names it); the tutor's
-       final signature likewise.
+     the tutors' half (celta5t): a returned stage is kept as returned unless the copy coming in has seen that return:
+       it carries the same returnedAt, or reopenedFrom names it (that return reopened, and perhaps returned again).
+       A different returnedAt alone, older or newer, is kept out (v305: a second Return from an old tab wiped the
+       first). The tutor's final signature: once held, only a copy carrying that same signature is taken.
    Everything else in the copy is written as sent. The trainee's page is answered with what the store now holds
    ({ saved: false, kept, data }), so it draws the saved copy; a tutor's is answered saved (its roster takes no single
    record), and its next page boots the store's copy. Two tutors writing the same unreturned stage at the same moment are
@@ -5571,12 +5572,16 @@ function celta5tKeep_(was, data) {
   Object.keys(inc).forEach(function (k) { out[k] = inc[k]; });
   ['stage1', 'stage2', 'stage3'].forEach(function (k) {
     var w = c5Obj_(was[k]), n = c5Obj_(out[k]); if (!w.returnedAt) return;
-    if (n.returnedAt) { if (String(n.returnedAt) < String(w.returnedAt)) { out[k] = w; kept = true; } return; }
+    /* v305 (25 Nov 2026): only a copy that has seen this return is taken -- the same return (more writing on it), or
+       that return reopened (reopenedFrom names it), returned again or not. A newer returnedAt alone is a second Return
+       from a tab that never saw the first, and it would wipe the first tutor's writing. */
+    if (n.returnedAt && String(n.returnedAt) === String(w.returnedAt)) return;
     if (n.reopenedFrom && String(n.reopenedFrom) === String(w.returnedAt)) return;   // the tutor reopened this very return
     out[k] = w; kept = true;
   });
+  /* v305: the final signature likewise: once the store holds it, only a copy carrying that same signature is taken */
   var wf = c5Obj_(was.final);
-  if (c5At_(wf.signed) && c5At_(c5Obj_(out.final).signed) < c5At_(wf.signed)) { out.final = wf; kept = true; }
+  if (c5At_(wf.signed) && c5At_(c5Obj_(out.final).signed) !== c5At_(wf.signed)) { out.final = wf; kept = true; }
   return { data: out, kept: kept };
 }
 function putCelta5_(courseId, token, kind, data) {
