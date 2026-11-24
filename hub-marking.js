@@ -894,7 +894,7 @@
         mknOneTextLink();
         /* what the page draws on the work after the comments (24 Nov 2026: the passages own work found) */
         if (typeof ctx.paintMore === 'function') { try { ctx.paintMore(); } catch (e) {} }
-        if (window.hubMic) hubMic.bar('#meText, #comment, [data-crit-comment], #mknSecond', { under: true });
+        /* no Dictate on the new marking page (Ramy, 24 Nov 2026: "I don't think it's actually needed there") */
         if (CURI >= ((ctx.a && ctx.a.criteria) || []).length) CURI = 0;
         markCur();
         mknBeside();
