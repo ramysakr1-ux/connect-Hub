@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611241419">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241437">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -451,6 +451,8 @@
   .mkn-signed{display:flex; flex-direction:column; gap:4px; padding:12px 14px; border-radius:var(--r-strip); background:var(--a-stone); font-size:0.9rem; line-height:1.45;}
   .mkn-script{font-family:'Newsreader',Georgia,serif; font-style:italic; font-size:1.3rem; color:var(--ink);}
   .mkn-sec-msg{margin:0 0 10px; font-size:0.9rem; font-weight:700; color:var(--a-red);}
+  /* a comment that was not signed, kept on screen to copy (24 Nov 2026) */
+  .mkn-sec-kept{margin:0 0 14px; padding:10px 12px; border:1px solid var(--sand-line); border-radius:var(--r-control); background:var(--paper);} .mkn-sec-kept p{margin:4px 0 0; white-space:pre-wrap; user-select:text;}
   /* 24 Nov 2026: the quiet line under a signature when a mark changed after it */
   .mkn-sec-moved{margin:8px 0 0; font-size:0.86rem; color:var(--grey);}
   @media print{ .mkn-switch, .mkn-foldbtn, .mkn-foundacts, .mkn-sign{display:none !important;} .mkn-foldbody[hidden]{display:block !important;} }
@@ -522,7 +524,7 @@
   @media (prefers-reduced-motion:reduce){ body.mkn .mkn-panel, body.mkn .mkn-panel.open{transition:none;} }
   @media print{ #mknFoot, #mknScrim, .mkn-phead{display:none !important;} body.mkn .mkn-panel{position:static !important; transform:none !important; visibility:visible !important; max-height:none !important; box-shadow:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611241419">
+<link rel="stylesheet" href="hub-house.css?v=202611241437">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -531,18 +533,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611241419"></script>
-<script src="assignment-history.js?v=202611241419"></script>
-<script src="hub-exchange.js?v=202611241419"></script>
-<script src="hub-docx.js?v=202611241419"></script>
-<script src="hub-marking.js?v=202611241419"></script>
-<script src="hub-due.js?v=202611241419"></script>
-<script src="hub-shared.js?v=202611241419"></script>
-<script src="hub-store.js?v=202611241419"></script>
-<script src="hub-say.js?v=202611241419"></script>
-<script src="hub-sync.js?v=202611241419"></script>
-<script src="hub-notebook.js?v=202611241419"></script>
-<script src="fol-interview.js?v=202611241419"></script>
+<script src="assignment-defaults.js?v=202611241437"></script>
+<script src="assignment-history.js?v=202611241437"></script>
+<script src="hub-exchange.js?v=202611241437"></script>
+<script src="hub-docx.js?v=202611241437"></script>
+<script src="hub-marking.js?v=202611241437"></script>
+<script src="hub-due.js?v=202611241437"></script>
+<script src="hub-shared.js?v=202611241437"></script>
+<script src="hub-store.js?v=202611241437"></script>
+<script src="hub-say.js?v=202611241437"></script>
+<script src="hub-sync.js?v=202611241437"></script>
+<script src="hub-notebook.js?v=202611241437"></script>
+<script src="fol-interview.js?v=202611241437"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -613,6 +615,10 @@ let MKN_OWN = null, MKN_OWN_BUSY = false, MKN_VER = {}, MKN_SHOW = {}, MKN_DIFFS
 /* The phone (24 Nov 2026). MKN_PANEL: the panel is up as a sheet, kept across a redraw so a mark does not drop it.
    MKN_NARROW: which way the page was last drawn, so a turn of the phone that crosses 1080px draws it again. */
 let MKN_PANEL = false, MKN_NARROW = null;
+/* The 1st marker's write checked against the store (24 Nov 2026, mknVerify further down). MKN_VT and MKN_VLATE: the
+   two timers; MKN_VERIFY: a check is running; MKN_HEALING: the page is sending its copy again. MKN_SEC_KEPT: the words
+   of a second marker's comment that was not signed, shown when the box is no longer offered. */
+let MKN_VT = null, MKN_VLATE = null, MKN_VERIFY = 0, MKN_HEALING = false, MKN_SEC_KEPT = '';
 
 /* Every door into this screen -- the dashboard's rows and the tracker's
    actions -- carries ?trainee=. Reached without one (a stale bookmark, a
@@ -706,6 +712,8 @@ function saveSubs(){
     if (document.body && document.body.classList.contains('mkn')) mknCarrySecond(roster.trainees[TRAINEE_ID].assignments || {});
     roster.trainees[TRAINEE_ID].assignments = SUBS;
     saveRoster(roster);
+    /* the 1st marker's write is checked against the store a moment later (24 Nov 2026, mknVerify) */
+    if (document.body && document.body.classList.contains('mkn')) mknVerifySoon();
   } else {
     localStorage.setItem(SUB_KEY, JSON.stringify(SUBS));
   }
@@ -1723,7 +1731,8 @@ function renderNew(){
     MKN_DIFFS = [];
     const work = st.round === 'sub2' && mknHasWork(sub.sub1) && mknHasWork(sub.sub2) ? mknResubHTML(a, sub) : mknWorkHTML(a, st.snap, st.round);
     /* what happened to a signature that was not taken stays on screen when there is no box to show it in (24 Nov 2026) */
-  const secMsg = MKN_SEC_MSG && !st.s2.canSign ? `<p class="mkn-sec-msg" role="status">${esc(MKN_SEC_MSG)}</p>` : '';
+  /* and where the box is gone, the words the tutor typed stay on screen to copy (24 Nov 2026, a reviewer's finding) */
+  const secMsg = MKN_SEC_MSG && !st.s2.canSign ? `<p class="mkn-sec-msg" role="status">${esc(MKN_SEC_MSG)}</p>` + (MKN_SEC_KEPT ? `<div class="mkn-sec-kept"><span class="mkn-cap">Your comment, not signed</span><p>${esc(MKN_SEC_KEPT)}</p></div>` : '') : '';
   const panel = secMsg + (st.s2.view ? mknSecondPanelHTML(st) : mknPanelHTML(st) + mknSignedHTML(st));
     /* on a phone the panel is a sheet, and Done at its top puts it away (24 Nov 2026) */
     const up = MKN_PANEL && mknNarrow();
@@ -1785,11 +1794,23 @@ function mknNear(x, y){
   if (a === b) return true;
   const wa = a.split(' '), wb = b.split(' ');
   if ((wa.length === 1 || wb.length === 1) && wa[0] === wb[0]) return true;
+  /* an initial and the same surname ("C. Tutor"), or the surname alone ("Tutor") (24 Nov 2026, a reviewer's finding) */
+  const pa = a.replace(/\./g, ' ').split(' ').filter(Boolean), pb = b.replace(/\./g, ' ').split(' ').filter(Boolean);
+  const la = pa[pa.length - 1] || '', lb = pb[pb.length - 1] || '';
+  if (pa.length > 1 && pb.length > 1 && la === lb && pa[0].charAt(0) === pb[0].charAt(0) && (pa[0].length === 1 || pb[0].length === 1)) return true;
+  if ((pa.length === 1 && pb.length > 1 && pa[0].length >= 3 && pa[0] === lb) || (pb.length === 1 && pa.length > 1 && pb[0].length >= 3 && pb[0] === la)) return true;
   if (Math.abs(a.length - b.length) > 2) return false;
   let prev = Array.from({ length: b.length + 1 }, (v, j) => j);
   for (let i = 1; i <= a.length; i++) { const cur = [i]; for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
   return prev[b.length] <= (Math.min(a.length, b.length) >= 10 ? 2 : 1);
 }
+/* THE COURSE'S TUTORS, AGAINST A TYPED NAME (24 Nov 2026, a reviewer's finding). A tutor may type a nickname on one
+   computer and the full name on another, and no rule on letters can tell those are one person. So the names on
+   Course admin are used too: the one listed tutor a typed name is close to, or '' when it is close to none (or to
+   more than one). Two names that come to the same listed tutor are the same person. */
+function mknTutorList(){ try { const S = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; return window.hubTutorNames ? (hubTutorNames(S) || []) : String(S.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean); } catch (e) { return []; } }
+function mknListed(name){ const hits = mknTutorList().filter(t => mknNear(name, t)); const exact = hits.filter(t => mknSame(t, name)); return exact.length === 1 ? exact[0] : hits.length === 1 ? hits[0] : ''; }
+function mknSamePerson(x, y){ if (mknNear(x, y)) return true; const a = mknListed(x); return !!a && a === mknListed(y); }
 /* only a web address is ever made into a link: what a trainee typed is never trusted to be one */
 function mknLink(u){ u = String(u || '').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
 /* she, he or they for a short phrase where a name will not fit ("the text they chose") */
@@ -1888,7 +1909,12 @@ function mknPillsHTML(st){
   else if (s2.typedName) out.push(pill('2nd marker · ' + esc(s2.by), '', true));
   else if (s2.canSign) out.push('<button type="button" class="mkn-pill is-dash" id="mknToSecond">2nd marker · not signed</button>');
   const marker = out.splice(lead);
-  return out.join('') + (marker.length ? `<span class="mkn-mpills">${marker.join('')}</span>` : '');
+  /* WHAT NEEDS A LOOK COMES FIRST (24 Nov 2026, a reviewer's finding). On a laptop the pills that did not fit slid out
+     of sight at the right, and those were the ones that flag something: Requirements, own work to look at. So the
+     mustard pills (late, words over or under, Requirements) and the own-work pill lead, in their own order, and the
+     plain facts follow. */
+  const flag = h => /\bis-amber\b|id="mknOwn"/.test(h), look = out.filter(flag), rest = out.filter(h => !flag(h));
+  return look.concat(rest).join('') + (marker.length ? `<span class="mkn-mpills">${marker.join('')}</span>` : '');
 }
 
 /* ---- THE 1ST MARKER, BY A CLICK (24 Nov 2026). "Take it" puts the tutor's own name. "Change" on another tutor's
@@ -2156,7 +2182,7 @@ function mknSecond(st){
   const named = String((sub.markers || {}).second || '').replace(/\s+/g, ' ').trim();
   const signed = mknSigned(rec), anyRec = Object.keys(all).some(k => mknSigned(all[k]));
   const typedName = !signed && !anyRec && !!named;
-  const view = !!first && st.allMarked && !!me && !mknNear(me, first) && /^(submitted|resubmitted|closed)$/.test(sub.stage);
+  const view = !!first && st.allMarked && !!me && !mknSamePerson(me, first) && /^(submitted|resubmitted|closed)$/.test(sub.stage);
   /* the draft is kept in this browser (mknDraftKey); one an earlier build wrote on the record is still read */
   const kept = mknDraftGet(r, sub);
   const mine = kept && mknSame(kept.by, me) ? kept : rec && rec.drafts ? (Object.keys(rec.drafts).filter(k => mknSame(k, me)).map(k => rec.drafts[k])[0] || null) : null;
@@ -2238,6 +2264,13 @@ async function mknSign(){
   const ta = $('mknSecond'), text = String(ta ? ta.value : st.s2.draft).trim();
   const norm = l => JSON.stringify(((l || [])).map(v => v === true ? 1 : v === false ? 0 : null));
   const shown = norm((st.sub.criteriaMarks || {})[r]), shownFirst = st.s2.first, shownAt = String(st.sub[r + 'At'] || '');
+  /* a name that is not one of the course's tutors is asked about once, with the 1st marker named, before it signs:
+     the same person under a nickname would otherwise count as double-marking their own script (24 Nov 2026) */
+  if (!mknListed(me) && window.confirmModal) {
+    MKN_SIGNING = true;
+    let go = false; try { go = await confirmModal(st.s2.first + ' is the 1st marker. Sign as 2nd marker as ' + me + '?', 'Sign'); } finally { MKN_SIGNING = false; }
+    if (!go) return;
+  }
   const btn = $('mknSign'); MKN_SIGNING = true; if (btn) { btn.disabled = true; btn.textContent = 'Signing…'; }
   let msg = '', signed = false;
   try {
@@ -2268,14 +2301,15 @@ async function mknSign(){
     }
   } catch (e) { msg = 'Not signed. ' + String((e && e.message) || e); }
   MKN_SIGNING = false;
-  MKN_SEC_MSG = msg;
+  MKN_SEC_MSG = msg; MKN_SEC_KEPT = msg && !signed ? text : '';
   render();
   /* a script already closed is filed again, so the folder's copy carries the signature (the store replaces the file of the same name) */
   const sub = subFor(CURRENT);
   if (signed && sub.stage === 'closed' && TRAINEE_ID && window.hubFileDoc && window.hubAssignmentRecordHTML) {
     try { const aDoc = WORDING[CURRENT]; hubFileDoc({ token: TRAINEE_ID, name: 'Assignment - ' + (aDoc && aDoc.title || CURRENT), html: hubAssignmentRecordHTML(aDoc, sub) }); } catch (e) {}
   }
-  const b = $('mknSecondBox'); if (b) try { b.scrollIntoView({ block: 'nearest' }); } catch (e) {}
+  /* the sentence that says what happened is brought into sight, wherever the redraw left the panel (24 Nov 2026) */
+  const b = document.querySelector('#mkPanel .mkn-sec-msg') || $('mknSecondBox'); if (b) try { b.scrollIntoView({ block: 'nearest' }); } catch (e) {}
 }
 
 /* RETURN, IN THE NEW LAYOUT (24 Nov 2026). The same doSave as the old layout, with the store read on both sides of it.
@@ -2290,6 +2324,7 @@ function mknWithin(p, ms){ return Promise.race([p, new Promise(r => setTimeout((
 async function mknReturn(){
   const b = $('saveBtn'); if (MKN_RETURNING || !b || b.disabled) return;
   MKN_RETURNING = true; b.disabled = true; b.textContent = 'Returning…';
+  clearTimeout(MKN_VT); clearTimeout(MKN_VLATE);
   let at = '', done = false;
   try {
     if (mknLive()) { await mknWithin(mknFlush(), 4000); const all = await mknWithin(mknStored(), 6000); if (all) mknCarrySecond(all); }
@@ -2326,7 +2361,55 @@ async function mknFileAfter(at){
     if (use) try { const aDoc = WORDING[CURRENT]; await hubFileDoc({ token: TRAINEE_ID, name: 'Assignment - ' + (aDoc && aDoc.title || CURRENT), html: hubAssignmentRecordHTML(aDoc, use) }); } catch (e) {}
   } finally { MKN_FILING--; }
 }
-window.addEventListener('beforeunload', e => { if (MKN_FILING > 0) { e.preventDefault(); e.returnValue = ''; return ''; } });
+/* LEAVING WHILE THE BUTTON SAYS "Returning…" (24 Nov 2026, a reviewer's finding). Return reads the store for a few
+   seconds before doSave runs, so the browser asks before the tab is left in that time too, as it does while the
+   record is being filed. Without this the Return was dropped with no word. */
+window.addEventListener('beforeunload', e => { if (MKN_FILING > 0 || MKN_RETURNING) { e.preventDefault(); e.returnValue = ''; return ''; } });
+
+/* THE 1ST MARKER'S WRITE, CHECKED AGAINST THE STORE (24 Nov 2026, a reviewer's finding). A second marker's signature
+   sends the store's copy of the whole script. If the 1st marker changed a mark while that copy was on its way, the
+   store took the older mark, and the 1st marker's page still said "Saved to the course". So, a moment after this page
+   writes, it reads the store. When the store's marks, comments, comments on the text or overall comment differ from
+   this page's, and the script is still the same submission with the same 1st marker, the page sends its own again,
+   with the signature and the own-work flags the store holds carried in. It reads once more 20 seconds later, for a
+   slow store. Nothing is drawn unless a signature came in. Only on a live tutor link; never on the second marker's
+   page, during a Return, or once the script has gone back. */
+const MKN_PARTS = ['criteriaMarks', 'criteriaComments', 'feedback', 'margin'];
+function mknStable(x){ return JSON.stringify(x, function(k, v){ return v && typeof v === 'object' && !Array.isArray(v) ? Object.keys(v).sort().reduce((o, n) => { o[n] = v[n]; return o; }, {}) : v; }); }
+function mknVerifySoon(){
+  try {
+    if (MKN_HEALING || MKN_VIEW2 || MKN_RETURNING || !mknLive()) return;
+    clearTimeout(MKN_VT); clearTimeout(MKN_VLATE);
+    MKN_VT = setTimeout(() => mknVerify(true), 1500);
+  } catch (e) {}
+}
+async function mknVerify(again){
+  if (MKN_VERIFY > 0) { MKN_VT = setTimeout(() => mknVerify(again), 1500); return; }
+  MKN_VERIFY++;
+  let healed = false;
+  try {
+    const ok = s => s && /^(submitted|resubmitted)$/.test(s.stage) && !MKN_RETURNING && !MKN_VIEW2;
+    if (!ok(subFor(CURRENT))) return;
+    await mknWithin(mknFlush(), 8000);
+    const all = await mknWithin(mknStored(), 8000), rec = all && all[CURRENT];
+    const now = subFor(CURRENT);
+    if (!rec || !ok(now) || rec.stage !== now.stage) return;
+    const r = mknRoundOf(now);
+    if (String(rec[r + 'At'] || '') !== String(now[r + 'At'] || '') || !mknSame((rec.markers || {}).first, (now.markers || {}).first)) return;
+    const pick = x => mknStable(MKN_PARTS.map(p => x[p] === undefined ? null : x[p]));
+    const had = mknStable(now.second || null);
+    if (pick(rec) !== pick(now)) {
+      mknCarrySecond(all);
+      if (rec.flags !== undefined) now.flags = rec.flags;
+      MKN_HEALING = true; try { saveSubs(); } finally { MKN_HEALING = false; }
+      await mknWithin(mknFlush(), 8000);
+      healed = true;
+    } else mknCarrySecond(all);
+    const a = document.activeElement;
+    if (mknStable(now.second || null) !== had && !(a && /^(TEXTAREA|INPUT)$/.test(a.tagName)) && document.body.classList.contains('mkn')) render();
+  } catch (e) {} finally { MKN_VERIFY--; }
+  if (again) MKN_VLATE = setTimeout(() => mknVerify(false), 20000);
+}
 /* true when the marks of the round are not the ones the 2nd marker signed (a signature from before 24 Nov has no marks kept: false) */
 function mknMovedAfterSign(rec, now){
   if (!rec || !Array.isArray(rec.marks)) return false;
