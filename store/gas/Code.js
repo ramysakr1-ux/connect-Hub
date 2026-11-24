@@ -1917,6 +1917,8 @@ case 'inbox': {
         if (k2 === 'assignments') return putAssignments_(course.id, me.token, req.data, 'tutor');
         /* v304 (25 Nov 2026): a returned stage, a signature, a submitted Stage 2 are not undone by an older copy (putCelta5_) */
         if (k2 === 'celta5' || k2 === 'celta5t') { putCelta5_(course.id, me.token, k2, req.data); return { saved: true }; }
+        /* v304: a give-back (or any tutor's copy) keeps the first turn-in time of the TP (keepFirst_) */
+        if (k2 === 'plan' || k2 === 'selfeval') { try { keepFirst_(k2, readMany_(course.id, me.token, [k2])[k2], req.data); } catch (kfErr) {} }
         write_(course.id, me.token, k2, req.data);
         return { saved: true };
       }
@@ -5621,7 +5623,7 @@ function fileLateSelf_(courseId, token, incoming, known, ctx) {
   if (/self-?evaluation/i.test(String(rec.docHTML || '')) || (rec.state && rec.state.doc && rec.state.doc.self)) return false;
   var ans = was.state.self || was.state, keep = {};
   Object.keys(ans).forEach(function (k) { if (k !== 'doc') keep[k] = ans[k]; });
-  rec.lateSelf = { self: keep, turnedInAt: was.turnedInAt || null };
+  rec.lateSelf = { self: keep, turnedInAt: was.firstTurnedInAt || was.turnedInAt || null };   // v304: the first time
   var one = {}; one[n] = rec; writeHistory_(courseId, token, one);
   return true;
 }
@@ -5632,7 +5634,8 @@ function fileLateSelf_(courseId, token, incoming, known, ctx) {
    move on (hub-sync). The store also judges a trainee's plan, self-evaluation and clearing of the feedback by their shape,
    under the script lock, against what it holds:
      over a TURNED-IN plan or self-evaluation of TP n,
-     - the same turn-in again, or a newer turn-in of TP n, is taken (a retry, or turned in again after a take-back);
+     - the same turn-in again is taken (a retry); a newer turn-in of TP n only when it took back THAT turn-in first, as a
+       draft does below (v304: a stale copy turned in again, with no take-back, put a later time over the first);
      - a draft of TP n is taken only when it took back THAT turn-in: it names it (backFrom equal to the stored
        turnedInAt), or its takenBackAt or givenBackAt is later than it, or it is the stored words with a takenBackAt up to
        ten minutes before it (a device whose clock is behind);
@@ -5649,7 +5652,8 @@ function fileLateSelf_(courseId, token, incoming, known, ctx) {
    (fileLateSelf_) and cleared, the plan is cleared unless it is for a later TP, and the feedback is cleared last. The
    other two clears then find nothing to clear. So a trainee is never left with one record of the old TP that nothing
    will ever clear.
-   A REFUSAL WRITES NOTHING. It answers ok with { saved: false, kept, data }, where data is what the trainee's own boot
+   A REFUSAL WRITES NOTHING to the record (v304: the refused copy is kept beside it, in planRefused or selfevalRefused,
+   and a second turn-in says why: 'already'). It answers ok with { saved: false, kept, data }, where data is what the trainee's own boot
    would hand her. The page before v303 takes that as saved, so its write leaves its ledger and is never sent again; the
    course's version moves at once, inside the request, so that page's next boot sees the store's copy.
    And whatever a trainee's save replaces that was turned in, or that was much longer, is kept first in planPrior or
@@ -5728,7 +5732,10 @@ function sameTpTaken_(was, now, nW, nN) {
   if (nN && nN !== nW) return false;
   if (now.status === 'turned_in') {
     var t = Number(now.turnedInAt || 0);
-    if (t !== at) return t > at;   // a newer turn-in is taken, an older one is not
+    /* v304 (24 Nov 2026): a newer turn-in of the same TP is taken only when that turn-in was taken back or given back
+       first. On C/21 a stale copy of a TP3 plan was turned in again at 18:38 over the one turned in at 13:42, with no take
+       back between, and the first time was lost. An older turn-in is never taken. */
+    if (t !== at) return t > at && (Number(now.backFrom) === at || Math.max(Number(now.takenBackAt || 0), Number(now.givenBackAt || 0)) > at);
     /* the same turn-in again is taken only with the same words: a page that laid the store's turned-in copy under a form
        drawn from an older one would otherwise send its old words under the turn-in's own stamp (review, 24 Nov 2026) */
     return JSON.stringify(now.state == null ? null : now.state) === JSON.stringify(was.state == null ? null : was.state) && String(now.docHTML || '') === String(was.docHTML || '');
@@ -5744,10 +5751,10 @@ function shrunk_(was, data) {
 }
 /* the record a save replaces, kept beside it: the last PRIOR_KEEP_ of them. A big list is packed or put in a Drive file
    by packRecord_ like any record. Keeping it never stops the save. */
-function keepPrior_(courseId, token, kind, was) {
-  var pk = kind + 'Prior', list = [];
+function keepPrior_(courseId, token, kind, was, suffix) {
+  var pk = kind + (suffix || 'Prior'), list = [];
   try { var cur = readMany_(courseId, token, [pk])[pk]; if (Array.isArray(cur)) list = cur; else if (cur && cur.was) list = [cur]; }
-  catch (e) { pk = kind + 'PriorAlso'; }   // the list could not be read: it is left as it is, and this one goes beside it
+  catch (e) { pk = kind + (suffix || 'Prior') + 'Also'; }   // the list could not be read: it is left as it is, and this one goes beside it
   list.push({ at: Date.now(), was: was });
   if (list.length > PRIOR_KEEP_) list = list.slice(list.length - PRIOR_KEEP_);
   try { write_(courseId, token, pk, list); } catch (e) { try { Logger.log('keepPrior_ ' + kind + ': ' + e); } catch (e2) {} }
@@ -5757,8 +5764,28 @@ function needsPrior_(was, data) {
   if (JSON.stringify(was) === JSON.stringify(data == null ? null : data)) return false;
   return was.status === 'turned_in' || shrunk_(was, data);
 }
+/* THE FIRST TURN-IN TIME IS KEPT (v304, 24 Nov 2026; Ramy). turnedInAt is the latest turn-in, and a take-back or a
+   give-back sets it to null, so the time a TP's plan or self-evaluation was first turned in was lost. firstTurnedInAt
+   keeps it: the earliest of the stored record's turn-in times for this TP (its firstTurnedInAt, its turnedInAt, or the
+   turn-in a take-back names in backFrom) and the incoming turn-in. The store sets it, from what it holds: a page's own
+   copy is not trusted for it, because a page merges every save onto its last copy and could carry the last TP's time
+   onto the next. It is carried only between records of the same TP, so the next TP starts without one. A record from
+   before v304 has none, and its turnedInAt (or, taken back, its backFrom) counts as the first. A record this store wrote
+   always has the field, 0 when nothing of this TP was turned in yet, so a backFrom a page carried over from the last TP
+   is not read as this TP's. Pages read firstTurnedInAt || turnedInAt. */
+function keepFirst_(kind, was, data) {
+  if (!data || typeof data !== 'object') return data;
+  var ts = [data.status === 'turned_in' ? data.turnedInAt : 0];
+  var nD = turnTp_(kind, data);
+  if (was && typeof was === 'object' && nD && turnTp_(kind, was) === nD) ts.push(was.firstTurnedInAt, was.status === 'turned_in' ? was.turnedInAt : 0, was.firstTurnedInAt == null ? was.backFrom : 0);
+  var first = 0;
+  ts.forEach(function (t) { t = Number(t || 0); if (t > 0 && (!first || t < first)) first = t; });
+  data.firstTurnedInAt = first;
+  return data;
+}
 /* write a trainee's plan or self-evaluation, keeping what it replaces when that matters */
 function putOne_(courseId, token, kind, data, was, ctx) {
+  keepFirst_(kind, was, data);
   if (needsPrior_(was, data)) keepPrior_(courseId, token, kind, was);
   if (kind === 'selfeval') { try { fileLateSelf_(courseId, token, data, was, ctx); } catch (lsErr) {} }
   write_(courseId, token, kind, data);
@@ -5774,13 +5801,22 @@ function moveOnWhole_(courseId, token, got, mo, ctx) {
   if (got.selfeval) putOne_(courseId, token, 'selfeval', null, got.selfeval, ctx);
   write_(courseId, token, 'feedback', null);
 }
-function refuseTurnedIn_(courseId, token, kind, was, got) {
+function refuseTurnedIn_(courseId, token, kind, was, got, data) {
   markChanged_(courseId);
   /* the version moves now as well as at the end of the request, so the version the store answers with is never the
      caller's own: its copy is behind, and its next page boots */
   try { PropertiesService.getScriptProperties().setProperty(verKey_(String(courseId)), Date.now().toString(36) + Math.random().toString(36).slice(2, 6)); } catch (pv) {}
   var view = kind === 'feedback' ? traineeFeedbackView_(courseId, token, was, got.selfeval) : was;
-  return { saved: false, kept: kind, data: view == null ? null : view };
+  var out = { saved: false, kept: kind, data: view == null ? null : view };
+  /* v304: a second turn-in of a TP already turned in says so (why: 'already', the page says it plainly), and the words
+     that were refused are kept beside the record (planRefused, selfevalRefused: the last three, { at, was }), so they are
+     not lost even on a page from before v303, which takes a refusal as saved. No page reads them. */
+  if ((kind === 'plan' || kind === 'selfeval') && data && typeof data === 'object') {
+    try { keepPrior_(courseId, token, kind, data, 'Refused'); } catch (krErr) {}
+    var nT = turnTp_(kind, was);
+    if (data.status === 'turned_in' && was && was.status === 'turned_in' && nT && turnTp_(kind, data) === nT) { out.why = 'already'; out.tp = nT; }
+  }
+  return out;
 }
 function putTurnedIn_(courseId, token, kind, data) {
   var set = null; try { set = courseRead_(courseId, 'settings'); } catch (e) {}
@@ -5802,20 +5838,20 @@ function putTurnedIn_(courseId, token, kind, data) {
     if (data == null) {   // a clear: moving on (got holds all three)
       mo = moveOnDue_(got);
       if (mo && !(kind === 'plan' && mo.later)) moveOnWhole_(courseId, token, got, mo, ctx);
-      else if (kind === 'feedback' || (kind === 'plan' && mo)) return refuseTurnedIn_(courseId, token, kind, was, got);   // the plan of a later TP stays when moving on
+      else if (kind === 'feedback' || (kind === 'plan' && mo)) return refuseTurnedIn_(courseId, token, kind, was, got, data);   // the plan of a later TP stays when moving on
       else if (turned && (!nW || tpOver_(courseId, token, nW, got.feedback, ctx))) putOne_(courseId, token, kind, null, was, ctx);   // an old record with no TP, or a TP already over
-      else return refuseTurnedIn_(courseId, token, kind, was, got);   // a draft is never cleared by a trainee's page: moving on clears only what is turned in
+      else return refuseTurnedIn_(courseId, token, kind, was, got, data);   // a draft is never cleared by a trainee's page: moving on clears only what is turned in
     } else if (!nW) {
       putOne_(courseId, token, kind, data, was, ctx);   // nothing turned in, or an old record with no TP: as before
     } else if (!(turnTp_(kind, data) > nW)) {
-      if (!sameTpTaken_(was, data, nW, turnTp_(kind, data))) return refuseTurnedIn_(courseId, token, kind, was, got);
+      if (!sameTpTaken_(was, data, nW, turnTp_(kind, data))) return refuseTurnedIn_(courseId, token, kind, was, got, data);
       putOne_(courseId, token, kind, data, was, ctx);
     } else {   // the next TP's copy over a turned-in one: only once that TP is over
       var all = readMany_(courseId, token, ['plan', 'selfeval', 'feedback']);
       mo = moveOnDue_(all);
-      if (mo && (kind === 'selfeval' || !mo.later)) { moveOnWhole_(courseId, token, all, mo, ctx); write_(courseId, token, kind, data); }
+      if (mo && (kind === 'selfeval' || !mo.later)) { moveOnWhole_(courseId, token, all, mo, ctx); write_(courseId, token, kind, keepFirst_(kind, null, data)); }
       else if (tpOver_(courseId, token, nW, all.feedback, ctx)) putOne_(courseId, token, kind, data, was, ctx);
-      else return refuseTurnedIn_(courseId, token, kind, was, all);
+      else return refuseTurnedIn_(courseId, token, kind, was, all, data);
     }
     try { SpreadsheetApp.flush(); } catch (fl) {}
   } finally { LOCK_DEPTH_--; if (!had) lock.releaseLock(); }

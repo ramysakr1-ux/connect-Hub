@@ -392,7 +392,8 @@
        between from its old form would be the old words over the store's copy (review, 24 Nov 2026) */
     if (key && WAIT && started) KEPT_KEYS[key] = 1;
     if (key) { delete dirty[key]; try { if (r.data == null) origRemove(key); else origSet(key, JSON.stringify(r.data)); } catch (e) {} }
-    KEPT.push(job.kind);
+    /* a second turn-in of a TP already turned in (store v304: why 'already') has its own line, with the TP's number */
+    KEPT.push(r.why === 'already' ? 'already-' + job.kind + '-' + (parseInt(r.tp, 10) || '') : job.kind);
     return r;
   }
   function keptShow(){
@@ -878,7 +879,19 @@
   function keptLine(kinds, redrawn){
     if (!kinds) return;
     var name = /plan/.test(kinds) ? 'Your plan' : /selfeval/.test(kinds) ? 'Your self-evaluation' : /celta5/.test(kinds) ? 'Your CELTA 5' : 'Your TP record';
-    var said = /^changed:/.test(kinds) ? name + ' was changed on another device after this page opened. This page now shows the newest copy.'
+    /* ALREADY TURNED IN (store v304, 24 Nov 2026). A TP's plan or self-evaluation is turned in once; turning it in again
+       needs a take-back first (or the tutor giving it back). The store refuses a second turn-in, keeps the words that were
+       sent, and the page says so plainly. */
+    var al = /already-(plan|selfeval)-(\d*)/.exec(kinds);
+    if (al) {
+      var tpW = al[2] ? 'TP' + al[2] + ' ' : '';
+      name = al[1] === 'plan' ? 'Your ' + tpW + 'lesson plan' : 'Your ' + tpW + 'self-evaluation';
+    }
+    var said = al ? name + ' is already turned in, so it was not turned in again.'
+        + (redrawn ? ' This page now shows the one your tutor has.' : '')
+        + ' What you typed on this device is kept.'
+        + (al[1] === 'plan' ? ' To change your plan, take it back first, or ask your tutor to give it back.' : '')
+      : /^changed:/.test(kinds) ? name + ' was changed on another device after this page opened. This page now shows the newest copy.'
       : redrawn ? name + ' was saved on another device after this page opened. This page now shows the saved copy.'
       : /celta5/.test(kinds) ? name + ' was submitted or signed on another device, so that part stays as it was saved there.'
       : name + ' was saved on another device, so the changes made on this device were not used.';

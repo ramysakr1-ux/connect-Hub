@@ -2019,6 +2019,22 @@ window.hubFileDoc = function(give){
    Every page that SHOWS one (the trainee's own print, the tutor's feedback form, the brief for Ask Connect) asks here, so
    one written in the first shape keeps showing exactly as it was written and the two cannot drift.
    Returns [[label, text], ...]; text is plain lines, a list as "• " lines. short: the tutor's narrow first column. */
+/* WHEN A PLAN OR SELF-EVALUATION WAS TURNED IN (24 Nov 2026; Ramy). The first turn-in time is kept (firstTurnedInAt,
+   store v304) and a later one is said beside it: "Turned in 24 Nov 13:42, turned in again 18:38". A record from before
+   has only turnedInAt, which is then the first. first and again are the words: "Turned in" and "turned in again" unless
+   given. Plain text; '' times are left out. */
+window.hubTurnedInWhen = function(rec, first, again){
+  first = first || 'Turned in'; again = again || 'turned in again';
+  try {
+    var at = function(v){ var d = new Date(+v || v); return v && !isNaN(d) ? d : null; };
+    var a = at(rec && (rec.firstTurnedInAt || rec.turnedInAt)), b = at(rec && rec.turnedInAt);
+    if (!a) return first;
+    var day = function(d){ return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
+    var out = first + ' ' + day(a) + ' ' + window.hubTimeOf(a);
+    if (b && b.getTime() > a.getTime()) out += ', ' + again + ' ' + (day(b) === day(a) ? '' : day(b) + ' ') + window.hubTimeOf(b);
+    return out;
+  } catch (e) { return first; }
+};
 /* A self-evaluation filed after its feedback went back (rec.lateSelf, see hubMoveOn): the part to show under the returned
    document, in the document's own plain style. '' when the record has none. */
 window.hubLateSelfHTML = function(rec){
