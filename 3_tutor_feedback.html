@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611241322">
+<link rel="stylesheet" href="hub-tokens.css?v=202611241356">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -588,6 +588,8 @@
     padding:12px 18px; margin-bottom:16px; font-size:0.86rem; color:var(--ink); line-height:1.5;}
   .turnstatus.show{display:flex;}
   .turnstatus button{flex:none;}
+  /* the house paints this notice's words white for the trainee's green banner; here it sits on a pale ground (24 Nov 2026) */
+  body #turnStatus{color:var(--ink) !important;}
   .btn-submit{background:var(--teal); color:var(--paper); font-size:1rem; font-weight:700;
     padding:12px 40px; border-radius:24px;
     border:none; cursor:pointer;}
@@ -644,7 +646,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611241322">
+<link rel="stylesheet" href="hub-house.css?v=202611241356">
 </head>
 <body>
 <div class="board">
@@ -836,14 +838,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611241322"></script>
-<script src="hub-shared.js?v=202611241322"></script>
-<script src="hub-store.js?v=202611241322"></script>
-<script src="hub-say.js?v=202611241322"></script>
-<script src="hub-crit-learn.js?v=202611241322"></script>
-<script src="hub-crit-vocab.js?v=202611241322"></script>
-<script src="hub-sync.js?v=202611241322"></script>
-<script src="hub-notebook.js?v=202611241322"></script>
+<script src="hub-exchange.js?v=202611241356"></script>
+<script src="hub-shared.js?v=202611241356"></script>
+<script src="hub-store.js?v=202611241356"></script>
+<script src="hub-say.js?v=202611241356"></script>
+<script src="hub-crit-learn.js?v=202611241356"></script>
+<script src="hub-crit-vocab.js?v=202611241356"></script>
+<script src="hub-sync.js?v=202611241356"></script>
+<script src="hub-notebook.js?v=202611241356"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2040,11 +2042,22 @@ function saveFile(blob,name){
 
 function buildHTML(d){
   let out='<div style="font-family:Karla,Calibri,Arial,sans-serif;font-size:11pt;color:#26221c;">'+(window.hubLetterheadHTML ? hubLetterheadHTML('Teaching practice feedback', true) : '')+feedbackHTML(d);
-  if(DOC) out+=traineeHTML(DOC, d.selfComment, d.tcomm, d.laComment);
+  if(DOC) out+='<!--hub:plan-->'+traineeHTML(DOC, d.selfComment, d.tcomm, d.laComment);
+  else if(PAST_N && PAST_TAIL) out+=PAST_TAIL;
   out+='</div>';
   return out;
 }
 let LAST_HTML='';
+/* A PAST TP WHOSE RETURNED RECORD KEPT NO COPY OF THE PLAN (a long one, 17 Nov 2026): the plan and the comments beside
+   its stages are only in the document returned. When it is returned again, that part is kept as it was: found by the
+   marker written since 24 Nov, or else just after the feedback as the form redraws it on opening. */
+let PAST_TAIL='';
+function pastTail(){
+  const h=PAST_N&&pastHist(loadRoster()); const old=String((h&&h.docHTML)||''); if(!old||(h.state&&h.state.doc)) return '';
+  let i=old.indexOf('<!--hub:plan-->');
+  if(i<0){ const fb=feedbackHTML(collect()), j=old.indexOf(fb); if(j<0) return null; i=j+fb.length; }
+  const tail=old.slice(i); return tail.replace(/<\/div>\s*$/,'');
+}
 
 $('returnBtn').addEventListener('click', async ()=>{
   const d=collect();
@@ -2054,8 +2067,9 @@ $('returnBtn').addEventListener('click', async ()=>{
   if(!d.next.length && (d.ap.length||d.at.length))
     missing.push('a star on any action point, so nothing will carry into the next TP');
   if(missing.length && !(await confirmModal('You haven\'t filled in '+missing.join(', ')+'. Return anyway?','Return anyway'))) return;
+  if(PAST_N && !DOC){ if(PAST_TAIL===null){ await confirmModal('This TP was returned before Lite kept a copy of the plan with it, and the plan part of the document could not be found. Nothing was changed. Ask for help to correct this TP.','Close'); return; } }
   LAST_HTML=buildHTML(d);
-  if(d.next.length) localStorage.setItem('chub:lastFeedback', JSON.stringify(d));
+  if(d.next.length && !PAST_N) localStorage.setItem('chub:lastFeedback', JSON.stringify(d));
   /* The store has it before the screen says so. Returning writes the feedback
      AND files the TP into the roster's history, and both used to go out on
      hub-sync's 600 ms debounce while this line already read "Returned": leave
@@ -2169,6 +2183,19 @@ const SELF_KEY='chub:selfeval';
 const ROSTER_KEY='connect_roster_v1';
 const feedbackParams=new URLSearchParams(location.search);
 const TRAINEE_ID=feedbackParams.get('trainee')||'';
+/* A PAST TP, REOPENED FOR EDITS (Ramy, 24 Nov 2026: "how can I edit something from a previous TP?"). Once the trainee
+   starts the next TP, the returned TP lives only in the history. ?tp=N opens that TP here: the tutor's changes are kept
+   on the side (history[N].edit, without the plan, which does not change), and the trainee keeps reading the version
+   returned before until it is returned again. Not used when N is the TP this form is already on. */
+const PAST_N=(function(){
+  const n=parseInt(feedbackParams.get('tp')||'',10); if(!TRAINEE_ID||!(n>=1&&n<=(window.HUB_MAX_TP||12))) return 0;
+  try{ const tr=(JSON.parse(localStorage.getItem('connect_roster_v1'))||{trainees:{}}).trainees[TRAINEE_ID]; const tp=(tr&&tr.tp)||{};
+    const h=tp.history&&tp.history[n]; if(!h) return 0;
+    const f=tp.feedback, m=f&&String((f.state&&f.state.f&&f.state.f.fTP)||f.label||'').match(/\d+/);
+    return m&&+m[0]===n ? 0 : n; }catch(e){ return 0; }
+})();
+let PAST_EDITING=!!PAST_N;
+function pastHist(r){ const tr=r.trainees[TRAINEE_ID]; return tr&&tr.tp&&tr.tp.history&&tr.tp.history[PAST_N]; }
 function loadRoster(){ try{ return JSON.parse(localStorage.getItem(ROSTER_KEY)) || {trainees:{}}; }catch(e){ return {trainees:{}}; } }
 function saveRosterObj(r){ localStorage.setItem(ROSTER_KEY, JSON.stringify(r)); }
 /* The trainee this page is about, by name.
@@ -2211,10 +2238,34 @@ function tpPointLink(){
 }
 
 function loadFeedbackRecord(){
+  if (PAST_N) {
+    const h=pastHist(loadRoster()); if(!h) return null;
+    const e=h.edit||null, out=Object.assign({}, h, e||{}, { status: PAST_EDITING ? 'draft' : 'returned' }); delete out.edit;
+    if(e&&e.state) out.state=Object.assign({}, e.state, { doc: h.state&&h.state.doc });
+    return out;
+  }
   if (TRAINEE_ID) { const tr=loadRoster().trainees[TRAINEE_ID]; return (tr&&tr.tp&&tr.tp.feedback)||null; }
   if(!CAN_STORE) return null; try{ return JSON.parse(localStorage.getItem(FEEDBACK_KEY)||'null'); }catch(e){ return null; }
 }
 function saveFeedbackRecord(patch){
+  if (PAST_N) {
+    if (patch.status==='draft') { PAST_EDITING=true; return; }      /* Reopen for edits: nothing is taken off the trainee */
+    const roster=loadRoster(), h=pastHist(roster); if(!h) return;
+    if (patch.status==='returned') {
+      /* returned again: the trainee now reads this version; the first return's time is kept */
+      let me=''; try{ me=(localStorage.getItem('chub:tutorName')||'').trim(); }catch(e){}
+      const cur=Object.assign({}, h, patch, { firstReturnedAt: h.firstReturnedAt||h.returnedAt, editedBy: me||'a tutor' }); delete cur.edit;
+      if (cur.state && !cur.state.doc && h.state && h.state.doc) cur.state=Object.assign({}, cur.state, { doc: h.state.doc });
+      if (cur.state && cur.state.doc) { try { if (JSON.stringify(cur).length > 46000) { cur.state=Object.assign({}, cur.state); delete cur.state.doc; } } catch(e){} }
+      roster.trainees[TRAINEE_ID].tp.history[PAST_N]=cur; PAST_EDITING=false;
+    } else {
+      const e=Object.assign({}, h.edit||{}, patch);
+      if (e.state) { e.state=Object.assign({}, e.state); delete e.state.doc; }
+      h.edit=e;
+    }
+    saveRosterObj(roster);
+    return;
+  }
   if (TRAINEE_ID) {
     const roster=loadRoster();
     if (!roster.trainees[TRAINEE_ID]) roster.trainees[TRAINEE_ID]={id:TRAINEE_ID,name:'Trainee',tp:{},assignments:{}};
@@ -2300,7 +2351,7 @@ function renderTurnStatus(){
        It has already been returned once, so this is not a slip the trainee
        never saw. */
     $('reopenBtn').addEventListener('click',async function(){
-      if(!(await confirmModal('Reopening takes this feedback back: until you return it again, '+traineeLabel('the trainee')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
+      if(!PAST_N && !(await confirmModal('Reopening takes this feedback back: until you return it again, '+traineeLabel('the trainee')+' cannot open it, even if they have already read it. Continue?','Reopen for edits'))) return;
       saveFeedbackRecord({status:'draft'});
       renderTurnStatus();
       /* THE PAGE IS DRAWN AGAIN WITH THE TRAINEE'S PAGES AS THEY ARE NOW (Ramy, 21 Nov 2026: after Reopen for edits the
@@ -2310,6 +2361,13 @@ function renderTurnStatus(){
       const go=()=>{ try{ sessionStorage.setItem('hub:glanceY:'+location.pathname, String(window.scrollY||0)); }catch(e){} location.reload(); };
       try{ (window.HubSync&&HubSync.flushNow?HubSync.flushNow(true):Promise.resolve()).then(go, go); }catch(e){ go(); }
     });
+  } else if(PAST_N){
+    /* a past TP open for edits: say plainly what the trainee sees meanwhile */
+    setLock(false);
+    const h=pastHist(loadRoster())||{};
+    el.textContent='Editing TP'+PAST_N+'. '+traineeLabel('The trainee')+' still sees the version returned on '+fmtDate(h.returnedAt)+' until you return it again.';
+    el.classList.add('show');
+    $('returnBtn').style.display='';
   } else {
     setLock(false);
     el.classList.remove('show');
@@ -2336,7 +2394,7 @@ function pulledSig(){
   return JSON.stringify([p&&p.state||null, p&&p.status||null, sf&&sf.state||null]);
 }
 window.HUB_REDRAW=function(){
-  if(!TRAINEE_ID||PULLED_SIG===null||$('pulledNew')) return;
+  if(PAST_N||!TRAINEE_ID||PULLED_SIG===null||$('pulledNew')) return;
   const rec=loadFeedbackRecord(); if(rec&&rec.status==='returned') return;
   const now=pulledSig(); if(now===PULLED_SIG) return;
   const hadSelf=JSON.parse(PULLED_SIG)[2]!==null, hasSelf=JSON.parse(now)[2]!==null;
@@ -2353,7 +2411,8 @@ window.HUB_REDRAW=function(){
   applyTraineeNames();
   PULLED_SIG=pulledSig();
   let planRec=null, selfRec=null;
-  if (TRAINEE_ID) {
+  if (PAST_N) {}
+  else if (TRAINEE_ID) {
     const tr=loadRoster().trainees[TRAINEE_ID];
     planRec=(tr&&tr.tp&&tr.tp.plan)||null;
     selfRec=(tr&&tr.tp&&tr.tp.selfeval)||null;
@@ -2413,7 +2472,7 @@ window.HUB_REDRAW=function(){
        form's working copy of the plan to stay inside the record's size (17 Nov), and the tutor's comments beside the
        stages were drawn on that copy, so on reopening there was no plan and no comments to see: Belma took it that her
        comments had not been saved. They were, in the finished document. That document is shown here in the plan's place. */
-    if(rec.status==='returned' && rec.docHTML && $('seen') && $('seen').style.display==='none'){
+    if((rec.status==='returned'||PAST_N) && rec.docHTML && $('seen') && $('seen').style.display==='none'){
       const card=$('seen'), h=card.querySelector('h2'); if(h) h.textContent='What was returned, with your comments';
       $('seenBody').innerHTML='<div class="returned-doc" style="background:var(--paper);border:1px solid var(--sand-line);border-radius:8px;padding:14px 16px;overflow-x:auto;">'+rec.docHTML+'</div>';
       card.style.display='';
@@ -2449,6 +2508,7 @@ window.HUB_REDRAW=function(){
       }
     }
   }catch(e){} }
+  if(PAST_N){ try{ PAST_TAIL=pastTail(); }catch(e){ PAST_TAIL=null; } }
   renderTurnStatus();
 })();
 
