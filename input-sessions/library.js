@@ -499,14 +499,24 @@ window.InputLib = (function(){
 (function(){
   if (window.INPUTLIB_ONLY) return;
   var st = document.createElement('style');
-  st.textContent = 'nav.sticky-nav .print-btn.print-answers{margin-left:18px;}';
+  /* ONE PRINT WITH THE ANSWERS, AT THE TOP (Ramy, 24 Nov 2026: "keep the top"). The print buttons sit together at the right
+     of the strip and wrap as one when the strip is full, so "Print with the answers" never falls onto a line of its own. The
+     card at the end of the session is hidden wherever the strip shows its print buttons; on a phone the strip has none, so
+     the card stays there and is the phone's way to print the answers. */
+  st.textContent = 'nav.sticky-nav .print-group{margin-left:auto; display:flex; gap:18px; align-items:flex-start; flex:none;}'
+    + ' nav.sticky-nav .print-group .print-btn{margin-left:0 !important;}'
+    + ' @media (max-width:560px){ nav.sticky-nav .print-group{display:none;} }'
+    + ' @media screen and (min-width:561px){ #ansCard{display:none !important;} }';
   (document.head || document.documentElement).appendChild(st);
   function add(){
     var card = document.getElementById('ansPrint'); if (!card || document.querySelector('.print-answers')) return;
     var all = document.querySelectorAll('nav.sticky-nav .print-btn'), last = all[all.length - 1]; if (!last) return;
     var c = document.createElement('button'); c.type = 'button'; c.className = 'print-btn print-answers'; c.textContent = 'Print with the answers';
     c.addEventListener('click', function(){ card.click(); });
-    last.parentNode.insertBefore(c, last.nextSibling);
+    var g = document.createElement('span'); g.className = 'print-group';
+    last.parentNode.insertBefore(g, last);
+    [].forEach.call(document.querySelectorAll('nav.sticky-nav > .print-btn'), function(b){ g.appendChild(b); });
+    g.appendChild(c);
   }
   window.InputLibAnswersDoor = add;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
