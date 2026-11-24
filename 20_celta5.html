@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611242350">
+<link rel="stylesheet" href="hub-tokens.css?v=202611250020">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -239,7 +239,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611242350">
+<link rel="stylesheet" href="hub-house.css?v=202611250020">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -252,20 +252,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611242350"></script>
-<script src="hub-hand.js?v=202611242350"></script>
-<script src="hub-ink.js?v=202611242350"></script>
-<script src="assignment-defaults.js?v=202611242350"></script>
-<script src="celta5-text.js?v=202611242350"></script>
-<script src="celta5-appendix.js?v=202611242350"></script>
-<script src="celta5-criteria.js?v=202611242350"></script>
-<script src="hub-tracker.js?v=202611242350"></script>
-<script src="observation-defaults.js?v=202611242350"></script>
-<script src="hub-shared.js?v=202611242350"></script>
-<script src="hub-store.js?v=202611242350"></script>
-<script src="hub-say.js?v=202611242350"></script>
-<script src="hub-sync.js?v=202611242350"></script>
-<script src="hub-notebook.js?v=202611242350"></script>
+<script src="celta5-pdf.js?v=202611250020"></script>
+<script src="hub-hand.js?v=202611250020"></script>
+<script src="hub-ink.js?v=202611250020"></script>
+<script src="assignment-defaults.js?v=202611250020"></script>
+<script src="celta5-text.js?v=202611250020"></script>
+<script src="celta5-appendix.js?v=202611250020"></script>
+<script src="celta5-criteria.js?v=202611250020"></script>
+<script src="hub-tracker.js?v=202611250020"></script>
+<script src="observation-defaults.js?v=202611250020"></script>
+<script src="hub-shared.js?v=202611250020"></script>
+<script src="hub-store.js?v=202611250020"></script>
+<script src="hub-say.js?v=202611250020"></script>
+<script src="hub-sync.js?v=202611250020"></script>
+<script src="hub-notebook.js?v=202611250020"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -312,7 +312,7 @@ const saveT = () => {
   const r = rec('connect_roster_v1'); if (!r || !r.trainees || !r.trainees[TOKEN]) { alert('The roster has not loaded yet — give it a moment.'); return; }
   r.trainees[TOKEN].celta5t = TT; localStorage.setItem('connect_roster_v1', JSON.stringify(r)); flash();
 };
-let ft; const flash = () => { const s = $('savedNote'); if (!s) return; s.textContent = 'Saved'; clearTimeout(ft); ft = setTimeout(() => { if ($('savedNote')) $('savedNote').textContent = ''; }, 1400); };
+let ft; const flash = () => { const ss = ['savedNote', 'savedNote2'].map($).filter(Boolean); if (!ss.length) return; ss.forEach(s => { s.textContent = 'Saved'; }); clearTimeout(ft); ft = setTimeout(() => { ['savedNote', 'savedNote2'].forEach(id => { if ($(id)) $(id).textContent = ''; }); }, 1400); };
 const now = () => new Date().toISOString();
 const when = iso => iso ? (window.hubDateOf ? hubDateOf(iso) : new Date(iso)).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '';
 const tutorName = () => (localStorage.getItem('chub:tutorName') || localStorage.getItem('hub:tutorName') || '').trim(); // chub:tutorName is what the dashboard's "Your name" keeps
@@ -804,6 +804,16 @@ function c5Route(stations, my){
 /* own: a stage the tutor writes (1 and 3). To the trainee it is "ready", not "returned": they handed nothing in
    (Ramy, 18 Nov 2026: "I don't understand why it says stage one returned. Returned from where?"). Stage 2, which the
    trainee writes first, keeps "returned". */
+/* A CANDIDATE'S SIGNATURE IS FOR THE RETURN SHE SIGNED (25 Nov 2026). A tutor's Reopen took away the tutor's return and
+   left the trainee's signature and choices on the changed record, shown as signed, with no way to sign again; the PDF would
+   have carried her earlier signature under a summary she never read. Her signature names the return it signs (forReturn).
+   It counts only while that return stands; otherwise the record keeps it, and she reads the stage again and signs again. */
+function sigFor(sig, t){
+  t = t || {};
+  if (!sig || !sig.at || !t.returnedAt) return null;
+  if (sig.forReturn) return sig.forReturn === t.returnedAt ? sig : null;
+  return (!t.reopenedFrom || String(sig.at) > String(t.returnedAt)) ? sig : null;   // signed before forReturn was kept
+}
 function stageState(sub, ret, sig, own){ return sig ? ['Signed','good'] : ret ? [IS_TRAINEE ? (own ? 'Ready — to sign' : 'Returned — to sign') : 'Returned, not signed yet','attn'] : sub ? [IS_TRAINEE ? 'With your tutor' : IS_TUTOR ? 'Waiting for you' : 'With the tutor','wait'] : ['Open','']; }
 /* The back of the booklet, which the paper version has and this page did not:
    Appendix 1, Cambridge's own examples of what meeting each of the 41 criteria
@@ -864,9 +874,13 @@ function render(){
   const s1 = ret(TT.stage1), s2c = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (IS_TRAINEE && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
   const my = IS_TRAINEE, tut = IS_TUTOR;
   const dates = (SETTINGS.start && SETTINGS.end) ? when(SETTINGS.start) + ' – ' + when(SETTINGS.end) : '';
-  const st1 = stageState(false, s1.returnedAt, s1.signedBy && s1.signedBy.at && (C.stage1 || {}).signed && C.stage1.signed.at, true);
-  const st2 = stageState(s2c.submittedAt, s2t.returnedAt, s2c.signed && s2c.signed.at);
-  const st3 = stageState(false, s3.returnedAt, (C.stage3 || {}).signed && C.stage3.signed.at, true);
+  const c1sig = sigFor((C.stage1 || {}).signed, s1), c2sig = sigFor(s2c.signed, s2t), c3sig = sigFor((C.stage3 || {}).signed, s3);
+  const again = (o, cur) => (o && o.signed && o.signed.at && !cur) ? 'Sign again' : 'Sign';
+  /* her half of Stage 2 is hers until she submits it, or until her tutor returns Stage 2 (a return before she submitted) */
+  const c2lock = !!s2c.submittedAt || !!(s2c.signed && s2c.signed.at) || !!s2t.returnedAt;
+  const st1 = stageState(false, s1.returnedAt, s1.signedBy && s1.signedBy.at && c1sig, true);
+  const st2 = stageState(s2c.submittedAt, s2t.returnedAt, c2sig);
+  const st3 = stageState(false, s3.returnedAt, c3sig, true);
   const stF = (fin.signed && fin.signed.at) ? ['Signed','good'] : (fint.signed && fint.signed.at) ? ['Tutor has signed — your turn','attn'] : ['Open',''];
 
   $('app').innerHTML = `
@@ -926,8 +940,9 @@ function render(){
         ${signature(s1, 'signedBy', { o:'s1', mine:false, waiting: 'Not returned yet' })}
       </div>
       <div class="half ${my?'mine':''}"><h3>Candidate</h3>
-        ${election(C.stage1 = C.stage1 || {}, 'agrees', { o:'c1', mine: my && !!s1.returnedAt, locked: !!((C.stage1||{}).signed && C.stage1.signed.at), yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree/do not agree</b> with the above comments.' })}
-        ${signature(C.stage1, 'signed', { o:'c1', mine: my, prefill: who.name, locked: s1.returnedAt ? '' : 'Your tutor has not written Stage 1 yet', label:'Your name, to sign that you have read it', button:'Sign' })}
+        ${election(C.stage1 = C.stage1 || {}, 'agrees', { o:'c1', mine: my && !!s1.returnedAt, locked: !!c1sig, yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree/do not agree</b> with the above comments.' })}
+        ${signature({ signed: c1sig }, 'signed', { o:'c1', mine: my, prefill: who.name, locked: s1.returnedAt ? '' : 'Your tutor has not written Stage 1 yet', label:'Your name, to sign that you have read it', button: again(C.stage1, c1sig) })}
+        ${my ? '<p class="tut-need" id="signNeed-c1" hidden>Choose I agree or I do not agree first.</p>' : ''}
       </div>
     </div>
   </section>
@@ -935,17 +950,18 @@ function render(){
   <section class="part" id="s2"><h2>Stage 2 <small>mid-course tutorial</small> ${pill(st2[0], st2[1])}</h2>
     ${stageText('stage2')}
     ${tut || s2t.hoursTaught ? `<div class="oneline"><div class="ol">${field(s2t, 'hoursTaught', 'Hours taught at this stage', { o:'s2t', mine: tut, input:'text', locked: !!s2t.returnedAt })}</div></div>` : ''}
-    ${marksGrid(s2c.marks, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !s2c.submittedAt, tutorMine: tut && !s2t.returnedAt, tutorX:true })}
+    ${marksGrid(s2c.marks, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !c2lock, tutorMine: tut && !s2t.returnedAt, tutorX:true })}
     <div class="halves" style="margin-top:14px">
       <div class="half ${my?'mine':''}"><h3>Candidate <small>${s2c.submittedAt ? 'submitted ' + when(s2c.submittedAt) : ''}</small></h3>
-        ${field(s2c, 'notesWA', 'Notes on your written assignments', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
-        ${field(s2c, 'notesOther', 'Other notes', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
-        <label class="f">Your overall self-assessment at this stage</label>${rating(s2c, 'overall', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
-        ${field(s2c, 'areas', 'Areas you need to work on', { o:'s2c', mine: my, locked: !!s2c.submittedAt })}
-        ${my ? (s2c.submittedAt ? '' : `<div class="bar"><button class="btn primary" type="button" data-submit="stage2">Submit to your tutor</button><span class="status" id="savedNote"></span></div>`) : ''}
-        ${election(s2c, 'accurate', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!(s2c.signed && s2c.signed.at), yes:'is', no:'is not', lead:'This <b>is/is not</b> an accurate record of the tutorial discussion and my progress to date.' })}
-        ${election(s2c, 'agrees', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!(s2c.signed && s2c.signed.at), yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree/do not agree</b> with the summarising comments.' })}
-        ${signature(s2c, 'signed', { o:'c2', mine: my, prefill: who.name, locked: s2t.returnedAt ? '' : 'Your tutor has not returned Stage 2 yet', label:'Your name, to sign', button:'Sign' })}
+        ${field(s2c, 'notesWA', 'Notes on your written assignments', { o:'s2c', mine: my, locked: c2lock })}
+        ${field(s2c, 'notesOther', 'Other notes', { o:'s2c', mine: my, locked: c2lock })}
+        <label class="f">Your overall self-assessment at this stage</label>${rating(s2c, 'overall', { o:'s2c', mine: my, locked: c2lock })}
+        ${field(s2c, 'areas', 'Areas you need to work on', { o:'s2c', mine: my, locked: c2lock })}
+        ${my ? (c2lock ? (s2c.submittedAt && !s2t.returnedAt && !(s2c.signed && s2c.signed.at) ? `<div class="bar"><button class="btn quiet" type="button" data-takeback="stage2">Take it back</button><span class="status">You can take it back to change it until your tutor returns Stage 2.</span></div>` : '') : `<div class="bar"><button class="btn primary" type="button" data-submit="stage2">Submit to your tutor</button><span class="status" id="savedNote"></span></div>`) : ''}
+        ${election(s2c, 'accurate', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!c2sig, yes:'is', no:'is not', lead:'This <b>is/is not</b> an accurate record of the tutorial discussion and my progress to date.' })}
+        ${election(s2c, 'agrees', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!c2sig, yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree/do not agree</b> with the summarising comments.' })}
+        ${signature({ signed: c2sig }, 'signed', { o:'c2', mine: my, prefill: who.name, locked: s2t.returnedAt ? '' : 'Your tutor has not returned Stage 2 yet', label:'Your name, to sign', button: again(s2c, c2sig) })}
+        ${my ? '<p class="tut-need" id="signNeed-c2" hidden>Choose both statements first.</p>' : ''}
       </div>
       <div class="half ${tut?'mine':''}"><h3>Tutor <small>${s2t.returnedAt ? 'returned ' + when(s2t.returnedAt) : ''}</small></h3>
         ${field(s2t, 'notesWA', 'Notes on written assignments', { o:'s2t', mine: tut, locked: !!s2t.returnedAt })}
@@ -977,8 +993,9 @@ function render(){
         ${signature(s3, 'signedBy', { o:'s3', mine:false, waiting: IS_TRAINEE ? 'Not written yet' : 'Not returned yet' })}
       </div>
       <div class="half ${my?'mine':''}"><h3>Candidate</h3>
-        ${election(C.stage3 = C.stage3 || {}, 'agrees', { o:'c3', mine: my && !!s3.returnedAt, locked: !!((C.stage3||{}).signed && C.stage3.signed.at), yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree/do not agree</b> with the summarising comments.' })}
-        ${signature(C.stage3, 'signed', { o:'c3', mine: my, prefill: who.name, locked: s3.returnedAt ? '' : 'No Stage 3 record to sign yet', label:'Your name, to sign', button:'Sign' })}
+        ${election(C.stage3 = C.stage3 || {}, 'agrees', { o:'c3', mine: my && !!s3.returnedAt, locked: !!c3sig, yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree/do not agree</b> with the summarising comments.' })}
+        ${signature({ signed: c3sig }, 'signed', { o:'c3', mine: my, prefill: who.name, locked: s3.returnedAt ? '' : 'No Stage 3 record to sign yet', label:'Your name, to sign', button: again(C.stage3, c3sig) })}
+        ${my ? '<p class="tut-need" id="signNeed-c3" hidden>Choose I agree or I do not agree first.</p>' : ''}
       </div>
     </div>
   </section>
@@ -1068,6 +1085,9 @@ function bookletInput(asTrainee){
      store now holds an unreturned stage back (traineeCelta5t_), and this page shows a trainee nothing of one either. */
   const ret = x => (HOLD && !(x && x.returnedAt)) ? {} : (x || {});
   const s1 = ret(TT.stage1), s2c = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (HOLD && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
+  /* a candidate's signature only for the return it signed (sigFor); her choices under an earlier one are left out too */
+  const c1sig = sigFor((C.stage1 || {}).signed, s1), c2sig = sigFor(s2c.signed, s2t), c3sig = sigFor((C.stage3 || {}).signed, s3);
+  const choice = (o, cur, k) => (o && o.signed && o.signed.at && !cur) ? null : (typeof (o || {})[k] === 'boolean' ? o[k] : null);
   const hist = T.tpHistory(who.tr), flat = T.recordFor(who.tr);
   const assessedTp = Object.keys(hist).sort((a, b) => a - b).map(n => { const f = (hist[n].state && hist[n].state.f) || {};
     /* 9.1.2: "The type of lesson must be recorded in the CELTA 5." The tutor's
@@ -1127,21 +1147,21 @@ function bookletInput(asTrainee){
              courseDates: (SETTINGS.start && SETTINGS.end) ? shortDate(SETTINGS.start) + ' - ' + shortDate(SETTINGS.end) : '', tutorNames: String(SETTINGS.tutorNames || '').split(/,|\band\b/).map(x => x.trim()).filter(Boolean) },
     attendance: { totalCourseHours: SETTINGS.totalHours ? Number(SETTINGS.totalHours) : null, totalHoursAttended: att.attended ? Number(att.attended) : null, unavoidableAbsences: abs, otherAbsences: other },
     stage1: { tutorialGiven: s1.tutorialGiven === 'yes' || s1.tutorialGiven === true ? true : s1.tutorialGiven === 'no' ? false : null, hoursTaught: s1.hoursTaught ? Number(s1.hoursTaught) : null, strengths: s1.strengths || null, actionPlan: s1.actionPlan || null,
-              candidateAgrees: typeof (C.stage1 || {}).agrees === 'boolean' ? C.stage1.agrees : null,
-              candidateSignatureName: sigName((C.stage1 || {}).signed), candidateSignedAt: sigAt((C.stage1 || {}).signed), candidateSignatureInk: sigInk((C.stage1 || {}).signed), tutorSignatureName: sigName(s1.signedBy), tutorSignedAt: sigAt(s1.signedBy), tutorSignatureInk: sigInk(s1.signedBy) },
+              candidateAgrees: choice(C.stage1, c1sig, 'agrees'),
+              candidateSignatureName: sigName(c1sig), candidateSignedAt: sigAt(c1sig), candidateSignatureInk: sigInk(c1sig), tutorSignatureName: sigName(s1.signedBy), tutorSignedAt: sigAt(s1.signedBy), tutorSignatureInk: sigInk(s1.signedBy) },
     observations, assessedTp,
     candidateStage2Marks: marks(s2c.marks), tutorStage2Marks: marks(s2t.marks), tutorStage3Marks: marks(s3.marks),
     writtenAssignments: { assignments },
     stage2Notes: { candidateWrittenAssignmentsNotes: s2c.notesWA || null, tutorWrittenAssignmentsNotes: s2t.notesWA || null, candidateOtherNotes: s2c.notesOther || null, tutorOtherNotes: s2t.notesOther || null },
     stage2Overall: { candidateOverall: RATE[s2c.overall] || null, candidateNotes: s2c.areas || null, tutorOverall: RATE[s2t.overall] || null, tutorNotes: s2t.summary || null,
                      hoursTaught: s2t.hoursTaught || null,
-                     candidateAccurate: typeof s2c.accurate === 'boolean' ? s2c.accurate : null, candidateAgrees: typeof s2c.agrees === 'boolean' ? s2c.agrees : null,
-                     tutorSignatureName: sigName(s2t.signedBy), tutorSignedAt: sigAt(s2t.signedBy), tutorSignatureInk: sigInk(s2t.signedBy), candidateSignatureName: sigName(s2c.signed), candidateSignedAt: sigAt(s2c.signed), candidateSignatureInk: sigInk(s2c.signed) },
+                     candidateAccurate: choice(s2c, c2sig, 'accurate'), candidateAgrees: choice(s2c, c2sig, 'agrees'),
+                     tutorSignatureName: sigName(s2t.signedBy), tutorSignedAt: sigAt(s2t.signedBy), tutorSignatureInk: sigInk(s2t.signedBy), candidateSignatureName: sigName(c2sig), candidateSignedAt: sigAt(c2sig), candidateSignatureInk: sigInk(c2sig) },
     stage3Header: { tutorialGiven: s3.tutorialGiven === 'yes' ? true : s3.tutorialGiven === 'no' ? false : null, hoursTaught: s3.hoursTaught || null },
     stage3Notes: { tutorWrittenAssignmentsNotes: s3.notesWA || null, tutorOtherNotes: s3.notesOther || null },
     stage3Overall: { tutorOverall: RATE[s3.overall] || null, tutorNotes: s3.summary || null, tutorSignatureName: sigName(s3.signedBy), tutorSignedAt: sigAt(s3.signedBy), tutorSignatureInk: sigInk(s3.signedBy),
-                     candidateAgrees: typeof (C.stage3 || {}).agrees === 'boolean' ? C.stage3.agrees : null,
-                     candidateSignatureName: sigName((C.stage3 || {}).signed), candidateSignedAt: sigAt((C.stage3 || {}).signed), candidateSignatureInk: sigInk((C.stage3 || {}).signed) },
+                     candidateAgrees: choice(C.stage3, c3sig, 'agrees'),
+                     candidateSignatureName: sigName(c3sig), candidateSignedAt: sigAt(c3sig), candidateSignatureInk: sigInk(c3sig) },
     finalDeclaration: { checklistTp: !!(fin.checks || {}).tp, checklistObservations: !!(fin.checks || {}).obs, checklistAssignments: !!(fin.checks || {}).wa, checklistOwnWork: !!(fin.checks || {}).own, checklistAllRecords: !!(fin.checks || {}).records,
                         gradeReviewComments: fint.gradeReview || null,
                         candidateSignatureName: sigName(fin.signed), candidateSignedAt: sigAt(fin.signed), candidateSignatureInk: sigInk(fin.signed), tutorSignatureName: sigName(fint.signed), tutorSignedAt: sigAt(fint.signed), tutorSignatureInk: sigInk(fint.signed) },
@@ -1205,9 +1225,13 @@ const isMineObj = o => /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o) ? IS_TRAINEE : IS_
 const save = o => (isMineObj(o) && /^(wa|conf|c1|s2c|c2|c3|fin)$/.test(o)) ? saveC() : saveT();
 function bind(){
   const app = $('app');
-  if (S1_RAW && S1_WORDS === 'idle') s1Reword();
-  if (S2.raw && S2.words === 'idle') S2.reword();
-  if (S3.raw && S3.words === 'idle') S3.reword();
+  /* after this binding, never inside it: a cached reword draws the page again at once, and a render inside bind() bound
+     every control twice (one Return press, two signature dialogs) */
+  setTimeout(() => {
+    if (S1_RAW && S1_WORDS === 'idle') s1Reword();
+    if (S2.raw && S2.words === 'idle') S2.reword();
+    if (S3.raw && S3.words === 'idle') S3.reword();
+  }, 0);
   /* Stage 1's boxes open to their whole text, filled in or not; so do Stage 2's and Stage 3's summaries */
   app.querySelectorAll('#s1 textarea, #s2 textarea.s1write, #s3 textarea.s1write').forEach(t => { const fit = () => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 4) + 'px'; }; fit(); t.addEventListener('input', fit); });
   /* a Stage 1 box shows its text laid out; press it to write in it, and it is laid out again when you leave it */
@@ -1283,17 +1307,35 @@ function bind(){
     const [o, key] = b.dataset.sign.split(':'); if (!isMineObj(o)) return;
     const input = app.querySelector(`[data-sig="${o}:${key}"]`); const name = (input && input.value.trim()) || '';
     if (!name) { alert('Type your name to sign.'); return; }
+    /* a candidate's stage signature comes after her choices (Cambridge prints them beside it), and names the return it signs */
+    const SIGNS = { c1: 'stage1', c2: 'stage2', c3: 'stage3' };
+    if (SIGNS[o]) {
+      const mineObj = OBJ[o]();
+      if (typeof mineObj.agrees !== 'boolean' || (o === 'c2' && typeof mineObj.accurate !== 'boolean')) {
+        const need = $('signNeed-' + o); if (need) { need.hidden = false; need.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        return;
+      }
+    }
     const ink = (IS_TUTOR && window.hubInk.kept && window.hubInk.kept(name) && window.hubInk.mine(name)) ? window.hubInk.mine(name) : await window.hubInk.confirm({ name, title: b.textContent.trim() }); if (ink === null) return;
-    const obj = OBJ[o](); obj[key] = ink ? { name, at: now(), ink } : { name, at: now() }; if (o === 'fint' && IS_TUTOR) (window.hubKeepTutorName ? hubKeepTutorName(name) : localStorage.setItem('chub:tutorName', name));   /* never over a name chosen from Course admin's tutors (24 Nov 2026) */
+    const obj = OBJ[o](); obj[key] = ink ? { name, at: now(), ink } : { name, at: now() }; if (SIGNS[o] && (TT[SIGNS[o]] || {}).returnedAt) obj[key].forReturn = TT[SIGNS[o]].returnedAt; if (o === 'fint' && IS_TUTOR) (window.hubKeepTutorName ? hubKeepTutorName(name) : localStorage.setItem('chub:tutorName', name));   /* never over a name chosen from Course admin's tutors (24 Nov 2026) */
     save(o); render();
   }));
-  app.querySelectorAll('[data-submit]').forEach(b => b.addEventListener('click', () => { if (!IS_TRAINEE) return; C.stage2 = C.stage2 || {}; C.stage2.submittedAt = now(); saveC(); render(); }));
+  app.querySelectorAll('[data-submit]').forEach(b => b.addEventListener('click', () => { if (!IS_TRAINEE) return;
+    if (!confirm('Submit your half of Stage 2 to your tutor? You can take it back until your tutor returns Stage 2.')) return;
+    C.stage2 = C.stage2 || {}; C.stage2.submittedAt = now(); delete C.stage2.takenBackFrom; saveC(); render(); }));
+  /* Take it back (25 Nov 2026): a submission made by mistake, or too early, is hers to take back until her tutor returns
+     Stage 2. takenBackFrom names the submission, which is how the store knows it is not an older copy (store v304). */
+  app.querySelectorAll('[data-takeback]').forEach(b => b.addEventListener('click', () => { if (!IS_TRAINEE) return;
+    const s = C.stage2 || {}; if (!s.submittedAt || (s.signed && s.signed.at) || (TT.stage2 || {}).returnedAt) return;
+    if (!confirm('Take your half of Stage 2 back to change it? Submit it again when it is ready.')) return;
+    s.takenBackFrom = s.submittedAt; delete s.submittedAt; C.stage2 = s; saveC(); render(); }));
   app.querySelectorAll('[data-return]').forEach(b => b.addEventListener('click', async () => {
     if (!IS_TUTOR) return; const stage = b.dataset.return;
     if ((stage === 'stage1' || stage === 'stage3') && !['yes', 'no', true, false].includes((TT[stage] || {}).tutorialGiven)) {
       const need = $('tutNeed-' + stage); if (need) { need.hidden = false; need.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
       return;
     }
+    if (stage === 'stage2' && !(C.stage2 || {}).submittedAt && !confirm(who.name + ' has not submitted their half yet. Return anyway?')) return;
     /* A tutor who saw and kept their signature on the dashboard signs with
        the click itself; anyone else gets the dialog as before. */
     const tn = tutorName();
@@ -1301,16 +1343,20 @@ function bind(){
       ? { name: tn, ink: window.hubInk.mine(tn) }
       : await window.hubInk.confirm({ askName: true, name: tn, title: 'Sign and return ' + stage.replace('stage', 'Stage ') });
     if (!got || !got.name) return;
-    const name = got.name, ink = got.ink;
+    const name = (window.hubTutorNameMatch && hubTutorNameMatch(got.name)) || got.name, ink = got.ink;
     /* a Stage 2 or Stage 3 summary still as it was shown, never typed in, joins the record as it is returned */
     if (stage === 'stage2' || stage === 'stage3') { const sum = app.querySelector((stage === 'stage2' ? '#s2' : '#s3') + ' textarea[data-k="summary"]');
-      if (sum && sum.value.trim() && !String((TT[stage] || {}).summary || '').trim()) { TT[stage] = TT[stage] || {}; TT[stage].summary = sum.value; } }
+      if (sum && sum.value.trim() && !String((TT[stage] || {}).summary || '').trim()) { TT[stage] = TT[stage] || {}; TT[stage].summary = sum.value; }
+      /* ...and so do the hours shown in the box: a stage written and returned in one sitting never saved them */
+      const h = app.querySelector((stage === 'stage2' ? '#s2' : '#s3') + ' input[data-k="hoursTaught"]');
+      if (h && h.value.trim() && !(TT[stage] || {}).hoursTaught) { TT[stage] = TT[stage] || {}; TT[stage].hoursTaught = h.value.trim(); } }
     (window.hubKeepTutorName ? hubKeepTutorName(name) : localStorage.setItem('chub:tutorName', name)); TT[stage] = TT[stage] || {}; TT[stage].returnedAt = now(); TT[stage].signedBy = ink ? { name, at: now(), ink } : { name, at: now() }; saveT(); render();
     fileBooklet();   /* a stage signed and returned: the booklet as it now stands goes to the center's folder */
   }));
   app.querySelectorAll('[data-reopen]').forEach(b => b.addEventListener('click', () => {
-    if (!IS_TUTOR) return; const stage = b.dataset.reopen; if (!confirm('Reopen ' + stage.replace('stage','Stage ') + ' for editing? The candidate’s signature on it, if any, stays on the record until they sign again.')) return;
-    TT[stage] = TT[stage] || {}; delete TT[stage].returnedAt; delete TT[stage].signedBy; saveT(); render();
+    if (!IS_TUTOR) return; const stage = b.dataset.reopen; if (!confirm('Reopen ' + stage.replace('stage','Stage ') + ' for editing? When you return it again, the candidate reads it again and signs again.')) return;
+    /* reopenedFrom names the return being reopened, so the store knows this is a Reopen and not an older copy (store v304) */
+    TT[stage] = TT[stage] || {}; if (TT[stage].returnedAt) TT[stage].reopenedFrom = TT[stage].returnedAt; delete TT[stage].returnedAt; delete TT[stage].signedBy; saveT(); render();
   }));
 }
 render();

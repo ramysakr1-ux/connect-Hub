@@ -59,6 +59,26 @@ window.CONNECT_HUB_CELTA5_STAGE_TEXT = {
   {
    "kind": "mark",
    "text": "Putting ‘X’ for ‘Not Applicable’ at this stage in the course because you have not yet focused on teaching or planning skills associated with that criterion."
+  },
+  {
+   "kind": "p",
+   "text": "Then complete the boxes marked ‘You’ with reference to the written assignments and any other areas you wish to discuss."
+  },
+  {
+   "kind": "p",
+   "text": "Choose the statement which you believe is the most appropriate description of your overall progress so far on the course (Overall Progress – Candidate’s Assessment). Then, in the box provided, list the areas which you think you need to work on."
+  },
+  {
+   "kind": "p",
+   "text": "Either before, during or after the tutorial, your tutor will complete the column marked ‘Tutor’, indicating whether they agree with your self-assessment or not."
+  },
+  {
+   "kind": "p",
+   "text": "During the tutorial, you might like to take notes. Your progress to date will be discussed, as will any strategies to help you with any difficulties you are having."
+  },
+  {
+   "kind": "p",
+   "text": "The tutor will summarise key issues concerning your progress in the appropriate box."
   }
  ],
  "stage3": [

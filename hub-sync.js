@@ -421,12 +421,14 @@
        HubSync.isFresh()    true once the store has answered for this page (always true on every other page)
        HubSync.whenFresh()  a promise, resolved then
        HubSync.owe(page)    hubMoveOn was held back; the page is drawn again once the store answers, if nobody is at work */
-  var WAIT = mode === 'trainee' && !DEMO && /(?:^|\/)(?:1_trainee_plan_and_analysis|2_trainee_self_evaluation|4_feedback_returned)\.html$/.test(location.pathname);
+  /* ...and the CELTA 5 (25 Nov 2026, the eve of C/21's Stage 2 tutorials): drawn from a phone's old copy, a tap there put
+     Wednesday's Stage 2 back over the half she had submitted and signed on her laptop (store v304 keeps it now) */
+  var WAIT = mode === 'trainee' && !DEMO && /(?:^|\/)(?:1_trainee_plan_and_analysis|2_trainee_self_evaluation|4_feedback_returned|20_celta5)\.html$/.test(location.pathname);
   var FRESH = !WAIT, FRESH_WAITERS = [], MOVE_OWED = false, LEAVING = false, DREW_STALE = false;
   /* the record this page's own form writes: when the store's copy of it is laid down under a form already drawn, the page
      is drawn again, even with somebody at work on it (review, 24 Nov 2026) -- its form shows an older copy, and a word typed
      into it would go out as that older copy */
-  var OWN_KEY = !WAIT ? '' : /2_trainee_self_evaluation/.test(location.pathname) ? 'chub:selfeval' : /1_trainee_plan_and_analysis/.test(location.pathname) ? 'chub:plan' : '';
+  var OWN_KEY = !WAIT ? '' : /2_trainee_self_evaluation/.test(location.pathname) ? 'chub:selfeval' : /1_trainee_plan_and_analysis/.test(location.pathname) ? 'chub:plan' : /20_celta5/.test(location.pathname) ? 'chub:celta5' : '';
   function ownRedraw(ch){
     if (!(WAIT && started && OWN_KEY && (ch || []).indexOf(OWN_KEY) >= 0)) return false;
     try { sessionStorage.setItem('hub:kept', 'changed:' + OWN_KEY.slice(5)); sessionStorage.setItem(KEEP_Y, String(window.scrollY || 0)); } catch (e) {}
@@ -875,9 +877,10 @@
      Not drawn again (another page, or one not started yet): it says what this device had was not used. */
   function keptLine(kinds, redrawn){
     if (!kinds) return;
-    var name = /plan/.test(kinds) ? 'Your plan' : /selfeval/.test(kinds) ? 'Your self-evaluation' : 'Your TP record';
+    var name = /plan/.test(kinds) ? 'Your plan' : /selfeval/.test(kinds) ? 'Your self-evaluation' : /celta5/.test(kinds) ? 'Your CELTA 5' : 'Your TP record';
     var said = /^changed:/.test(kinds) ? name + ' was changed on another device after this page opened. This page now shows the newest copy.'
       : redrawn ? name + ' was saved on another device after this page opened. This page now shows the saved copy.'
+      : /celta5/.test(kinds) ? name + ' was submitted or signed on another device, so that part stays as it was saved there.'
       : name + ' was saved on another device, so the changes made on this device were not used.';
     var show = function(){
       var old = document.getElementById('hubKept'); if (old) old.remove();
@@ -1288,7 +1291,10 @@
     var JUST_ANSWERED = false;
     if (WAIT) { try { var ja = parse(sessionStorage.getItem('hub:answered')); sessionStorage.removeItem('hub:answered');
       JUST_ANSWERED = !!(ja && ja.p === location.pathname && Date.now() - ja.at < 15000 && Date.now() - (V0 && V0.at || 0) < 15000 && !Object.keys(ledger()).length); } catch (e) {} }
-    if (sameCopy && (!WAIT || JUST_ANSWERED) && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
+    /* a tutor's CELTA 5 always asks the store too (25 Nov 2026): in a tutorial, "I've submitted, look now" is seconds old,
+       and the one-minute shortcut showed the copy from before it */
+    var C5_TUTOR = mode === 'tutor' && /(?:^|\/)20_celta5\.html$/.test(location.pathname);
+    if (sameCopy && (!WAIT || JUST_ANSWERED) && !C5_TUTOR && Date.now() - (V0.at || 0) < 60000) { settledQuietly(); return; }
     var ASKING = false;
     var ask = function(){
       if (ASKING || STOPPED) return; ASKING = true;

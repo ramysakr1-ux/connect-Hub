@@ -1915,6 +1915,8 @@ case 'inbox': {
         if (!TUTOR_WRITES[k2]) throw new Error('Not a record kind: ' + k2);
         if (!me) throw new Error('No token');
         if (k2 === 'assignments') return putAssignments_(course.id, me.token, req.data, 'tutor');
+        /* v304 (25 Nov 2026): a returned stage, a signature, a submitted Stage 2 are not undone by an older copy (putCelta5_) */
+        if (k2 === 'celta5' || k2 === 'celta5t') { putCelta5_(course.id, me.token, k2, req.data); return { saved: true }; }
         write_(course.id, me.token, k2, req.data);
         return { saved: true };
       }
@@ -1942,6 +1944,13 @@ case 'inbox': {
          from another device, and moving on to the next TP is done whole or not at all (putTurnedIn_). v299's filing of a
          self-evaluation (fileLateSelf_) runs in there. */
       if (k2 === 'plan' || k2 === 'selfeval' || (k2 === 'feedback' && req.data == null)) return putTurnedIn_(course.id, me.token, k2, req.data);
+      /* v304 (25 Nov 2026): a submitted or signed CELTA 5 is not undone by an older copy from another device (putCelta5_) */
+      if (k2 === 'celta5') {
+        var c5r = putCelta5_(course.id, me.token, k2, req.data);
+        if (!c5r.kept) return { saved: true };
+        try { PropertiesService.getScriptProperties().setProperty(verKey_(String(course.id)), Date.now().toString(36) + Math.random().toString(36).slice(2, 6)); } catch (pv5) {}
+        return { saved: false, kept: 'celta5', data: c5r.data };
+      }
       write_(course.id, me.token, k2, req.data);
       return { saved: true };
     }
@@ -5510,6 +5519,79 @@ function traineeCelta5t_(t) {
   ['stage1', 'stage2', 'stage3'].forEach(function (k) { if (out[k] && !out[k].returnedAt) out[k] = {}; });
   if (out.final && !(out.final.signed && out.final.signed.at)) out.final = {};
   return out;
+}
+/* A SUBMITTED OR SIGNED CELTA 5 IS NOT UNDONE BY AN OLDER COPY (v304, 25 Nov 2026, the eve of C/21's Stage 2 tutorials).
+   Both halves of the CELTA 5 are written whole, as the page last loaded them. On 24 Nov a second copy of Lite (a phone, or
+   WhatsApp's own browser) saved a blank lesson plan over a turned-in one (v303); the CELTA 5 had the same opening: a phone
+   still holding Wednesday's copy, tapped once, put back Wednesday's Stage 2 over the half she had submitted and signed on
+   her laptop, and a tutor's tab open since before the tutorial undid the other tutor's Return. Now, under the script lock:
+     the trainee's half (celta5): a part the store holds as submitted or signed is kept as the store holds it when the copy
+       coming in would drop it or carries an older one -- Stage 2 whole while it is submitted (unless the trainee took it
+       back herself before her tutor returned it: takenBackFrom names that submission), Stage 1, 2 and 3 and the final
+       declaration whole once signed, each confirmation, each written-assignment signature and each signed letter. A
+       newer signature is taken (signing again after a tutor reopened a stage).
+     the tutors' half (celta5t): a returned stage is kept as returned when the copy coming in has not seen that return
+       (no returnedAt, or an older one), unless it is that return being reopened (reopenedFrom names it); the tutor's
+       final signature likewise.
+   Everything else in the copy is written as sent. The trainee's page is answered with what the store now holds
+   ({ saved: false, kept, data }), so it draws the saved copy; a tutor's is answered saved (its roster takes no single
+   record), and its next page boots the store's copy. Two tutors writing the same unreturned stage at the same moment are
+   not merged: one device per trainee's CELTA 5. */
+function c5Obj_(x) { return x && typeof x === 'object' && !Array.isArray(x) ? x : {}; }
+function c5At_(x) { return x && typeof x === 'object' && x.at ? String(x.at) : ''; }
+function celta5Keep_(was, data, tutors) {
+  was = c5Obj_(was); tutors = c5Obj_(tutors);
+  var out = {}, inc = c5Obj_(data), kept = false;
+  Object.keys(inc).forEach(function (k) { out[k] = inc[k]; });
+  ['stage1', 'stage3', 'final'].forEach(function (k) {
+    var w = c5Obj_(was[k]); if (!c5At_(w.signed)) return;
+    if (c5At_(c5Obj_(out[k]).signed) < c5At_(w.signed)) { out[k] = w; kept = true; }
+  });
+  var w2 = c5Obj_(was.stage2), n2 = c5Obj_(out.stage2);
+  if (w2.submittedAt && n2.submittedAt !== w2.submittedAt) {
+    var tookBack = !n2.submittedAt && String(n2.takenBackFrom || '') === String(w2.submittedAt) && !c5Obj_(tutors.stage2).returnedAt && !c5At_(w2.signed);
+    if (!tookBack) { out.stage2 = w2; kept = true; }
+  } else if (c5At_(w2.signed) && c5At_(n2.signed) < c5At_(w2.signed)) { out.stage2 = w2; kept = true; }
+  ['confirms', 'wa'].forEach(function (k) {
+    var w = c5Obj_(was[k]), n = null;
+    Object.keys(w).forEach(function (s) {
+      if (!c5At_(w[s]) || c5At_(c5Obj_(c5Obj_(out[k])[s])) >= c5At_(w[s])) return;
+      if (!n) { n = {}; Object.keys(c5Obj_(out[k])).forEach(function (x) { n[x] = out[k][x]; }); out[k] = n; }
+      n[s] = w[s]; kept = true;
+    });
+  });
+  ['failLetterSigned', 'malpracticeLetterSigned'].forEach(function (k) {
+    if (c5At_(was[k]) && c5At_(out[k]) < c5At_(was[k])) { out[k] = was[k]; kept = true; }
+  });
+  return { data: out, kept: kept };
+}
+function celta5tKeep_(was, data) {
+  was = c5Obj_(was);
+  var out = {}, inc = c5Obj_(data), kept = false;
+  Object.keys(inc).forEach(function (k) { out[k] = inc[k]; });
+  ['stage1', 'stage2', 'stage3'].forEach(function (k) {
+    var w = c5Obj_(was[k]), n = c5Obj_(out[k]); if (!w.returnedAt) return;
+    if (n.returnedAt) { if (String(n.returnedAt) < String(w.returnedAt)) { out[k] = w; kept = true; } return; }
+    if (n.reopenedFrom && String(n.reopenedFrom) === String(w.returnedAt)) return;   // the tutor reopened this very return
+    out[k] = w; kept = true;
+  });
+  var wf = c5Obj_(was.final);
+  if (c5At_(wf.signed) && c5At_(c5Obj_(out.final).signed) < c5At_(wf.signed)) { out.final = wf; kept = true; }
+  return { data: out, kept: kept };
+}
+function putCelta5_(courseId, token, kind, data) {
+  var lock = LockService.getScriptLock(), had = LOCK_DEPTH_ > 0 || lock.hasLock();
+  if (!had) lock.waitLock(20000);
+  LOCK_DEPTH_++;
+  try {   // read, compare and write as one step, so two saves cannot cross
+    var got = readMany_(courseId, token, ['celta5', 'celta5t']);
+    var r = kind === 'celta5t' ? celta5tKeep_(got.celta5t, data) : celta5Keep_(got.celta5, data, got.celta5t);
+    /* nothing the store holds is at stake: written exactly as sent, as before */
+    var put = r.kept ? r.data : data;
+    if (JSON.stringify(got[kind] == null ? null : got[kind]) !== JSON.stringify(put == null ? null : put)) write_(courseId, token, kind, put);
+    try { SpreadsheetApp.flush(); } catch (fl) {}
+    return r;
+  } finally { LOCK_DEPTH_--; if (!had) lock.releaseLock(); }
 }
 /* REFLECT BEFORE READING, HELD BY THE STORE (v263, 19 Nov 2026). Ramy, about a C/21 trainee whose TP1 feedback had been
    returned before his self-evaluation was in: "Just want to make sure that he can't open his feedback, or he couldn't."
