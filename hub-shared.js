@@ -2526,8 +2526,6 @@ window.hubNoticeText = function(p){
 (function(){
   /* hub-shared loads before hub-store on some pages, so who is looking is asked once the page is in */
   var WRITE = /\b(save|add|delete|remove|edit|share|stop sharing|release|upload|post|issue|withdraw|submit|send|sign|book|cancel my place|clear|reset|move|put back|publish|take it back|give it back|rename|swap|create|start again|import|record|tick|mark as|answered|to mark|connect with)\b/i;
-  /* in another tutor's view, also the tutor's own actions (the assessor never has them) */
-  var VIEW_WRITE = /\b(make an announcement|return|reopen|mark|met|not met|take it|turn in|approve|typo|good|to work on|comment|reword|draw|fill|take|give)\b/i;
   var VIEW = /\b(print|open|show|hide|reveal|play|listen|watch|next|previous|close|full screen|days across|days down|by week|by topic|more|less|turn)\b/i;
   function viewOnly(el){ return el.hasAttribute('data-view') || /^(show|filter|view|see)\b/i.test(el.getAttribute('aria-label') || ''); }
   function lock(root){
@@ -2541,32 +2539,12 @@ window.hubNoticeText = function(p){
     (root || document).querySelectorAll('[contenteditable]').forEach(function(el){ if (el.getAttribute('contenteditable') !== 'false') { el.setAttribute('contenteditable', 'false'); el.classList.add('hub-ro'); } });
     (root || document).querySelectorAll('button, a.btn, [role=button]').forEach(function(el){
       var t = (el.innerText || el.getAttribute('aria-label') || el.title || '').replace(/\s+/g, ' ').trim();
-      if (t && (WRITE.test(t) || (viewing() && VIEW_WRITE.test(t))) && !VIEW.test(t)) el.classList.add('hub-ro-hide');
+      if (t && WRITE.test(t) && !VIEW.test(t)) el.classList.add('hub-ro-hide');
     });
   }
-  /* ANOTHER TUTOR'S VIEW IS VIEW ONLY (Ramy, 25 Nov 2026: "if one trainer signs in as another trainer, it should be view
-     only. They should not be able to change anything"). The tutor dashboard's "See Belma's view" keeps the tab in that
-     view (sessionStorage chub:viewAs); every page in the tab then reads as the assessor's does, with a strip that says
-     whose view it is and goes back. */
-  function viewing(){
-    try { var v = (sessionStorage.getItem('chub:viewAs') || '').trim(), me = (localStorage.getItem('chub:tutorName') || '').trim();
-      return !!v && !!me && v.toLowerCase() !== me.toLowerCase() && !!(window.HubStore && HubStore.isTutor && HubStore.isTutor()) ? v : ''; } catch (e) { return ''; }
-  }
-  window.hubViewingAs = viewing;
-  function strip(v){
-    if (document.getElementById('hubViewStrip') || /5_tutor_dashboard\.html$/.test(location.pathname)) return;
-    var d = document.createElement('div'); d.id = 'hubViewStrip';
-    d.style.cssText = 'position:sticky;top:0;z-index:9000;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:8px 14px;background:color-mix(in oklab, var(--a-mustard, #c99a2e) 18%, var(--paper, #fff));border-bottom:1.5px solid var(--a-mustard, #c99a2e);font:600 .88rem Karla,sans-serif;color:var(--ink,#232220);';
-    var t = document.createElement('span'); t.textContent = 'You\u2019re seeing ' + v.split(/\s+/)[0] + '\u2019s view. Nothing can be changed.';
-    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('data-view', '1'); b.textContent = 'Back to my view';
-    b.style.cssText = 'font:700 .82rem Karla,sans-serif;border:1.5px solid var(--sand-line,#ddd);background:var(--paper,#fff);border-radius:999px;padding:6px 12px;cursor:pointer;';
-    b.addEventListener('click', function(){ try { sessionStorage.removeItem('chub:viewAs'); } catch (e) {} location.reload(); });
-    d.appendChild(t); d.appendChild(b); document.body.insertBefore(d, document.body.firstChild);
-  }
   function go(){
-    var S = window.HubStore, v = viewing();
-    if (v) strip(v);
-    if (!v && (!S || !S.isAssessor || !S.isAssessor())) return;
+    var S = window.HubStore;
+    if (!S || !S.isAssessor || !S.isAssessor()) return;
     /* The owner's entry page is Connect's, not a course's: an assessor key left in this browser from a visit must not
        lock it (1 Nov 2026, the role-by-role review's R6). The owner signs in there with their own passphrase. */
     if (/14_owner\.html$/.test(location.pathname)) return;

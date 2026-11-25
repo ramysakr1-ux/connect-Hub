@@ -128,18 +128,7 @@ window.HubStore = (function(){
   function cred(){ return key() || akey() || vtoken() || token() || ''; }
   function verGet(){ try { return JSON.parse(localStorage.getItem('hub:ver') || 'null'); } catch (e) { return null; } }
   function verPut(o){ try { localStorage.setItem('hub:ver', JSON.stringify(o)); } catch (e) {} }
-  /* ANOTHER TUTOR'S VIEW SENDS NOTHING (25 Nov 2026): while a tab shows another tutor's view (sessionStorage chub:viewAs,
-     set on the tutor dashboard), only the store's reads go out; anything that would change the course is refused here,
-     whatever button asked for it. The same reads as the store's own READ_OPS_, and the tutor's notes. */
-  var VIEW_READS = { tutorPhrases: 1, stage1Words: 1, adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
-    questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1, ownerCourses: 1, centres: 1, volunteerCards: 1,
-    readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1, health: 1, tutorNotes: 1 };
-  function viewingOther(){
-    try { var v = (sessionStorage.getItem('chub:viewAs') || '').trim(), me = (localStorage.getItem('chub:tutorName') || '').trim();
-      return !!v && !!me && v.toLowerCase() !== me.toLowerCase() && !!localStorage.getItem('hub:k'); } catch (e) { return false; }
-  }
   async function call(body, timeoutMs){
-    if (body && body.op && !VIEW_READS[body.op] && !READS[body.op] && viewingOther()) throw new Error('Nothing can be changed while you see another tutor\u2019s view. Go back to your own view first.');
     var payload = Object.assign({}, body);
     if (!payload.owner && !READS[payload.op] && isDemo()) return { demo: true, saved: true };
     if (!payload.owner && !READS[payload.op] && moved()) throw new Error('Another Lite link was opened in this browser since this page loaded. Reload this page before saving, so your work goes to the right place.');
