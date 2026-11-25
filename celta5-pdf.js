@@ -138,7 +138,10 @@
     while (out.length && !out[out.length - 1]) out.pop();
     return out;
   }
-  function drawStageText(page, font, text, box, name, firstLeading){
+  /* THE HEADINGS IN BOLD (Ramy, 25 Nov 2026): "Strengths:", "Action points:", "Overall comment:" (and Stage 3's older
+     "Strengths in planning:" and the PLANNING / TEACHING lines) print in the bold face; the words and the lines are the same */
+  const STAGE_HEAD = /^((Strengths|Action points)( in (planning|teaching))?|Overall comment|Action plan):$|^(PLANNING|TEACHING)$/;
+  function drawStageText(page, font, text, box, name, firstLeading, bold){
     if (!text || !String(text).trim()) return;
     const maxWidth = box.x1 - box.x0, room = box.y1 - box.y0;
     let size = 9.5, lead = firstLeading || 12, lines = [];
@@ -151,7 +154,7 @@
     for (const l of lines) {
       if (!l) { y += lead * 0.5; continue; }
       if (y + lead > box.y1) { OVERFLOW.push(name || 'A box'); return; }
-      drawAt(page, font, l.text, box.x0 + l.x, y, size); y += lead;
+      drawAt(page, (bold && STAGE_HEAD.test(String(l.text).trim())) ? bold : font, l.text, box.x0 + l.x, y, size); y += lead;
     }
   }
   function drawOvalAround(page, box){
@@ -308,7 +311,7 @@
     if (d.candidateOverall) drawOvalAround(page, CAND[RATINGS.indexOf(d.candidateOverall)]);
     if (d.candidateNotes) drawStageText(page, f.regular, d.candidateNotes, { x0: 62, y0: 178, x1: 525, y1: 316 }, 'Stage 2, the candidate\u2019s areas to work on');
     if (d.tutorOverall) drawOvalAround(page, TUT[RATINGS.indexOf(d.tutorOverall)]);
-    if (d.tutorNotes) drawStageText(page, f.regular, d.tutorNotes, { x0: 57, y0: 431, x1: 525, y1: 618 }, 'Stage 2, Summary of tutorial and action points');
+    if (d.tutorNotes) drawStageText(page, f.regular, d.tutorNotes, { x0: 57, y0: 431, x1: 525, y1: 618 }, 'Stage 2, Summary of tutorial and action points', null, f.bold);
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 165, 657.4, 440 - 165 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 440, 657.4); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 190, 726.5, 440.5 - 190 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 440.5, 726.5); }
     /* "This is/is not an accurate record of the tutorial discussion and my
@@ -328,7 +331,7 @@
   function drawStage3Overall(page, f, d){
     const TUT = [{ x0: 78, y0: 89.1, x1: 318, y1: 101.5 }, { x0: 78, y0: 101.9, x1: 300, y1: 114.2 }, { x0: 78, y0: 114.5, x1: 492, y1: 126.8 }];
     if (d.tutorOverall) drawOvalAround(page, TUT[RATINGS.indexOf(d.tutorOverall)]);
-    if (d.tutorNotes) drawStageText(page, f.regular, d.tutorNotes, { x0: 65, y0: 168, x1: 530, y1: 568 }, 'Stage 3, Summary of tutorial and action points');
+    if (d.tutorNotes) drawStageText(page, f.regular, d.tutorNotes, { x0: 65, y0: 168, x1: 530, y1: 568 }, 'Stage 3, Summary of tutorial and action points', null, f.bold);
     if (d.tutorSignatureName && d.tutorSignedAt) { drawSigned(page, f.regular, d.tutorSignatureName, d.tutorSignatureInk, 170, 608.5, 448 - 170 - 10); drawAt(page, f.regular, fmtDate(d.tutorSignedAt), 448, 608.5); }
     if (d.candidateSignatureName && d.candidateSignedAt) { drawSigned(page, f.regular, d.candidateSignatureName, d.candidateSignatureInk, 195, 665.2, 449 - 195 - 10); drawAt(page, f.regular, fmtDate(d.candidateSignedAt), 449, 665.2); }
     if (d.candidateAgrees === true) drawOvalAround(page, { x0: 144.9, y0: 622.8, x1: 174.1, y1: 634.9 });

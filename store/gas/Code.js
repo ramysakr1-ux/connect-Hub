@@ -3059,7 +3059,8 @@ case 'inbox': {
       /* v306 (25 Nov 2026): the Overall comment has a call of its own, after the points, so the voice is not lost in the
          points' rules (the first real draft read like a report, not like the tutor who signs it) (stage2CloseWrite_) */
       if (swOverall) {
-        swRes.overall = stage2CloseWrite_(swKey, swName, swClose, swRes);
+        /* v307 (25 Nov 2026): Stage 3 closes with one too (Ramy: "make stage 3 similar to stage 2") */
+        swRes.overall = stage2CloseWrite_(swKey, swName, swClose, swRes, String(req.stage) === '3' ? 3 : 2);
         swRes.overall = swRes.overall.slice(0, 2000);
       }
       return swRes;
@@ -6339,19 +6340,20 @@ function stage2CloseAsk_(key, sys, user, temp) {
 }
 /* v306: the Overall comment, written on its own from the points just written, this trainee's lesson comments and the
    signer's samples; lengthened once when short (v295); asked once more without the words it must never carry */
-function stage2CloseWrite_(key, name, close, res) {
+function stage2CloseWrite_(key, name, close, res, stage) {
+  var three = stage === 3;
   var hasVoice = !!(close && close.voice.length), prof = hasVoice ? stage2CloseProfile_(close.voice) : null;
   var words = function (t) { return String(t || '').split(/\s+/).filter(Boolean).length; };
   var user = { strengths: res.strengths, actions: res.actions, lessonComments: (close && close.lessons) || [] };
   if (hasVoice) user.tutorSamples = close.voice;
-  var sys = 'You write the Overall comment that closes Stage 2 of a CELTA trainee\'s CELTA 5 booklet, for the tutor who signs it. The strengths and action points given are already in the booklet above it. '
-    + stage2ClosePrompt_(name, hasVoice, prof) + ' American spelling. Answer as JSON: {"overall":"..."}.';
+  var sys = 'You write the Overall comment that closes Stage ' + (three ? 3 : 2) + ' of a CELTA trainee\'s CELTA 5 booklet, for the tutor who signs it. The strengths and action points given are already in the booklet above it. '
+    + stage2ClosePrompt_(name, hasVoice, prof, three) + ' American spelling. Answer as JSON: {"overall":"..."}.';
   var out = '';
   try { out = stage2CloseTidy_(stage2CloseAsk_(key, sys, user, 0.5), name); } catch (e) { out = ''; }
   if (out && words(out) < 150) {
     try {
-      var lng = stage2CloseTidy_(stage2CloseAsk_(key, 'You lengthen a CELTA tutor\'s Stage 2 Overall comment to between 180 and 230 words, in the same voice and the same order: '
-        + 'how far the trainee has come, with their first name, then what is working, then what to keep attention on in the second half of the course. No stock phrases and no sign-off line. '
+      var lng = stage2CloseTidy_(stage2CloseAsk_(key, 'You lengthen a CELTA tutor\'s Stage ' + (three ? 3 : 2) + ' Overall comment to between 180 and 230 words, in the same voice and the same order: '
+        + 'how far the trainee has come, with their first name, then what is working, then what to keep attention on ' + (three ? 'in the final lessons of the course' : 'in the second half of the course') + '. No stock phrases and no sign-off line. '
         + 'Lengthen it by saying more about the points given, one by one, in concrete terms (what the trainee does, what it gives the students, what to do next): nothing new, no single lessons, no TP numbers, no students\' names, no grade. '
         + stage2CloseVoice_(hasVoice, prof) + 'Write "students", never Ss. American spelling. Answer as JSON: {"overall":"..."}.',
         { overall: out, strengths: res.strengths, actions: res.actions, tutorSamples: hasVoice ? close.voice : undefined }, 0.4), name);
@@ -6361,7 +6363,7 @@ function stage2CloseWrite_(key, name, close, res) {
   var bad = stage2CloseBanned_(out);
   if (out && bad.length) {
     try {
-      var fix = stage2CloseTidy_(stage2CloseAsk_(key, 'You edit a CELTA tutor\'s Stage 2 Overall comment. Rewrite only the sentences that use these words, without them and without any word like them: '
+      var fix = stage2CloseTidy_(stage2CloseAsk_(key, 'You edit a CELTA tutor\'s Stage ' + (three ? 3 : 2) + ' Overall comment. Rewrite only the sentences that use these words, without them and without any word like them: '
         + JSON.stringify(bad) + '. Say the same thing in plain everyday words, in the same voice; change nothing else and keep the length. ' + stage2CloseVoice_(hasVoice, prof)
         + 'Answer as JSON: {"overall":"..."}.', { overall: out, tutorSamples: hasVoice ? close.voice : undefined }, 0.2), name);
       if (fix && stage2CloseBanned_(fix).length < bad.length && words(fix) >= 0.85 * words(out)) out = fix;
@@ -6369,10 +6371,14 @@ function stage2CloseWrite_(key, name, close, res) {
   }
   return out;
 }
-function stage2ClosePrompt_(name, hasVoice, prof) {
-  return 'Also write the Overall comment that closes Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of 180 to 230 words (never shorter than 160 words; count them before you answer), in "overall". '
-    + 'Its shape: first how far the trainee has come over the first half of the course, with their first name' + (name ? ' (' + name + ')' : '') + ' once in that opening sentence; '
-    + 'then what is working well in their planning and teaching, lesson after lesson; then what to keep their attention on in the second half of the course, when they teach a new level and the later criteria come in, as instructions. '
+function stage2ClosePrompt_(name, hasVoice, prof, three) {
+  return (three ? 'Also write the Overall comment that closes Stage 3, the tutorial in the final third of the course, with only the last teaching practices still to come: ' : 'Also write the Overall comment that closes Stage 2, the tutorial at the midpoint of the course: ')
+    + 'one paragraph to the trainee of 180 to 230 words (never shorter than 160 words; count them before you answer), in "overall". '
+    + (three
+      ? 'Its shape: first how far the trainee has come since the midpoint of the course, with their first name' + (name ? ' (' + name + ')' : '') + ' once in that opening sentence; '
+        + 'then what is working well in their planning and teaching, lesson after lesson; then what to put their attention on in the final lessons of the course, as instructions. '
+      : 'Its shape: first how far the trainee has come over the first half of the course, with their first name' + (name ? ' (' + name + ')' : '') + ' once in that opening sentence; '
+        + 'then what is working well in their planning and teaching, lesson after lesson; then what to keep their attention on in the second half of the course, when they teach a new level and the later criteria come in, as instructions. ')
     + 'Draw it from "lessonComments" (the overall comments the tutors wrote on this trainee\'s lessons in this stage) and from the strengths and action points you give above, and from nothing else. '
     + '"lessonComments" give only what to say about this trainee: never their wording, never a whole sentence of theirs, and never their voice; the voice is only the one described at the end. '
     + 'Make it this trainee\'s own: what is said of them could not be said of every trainee. Write to the trainee as "you". '
