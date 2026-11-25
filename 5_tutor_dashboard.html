@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611252019">
+<link rel="stylesheet" href="hub-tokens.css?v=202611252225">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -748,7 +748,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611252019">
+<link rel="stylesheet" href="hub-house.css?v=202611252225">
 </head>
 <body>
 <div class="board">
@@ -880,27 +880,27 @@
 
 </div>
 
-<script src="hub-due.js?v=202611252019"></script>
-<script src="observation-defaults.js?v=202611252019"></script>
-<script src="hub-rotation.js?v=202611252019"></script>
-<script src="hub-peers.js?v=202611252019"></script>
-<script src="hub-shared.js?v=202611252019"></script>
+<script src="hub-due.js?v=202611252225"></script>
+<script src="observation-defaults.js?v=202611252225"></script>
+<script src="hub-rotation.js?v=202611252225"></script>
+<script src="hub-peers.js?v=202611252225"></script>
+<script src="hub-shared.js?v=202611252225"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611252019"></script>
-<script src="hub-say.js?v=202611252019"></script>
-<script src="hub-hand.js?v=202611252019"></script>
-<script src="hub-ink.js?v=202611252019"></script>
-<script src="hub-shelf.js?v=202611252019"></script>
+<script src="hub-store.js?v=202611252225"></script>
+<script src="hub-say.js?v=202611252225"></script>
+<script src="hub-hand.js?v=202611252225"></script>
+<script src="hub-ink.js?v=202611252225"></script>
+<script src="hub-shelf.js?v=202611252225"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611252019"></script>
-<script src="hub-sync.js?v=202611252019"></script>
-<script src="hub-notebook.js?v=202611252019"></script>
-<script src="hub-tracker.js?v=202611252019"></script>
-<script src="hub-feedback.js?v=202611252019"></script>
+<script src="assignment-defaults.js?v=202611252225"></script>
+<script src="hub-sync.js?v=202611252225"></script>
+<script src="hub-notebook.js?v=202611252225"></script>
+<script src="hub-tracker.js?v=202611252225"></script>
+<script src="hub-feedback.js?v=202611252225"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -989,8 +989,18 @@ const A_STATE={
   resubmission_needed: {label:'Resubmission needed',    tone:'brick', act:false},
   returned_unmarked:   {label:'Returned unmarked',      tone:'brick', act:false},
   closed:              {label:'Closed',                 tone:'',      act:false},
-  draft:               {label:'Draft',                  tone:'',      act:false}
+  draft:               {label:'Draft',                  tone:'',      act:false},
+  /* MARKED IS NOT WAITING TO BE MARKED (Ramy, 25 Nov 2026: "says waiting to be marked, even though I have already marked
+     my assignments. I just haven't returned them yet"). A submitted round whose criteria all carry Met or Not met is
+     marked; it waits to be returned, which the cards and rows now say in those words. */
+  marked:              {label:'Marked, not returned yet', tone:'amber', act:false, ret:true}
 };
+function asgMarked(sub){
+  if (!sub || (sub.stage !== 'submitted' && sub.stage !== 'resubmitted')) return false;
+  const m = ((sub.criteriaMarks || {})[sub.stage === 'resubmitted' ? 'sub2' : 'sub1']) || [];
+  return m.length > 0 && m.every(v => v === true || v === false);
+}
+function asgState(sub){ return asgMarked(sub) ? { stage: 'marked', s: A_STATE.marked } : { stage: sub.stage, s: A_STATE[sub.stage] || { label: sub.stage, tone: '', act: false } }; }
 
 let TAB=(location.hash==='#assignments'?'assignments':'tp'), FILTER=null;   /* #assignments: back from an assignment's trainee view (16 Nov 2026) */
 /* FOCUS ON MY GROUP (30 Oct 2026, the specification's R18): a tutor can show one TP group's rows. Kept in this browser
@@ -1080,7 +1090,7 @@ function assignmentRows(list){
         return;
       }
       if (!sub || sub.stage==='draft') return;
-      out.push({tr, key, stage:sub.stage, s:A_STATE[sub.stage] || {label:sub.stage, tone:'', act:false}});
+      out.push(Object.assign({tr, key}, asgState(sub)));
     });
   });
   return out;
@@ -1090,7 +1100,7 @@ function paintQueue(){
   const list=people(), mineList=myPeople();
   const tpWaiting=mineList.filter(t=>tpState(t).act).length;
   const aRows=assignmentRows(mineList);
-  const aWaiting=aRows.filter(r=>r.s.act).length;
+  const aWaiting=aRows.filter(r=>r.s.act).length, aReturn=aRows.filter(r=>r.s.ret).length;
   const stuck=aRows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length;
   /* Red is what the tutor has to do (Ramy, 28 Sep 2026): feedback to write
      and marking to do go garnet when there is any. An assignment back with a
@@ -1101,7 +1111,7 @@ function paintQueue(){
   document.getElementById('queue').innerHTML =
     card('tp','Teaching practice',tpWaiting,'lesson ready for your feedback','lessons ready for your feedback','stuck') +
     card('assignments','Assignments',aWaiting,'waiting to be marked','waiting to be marked','stuck',
-      stuck ? `<div class="sub wait">${stuck} back with ${stuck===1?'a trainee':'trainees'}</div>` : '') +
+      (aReturn ? `<div class="sub">${aReturn} marked, not returned yet</div>` : '') + (stuck ? `<div class="sub wait">${stuck} back with ${stuck===1?'a trainee':'trainees'}</div>` : '')) +
     card('trainees','Trainees',list.length,'on the course','on the course','');
 }
 
@@ -1280,9 +1290,9 @@ function paintRows(){
     const stateOf=(tr,key)=>{
       const sub=(tr.assignments||{})[key];
       if (!sub || sub.stage==='draft') return {stage:'none', s:{label:'Not submitted', tone:'', act:false}};
-      return {stage:sub.stage, s:A_STATE[sub.stage] || {label:sub.stage, tone:'', act:false}};
+      return asgState(sub);
     };
-    const rank=r=>r.s.act?0:(r.stage==='resubmission_needed'||r.stage==='returned_unmarked')?1:r.stage==='closed'?2:r.stage==='none'?4:3;
+    const rank=r=>r.s.act?0:r.s.ret?0.5:(r.stage==='resubmission_needed'||r.stage==='returned_unmarked')?1:r.stage==='closed'?2:r.stage==='none'?4:3;
     /* Closed by the tutor is remembered as closed ('none'); only a browser
        that has never chosen falls back to the first that needs marking. */
     let open=null; try{ open=localStorage.getItem('chub:asgOpen'); }catch(e){}
@@ -1295,12 +1305,12 @@ function paintRows(){
       const aTone = r.s.act ? 'amber' : r.s.tone === 'brick' ? 'brick' : closedOne ? 'ok' : r.stage==='none' ? (r.late && r.late.sub ? 'late' : 'faint') : 'in';
       return `<div class="trc trc-a${r.s.act ? ' need' : ''}">${twho(r.tr)}
            <div class="trc-cells">${tcell(ASSIGN_NAMES[r.key]||r.key, r.s.label, aTone, r.s.act ? waitedFor(waitedSince(r.tr,r.key)) : '')}</div>
-           <div class="trc-act">${door ? tbtn(r.s.act?'Mark':closedOne?'Open the record':'Open', r.s.act, href) : ''}</div></div>`;
+           <div class="trc-act">${door ? tbtn(r.s.act?'Mark':r.s.ret?'Return':closedOne?'Open the record':'Open', r.s.act||r.s.ret, href) : ''}</div></div>`;
     };
     const section=key=>{
       const rows=list.map(tr=>{ const r=Object.assign({tr,key},stateOf(tr,key)); r.f={sub:r.stage==='none'?0:1}; return r; });   /* f.sub: for the red light */
-      const waiting=rows.filter(r=>r.s.act).length, back=rows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length, closed=rows.filter(r=>r.stage==='closed').length, none=rows.filter(r=>r.stage==='none').length;
-      const bits=[waiting?`<b class="brick">${waiting} waiting to be marked</b>`:'', back?`${back} back with ${back===1?'a trainee':'trainees'}`:'', closed?`${closed} closed`:'', none?`${none} not submitted`:''].filter(Boolean).join(' · ');
+      const waiting=rows.filter(r=>r.s.act).length, toReturn=rows.filter(r=>r.s.ret).length, back=rows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length, closed=rows.filter(r=>r.stage==='closed').length, none=rows.filter(r=>r.stage==='none').length;
+      const bits=[waiting?`<b class="brick">${waiting} waiting to be marked</b>`:'', toReturn?`<b>${toReturn} marked, not returned yet</b>`:'', back?`${back} back with ${back===1?'a trainee':'trainees'}`:'', closed?`${closed} closed`:'', none?`${none} not submitted`:''].filter(Boolean).join(' · ');
       const isOpen=key===open;
       /* THE RED DOT ON AN ASSIGNMENT IS THE DEADLINE (Ramy, 24 Nov 2026: "they're all meant to submit tomorrow, so they
          haven't passed the deadline"). Not compared with the group as teaching practice is: a trainee whose own deadline
@@ -1338,13 +1348,14 @@ function paintRows(){
       const subs=tr.assignments||{}, st=k=>(subs[k]||{}).stage||'';
       const keys=Object.keys(subs);
       const closed=keys.filter(k=>st(k)==='closed').length;
-      const toMark=keys.filter(k=>st(k)==='submitted'||st(k)==='resubmitted').length;
+      const toMark=keys.filter(k=>(st(k)==='submitted'||st(k)==='resubmitted') && !asgMarked(subs[k])).length;
+      const toReturn=keys.filter(k=>asgMarked(subs[k])).length;
       const back=keys.filter(k=>st(k)==='resubmission_needed'||st(k)==='returned_unmarked').length;
       const s=tpState(tr), tpN=f.n;
       const tpWord = s.label==='Not yet turned in' ? 'Nothing in yet' : s.label;
       const tpTone = s.act ? 'amber' : s.label==='Returned' ? 'ok' : L.tp ? 'late' : /^Plan in|^Material in/.test(s.label) ? 'in' : 'faint';
-      const aWord = toMark ? toMark + ' to mark' : back ? back + ' back with them' : closed ? closed + ' of 4 closed' : 'None closed yet';
-      const aTone = toMark ? 'amber' : back ? 'brick' : closed === 4 ? 'ok' : L.sub ? 'late' : closed ? 'in' : 'faint';
+      const aWord = toMark ? toMark + ' to mark' : toReturn ? toReturn + ' to return' : back ? back + ' back with them' : closed ? closed + ' of 4 closed' : 'None closed yet';
+      const aTone = toMark || toReturn ? 'amber' : back ? 'brick' : closed === 4 ? 'ok' : L.sub ? 'late' : closed ? 'in' : 'faint';
       let oWord = '—', oTone = 'plain', oNote = '';
       try { const h = window.hubObservationHours(tr.observations || {});
         if (h.of) { const done = h.turnedIn === h.of && h.totalMinutes >= 360;
@@ -1720,7 +1731,7 @@ function paintBrief(){
   } catch (e) {}
   /* nothing waiting on the tutor */
   const list = myPeople();
-  const waiting = list.filter(t => tpState(t).act).length + assignmentRows(list).filter(r => r.s.act).length;
+  const waiting = list.filter(t => tpState(t).act).length + assignmentRows(list).filter(r => r.s.act || r.s.ret).length;
   const toRead = list.reduce((n2, t) => n2 + selfToRead(t).length, 0);
   if (list.length && !waiting && !toRead && !stage1DueList().length) chips.push('<span class="dv6-chip clear">\u2713 Nothing waiting on you</span>');
   if (toRead) chips.push('<a class="dv6-chip wait" href="#rows"><b>' + toRead + '</b> ' + (toRead === 1 ? 'self-evaluation to read' : 'self-evaluations to read') + '</a>');
