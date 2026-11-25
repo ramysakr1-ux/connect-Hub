@@ -3044,8 +3044,7 @@ case 'inbox': {
         + 'Write "students", never Ss. ' + celtaShorthand_()
         + 'In the points, write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
         + 'No praise that is not in the original, no grades, no names, no arrows. American spelling. '
-        + (swOverall ? stage2ClosePrompt_(swName, !!(swClose && swClose.voice.length)) : '')
-        + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]' + (swOverall ? ',"overall":"..."' : '') + '}.';
+        + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]}.';
       var swResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
         payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
@@ -3057,25 +3056,10 @@ case 'inbox': {
       var swClean = function(a){ return (Array.isArray(a) ? a : []).map(function(x){
         return { text: String((x && x.text) || '').trim().slice(0, 400), codes: (Array.isArray(x && x.codes) ? x.codes : []).map(String).filter(function(c){ return swAllowed[c]; }) }; }).filter(function(x){ return x.text; }); };
       var swRes = { strengths: swClean(swOut.strengths), actions: swClean(swOut.actions) };
+      /* v306 (25 Nov 2026): the Overall comment has a call of its own, after the points, so the voice is not lost in the
+         points' rules (the first real draft read like a report, not like the tutor who signs it) (stage2CloseWrite_) */
       if (swOverall) {
-        swRes.overall = stage2CloseTidy_(swOut.overall, swName);
-        /* v295: the model writes short whatever the prompt says (114 to 152 words against "180 to 230"). Under 150 words,
-           it is asked once more to say the same at his length, from the same points and nothing else. */
-        var swWords = function(t){ return String(t || '').split(/\s+/).filter(Boolean).length; };
-        if (swWords(swRes.overall) < 150) {
-          try {
-            var swLong = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
-              payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0.3, response_format: { type: 'json_object' },
-                messages: [{ role: 'system', content: 'You lengthen a CELTA tutor\'s Stage 2 Overall comment to between 180 and 230 words, in the same voice and the same order: '
-                  + 'how far the trainee has come, with their first name, then what is consistently working, then what to keep attention on in the second half of the course. No stock phrases and no sign-off line. '
-                  + 'Lengthen it by saying more about the points given, one by one, in concrete terms (what the trainee does, what it gives the students, what to do next): nothing new, no single lessons, no TP numbers, no students\' names, no grade. ' + stage2CloseVoice_(!!(swClose && swClose.voice.length))
-                  + 'Write "students", never Ss. American spelling. Answer as JSON: {"overall":"..."}.' },
-                  { role: 'user', content: JSON.stringify({ overall: swRes.overall, strengths: swRes.strengths, actions: swRes.actions, tutorSamples: (swClose && swClose.voice.length) ? swClose.voice : undefined }) }] })
-            });
-            if (swLong.getResponseCode() === 200) { var swL = String((JSON.parse(JSON.parse(swLong.getContentText()).choices[0].message.content || '{}')).overall || '').trim(); swL = stage2CloseTidy_(swL, swName); if (swWords(swL) > swWords(swRes.overall)) swRes.overall = swL; }
-          } catch (swLe) {}
-        }
+        swRes.overall = stage2CloseWrite_(swKey, swName, swClose, swRes);
         swRes.overall = swRes.overall.slice(0, 2000);
       }
       return swRes;
@@ -6317,17 +6301,77 @@ function stage2CloseIn_(req) {
   if (voice.length < STAGE2_VOICE_MIN_) voice = [];
   return { voice: voice, lessons: lessons };
 }
-function stage2CloseVoice_(hasVoice) {
-  return hasVoice
-    ? 'VOICE OF THE OVERALL COMMENT: it is signed by the tutor who wrote "tutorSamples", overall comments that tutor wrote on other lessons on this course (a trainee is NAME there). '
-      + 'Write it as that tutor writes: their length of sentence, how they open, how they praise and how they turn to what to change, how direct or how warm they are, the everyday words they reach for, whether they use fragments, contractions or "I". '
-      + 'Take only the voice from the samples: never their content, never a whole sentence of theirs, and nothing about another trainee or another lesson. '
-    : 'VOICE OF THE OVERALL COMMENT: a plain, neutral trainer voice: clear and kind, short sentences, everyday words, no catchphrases, no sign-off line. ';
+/* v306: what the signer's samples show of how they write, measured here so the model is told it in numbers and in
+   their own openings, not left to guess from six paragraphs: the words in an average sentence, and how their sentences
+   open (the first few words of each sentence, NAME kept as NAME). From the samples only: another tutor's never. */
+function stage2CloseProfile_(voice) {
+  var sents = [], opens = [], seen = {};
+  (voice || []).forEach(function (v) {
+    (String(v).match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []).forEach(function (x) {
+      var w = x.trim().split(/\s+/).filter(Boolean); if (w.length < 3) return; sents.push(w.length);
+      var o = w.slice(0, 4).join(' ').replace(/[,;:]+$/, ''), k = o.toLowerCase(); if (!seen[k] && opens.length < 14) { seen[k] = 1; opens.push(o); }
+    });
+  });
+  var avg = sents.length ? Math.round(sents.reduce(function (a, b) { return a + b; }, 0) / sents.length) : 0;
+  return { avg: avg, opens: opens };
 }
-function stage2ClosePrompt_(name, hasVoice) {
+function stage2CloseVoice_(hasVoice, prof) {
+  if (!hasVoice) return 'VOICE OF THE OVERALL COMMENT: a plain, neutral trainer voice: clear and kind, short sentences, everyday words, no catchphrases, no sign-off line. ';
+  return 'VOICE OF THE OVERALL COMMENT: it is signed by the tutor who wrote "tutorSamples", overall comments that tutor wrote on other lessons on this course (a trainee is NAME there). '
+    + 'It must read as if that tutor wrote it, not as a report. Before you write, look at how the samples open their sentences, the words they praise with, the words they use to turn to what to change (such as "please", "just", "make sure", "keep an eye on", "I think", or whatever this tutor uses), how direct and how warm they are, and whether they use fragments, contractions or "I". Then write with the same habits. '
+    + (prof && prof.avg ? 'This tutor\'s sentences average about ' + prof.avg + ' words: keep yours near that, and vary them as they do. ' : '')
+    + (prof && prof.opens && prof.opens.length ? 'This is how this tutor\'s sentences open: ' + JSON.stringify(prof.opens) + '. Open your sentences the same kinds of ways (a short phrase of theirs of up to five words may be used again; never a whole sentence of theirs). ' : '')
+    + 'Take only the voice from the samples: never their content, and nothing about another trainee or another lesson. '
+    + 'Do not smooth it into report language: no "showing a clear ability", no "consistently", no "thorough", no strings of three adjectives, no sentence that only sums up. ';
+}
+/* words the paragraph must never carry (the prompt's own list and the report words); a draft with one is asked again */
+var STAGE2_BANNED_ = /\b(demonstrat\w*|foster\w*|ownership|thoughtful\w*|effective(ly)?|facilitat\w*|showcas\w*|commendabl\w*|it is clear that|deeper learning|autonomy|strateg(y|ies)|ensur\w*|utili[sz]\w*|best of luck|keep up the good work|solid foundation|on the right track|journey|growth|potential|consistently|showing a clear ability)\b/gi;
+function stage2CloseBanned_(t) { var m = String(t || '').match(STAGE2_BANNED_) || [], seen = {}; return m.map(function (x) { return x.toLowerCase(); }).filter(function (x) { if (seen[x]) return false; seen[x] = 1; return true; }); }
+function stage2CloseAsk_(key, sys, user, temp) {
+  var r = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + key },
+    payload: JSON.stringify({ model: 'gpt-4.1', temperature: temp, response_format: { type: 'json_object' },
+      messages: [{ role: 'system', content: sys }, { role: 'user', content: JSON.stringify(user) }] })
+  });
+  if (r.getResponseCode() !== 200) return '';
+  return String((JSON.parse(JSON.parse(r.getContentText()).choices[0].message.content || '{}')).overall || '').trim();
+}
+/* v306: the Overall comment, written on its own from the points just written, this trainee's lesson comments and the
+   signer's samples; lengthened once when short (v295); asked once more without the words it must never carry */
+function stage2CloseWrite_(key, name, close, res) {
+  var hasVoice = !!(close && close.voice.length), prof = hasVoice ? stage2CloseProfile_(close.voice) : null;
+  var words = function (t) { return String(t || '').split(/\s+/).filter(Boolean).length; };
+  var user = { strengths: res.strengths, actions: res.actions, lessonComments: (close && close.lessons) || [] };
+  if (hasVoice) user.tutorSamples = close.voice;
+  var sys = 'You write the Overall comment that closes Stage 2 of a CELTA trainee\'s CELTA 5 booklet, for the tutor who signs it. The strengths and action points given are already in the booklet above it. '
+    + stage2ClosePrompt_(name, hasVoice, prof) + ' American spelling. Answer as JSON: {"overall":"..."}.';
+  var out = '';
+  try { out = stage2CloseTidy_(stage2CloseAsk_(key, sys, user, 0.5), name); } catch (e) { out = ''; }
+  if (out && words(out) < 150) {
+    try {
+      var lng = stage2CloseTidy_(stage2CloseAsk_(key, 'You lengthen a CELTA tutor\'s Stage 2 Overall comment to between 180 and 230 words, in the same voice and the same order: '
+        + 'how far the trainee has come, with their first name, then what is working, then what to keep attention on in the second half of the course. No stock phrases and no sign-off line. '
+        + 'Lengthen it by saying more about the points given, one by one, in concrete terms (what the trainee does, what it gives the students, what to do next): nothing new, no single lessons, no TP numbers, no students\' names, no grade. '
+        + stage2CloseVoice_(hasVoice, prof) + 'Write "students", never Ss. American spelling. Answer as JSON: {"overall":"..."}.',
+        { overall: out, strengths: res.strengths, actions: res.actions, tutorSamples: hasVoice ? close.voice : undefined }, 0.4), name);
+      if (words(lng) > words(out)) out = lng;
+    } catch (e) {}
+  }
+  var bad = stage2CloseBanned_(out);
+  if (out && bad.length) {
+    try {
+      var fix = stage2CloseTidy_(stage2CloseAsk_(key, 'You edit a CELTA tutor\'s Stage 2 Overall comment. Rewrite only the sentences that use these words, without them and without any word like them: '
+        + JSON.stringify(bad) + '. Say the same thing in plain everyday words, in the same voice; change nothing else and keep the length. ' + stage2CloseVoice_(hasVoice, prof)
+        + 'Answer as JSON: {"overall":"..."}.', { overall: out, tutorSamples: hasVoice ? close.voice : undefined }, 0.2), name);
+      if (fix && stage2CloseBanned_(fix).length < bad.length && words(fix) >= 0.85 * words(out)) out = fix;
+    } catch (e) {}
+  }
+  return out;
+}
+function stage2ClosePrompt_(name, hasVoice, prof) {
   return 'Also write the Overall comment that closes Stage 2, the tutorial at the midpoint of the course: one paragraph to the trainee of 180 to 230 words (never shorter than 160 words; count them before you answer), in "overall". '
     + 'Its shape: first how far the trainee has come over the first half of the course, with their first name' + (name ? ' (' + name + ')' : '') + ' once in that opening sentence; '
-    + 'then what is consistently working in their planning and teaching; then what to keep their attention on in the second half of the course, when they teach a new level and the later criteria come in, as instructions. '
+    + 'then what is working well in their planning and teaching, lesson after lesson; then what to keep their attention on in the second half of the course, when they teach a new level and the later criteria come in, as instructions. '
     + 'Draw it from "lessonComments" (the overall comments the tutors wrote on this trainee\'s lessons in this stage) and from the strengths and action points you give above, and from nothing else. '
     + '"lessonComments" give only what to say about this trainee: never their wording, never a whole sentence of theirs, and never their voice; the voice is only the one described at the end. '
     + 'Make it this trainee\'s own: what is said of them could not be said of every trainee. Write to the trainee as "you". '
@@ -6335,7 +6379,7 @@ function stage2ClosePrompt_(name, hasVoice) {
     + 'Never give a grade, a standard or a result, and never promise or predict one (not "pass", not "to standard", not "on track for"). '
     + 'Never use stock phrases: not "Best of luck", not "Keep up the good work", not "a solid foundation", not "on the right track", not "journey", "growth" or "potential". '
     + 'Never use: demonstrate, demonstrating, foster, ownership, thoughtfully, effectively, facilitate, showcase, commendable, it is clear that, deeper learning, autonomy, strategies, ensure, utilize. '
-    + 'Write "students", never Ss. ' + stage2CloseVoice_(hasVoice);
+    + 'Write "students", never Ss. ' + stage2CloseVoice_(hasVoice, prof);
 }
 /* the paragraph as it comes back: a string or nothing; a label, quotes or arrows taken off; NAME put back as the name;
    a sentence that gives or promises a grade left out; too short to be a paragraph and it is nothing */
