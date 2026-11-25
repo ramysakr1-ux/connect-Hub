@@ -1178,24 +1178,58 @@ function learnFromPoints(){
 /* Typing a code by hand (e.g. "4h ") turns into the same styled tag as clicking it —
    both routes must look and behave identically. Only fires right after a space, so it
    never interferes with ordinary typing. */
-function tryAutoTag(box){
+/* HOWEVER THE CODE ENDS (Ramy, 25 Nov 2026: "writing the criterion by hand now doesn't transfer it into chips"): only a
+   space after it made a tag. A code finished with Enter, a full stop, a comma, a colon, in brackets "(1d)", or left at the
+   end when the tutor clicks away stayed plain text. Now each of those makes the tag too. `atEnd` is the Enter case: the code
+   is the last thing before the caret, with nothing typed after it. A code inside a word ("TP2a") is never a tag. */
+const CODE_END=/(^|[^0-9A-Za-z])(\(?)([1-5][a-n])(\)?)([\s\u00A0.,;:])$/i;
+const CODE_AT_END=/(^|[^0-9A-Za-z])(\(?)([1-5][a-n])(\)?)$/i;
+function tryAutoTag(box, atEnd){
   const sel=window.getSelection();
-  if(!sel.rangeCount) return;
+  if(!sel.rangeCount) return false;
   const range=sel.getRangeAt(0);
-  if(!range.collapsed) return;
+  if(!range.collapsed) return false;
   const node=range.startContainer;
-  if(node.nodeType!==3) return;
+  if(node.nodeType!==3) return false;
   const offset=range.startOffset;
-  const m=node.data.slice(0,offset).match(/([0-9][a-n])\s$/i);
-  if(!m) return;
-  const code=m[1].toLowerCase();
-  if(!VALID_CODES.has(code)) return;
+  const m=node.data.slice(0,offset).match(atEnd ? CODE_AT_END : CODE_END);
+  if(!m) return false;
+  const code=m[3].toLowerCase();
+  if(!VALID_CODES.has(code)) return false;
+  const end=atEnd ? '' : m[5];
   const r=document.createRange();
-  r.setStart(node,offset-m[0].length); r.setEnd(node,offset);
+  r.setStart(node,offset-(m[0].length-m[1].length)); r.setEnd(node,offset);
   sel.removeAllRanges(); sel.addRange(r);
-  document.execCommand('insertHTML',false,tagHTML(code));
+  /* a space that ended the code is the tag's own space after it; a full stop or comma comes back right after the tag, and
+     a closing bracket goes with the code, with no space added (the tutor types the next one) */
+  const bare=tagHTML(code).replace(/&nbsp;$/,'');
+  document.execCommand('insertHTML',false, /[.,;:]/.test(end) ? bare+esc(end) : end===')' ? bare : tagHTML(code));
   rememberCaret(box);
   dirty=true;
+  return true;
+}
+/* clicking away: any code still written as text in the point becomes a tag (no caret is needed for this) */
+function tagLooseCodes(box){
+  const tw=document.createTreeWalker(box, NodeFilter.SHOW_TEXT); const nodes=[]; let n;
+  while((n=tw.nextNode())) if(!n.parentElement.closest('.tag')) nodes.push(n);
+  let changed=false;
+  const RE=/(^|[^0-9A-Za-z])\(?([1-5][a-n])\)?(?=$|[\s\u00A0.,;:!?])/gi;
+  nodes.forEach(node=>{
+    const t=node.data; let last=0, m, frag=null;
+    RE.lastIndex=0;
+    while((m=RE.exec(t))){
+      const code=m[2].toLowerCase(); if(!VALID_CODES.has(code)) continue;
+      frag=frag||document.createDocumentFragment();
+      const start=m.index+m[1].length;
+      frag.appendChild(document.createTextNode(t.slice(last,start)));
+      const tmp=document.createElement('span'); tmp.innerHTML=tagHTML(code).replace(/&nbsp;$/,'');
+      frag.appendChild(tmp.firstChild);
+      last=m.index+m[0].length;
+    }
+    if(frag){ frag.appendChild(document.createTextNode(t.slice(last))); node.parentNode.replaceChild(frag,node); changed=true; }
+  });
+  if(changed) dirty=true;
+  return changed;
 }
 let caretBox=null, caretRange=null;
 function rememberCaret(box){
@@ -1273,21 +1307,33 @@ function addPoint(listId, html, _unused){
   }
   row.addEventListener('ai-suggest',renderSuggestions);
   suggestRow.addEventListener('mousedown',e=>e.preventDefault());
+  /* THE OTHER SUGGESTIONS WAIT A MOMENT (Ramy, 25 Nov 2026: "the criteria should not disappear as soon as one is chosen
+     in case you need to choose another, somewhere between lingering and disappearing immediately"). Choosing one takes
+     that one away and leaves the rest, so a second can be added. They go when the tutor types in the point again, moves to
+     another point, or after a few seconds; then, as before (23 Nov), a point that has its criterion is suggested nothing. */
+  let lingerTimer=null, picking=false;
   suggestRow.addEventListener('click',e=>{
     const chip=e.target.closest('.suggest-chip');
     if(!chip) return;
-    insertTag(box, chip.dataset.code);
-    renderSuggestions();
+    clearTimeout(lingerTimer);
+    lingerTimer=setTimeout(()=>{ lingerTimer=null; suggestRow.innerHTML=''; },6000);   // set first: inserting the tag fires an input
+    picking=true; try{ insertTag(box, chip.dataset.code); } finally { picking=false; }
+    chip.remove();
+    if(!suggestRow.querySelector('.suggest-chip')){ clearTimeout(lingerTimer); lingerTimer=null; suggestRow.innerHTML=''; }
     dirty=true;
   });
 
   ['keyup','mouseup','focus'].forEach(ev=>box.addEventListener(ev,()=>rememberCaret(box)));
   box.addEventListener('input',e=>{
     dirty=true;
+    /* the tag a chosen suggestion just put in is not the tutor typing: the other suggestions stay (lingerTimer) */
+    if(picking) return;
+    clearTimeout(lingerTimer); lingerTimer=null;
     clearTimeout(suggestTimer);
     suggestTimer=setTimeout(renderSuggestions,500);
-    if(e.data===' ') tryAutoTag(box);
+    if(e.data && /^[\s\u00A0.,;:)]$/.test(e.data)) tryAutoTag(box);
   });
+  box.addEventListener('blur',()=>{ if(tagLooseCodes(box)) renderSuggestions(); });
   /* THE PASTE CLEANER (Ramy, 17 Nov 2026, after pasting feedback written elsewhere: the criteria "are not the same style ...
      those two stars next to the criteria"). Pasted text stays plain, as before, and is also cleaned: Markdown marks (**bold**,
      *, #, list dashes and numbers) come off; a code written at the start or the end of a line ("4a / 4b:", "(5f)") becomes
@@ -1375,6 +1421,7 @@ function addPoint(listId, html, _unused){
   box.addEventListener('keydown',e=>{
     if(e.key!=='Enter' || e.shiftKey) return;
     e.preventDefault();
+    tryAutoTag(box, true);   // a code typed last on the line, then Enter
     document.execCommand('insertHTML',false,'<br>'+POINT_BULLET);
     rememberCaret(box); dirty=true;
     clearTimeout(suggestTimer); suggestRow.innerHTML='';
