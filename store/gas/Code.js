@@ -6322,6 +6322,7 @@ function stage2CloseVoice_(hasVoice, prof) {
     + (prof && prof.avg ? 'This tutor\'s sentences average about ' + prof.avg + ' words: keep yours near that, and vary them as they do. ' : '')
     + (prof && prof.opens && prof.opens.length ? 'This is how this tutor\'s sentences open: ' + JSON.stringify(prof.opens) + '. Open your sentences the same kinds of ways (a short phrase of theirs of up to five words may be used again; never a whole sentence of theirs). ' : '')
     + 'Take only the voice from the samples: never their content, and nothing about another trainee or another lesson. '
+    + 'The samples are about one lesson; this is about the first half of the course: never "today", "this lesson", "this time" or "so far today", and no closing line that only praises. '
     + 'Do not smooth it into report language: no "showing a clear ability", no "consistently", no "thorough", no strings of three adjectives, no sentence that only sums up. ';
 }
 /* words the paragraph must never carry (the prompt's own list and the report words); a draft with one is asked again */
