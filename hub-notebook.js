@@ -258,6 +258,18 @@
     + '.nbk-none{color:var(--grey);font-size:.88rem;margin:0;}'
     + '.nbk-reply{display:flex;gap:8px;align-items:flex-end;padding:10px 20px 6px;border-top:1px solid var(--row-line);} .nbk-reply textarea{flex:1;min-height:0;border:0;background:var(--sand);border-radius:12px;padding:10px 12px;resize:none;}'
     + '.nbk-reply .nbk-btn.go{border-radius:999px;background:var(--a-lemon);color:var(--ink);background-image:none;padding:11px 18px;} .nbk-reply + .nbk-msg{padding:0 20px 12px;margin:0;}'
+    /* TUTORS APART FROM TRAINEES (25 Nov 2026) */
+    + '.nbk-side{margin:0 0 2px;padding:14px 20px 0;font:700 10.5px/1.3 Karla,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);}'
+    + '.nbk-sheet.nbk-red{box-shadow:inset 0 0 0 3px var(--a-red),-10px 0 40px -18px rgba(35,34,32,.4);} .nbk-sheet.nbk-red .nbk-side{color:var(--a-red);}'
+    + '.nbk-sheet.nbk-red .nbk-to{margin:4px 0 10px;font:400 1.35rem/1.2 Newsreader,Georgia,serif;color:var(--a-red);}'
+    + '.nbk-sheet.nbk-red .nbk-who button.on{background:var(--a-red);border-color:var(--a-red);}'
+    + '.nbk-sheet.nbk-red .nbk-row .nbk-btn.go{background:var(--a-red);color:var(--paper);} .nbk-sheet.nbk-red .nbk-row .nbk-btn.go:hover{background:var(--a-red);color:var(--paper);}'
+    + '.nbk-sheet.nbk-red .nbk-m.me{background:var(--a-red);} .nbk-sheet.nbk-red .nbk-reply .nbk-btn.go{background:var(--a-red);color:var(--paper);}'
+    + '.nbk-switch{display:block;margin:16px auto 0;font:700 .9rem Karla,sans-serif;background:none;border:0;cursor:pointer;color:var(--a-red);text-decoration:underline;text-underline-offset:3px;padding:6px;}'
+    + '.nbk-sheet.nbk-red .nbk-switch{color:var(--grey);}'
+    + '.nbk-new{background:var(--gold-wash,#fbecc9);border:1px solid var(--amber-edge,#e2c27a);border-radius:12px;padding:10px 12px;margin:0 0 12px;} .nbk-new b{display:block;font-size:.88rem;margin:0 0 6px;}'
+    + '.nbk-new button{font:700 .82rem Karla,sans-serif;padding:7px 12px;border-radius:999px;border:1.5px solid var(--sand-line);background:var(--paper);color:var(--ink);cursor:pointer;margin:0 6px 4px 0;}'
+    + '.nbk-arc .nbk-n{background:var(--a-red);color:var(--paper);}'
     + '@media (max-width:560px){.nbk-sheet{top:auto;left:0;width:100%;max-height:88vh;border-radius:16px 16px 0 0;transform:translateY(100%);} .nbk-sheet.on{transform:none;} .nbk-arc{width:48px;height:48px;right:14px;}}'
     + '@media (prefers-reduced-motion:reduce){.nbk-sheet,.nbk-back,.nbk-arc{transition:none;}}'
     + '@media print{.nbk-arc,.nbk-sheet,.nbk-back{display:none !important;}}';
@@ -310,14 +322,23 @@
          reply"). The tutor names were on this row for an hour on 22 Nov; they are off. */
       return [{ k: '', label: 'Only me' }, { k: 'group', label: 'My TP group' }, { k: 'course', label: 'Whole course' }];
     }
-    var out = [{ k: '', label: 'Only me' }], others = otherTutorNames();
-    out.push({ k: 'tutors', name: others.join(' and '), label: others.length ? others.map(first).join(' and ') : 'The other tutors' });
+    return tutorSide().concat(traineeSide(th));
+  }
+  /* TUTORS APART FROM TRAINEES (Ramy, 25 Nov 2026: "sometimes the trainers are having a chat during the TP feedback ... I
+     don't want this to accidentally end up going to a trainee. The two should be really separate and distinct"). The
+     sheet the notebook opens holds only Only me and the other tutors, headed "Tutors only. Trainees never see this."; a
+     trainee is reached only through "Message a trainee instead", a separate red sheet that names who will read it. */
+  function tutorPeer(){ var others = otherTutorNames(); return { k: 'tutors', name: others.join(' and '), label: others.length ? others.map(first).join(' and ') : 'The other tutors' }; }
+  function tutorSide(){ return [{ k: '', label: 'Only me' }, tutorPeer()]; }
+  function traineeSide(th){
+    var out = [];
     if (th && th.k === 'trainee' && th.id) { var row = rosterList().filter(function(t){ return t.token === th.id; })[0] || { token: th.id, name: th.t, group: '' };
       out.push({ k: 'trainee', to: row.token, name: row.name, label: first(row.name) }); if (row.group) out.push({ k: 'tgroup', group: row.group, label: 'TP group ' + row.group }); }
-    else if (rosterList().length) out.push({ k: 'pick', label: 'A trainee' });
+    if (rosterList().length) out.push({ k: 'pick', label: out.length ? 'Another trainee' : 'Choose a trainee' });
     return out;
   }
-  function goLabel(p){ return !p || !p.k ? 'Save' : p.k === 'group' ? 'Share with my TP group' : p.k === 'course' ? 'Share with the whole course' : p.k === 'tgroup' ? 'Send to ' + p.label : 'Send to ' + (p.label || 'my tutor'); }
+  function isTraineePeer(p){ return !!p && (p.k === 'trainee' || p.k === 'tgroup' || p.k === 'pick'); }
+  function goLabel(p){ return !p || !p.k ? 'Save' : p.k === 'pick' ? 'Send' : p.k === 'group' ? 'Share with my TP group' : p.k === 'course' ? 'Share with the whole course' : p.k === 'tgroup' ? 'Send to ' + p.label : 'Send to ' + (p.label || 'my tutor'); }
   function peerTitle(p){ return p.k === 'group' ? 'My TP group' : p.k === 'course' ? 'The whole course' : p.k === 'tgroup' ? 'TP group ' + p.group : (p.name || p.label || 'My tutor'); }
   function peerKey(p){ return p.k + ':' + (p.k === 'trainee' ? p.to : p.k === 'tgroup' ? p.group : p.k === 'tutor' ? String(p.name || '').toLowerCase() : ''); }
   /* the conversation with one audience, oldest first, put together from the records both sides already hold */
@@ -395,22 +416,30 @@
     note.where = (location.pathname.split('/').slice(-2).join('/') + location.search).slice(0, 200);
     return note;
   }
-  function open(th, preset){
+  function open(th, preset, carry){
     th = th || context(); frame('A new note');
-    var needName = MODE === 'tutor' && !who(), list = peers(th), cur = list[0];
-    if (preset) cur = list.filter(function(p){ return peerKey(p) === peerKey(preset); })[0] || (list.push(preset), preset);
+    var side = MODE === 'tutor' ? ((carry && carry.side) || (isTraineePeer(preset) ? 'trainee' : 'tutors')) : '';
+    var needName = MODE === 'tutor' && !who(), list = MODE !== 'tutor' ? peers(th) : side === 'trainee' ? traineeSide(th) : tutorSide(), cur = list[0];
+    if (preset && (MODE !== 'tutor' || isTraineePeer(preset) === (side === 'trainee'))) cur = list.filter(function(p){ return peerKey(p) === peerKey(preset); })[0] || (list.push(preset), preset);
+    if (!cur) cur = { k: 'pick', label: 'Choose a trainee' }, list = [cur];
+    if (side === 'trainee') sheet.classList.add('nbk-red');
     var canRec = !!(mimePick() && navigator.mediaDevices);
-    sheet.innerHTML = headHTML(th.k === 'day' ? 'A note for today' : 'Note on <b>' + esc(th.t) + (th.sub ? ' · ' + esc(th.sub) : '') + '</b>')
-      + '<div class="nbk-body">'
+    sheet.innerHTML = (side ? '<p class="nbk-side">' + (side === 'trainee' ? 'To a trainee' : 'Tutors only. Trainees never see this.') + '</p>' : '')
+      + headHTML(th.k === 'day' ? 'A note for today' : 'Note on <b>' + esc(th.t) + (th.sub ? ' · ' + esc(th.sub) : '') + '</b>')
+      + '<div class="nbk-body">' + newHTML()
+      + (side === 'trainee' ? '<p class="nbk-to"></p>' : '')
       + (needName ? '<input class="nbk-name" type="text" placeholder="Your name, as on the dashboard" autocomplete="name" aria-label="Your name">' : '')
       + '<textarea placeholder="Write it down." aria-label="Your note"></textarea>'
       + '<div class="nbk-who" role="group" aria-label="Who it is for"></div>'
       + '<div class="nbk-row">' + (canRec ? '<button type="button" class="nbk-btn rec" aria-label="Record a voice note"><span class="dot"></span><span class="lbl">Voice</span></button>' : '') + '<button type="button" class="nbk-btn go" disabled>Save</button></div>'
-      + '<div class="nbk-audio" hidden></div><p class="nbk-msg" aria-live="polite"></p></div>';
+      + '<div class="nbk-audio" hidden></div><p class="nbk-msg" aria-live="polite"></p>'
+      + (side === 'tutors' && rosterList().length ? '<button type="button" class="nbk-switch">Message a trainee instead</button>' : side === 'trainee' ? '<button type="button" class="nbk-switch">Back to my notes</button>' : '')
+      + '</div>';
     var ta = sheet.querySelector('textarea'), go = sheet.querySelector('.nbk-btn.go'), rb = sheet.querySelector('.nbk-btn.rec'), au = sheet.querySelector('.nbk-audio'), nm = sheet.querySelector('.nbk-name'), msg = sheet.querySelector('.nbk-msg'), whoBox = sheet.querySelector('.nbk-who');
     /* chosen from Course admin's tutors where the course lists them (24 Nov 2026) */
     if (nm && window.hubTutorNameField) nm = window.hubTutorNameField(nm);
-    function ready(){ go.disabled = !(ta.value.trim() || recBlob) || !!(nm && !nm.value.trim()) || cur.k === 'pick'; go.textContent = goLabel(cur); }
+    function ready(){ go.disabled = !(ta.value.trim() || recBlob) || !!(nm && !nm.value.trim()) || cur.k === 'pick'; go.textContent = goLabel(cur);
+      var to = sheet.querySelector('.nbk-to'); if (to) to.textContent = cur.k === 'trainee' ? 'To ' + first(cur.name) + '. ' + first(cur.name) + ' will read this.' : cur.k === 'tgroup' ? 'To ' + cur.label + '. Everyone in it will read this.' : 'Choose who will read this.'; }
     function chips(){
       whoBox.innerHTML = list.map(function(p, i){ return '<button type="button" data-i="' + i + '" class="' + (p === cur ? 'on' : '') + '" aria-pressed="' + (p === cur) + '">' + esc(p.label) + '</button>'; }).join('')
         + (cur.k === 'pick' ? '<select class="nbk-pick" aria-label="Which trainee"><option value="">Which trainee?</option>' + rosterList().map(function(t){ return '<option value="' + esc(t.token) + '">' + esc(t.name) + '</option>'; }).join('') + '</select>' : '');
@@ -419,6 +448,9 @@
         var p = { k: 'trainee', to: t.token, name: t.name, label: first(t.name) }; list = list.filter(function(x){ return x.k !== 'pick' && x.k !== 'trainee'; }).concat([p, { k: 'pick', label: 'Another trainee' }]); cur = p; chips(); ready(); });
     }
     chips(); ready();
+    /* the words do not cross: a remark written for the tutors never rides into a message to a trainee; going back keeps nothing either */
+    var sw = sheet.querySelector('.nbk-switch'); if (sw) sw.addEventListener('click', function(){ open(th, null, { side: side === 'trainee' ? 'tutors' : 'trainee' }); });
+    wireNew(sheet);
     sheet.querySelector('.nbk-x').addEventListener('click', close);
     ta.addEventListener('input', ready); if (nm) nm.addEventListener('input', ready);
     setTimeout(function(){ (nm || ta).focus(); }, 240);
@@ -463,7 +495,10 @@
     function paint(note){
       if (sheet !== el) return;
       var ms = messages(p), short = MODE === 'trainee' && p.k === 'tutor';
-      el.innerHTML = headHTML('With <b>' + esc(peerTitle(p)) + '</b>')
+      seen(p);
+      if (MODE === 'tutor' && isTraineePeer(p)) el.classList.add('nbk-red');
+      el.innerHTML = (MODE === 'tutor' ? '<p class="nbk-side">' + (isTraineePeer(p) ? 'To a trainee. ' + esc(p.k === 'tgroup' ? p.label : first(p.name)) + ' will read this.' : 'Tutors only. Trainees never see this.') + '</p>' : '')
+        + headHTML('With <b>' + esc(peerTitle(p)) + '</b>')
         + '<div class="nbk-body nbk-talk"><div class="nbk-thread">' + (ms.length ? ms.map(function(m, i){
             return '<div class="nbk-m ' + (m.me ? 'me' : 'them') + '">' + esc(m.text || '') + (m.audio ? '<button type="button" class="nbk-hear" data-i="' + i + '">Listen</button><span class="slot"></span>' : '')
               + '<i>' + esc((m.me ? 'You' : first(m.by) || 'Them') + ' · ' + (m.note && m.note.day !== today() ? dayLabel(String(m.at).slice(0, 10)) + ' ' : '') + timeLabel(m.at)) + '</i></div>'; }).join('') : '<p class="nbk-none">Nothing yet.</p>') + '</div></div>'
@@ -496,12 +531,48 @@
 
   /* ---- the arc in the corner ------------------------------------------------ */
   var arc = null;
-  function countToday(){
-    var d = today();
-    var list = MODE === 'trainee' ? load().notes : (tutor.cache().mine || []);
-    return list.filter(function(n){ return n && n.day === d; }).length;
+  /* THE NUMBER IS WHAT CAME TO YOU AND IS NOT OPENED (Ramy, 25 Nov 2026: "the number implies how many things are written
+     inside, but it shouldn't ... just when you have a message that you haven't opened yet"). It counted the notes written
+     today. Now it counts what someone else sent: another tutor's note, a trainee's reply or question, a classmate's or a
+     tutor's note to a trainee. Opening that conversation, or the Notebook page, clears it. Kept on this device
+     (chub:nbSeen); the first time, everything already there counts as read. */
+  var SEEN = 'chub:nbSeen';
+  function incoming(){
+    var out = [], me = who();
+    if (MODE === 'trainee') {
+      var myName = (rd('hub:me') || {}).name || '';
+      (rd('connect_notes_v1') || []).forEach(function(n){ if (!n || (myName && same(n.by, myName))) return;
+        if (n.fromTutor && n.scope === 'trainee') out.push({ id: 'g:' + n.id, peer: { k: 'tutor', name: n.by, label: first(n.by) } });
+        else if (n.scope === 'group' || n.scope === 'course') out.push({ id: 'g:' + n.id, peer: { k: n.scope, label: n.scope === 'course' ? 'Whole course' : 'My TP group' } }); });
+      return out;
+    }
+    if (!me) return out;
+    var c = tutor.cache(), roster = rosterList(), tp = tutorPeer();
+    (c.shared || []).forEach(function(n){ if (n && !same(n.by, me)) out.push({ id: 's:' + n.id, peer: tp }); });
+    (c.mine || []).forEach(function(n){ if (!n) return;
+      if (n.sent && n.sent.scope === 'trainee') (n.replies || []).forEach(function(r){ if (r && !same(r.by, me)) out.push({ id: 'r:' + n.id + ':' + r.at, peer: { k: 'trainee', to: n.sent.to, name: n.sent.name, label: first(n.sent.name) } }); });
+      else if (n.sent && n.sent.scope === 'group') (n.replies || []).forEach(function(r){ if (r && !same(r.by, me)) out.push({ id: 'r:' + n.id + ':' + r.at, peer: { k: 'tgroup', group: n.sent.group, label: 'TP group ' + n.sent.group } }); });
+      else if (/^q-/.test(String(n.id))) { var t = roster.filter(function(x){ return same(x.name, n.by); })[0]; if (t) out.push({ id: 'q:' + n.id, peer: { k: 'trainee', to: t.token, name: t.name, label: first(t.name) } }); } });
+    return out;
   }
-  function paintCount(){ if (!arc) return; var n = countToday(); var b = arc.querySelector('.nbk-n'); if (n) { if (!b) { b = document.createElement('span'); b.className = 'nbk-n'; arc.appendChild(b); } b.textContent = n; } else if (b) b.remove(); }
+  function seenRec(){ var r = rd(SEEN); if (!r || typeof r !== 'object' || !r.ids) { r = { ids: {} }; incoming().forEach(function(x){ r.ids[x.id] = 1; }); keepSeen(r); } return r; }
+  function keepSeen(r){ try { localStorage.setItem(SEEN, JSON.stringify(r)); } catch (e) {} }
+  function unread(){ var r = seenRec(); return incoming().filter(function(x){ return !r.ids[x.id]; }); }
+  function seen(p){ var r = seenRec(), k = peerKey(p), ch = false; incoming().forEach(function(x){ if (peerKey(x.peer) === k && !r.ids[x.id]) { r.ids[x.id] = 1; ch = true; } }); if (ch) { keepSeen(r); paintCount(); } }
+  function seenAll(){ var r = seenRec(), ch = false; incoming().forEach(function(x){ if (!r.ids[x.id]) { r.ids[x.id] = 1; ch = true; } }); if (ch) { keepSeen(r); paintCount(); } }
+  /* "New for you" at the top of the sheet: who wrote, one button each, into that conversation */
+  function newHTML(){
+    var by = {}, order = [];
+    unread().forEach(function(x){ var k = peerKey(x.peer); if (!by[k]) { by[k] = { p: x.peer, n: 0 }; order.push(k); } by[k].n++; });
+    if (!order.length) return '';
+    return '<div class="nbk-new"><b>New for you</b>' + order.map(function(k, i){ return '<button type="button" data-new="' + i + '">' + esc(by[k].p.label || peerTitle(by[k].p)) + ' · ' + by[k].n + '</button>'; }).join('') + '</div>';
+  }
+  function wireNew(el){
+    var by = {}, order = []; unread().forEach(function(x){ var k = peerKey(x.peer); if (!by[k]) { by[k] = x.peer; order.push(k); } });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-new]'), function(b){ b.addEventListener('click', function(){ talk(by[order[+b.getAttribute('data-new')]]); }); });
+  }
+  function countToday(){ return unread().length; }
+  function paintCount(){ if (!arc) return; var n = countToday(); arc.setAttribute('aria-label', n ? 'Notebook: ' + n + (n === 1 ? ' new message' : ' new messages') : 'Write a note in your notebook'); var b = arc.querySelector('.nbk-n'); if (n) { if (!b) { b = document.createElement('span'); b.className = 'nbk-n'; arc.appendChild(b); } b.textContent = n; } else if (b) b.remove(); }
   /* The arc rides above whatever else is fixed in the bottom-right corner: the dictation bar on the
      writing screens, an action bar, the page's own say-something pill. Measured, not guessed. */
   function place(){
@@ -540,8 +611,9 @@
     document.addEventListener('focusin', function(e){ if (isField(e.target)) { typing = true; tuck(true); } });
     document.addEventListener('focusout', function(e){ if (isField(e.target)) { typing = false; setTimeout(function(){ if (!typing) tuck(false); }, 250); } });
     document.addEventListener('hub:ready', function(){ setTimeout(place, 50); paintCount(); });
+    if (MODE === 'tutor' && who() && Date.now() - (tutor.cache().at || 0) > 180000) tutor.load().then(paintCount, function(){});
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
 
-  window.HubNotebook = { mode: MODE, context: context, open: open, load: load, save: save, tutor: tutor, play: play, talk: talk, peers: peers, messages: messages, peerTitle: peerTitle, arc: arcSVG, who: who, today: today, dayLabel: dayLabel, timeLabel: timeLabel, threadKey: threadKey, actionPoints: actionPoints, newId: newId, nowISO: nowISO, secs: secs, place: place, count: paintCount };
+  window.HubNotebook = { mode: MODE, seenAll: seenAll, unread: unread, context: context, open: open, load: load, save: save, tutor: tutor, play: play, talk: talk, peers: peers, messages: messages, peerTitle: peerTitle, arc: arcSVG, who: who, today: today, dayLabel: dayLabel, timeLabel: timeLabel, threadKey: threadKey, actionPoints: actionPoints, newId: newId, nowISO: nowISO, secs: secs, place: place, count: paintCount };
 })();
