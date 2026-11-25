@@ -2840,8 +2840,12 @@ case 'inbox': {
          the most it wants of each (by the TP and how much the tutor wrote); the store holds to it. Nothing the notes do
          not say is added, and the lines stay in While you watch for anything the tutor wants to add by hand. */
       var tnMaxS = Math.max(1, Math.min(8, parseInt(req.maxS, 10) || 5)), tnMaxA = Math.max(1, Math.min(6, parseInt(req.maxA, 10) || 3));
+      /* v308 (25 Nov 2026). Ramy: "we also have planning now ... is that 5 strengths in teaching, or teaching and planning?"
+         It was both together, so planning ate into teaching and the feedback read thin. Planning has its own limit now
+         (maxSP / maxAP from the page, else 3 and 2), and maxS / maxA are teaching's. */
+      var tnMaxSP = Math.max(0, Math.min(5, req.maxSP == null ? 3 : parseInt(req.maxSP, 10) || 0)), tnMaxAP = Math.max(0, Math.min(4, req.maxAP == null ? 2 : parseInt(req.maxAP, 10) || 0));
       var tnSys = 'You help a CELTA tutor turn the rough notes they wrote while watching a trainee teach into the strengths and action points of the trainee\'s feedback. '
-        + 'Group the tutor\'s lines: lines about the same thing become one point. Give at most ' + tnMaxS + ' strengths and at most ' + tnMaxA + ' action points in all, counting planning and teaching together; fewer when the notes say less. Choose the points that matter most for this lesson; leave out the rest. '
+        + 'Group the tutor\'s lines: lines about the same thing become one point. Give at most ' + tnMaxS + ' strengths and ' + tnMaxA + ' action points in teaching, and at most ' + tnMaxSP + ' strengths and ' + tnMaxAP + ' action points in planning; fewer when the notes say less. Choose the points that matter most for this lesson; leave out the rest. '
         + 'Each point is one or two sentences addressed to the trainee as "you"; a point may open the way tutors do, without a verb ("Good focus on ...", "Clear instructions for ..."). Say what you did, with the specific detail the notes give (the stage, the activity, the language, what the students did), and, when the notes say or show it, the effect on the students or on the lesson. '
         + trainerVoice_()
         + 'An action point names the problem and ends with one concrete thing to do next time, which must follow directly from the notes. '
@@ -2869,9 +2873,7 @@ case 'inbox': {
           .filter(function(c){ return /^[1-5][a-n]$/.test(c) && (planning ? c.charAt(0) === '4' : c.charAt(0) !== '4'); }).slice(0, 2) }; }).filter(function(x){ return x.text; }); };
       /* the most of each, planning first: what the model sends over the limit is left out, not squeezed in */
       var tnSp = tnList(tnOut.sp, true), tnSt = tnList(tnOut.st, false), tnAp = tnList(tnOut.ap, true), tnAt = tnList(tnOut.at, false);
-      var tnCut = function (a, b, max) { var keepA = Math.min(a.length, Math.max(0, max - Math.min(b.length, Math.ceil(max / 2)))); return [a.slice(0, keepA), b.slice(0, max - keepA)]; };
-      var sPair = tnCut(tnSp, tnSt, tnMaxS), aPair = tnCut(tnAp, tnAt, tnMaxA);
-      return { sp: sPair[0], st: sPair[1], ap: aPair[0], at: aPair[1] };
+      return { sp: tnSp.slice(0, tnMaxSP), st: tnSt.slice(0, tnMaxS), ap: tnAp.slice(0, tnMaxAP), at: tnAt.slice(0, tnMaxA) };
     }
     /* THE OVERALL COMMENT FROM THE TUTOR'S NOTES (Ramy, 27 Oct 2026: "the overall
        comment ... that's the prose ... a running commentary about the lesson or a
