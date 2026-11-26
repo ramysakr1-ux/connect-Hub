@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611252247">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261006">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -289,6 +289,20 @@
   .asg{display:grid; grid-template-columns:repeat(var(--n, 4), minmax(0,1fr)); gap:8px;}
   .t1 .as{border-radius:10px; padding:7px 10px; display:flex; flex-direction:column; gap:1px; text-align:left; min-width:0;}
   .t1 .as b{font-family:'Instrument Sans','Karla',sans-serif; font-size:15px; letter-spacing:.04em; font-weight:700;} .t1 .as em{font-style:normal; font-size:13px; font-weight:600; line-height:1.2; white-space:nowrap;}
+  .t1 .as b{display:flex; align-items:center; gap:7px;}
+  .t1 .as .dmtag{font-size:10px; letter-spacing:.08em; font-weight:700; line-height:1; padding:3px 5px 2px; border-radius:4px; border:1.2px solid currentColor; opacity:.78;}
+  /* THE TP HOVER BOX (26 Nov 2026, Ramy: "a small box that opens when you
+     hover with the important information"). The square's colour already says
+     the grade, so the box never repeats it: the TP and its date, the kind of
+     lesson in one word (Grammar, Reading...), and the tutor. Nothing else. Pointer devices only; a tap
+     still opens the strip below. */
+  #tptip{position:fixed; z-index:60; max-width:220px; padding:9px 12px 10px; border-radius:9px; background:oklch(24% 0.012 280); color:oklch(97% 0.005 85); font-size:12.5px; line-height:1.35; box-shadow:0 6px 18px oklch(0% 0 0 / .22); pointer-events:none; opacity:0; transform:translateY(3px); transition:opacity .12s, transform .12s;}
+  #tptip.on{opacity:1; transform:none;}
+  #tptip .h{font-weight:700; font-size:12px; letter-spacing:.03em; opacity:.7; margin-bottom:3px;}
+  #tptip .aim{font-weight:700; font-size:14px;}
+  #tptip .meta{margin-top:3px; font-size:12px; opacity:.75;}
+  @media (hover:none){ #tptip{display:none;} }
+  @media print{ #tptip{display:none;} }
   .t1 .as.pass{background:oklch(93% 0.035 140); color:oklch(38% 0.08 140);} .t1 .as.mark{background:var(--a-navy); color:var(--paper);} .t1 .as.resub{background:oklch(92% 0.045 65); color:oklch(42% 0.11 55);}
   .t1 .as.fail{background:var(--brick); color:var(--paper);} .t1 .as.late{background:var(--paper); box-shadow:inset 0 0 0 1.5px var(--brick); color:var(--brick);} .t1 .as.soon{background:var(--paper); box-shadow:inset 0 0 0 1.5px oklch(70% 0.11 70); color:oklch(42% 0.11 55);}
   .t1 .as.none{box-shadow:inset 0 0 0 1.5px var(--sand-line); background:none; color:oklch(68% 0.01 280);}
@@ -304,7 +318,7 @@
   @media (max-width:560px){ .asg{grid-template-columns:repeat(2, minmax(0,1fr));} }
   @media print{ .filters{display:none;} .t1-row{border:1px solid #ddd; break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611252247">
+<link rel="stylesheet" href="hub-house.css?v=202611261006">
 </head>
 <body>
 <div class="page">
@@ -332,15 +346,15 @@
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202611252247"></script>
-<script src="hub-shared.js?v=202611252247"></script>
-<script src="hub-rotation.js?v=202611252247"></script>
-<script src="assignment-defaults.js?v=202611252247"></script>
-<script src="hub-tracker.js?v=202611252247"></script>
-<script src="hub-store.js?v=202611252247"></script>
-<script src="hub-say.js?v=202611252247"></script>
-<script src="hub-sync.js?v=202611252247"></script>
-<script src="hub-notebook.js?v=202611252247"></script>
+<script src="hub-due.js?v=202611261006"></script>
+<script src="hub-shared.js?v=202611261006"></script>
+<script src="hub-rotation.js?v=202611261006"></script>
+<script src="assignment-defaults.js?v=202611261006"></script>
+<script src="hub-tracker.js?v=202611261006"></script>
+<script src="hub-store.js?v=202611261006"></script>
+<script src="hub-say.js?v=202611261006"></script>
+<script src="hub-sync.js?v=202611261006"></script>
+<script src="hub-notebook.js?v=202611261006"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -616,16 +630,17 @@ function asgBox(p, a){
   else if (st === A_STATE.MISSING) w = ['Late', 'late'];
   else if (st === A_STATE.DUE) w = ['Due soon', 'soon'];
   else if (!w) w = [st.t && st.t !== '·' ? st.t.charAt(0).toUpperCase() + st.t.slice(1) : 'Not yet', 'none'];
-  return `<button type="button" class="cell as ${w[1]}${SEL && SEL.id === p.tr.id && SEL.col === a.key ? ' sel' : ''}" data-id="${esc(p.tr.id)}" data-col="${a.key}" title="${esc(st.name || '')}"><b>${esc(a.label)}</b><em>${esc(w[0])}${s.dm ? ' · 2 markers' : ''}</em></button>`;
+  return `<button type="button" class="cell as ${w[1]}${SEL && SEL.id === p.tr.id && SEL.col === a.key ? ' sel' : ''}" data-id="${esc(p.tr.id)}" data-col="${a.key}" title="${esc((st.name || '') + (s.dm ? ' · double-marked' : ''))}"><b>${esc(a.label)}${s.dm ? '<span class="dmtag">DM</span>' : ''}</b><em>${esc(w[0])}</em></button>`;
 }
+let LAST_PEOPLE = [];
 function tpBox(p, t){
   const g = p.tps[t.key].g, st = T_STATE[g] || T_STATE.nd;
   const cls = g === 'STD' ? 's' : g === 'ABOVE' ? 'a' : g === 'NOTSTD' ? 'n' : g === 'un' ? 'u' : 'e';
-  return `<button type="button" class="cell tp ${cls}${SEL && SEL.id === p.tr.id && SEL.col === t.key ? ' sel' : ''}" data-id="${esc(p.tr.id)}" data-col="${t.key}" title="TP${t.n}: ${esc(st.name)}" aria-label="TP${t.n}: ${esc(st.name)}">${g === 'STD' || g === 'ABOVE' || g === 'NOTSTD' ? st.t : t.n}</button>`;
+  return `<button type="button" class="cell tp ${cls}${SEL && SEL.id === p.tr.id && SEL.col === t.key ? ' sel' : ''}" data-id="${esc(p.tr.id)}" data-col="${t.key}" aria-label="TP${t.n}: ${esc(st.name)}">${g === 'STD' || g === 'ABOVE' || g === 'NOTSTD' ? st.t : t.n}</button>`;
 }
 function render(){
   LETTER_OF = null;
-  const all = people();
+  const all = people(); LAST_PEOPLE = all;
   const counts = { mark: all.reduce((n, p) => n + toMark(p), 0), sign: all.reduce((n, p) => n + toSign(p), 0), look: all.filter(needsLook).length };
   const F = [['Everyone', 'Everyone', ''], ['mark', 'to mark', 'mk'], ['sign', counts.sign === 1 ? 'stage to sign' : 'stages to sign', 'sg'], ['look', counts.look === 1 ? 'needs a look' : 'need a look', 'rk']];
   if (!F.some(f => f[0] === FILTER)) FILTER = 'Everyone';
@@ -806,6 +821,33 @@ function renderDetail(all){
   </div>`;
 }
 
+/* The TP hover box: see #tptip in the styles. Reads the returned feedback's
+   own header, so it says what the tutor wrote and nothing the square says. */
+(function tpTip(){
+  const wrap = $('gridwrap'); if (!wrap || !window.matchMedia('(hover:hover)').matches) return;
+  const tip = document.createElement('div'); tip.id = 'tptip'; tip.setAttribute('aria-hidden', 'true'); document.body.appendChild(tip);
+  const dayOf = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '')); if (!m) return ''; return new Date(Date.UTC(+m[1], m[2] - 1, +m[3])).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }); };
+  let on = null;
+  const hide = () => { tip.classList.remove('on'); on = null; };
+  wrap.addEventListener('mouseover', e => {
+    const b = e.target.closest('.cell.tp'); if (b === on) return;
+    if (!b) { hide(); return; }
+    const p = (LAST_PEOPLE || []).find(x => x.tr.id === b.dataset.id), t = p && p.tps[b.dataset.col];
+    const f = t && t.fb && t.g !== 'un' && t.fb.state && t.fb.state.f;
+    if (!f) { hide(); return; }
+    const n = b.dataset.col.replace(/\D/g, ''), d = dayOf(f.fDate), who = String(f.fTutor || '').trim();
+    tip.innerHTML = `<div class="h">TP${esc(n)}${d ? ' · ' + esc(d) : ''}</div>`
+      + (t.aim ? `<div class="aim">${esc(t.aim)}</div>` : '')
+      + (who ? `<div class="meta">${esc(who)}</div>` : '');
+    const r = b.getBoundingClientRect(); tip.style.left = '0px'; tip.style.top = '0px'; tip.classList.add('on');
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8), y = r.top - h - 8;
+    if (y < 8) y = r.bottom + 8;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px'; on = b;
+  });
+  wrap.addEventListener('mouseleave', hide);
+  addEventListener('scroll', hide, { passive: true });
+})();
 $('filters').addEventListener('click', e=>{ const b=e.target.closest('.filter'); if(!b) return; FILTER=b.dataset.f; render(); });
 $('gridwrap').addEventListener('click', e=>{ const c=e.target.closest('.cell'); if(!c) return; SEL={id:c.dataset.id, col:c.dataset.col}; render(); hubScrollIntoView(document.getElementById('detail'), 'nearest'); });
 $('detail').addEventListener('click', e=>{
