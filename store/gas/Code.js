@@ -1623,7 +1623,7 @@ case 'inbox': {
       if (LIBRARY_AUDIO_.indexOf(aid) === -1) {
         var tpa = courseRead_(course.id, 'tppoints') || {};
         var scopeA = reader ? tpa : (me && (tpa.released || {})[String(me.group || '')] ? (tpa.groups || {})[String(me.group || '')] : null);
-        if (!scopeA || JSON.stringify(scopeA).indexOf(aid) === -1) throw new Error('That track is not on this course');
+        if ((!scopeA || JSON.stringify(scopeA).indexOf(aid) === -1) && JSON.stringify(tp78For_(course, reader, me).lessons || {}).indexOf(aid) === -1) throw new Error('That track is not on this course');
       }
       var fa = DriveApp.getFileById(aid);
       if (fa.getSize() > 15 * 1024 * 1024) throw new Error('That track is too large to play here');
@@ -1770,7 +1770,7 @@ case 'inbox': {
         // and wherever a course-level record names the token (letter order,
         // slots, groups...): the token is a 24-hex string, so a plain
         // replacement in the JSON touches nothing else
-        ['settings', 'wording', 'observations', 'timetable', 'tppoints', 'grid', 'stream', 'shared', 'volunteers'].forEach(function (kind) {
+        ['settings', 'wording', 'observations', 'timetable', 'tppoints', 'grid', 'tp78', 'stream', 'shared', 'volunteers'].forEach(function (kind) {
           var rec = courseRead_(course.id, kind);
           if (rec == null) return;
           var js = JSON.stringify(rec);
@@ -3615,8 +3615,45 @@ case 'inbox': {
       if (!tutor && gtok !== me.token) throw new Error('Not yours to write');
       var gtp = String(req.tp || ''); if (!/^\d{1,2}$/.test(gtp)) throw new Error('Which teaching practice?');
       var grow = { main: String(req.main || '').slice(0, 40), sub: String(req.sub || '').slice(0, 40), material: String(req.material || '').slice(0, 300), at: pinnedAt_(course, req.at) };
-      var gnext = courseUpdateObj_(course.id, 'grid', function (g) { g.rows = g.rows || {}; g.rows[gtok] = g.rows[gtok] || {}; g.rows[gtok]['tp' + gtp] = grow; return g; });
+      /* v314 (26 Nov 2026): the lesson chosen from the trainee's TP7 & TP8 material, and their place in the teaching order
+         ('YYYY-MM-DD|n'). Ramy: no two trainees teach the same lesson, and one trainee to a place. A tutor may override. */
+      var gLesson = req.lesson === undefined ? undefined : String(req.lesson || '').slice(0, 40);
+      var gPlace = req.place === undefined ? undefined : String(req.place || '').slice(0, 20);
+      if (gLesson && !/^s\d{1,3}\|\d{1,2}[AB]\|\d$/.test(gLesson)) throw new Error('Which lesson?');
+      if (gPlace && !/^\d{4}-\d{2}-\d{2}\|\d$/.test(gPlace)) throw new Error('Which place?');
+      var gMates = {}, gGrp = '';
+      roster_(course.id).forEach(function (t) { if (t.token === gtok) gGrp = String(t.group || ''); });
+      roster_(course.id).forEach(function (t) { if (String(t.group || '') === gGrp && t.token !== gtok) gMates[t.token] = t.name || 'someone'; });
+      if (gLesson && !tutor) { var gOff = ((courseRead_(course.id, 'tp78') || {}).offers || {})[gtok] || []; if (!gOff.some(function (o) { return o && o.k === gLesson; })) throw new Error('That lesson is not one of yours'); }
+      var gnext = courseUpdateObj_(course.id, 'grid', function (g) { g.rows = g.rows || {}; g.rows[gtok] = g.rows[gtok] || {};
+        var old = g.rows[gtok]['tp' + gtp] || {};
+        if (gLesson === undefined) { if (old.lesson) grow.lesson = old.lesson; } else if (gLesson) grow.lesson = gLesson;
+        if (gPlace === undefined) { if (old.place) grow.place = old.place; } else if (gPlace) grow.place = gPlace;
+        if (!tutor) Object.keys(gMates).forEach(function (mt) { var r = g.rows[mt] || {}; Object.keys(r).forEach(function (k) { var c = r[k] || {};
+          if (gLesson && c.lesson === gLesson) throw new Error(gMates[mt] + ' has already chosen that lesson');
+          if (gPlace && c.place === gPlace) throw new Error(gMates[mt] + ' already has that place'); }); });
+        g.rows[gtok]['tp' + gtp] = grow; return g; });
       return { saved: true, grid: gridFor_(course, gnext, reader, me) };
+    }
+    /* v314 (26 Nov 2026): TP7 & TP8 MATERIAL. Ramy: each trainee is offered three lessons for a language aim and three for
+       a skill they have not taught yet, from the Pool's books at their class's level, "exactly like what we did before ...
+       the teacher book, the student book ... the copy cut up ... the audio ... just no TP points". A tutor's page works the
+       offers out (tp78Offer) and the store keeps them: { offers: { <token>: [{ k: 'sNN|1A|0', t: <type> }] } }. A trainee
+       reads only their own lessons, with no aims and no type (they decide the aims themselves); tutors read them all. */
+    case 'tp78Offer': {
+      requireTutor_(tutor);
+      var toIn = req.offers || {}, toN = 0;
+      var toNext = courseUpdateObj_(course.id, 'tp78', function (o) { o.offers = o.offers || {};
+        Object.keys(toIn).forEach(function (tk) { if (!/^[\w-]{4,80}$/.test(tk)) return; if (o.offers[tk] && o.offers[tk].length && !req.replace) return;
+          var list = (Array.isArray(toIn[tk]) ? toIn[tk] : []).filter(function (x) { return x && /^s\d{1,3}\|\d{1,2}[AB]\|\d$/.test(String(x.k || '')); }).slice(0, 8)
+            .map(function (x) { return { k: String(x.k), t: String(x.t || '').slice(0, 30) }; });
+          if (list.length) { o.offers[tk] = list; toN++; } });
+        o.at = new Date().toISOString(); return o; });
+      return { saved: toN, tp78: tp78For_(course, true, null, toNext) };
+    }
+    case 'tp78': {
+      if (!course) throw new Error('Open your course link first');
+      return { tp78: tp78For_(course, reader, me) };
     }
     case 'gridRelease': {
       requireTutor_(tutor);
@@ -5245,6 +5282,26 @@ function folProfilesFor_(prof, forTutor, courseId, me) {
 // What each reader may see of the grid. Tutors and the assessor: the whole
 // thing, rows by token (theirs to know). A candidate: nothing until their
 // group is released, then their group's rows BY NAME, their own marked.
+function tp78Slot_(key) {
+  var m = /^(s\d{1,3})\|(\d{1,2}[AB])\|(\d)$/.exec(String(key || '')); if (!m) return null;
+  var lib = libraryCourse_(); if (!lib) return null;
+  var set = (((courseRead_(lib.id, 'tppoints') || {}).set || {}).library || {})[m[1]]; if (!set) return null;
+  var sl = (((set.sessions || {})[m[2]] || {}).slots || [])[+m[3]]; if (!sl) return null;
+  return { set: set, day: (set.sessions || {})[m[2]] || {}, slot: sl };
+}
+function tp78For_(course, reader, me, rec) {
+  var o = rec || courseRead_(course.id, 'tp78') || {}, offers = o.offers || {}, out = { lessons: {} };
+  var keys = [];
+  if (reader) { out.offers = offers; Object.keys(offers).forEach(function (tk) { (offers[tk] || []).forEach(function (x) { if (keys.indexOf(x.k) === -1) keys.push(x.k); }); }); }
+  else if (me) { out.offers = (offers[me.token] || []).map(function (x) { return { k: x.k }; }); out.offers.forEach(function (x) { keys.push(x.k); }); }
+  else return out;
+  keys.forEach(function (k) { var f = tp78Slot_(k); if (!f) return; var sl = f.slot;
+    var l = { book: String(f.set.book || f.set.name || '').split(',')[0], short: f.set.short || '', level: f.set.level || '', context: f.day.context || '', pages: sl.pages || '', tracks: sl.tracks || '',
+      files: (sl.files || []).map(function (x) { return { name: x.name || '', url: x.url || '', src: x.src || '', page: x.page || '', ans: x.ans ? 1 : 0 }; }) };
+    if (reader) { l.type = sl.type || ''; l.aim = sl.aim || ''; l.sub = sl.sub || ''; }
+    out.lessons[k] = l; });
+  return out;
+}
 function gridFor_(course, g, reader, me) {
   g = (g && typeof g === 'object' && !Array.isArray(g)) ? g : {};
   var rows = g.rows || {}, rel = {}, due = g.due || {}, wait = {}, now = Date.now();

@@ -3693,3 +3693,48 @@ window.hubTpParts = function(doc){
     });
   } catch (e) {}
 };
+
+/* TP7 & TP8 MATERIAL: WHICH LESSONS A TRAINEE IS OFFERED (Ramy, 26 Nov 2026). "We would like to encourage them to choose
+   a new skill or a new language that they haven't taught yet ... 3 options of a new skill ... or 3 options of new
+   language ... per trainee", "it doesn't have to come from the same book", and "Lite should be able to do it on its
+   own". From the Pool sets at the level of the class the group teaches TP7 in, leaving out the books the course already
+   uses and any lesson built on an earlier one (library/follows.json), three lessons for the language aims the trainee has
+   not taught and three for the skills they have not taught. When every aim of a kind has been taught, the least taught.
+   Spread across books, and across the group, so two trainees seldom meet the same lesson.
+   in:  { trainees: [{ token, group, taught: ['Grammar', ...] }], level(group) -> 'Upper-intermediate', sets: { sNN: set },
+          skip: ['s9', ...], follows: {...} }
+   out: { <token>: [{ k: 'sNN|3B|0', t: 'Functional language' }] } */
+window.hubTp78Pick = function(o){
+  var LANG = ['Grammar', 'Vocabulary', 'Functional language'], SKILL = ['Reading', 'Listening', 'Speaking', 'Writing'];
+  var band = function(v){ var m = /\(([^)]+)\)/.exec(String(v || '')); return String(m ? m[1] : v || '').trim().toLowerCase(); };
+  var hash = function(s){ var h = 2166136261; s = String(s); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  var used = {}, out = {};
+  (o.trainees || []).forEach(function(t){
+    var want = band(o.level(t.group)); if (!want) return;
+    var sets = Object.keys(o.sets || {}).filter(function(id){ var S = o.sets[id]; return S && (o.skip || []).indexOf(id) === -1 && band(S.level) === want; });
+    var cands = [];
+    sets.forEach(function(id){ var S = o.sets[id], fol = (o.follows || {})[id] || {};
+      Object.keys(S.sessions || {}).forEach(function(day){ ((S.sessions[day] || {}).slots || []).forEach(function(sl, i){
+        if (!sl || fol[day + '.' + (i + 1)]) return;
+        if (!(sl.files || []).some(function(f){ return f && f.url; })) return;
+        cands.push({ k: id + '|' + day + '|' + i, t: sl.type || '', set: id }); }); }); });
+    var count = {}; (t.taught || []).forEach(function(a){ count[a] = (count[a] || 0) + 1; });
+    var pick = function(kind){
+      var fresh = kind.filter(function(a){ return !count[a]; });
+      var aims = fresh.length ? fresh : (function(){ var have = kind.filter(function(a){ return cands.some(function(c){ return c.t === a; }); }); var min = Math.min.apply(null, have.map(function(a){ return count[a] || 0; })); return have.filter(function(a){ return (count[a] || 0) === min; }); })();
+      var pool = cands.filter(function(c){ return aims.indexOf(c.t) !== -1; })
+        .sort(function(a, b){ return (used[a.k] || 0) - (used[b.k] || 0) || hash(t.token + a.k) - hash(t.token + b.k); });
+      var got = [], books = {};
+      for (var pass = 0; pass < 3 && got.length < 3; pass++) pool.forEach(function(c){
+        if (got.length >= 3 || got.indexOf(c) !== -1) return;
+        if (pass === 0 && books[c.set]) return;                       // a different book each, first
+        if (pass === 0 && aims.length > 1 && got.some(function(g){ return g.t === c.t; }) && pool.some(function(x){ return got.indexOf(x) === -1 && !got.some(function(g){ return g.t === x.t; }); })) return;
+        got.push(c); books[c.set] = 1; });
+      got.forEach(function(c){ used[c.k] = (used[c.k] || 0) + 1; });
+      return got.map(function(c){ return { k: c.k, t: c.t }; });
+    };
+    var list = pick(LANG).concat(pick(SKILL));
+    if (list.length) out[t.token] = list;
+  });
+  return out;
+};

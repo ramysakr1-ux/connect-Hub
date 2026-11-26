@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<!--
+  Connect Lite — TP7 & TP8 material
+  © 2026 Ramy Sakr. All rights reserved.
+
+  Ramy, 26 Nov 2026: each trainee is offered three lessons for a language aim and three for a skill they have not taught
+  yet, from the Pool's books at their class's level: "the teacher book, the student book ... the copy cut up ... the audio
+  ... Everything is there. Obviously, just no TP points. Instead, they have the card." And: "should we just give them like
+  the page and they decide what the main and sub aim is? ... make it more challenging". So a trainee's cards carry the
+  book, the pages and the audio, and no aims; tutors see the same cards with Lite's aims. Choosing a card writes it onto
+  the trainee's row of the planning grid (21_tp_grid.html). The offers are worked out by hubTp78Pick (hub-shared.js) and
+  kept by the store (tp78Offer / tp78).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="brand/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+<title>Connect Lite — TP7 &amp; TP8 material</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hub-tokens.css?v=202611262143">
+<style>
+  body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
+  .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
+  .back{display:inline-block; margin-bottom:14px; font-size:0.82rem; color:var(--teal); text-decoration:none; font-weight:600;}
+  .eyebrow{font-size:0.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--teal); margin:0;}
+  h1{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.9rem; margin:2px 0 14px;}
+  .task{background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--gold); border-radius:12px; padding:14px 18px; margin:0 0 18px; max-width:780px;}
+  .task b{display:block; font-size:1rem; margin:0 0 4px;} .task p{margin:0; font-size:0.92rem; line-height:1.55;}
+  .who{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 16px;}
+  .who select{font:inherit; font-size:0.95rem; padding:8px 12px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper);}
+  .who .btn{font:inherit; font-weight:600; font-size:0.85rem; padding:8px 14px; border-radius:8px; border:1px solid var(--sand-line); background:var(--paper); cursor:pointer;}
+  .lessons{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px;}
+  .ls{background:var(--paper); border:1px solid var(--sand-line); border-top:3px solid var(--teal); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; min-width:0;}
+  .ls.on{box-shadow:0 0 0 3px var(--amber-edge);}
+  .ls.taken{opacity:.62;}
+  .ls .num{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.6rem; line-height:1; color:var(--teal);}
+  .ls .bk{font-size:0.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--grey);}
+  .ls .t{font-weight:700; font-size:0.95rem; margin-top:-2px;}
+  .ls .pages{font-size:0.84rem; color:var(--grey); line-height:1.5; white-space:pre-line;}
+  .ls ul{list-style:none; margin:0; padding:0; font-size:0.86rem; line-height:1.55;}
+  .ls li{display:flex; gap:8px; align-items:baseline;}
+  .ls li i{font-style:normal; font-size:0.68rem; font-weight:700; padding:1px 7px; border-radius:999px; background:var(--sand-deep); flex:none;}
+  .ls .aims{background:var(--sand-deep); border-radius:8px; padding:8px 10px; font-size:0.82rem; line-height:1.5;}
+  .ls .aims b{display:block; font-size:0.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin-top:4px;}
+  .ls .type{display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--gold-wash); border:1px solid var(--amber-edge);}
+  .ls .acts{display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:6px;}
+  .ls .b{font:inherit; font-weight:700; font-size:0.82rem; padding:8px 12px; border-radius:8px; border:1px solid var(--teal); color:var(--teal); background:var(--paper); cursor:pointer;}
+  .ls .b.yes{background:var(--teal); color:var(--paper);}
+  .ls .b:disabled{opacity:.5; cursor:default;}
+  .ls .tk{font-size:0.84rem; font-weight:600; color:var(--grey);}
+  .ls .open{font:inherit; font-size:0.82rem; font-weight:600; color:var(--teal); background:none; border:0; padding:0; text-align:left; text-decoration:underline; cursor:pointer;}
+  .viewer{grid-column:1 / -1; background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:14px 16px;}
+  .viewer h2{font-family:'Newsreader',Georgia,serif; font-size:1.2rem; margin:0 0 10px;}
+  .pgs{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;}
+  .pg{margin:0;} .pg figcaption{font-size:0.8rem; font-weight:700; margin:0 0 4px;}
+  .pg iframe{width:100%; height:520px; border:1px solid var(--sand-line); border-radius:8px; background:var(--sand-deep);}
+  .pg a{font-size:0.8rem; color:var(--teal);}
+  .auds{display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 0;}
+  .aud{background:var(--sand-deep); border-radius:10px; padding:8px 12px; font-size:0.84rem;}
+  .aud button{font:inherit; font-weight:700; font-size:0.82rem; padding:6px 12px; border-radius:8px; border:1px solid var(--teal); background:var(--paper); color:var(--teal); cursor:pointer; margin-left:8px;}
+  .aud audio{display:block; margin-top:6px; max-width:100%;}
+  .own{margin:16px 0 0; font-size:0.92rem;} .own a{color:var(--teal); font-weight:700;}
+  .status{font-size:0.86rem; color:var(--grey); min-height:1.2em; margin:10px 0 0;}
+  .empty{background:var(--paper); border:1px solid var(--sand-line); border-radius:12px; padding:18px; color:var(--grey);}
+  @media (max-width:860px){ .lessons{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ .board{padding:18px 12px 60px;} .lessons, .pgs{grid-template-columns:1fr;} .pg iframe{height:420px;} }
+</style>
+<link rel="stylesheet" href="hub-house.css?v=202611262143">
+</head>
+<body class="hub-grid hub-paper hub-course">
+<div class="board">
+  <a class="back" id="back" href="index.html">Back</a>
+  <div id="app"></div>
+</div>
+<script src="hub-due.js?v=202611262143"></script>
+<script src="hub-tracker.js?v=202611262143"></script>
+<script src="hub-rotation.js?v=202611262143"></script>
+<script src="hub-shared.js?v=202611262143"></script>
+<script src="hub-store.js?v=202611262143"></script>
+<script src="hub-say.js?v=202611262143"></script>
+<script src="hub-sync.js?v=202611262143"></script>
+<script src="hub-notebook.js?v=202611262143"></script>
+<script type="text/x-hub-app">
+const MODE = window.HubMode;
+if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
+  throw new Error('Connect Lite: stopping this page on purpose \u2014 this is one of the course\u2019s own pages.');
+const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor', IS_STAFF = MODE === 'tutor' || MODE === 'assessor';
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const rec = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch(e) { return null; } };
+const SETTINGS = rec('connect_course_settings') || {};
+const TOTAL = (function(){ const n = parseInt(SETTINGS.tpCount, 10); return (n >= 2 && n <= 12) ? n : 8; })();
+const TPS = [TOTAL - 1, TOTAL];
+$('back').href = IS_TRAINEE ? 'index.html' : '21_tp_grid.html';
+const GKEY = 'connect_tp_grid_v1';
+let D = null, note = '', busy = false, openKey = '', who = new URLSearchParams(location.search).get('t') || '';
+const hash = s => { let h = 2166136261; s = String(s); for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const title = l => String(l.context || '').split(/\s+[–-]\s+|,\s+and\s+|;\s*/)[0].replace(/^\w/, c => c.toUpperCase());
+const dayOf = k => String(k).split('|')[1] || '';
+const driveId = u => { const m = /\/d\/([\w-]{20,})|[?&]id=([\w-]{20,})/.exec(String(u || '')); return m ? (m[1] || m[2]) : ''; };
+const tracksOf = l => String(l.tracks || '').split('\n').map(x => x.trim()).filter(Boolean).map(x => { const p = x.split('|'); return { name: p[0].trim(), url: (p[1] || '').trim() }; });
+const shortBook = l => l.short || String(l.book || '').split(',')[0];
+function label(l, key){ const t = tracksOf(l).map(x => x.name.replace(/^track\s*/i, '')); return `${shortBook(l)} · ${dayOf(key)} · ${(l.files || []).filter(f => f.src === 'SB').map(f => 'SB p. ' + f.page).join(', ') || l.pages.split('\n')[0]}${t.length ? ' · track' + (t.length > 1 ? 's ' : ' ') + t.join(', ') : ''}`; }
+
+/* the trainee's own row on the grid, and who in the group has which lesson */
+function gridInfo(){
+  const g = rec(GKEY) || {}, mine = {}, taken = {};
+  if (IS_TRAINEE) (g.rows || []).forEach(r => TPS.forEach(tp => { const c = (r.plan || {})['tp' + tp] || {}; if (!c.lesson) return; if (r.mine) mine['tp' + tp] = c; else taken[c.lesson] = r.name; }));
+  else { const rows = g.rows || {}, ro = (rec('connect_roster_v1') || {}).trainees || {}, grp = (ro[who] || {}).group;
+    Object.keys(rows).forEach(tk => TPS.forEach(tp => { const c = (rows[tk] || {})['tp' + tp] || {}; if (!c.lesson) return;
+      if (tk === who) mine['tp' + tp] = c; else if (String((ro[tk] || {}).group) === String(grp)) taken[c.lesson] = (ro[tk] || {}).name || 'someone'; })); }
+  return { mine, taken, released: IS_TRAINEE ? !!g.released : true };
+}
+function render(){
+  const app = $('app');
+  const head = `<p class="eyebrow">Teaching practice</p><h1>TP${TPS[0]} &amp; TP${TPS[1]} material</h1>`;
+  const task = `<div class="task"><b>${IS_TRAINEE ? 'Your task' : 'The trainee\u2019s task'}</b><p>Look at the pages and decide what each lesson could be. Choose one for TP${TPS[0]} and one for TP${TPS[1]}: one a language lesson, the other a skills lesson. Then put the main aim and sub aim on the planning grid. Everything is here: the Student\u2019s Book, the Teacher\u2019s Book, the copies and the audio.${IS_STAFF ? ' Trainees do not see the aims or the lesson type; you do.' : ''}</p></div>`;
+  if (!D) { app.innerHTML = head + `<div class="empty">${esc(note || 'Getting the lessons\u2026')}</div>`; return; }
+  const gi = gridInfo();
+  if (IS_TRAINEE && !gi.released) { app.innerHTML = head + `<div class="empty">Your tutor has not opened TP${TPS[0]} and TP${TPS[1]} yet.</div>`; return; }
+  let pick = '';
+  if (IS_STAFF) {
+    const ro = (rec('connect_roster_v1') || {}).trainees || {}, offered = Object.keys(D.offers || {});
+    const people = Object.values(ro).filter(t => offered.includes(t.id)).sort((a, b) => String(a.group).localeCompare(String(b.group)) || String(a.name).localeCompare(String(b.name)));
+    if (!people.length) { app.innerHTML = head + task + `<div class="empty">No lessons offered yet. They are made when you open the planning grid.</div>`; return; }
+    if (!people.some(t => t.id === who)) who = people[0].id;
+    const i = people.findIndex(t => t.id === who);
+    pick = `<div class="who"><button class="btn" type="button" data-step="-1"${i ? '' : ' disabled'}>Previous</button><select id="whoSel">${people.map(t => `<option value="${esc(t.id)}"${t.id === who ? ' selected' : ''}>Group ${esc(t.group || '\u2014')} \u00b7 ${esc(t.name)}</option>`).join('')}</select><button class="btn" type="button" data-step="1"${i < people.length - 1 ? '' : ' disabled'}>Next</button></div>`;
+    window.__people = people;
+  }
+  const list = (IS_TRAINEE ? D.offers : (D.offers || {})[who]) || [];
+  const keys = list.map(x => x.k).filter(k => D.lessons[k]).sort((a, b) => hash(a) - hash(b));
+  if (!keys.length) { app.innerHTML = head + task + pick + `<div class="empty">No lessons ${IS_TRAINEE ? 'for you' : 'for this trainee'} yet.${IS_TRAINEE ? ' Ask your tutor.' : ''}</div>`; return; }
+  const typeOf = k => ((list.find(x => x.k === k) || {}).t) || (D.lessons[k] || {}).type || '';
+  const cards = keys.map((k, n) => {
+    const l = D.lessons[k], whoTp = TPS.find(tp => (gi.mine['tp' + tp] || {}).lesson === k), tk = gi.taken[k];
+    const files = l.files || [], tr = tracksOf(l);
+    const li = [];
+    const sb = files.filter(f => f.src === 'SB').map(f => f.page), tb = files.filter(f => f.src === 'TB').map(f => f.page), wb = files.filter(f => /^W/.test(f.src)).map(f => f.page);
+    if (sb.length) li.push(`<li><i>SB</i>p${sb.length > 1 ? 'p' : ''}. ${esc(sb.join(', '))}</li>`);
+    if (tb.length) li.push(`<li><i>TB</i>p${tb.length > 1 ? 'p' : ''}. ${esc(tb.join(', '))}, with the answers</li>`);
+    if (wb.length) li.push(`<li><i>WB</i>p${wb.length > 1 ? 'p' : ''}. ${esc(wb.join(', '))}</li>`);
+    if (sb.length) li.push(`<li><i>Copies</i>the Student\u2019s Book page${sb.length > 1 ? 's' : ''}, ready to print and cut up</li>`);
+    if (tr.length) li.push(`<li><i>Audio</i>${esc(tr.map(x => x.name).join(', '))}</li>`);
+    const acts = IS_TRAINEE ? (tk ? `<span class="tk">${esc(tk)} has chosen this one</span>`
+      : TPS.map(tp => `<button class="b${whoTp === tp ? ' yes' : ''}" type="button" data-use="${tp}" data-k="${esc(k)}"${busy ? ' disabled' : ''}>${whoTp === tp ? 'Your TP' + tp : 'Use for TP' + tp}</button>`).join(''))
+      : (whoTp ? `<span class="tk">Chosen for TP${whoTp}</span>` : tk ? `<span class="tk">${esc(tk)} has chosen this one</span>` : '');
+    const aims = IS_STAFF ? `<div class="aims"><span class="type">Offered as ${esc(typeOf(k).toLowerCase())}</span>${l.aim ? `<b>Main aim</b>${esc(l.aim)}` : ''}${l.sub ? `<b>Sub aim</b>${esc(l.sub)}` : ''}</div>` : '';
+    return `<div class="ls${whoTp ? ' on' : ''}${tk && !whoTp ? ' taken' : ''}" data-k="${esc(k)}"><span class="num">${n + 1}</span><span class="bk">${esc(shortBook(l))} \u00b7 ${esc(dayOf(k))}</span>${title(l) ? `<span class="t">${esc(title(l))}</span>` : ''}<ul>${li.join('')}</ul>${aims}<button class="open" type="button" data-open="${esc(k)}">${openKey === k ? 'Close the pages' : 'Open the pages and audio'}</button><div class="acts">${acts}</div></div>`
+      + (openKey === k ? viewer(l) : '');
+  }).join('');
+  app.innerHTML = head + task + pick + `<div class="lessons">${cards}</div>`
+    + (IS_TRAINEE ? `<p class="own">Not for you? <a href="21_tp_grid.html">Find your own on the planning grid</a>. Then you find the material and bring it to your tutor.</p>` : '')
+    + `<p class="status" role="status">${esc(note)}</p>`;
+  wire();
+}
+function viewer(l){
+  const pages = (l.files || []).filter(f => driveId(f.url)).map(f => { const id = driveId(f.url);
+    return `<figure class="pg"><figcaption>${esc(f.name || 'Page')}</figcaption><iframe src="https://drive.google.com/file/d/${esc(id)}/preview?hl=en" loading="lazy" title="${esc(f.name || 'Page')}"></iframe><a href="https://drive.google.com/file/d/${esc(id)}/view" target="_blank" rel="noopener">Open in Drive to print</a></figure>`; }).join('');
+  const auds = tracksOf(l).map(t => { const id = driveId(t.url);
+    return `<div class="aud" data-drive="${esc(id)}">${esc(t.name)}${id ? '<button type="button" class="play">Play</button>' : ' <span>play it from your own copy of the audio</span>'}</div>`; }).join('');
+  return `<div class="viewer"><h2>${esc(l.book)}</h2><div class="pgs">${pages || '<p>No scanned pages for this lesson.</p>'}</div>${auds ? `<div class="auds">${auds}</div>` : ''}</div>`;
+}
+const AUDIO = new Map();
+function wire(){
+  const app = $('app');
+  app.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => { openKey = openKey === b.dataset.open ? '' : b.dataset.open; render(); }));
+  app.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => { const P = window.__people || [], i = P.findIndex(t => t.id === who) + (+b.dataset.step); if (P[i]) { who = P[i].id; openKey = ''; render(); } }));
+  const s = $('whoSel'); if (s) s.addEventListener('change', () => { who = s.value; openKey = ''; render(); });
+  app.querySelectorAll('.aud .play').forEach(b => b.addEventListener('click', async () => {
+    const box = b.closest('.aud'), id = box.dataset.drive; if (!id) return;
+    const show = url => { b.remove(); box.insertAdjacentHTML('beforeend', `<audio controls autoplay src="${url}"></audio>`); };
+    if (AUDIO.has(id)) return show(AUDIO.get(id));
+    b.disabled = true; b.textContent = 'Getting the track\u2026';
+    try { const r = await window.HubStore.audio(id); const bin = atob(r.b64), by = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) by[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([by], { type: r.mime || 'audio/mpeg' })); AUDIO.set(id, url); show(url); }
+    catch(e) { b.disabled = false; b.textContent = 'Play'; note = 'That track would not load just now. Try again.'; setStatus(); }
+  }));
+  app.querySelectorAll('[data-use]').forEach(b => b.addEventListener('click', () => use(+b.dataset.use, b.dataset.k)));
+}
+function setStatus(){ const s = document.querySelector('.status'); if (s) s.textContent = note; }
+/* Choosing a lesson writes it onto the trainee's own row of the grid: the lesson, and its book and pages as the material.
+   The aims they chose stay; if the lesson was already their other TP's, that TP is cleared. */
+async function use(tp, k){
+  if (busy) return;
+  const gi = gridInfo(), cur = gi.mine['tp' + tp] || {}, other = TPS.find(x => x !== tp), oc = gi.mine['tp' + other] || {};
+  const already = cur.lesson === k;
+  busy = true; note = 'Saving\u2026'; render();
+  try {
+    const tok = window.HubStore.token();
+    if (!already && oc.lesson === k) { const r0 = await window.HubStore.call({ op: 'gridSet', tp: other, token: tok, main: oc.main || '', sub: oc.sub || '', material: '', lesson: '' }); localStorage.setItem(GKEY, JSON.stringify(r0.grid)); }
+    const r = await window.HubStore.call({ op: 'gridSet', tp, token: tok, main: cur.main || '', sub: cur.sub || '', material: already ? '' : label(D.lessons[k], k), lesson: already ? '' : k });
+    localStorage.setItem(GKEY, JSON.stringify(r.grid));
+    note = already ? 'Taken off TP' + tp + '.' : 'Saved as your TP' + tp + '. Now choose your aims on the planning grid.';
+  } catch(err) { note = 'Could not save: ' + (err.message || err); }
+  busy = false; render();
+}
+async function load(){
+  render();
+  try { const r = await window.HubStore.call({ op: 'tp78' }); D = r.tp78 || { offers: [], lessons: {} }; note = ''; }
+  catch(err) { note = 'The lessons did not load: ' + (err.message || err) + '. Try again in a moment.'; }
+  render();
+}
+load();
+</script>
+</body>
+</html>

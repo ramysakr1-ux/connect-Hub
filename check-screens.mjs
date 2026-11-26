@@ -69,6 +69,7 @@ const ROOMS = {
      read; each reader is shown their own share of them by the store. */
   '23_timetable.html':               { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   '24_tp_points.html':               { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
+  '43_tp78_material.html':           { trainee:'open',   tutor:'open',   assessor:'open',   volunteer:'refuse' },
   /* The volunteer register is the tutors' room; the assessor reads it, since
      Handbook 14.1 lists attendance registers for the visit. */
   /* The candidate agreement is the whole course's to read: the trainee signs
