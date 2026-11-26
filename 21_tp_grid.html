@@ -29,7 +29,7 @@
 <title>Connect Lite — TP planning grid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261932">
+<link rel="stylesheet" href="hub-tokens.css?v=202611262035">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -42,6 +42,13 @@
   section.group h2 small{font-family:'Karla',sans-serif; font-size:0.8rem; font-weight:500; color:var(--grey);}
   .relbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 0;}
   .relnote{font-size:0.8rem; color:var(--grey);}
+  .openbox .opt{display:flex; gap:10px; align-items:flex-start; margin:10px 0 0; padding:10px 12px; border:1px solid var(--sand-line); border-radius:10px; background:var(--paper); cursor:pointer;}
+  .openbox .opt.on{border-color:var(--teal); box-shadow:inset 0 0 0 1px var(--teal);}
+  .openbox .opt input[type=radio]{accent-color:var(--teal); margin-top:3px;}
+  .openbox .opt b{display:block; font-size:0.95rem;} .openbox .opt small{display:block; font-size:0.84rem; color:var(--grey); line-height:1.45;}
+  .openbox .opt input[type=datetime-local]{margin-top:8px; font:inherit; font-size:0.9rem; padding:7px 10px; border:1.5px solid var(--sand-line); border-radius:8px; background:var(--paper); color:inherit;}
+  .openbox .opt:not(.on) input[type=datetime-local]{display:none;}
+  .chip.wait{background:var(--gold-wash); color:var(--ink); border:1px solid var(--amber-edge);}
   .check{margin:10px 0 0; padding:14px 16px; border-radius:var(--r-strip); background:var(--gold-wash); border:1px solid var(--amber-edge); border-left:4px solid var(--gold);}
   .check .ttl{font-family:'Newsreader',Georgia,serif; font-size:1.05rem; font-weight:600; margin:0 0 4px;}
   .check .msg{font-size:0.9rem; line-height:1.5;}
@@ -77,12 +84,54 @@
   .cell input:focus{outline:none; border-color:var(--gold);}
   table.grid .ro{height:46px; box-sizing:border-box; display:flex; align-items:center; padding:0 14px; border-radius:8px; background:var(--sand-deep); color:var(--ink); font-size:0.86rem;}
   table.grid .ro.empty{color:var(--faint); font-style:italic;}
-  td.clash .ro, td.clash .house-sel select{box-shadow:inset 0 0 0 1.5px var(--gold);}
+  .cell.clash .ro, .cell.clash .house-sel select{box-shadow:inset 0 0 0 1.5px var(--gold);}
   .clashnote{font-size:0.78rem; color:var(--gold-deep); font-weight:600; margin:8px 0 0;}
   .aims{font-size:0.8rem; color:var(--grey); margin:12px 0 0; line-height:1.55;}
   .status{font-size:0.8rem; color:var(--grey); margin-left:auto;}
   .empty{padding:20px; color:var(--grey); font-size:0.9rem;}
   @media (max-width:560px){ .board{padding:18px 12px 60px;} section.group{padding:12px 12px 14px;} .sofar{max-width:160px;} }
+
+  /* EACH TP A CARD (Ramy, 26 Nov 2026: "each TP a full card ... the pills inside it ... funky ... blue, like we did with
+     the tracker"). One row a trainee; beside the name, a deep blue card for each teaching practice: its number, the main
+     aim and the sub aim as pills to tap (tap the chosen one again to clear it), the material under them. Both cards wear the tracker's
+     dark card colour (Ramy: one colour is enough). A hidden select under each set of pills keeps the saving and the aims map exactly as they were. */
+  table.grid{table-layout:fixed; border:0; background:none; border-collapse:separate; border-spacing:0;} table.grid col.c-who{width:22%;}
+  .tablewrap{overflow:visible;}
+  table.grid thead{display:none;}
+  table.grid td{border:0; padding:0; vertical-align:top;}
+  table.grid tbody tr td:first-child{padding:18px 14px 12px 0;}
+  table.grid tbody tr + tr td{border-top:1px solid var(--sand-line);}
+  .tpcol{padding:12px 0 12px 12px !important;}
+  .tpbox{--c:oklch(24% 0.012 280); --c2:oklch(29% 0.012 280); --cl:oklch(38% 0.012 280); --ci:oklch(97% 0.005 85); --cd:oklch(78% 0.01 85);
+    display:flex; flex-direction:column; gap:12px; height:100%; box-sizing:border-box; padding:16px 18px 18px; border-radius:14px;
+    background:var(--c); color:var(--ci); border-top:3px solid var(--teal); box-shadow:0 10px 24px -16px oklch(20% 0.02 280 / .7);}
+  .aimwarn{margin:0; padding:8px 10px; border-radius:8px; background:oklch(84% 0.12 78 / .14); border-left:3px solid oklch(84% 0.12 78); font-size:0.8rem; line-height:1.45; color:var(--ci);}
+  .aimwarn b{color:oklch(86% 0.12 78);} .aimwarn[hidden]{display:none;}
+  .tph{font-family:'Newsreader',Georgia,serif; font-weight:700; font-size:1.45rem; line-height:1; color:var(--ci);}
+  .tpbox .cell{min-width:0;}
+  .tpbox .lab, .sofar .lab{display:block; font-size:0.64rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin:0 0 6px;}
+  .tpbox .lab{color:var(--cd);} .sofar .lab{color:var(--grey);}
+  .pills{display:flex; flex-wrap:wrap; gap:6px;}
+  .pill{font:inherit; font-size:0.8rem; font-weight:600; line-height:1; padding:7px 12px; border-radius:999px; cursor:pointer;
+    background:transparent; color:var(--cd); border:1px solid var(--cl); transition:transform .15s ease, background .15s ease;}
+  .pill:hover{transform:translateY(-1px); color:var(--ci); border-color:var(--cd);}
+  .pill.on{background:var(--ci); color:var(--c); border-color:var(--ci); font-weight:700;}
+  table.grid .tpbox .ro{display:block; height:auto; padding:0; background:none; color:var(--ci); font-size:0.86rem;}
+  .tpbox .ro .pill{cursor:default;} table.grid .tpbox .ro.empty{color:var(--cd); font-style:italic;}
+  .tpbox .cell input{height:42px; background:var(--c2); color:var(--ci); border:1px solid var(--cl); border-radius:8px;}
+  .tpbox .cell input::placeholder{color:var(--cd);} .tpbox .cell input:focus{border-color:var(--ci);}
+  .tpbox .cell.clash .pill.on{box-shadow:0 0 0 2px oklch(84% 0.12 78);}
+  table.grid .tpbox .cell.clash .ro{box-shadow:none;} .tpbox .cell:focus-within{outline:none;}
+  .sofar{max-width:none; margin-top:10px;}
+  .sofar b{display:inline-block; margin:0 6px 4px 0; padding:2px 8px; border-radius:999px; background:var(--sand-deep); font-size:0.72rem; font-weight:600; color:var(--ink);}
+  table.grid tr.mine .tpbox{box-shadow:0 0 0 3px oklch(84% 0.12 78 / .8), 0 10px 24px -16px oklch(25% 0.08 255 / .7);}
+  table.grid tr.mine td{background:none;}
+  @media (max-width:760px){
+    table.grid, table.grid tbody, table.grid tr, table.grid td{display:block; width:100%;} table.grid colgroup{display:none;}
+    table.grid tbody tr td:first-child{padding:16px 0 4px;}
+    table.grid tbody tr + tr td{border-top:0;} table.grid tbody tr + tr td:first-child{border-top:1px solid var(--sand-line);}
+    .tpcol{padding:8px 0 !important;}
+  }
   @media print{ .back, .relbar, .check, #hubSync{display:none !important;} body{background:#fff;} }
 
   /* ---- v2 (7 Oct 2026): the group's aims at a glance ------------------------
@@ -101,7 +150,7 @@
   .ag-chip:hover{transform:translateY(-1px); box-shadow:0 6px 12px -8px oklch(30% 0.04 60 / .5);}
   .ag-none{font-size:0.76rem; color:var(--grey);}
   .ag-none.all{color:var(--teal);}
-  td.cell.ag-lit .house-sel select, td.cell.ag-lit .ro{box-shadow:inset 0 0 0 2px var(--teal);}
+  .cell.ag-lit .house-sel select, .cell.ag-lit .ro{box-shadow:inset 0 0 0 2px var(--teal);}
   .nm .ag-ok{display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-left:8px; border-radius:50%;
     background:var(--teal); color:var(--paper); font-size:10px; font-weight:700; animation:ag-in .35s cubic-bezier(.3,1.5,.5,1) both;}
   .ag-count{font-size:0.78rem; color:var(--grey); margin-left:8px; font-family:'Karla',sans-serif; font-weight:500;}
@@ -111,21 +160,21 @@
   @media(max-width:560px){ .ag-map{grid-template-columns:1fr; gap:4px;} .ag-map .tp{margin-top:6px;} }
   @media print{ .ag-map, .ag-count{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261932">
+<link rel="stylesheet" href="hub-house.css?v=202611262035">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611261932"></script>
-<script src="hub-tracker.js?v=202611261932"></script>
-<script src="hub-rotation.js?v=202611261932"></script>
-<script src="hub-shared.js?v=202611261932"></script>
-<script src="hub-store.js?v=202611261932"></script>
-<script src="hub-say.js?v=202611261932"></script>
-<script src="hub-sync.js?v=202611261932"></script>
-<script src="hub-notebook.js?v=202611261932"></script>
+<script src="hub-due.js?v=202611262035"></script>
+<script src="hub-tracker.js?v=202611262035"></script>
+<script src="hub-rotation.js?v=202611262035"></script>
+<script src="hub-shared.js?v=202611262035"></script>
+<script src="hub-store.js?v=202611262035"></script>
+<script src="hub-say.js?v=202611262035"></script>
+<script src="hub-sync.js?v=202611262035"></script>
+<script src="hub-notebook.js?v=202611262035"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -164,32 +213,85 @@ const groupsOf = () => {
   return Object.keys(by).sort().map(g => ({ group: g, rows: by[g].map(t => Object.assign({ L: window.hubLetterOf ? hubLetterOf(t.id, t.name) : '' }, t)).sort((a, b) => (a.L || 'Z').localeCompare(b.L || 'Z') || (a.name || '').localeCompare(b.name || '')).map(t => ({ name: t.name, token: t.id, letter: t.L, plan: ((grid && grid.rows) || {})[t.id] || {}, tr: t })) }));
 };
 function meTr(){ const me = rec('hub:me') || {}; return { id: me.token, name: me.name, tp: { plan: rec('chub:plan'), selfeval: rec('chub:selfeval'), feedback: rec('chub:feedback'), history: rec('chub:tpHistory') || {} }, assignments: rec('connect_assignment_submissions_v1') || {}, tracker: rec('chub:tracker') || {} }; }
-const released = g => IS_TRAINEE ? !!(grid && grid.released) : !!(grid && grid.released && grid.released[g]);
+const released = g => IS_TRAINEE ? !!(grid && grid.released) : !!(grid && ((grid.released && grid.released[g]) || (grid.openAt && grid.openAt[g] && Date.parse(grid.openAt[g]) <= Date.now())));
 
+/* Main and sub aim (Ramy, 26 Nov 2026: "two skills or two language, or the same skill or the same language ... should be
+   a warning"). A reminder under the aims, never a block: the page's own rule is a skill sub aim for a language lesson and
+   a language sub aim for a skills lesson. */
+const LANG = ['Grammar', 'Vocabulary', 'Functional language'];
+function aimWarn(main, sub){
+  const m = aimWord(main), s = aimWord(sub); if (!m || !s) return '';
+  if (m === s) return '<b>Check:</b> the main aim and the sub aim are the same. Choose a different sub aim.';
+  const ml = LANG.includes(m), sl = LANG.includes(s);
+  if (ml && sl) return '<b>Check:</b> both aims are language. A language lesson usually has a skill as its sub aim.';
+  if (!ml && !sl) return '<b>Check:</b> both aims are skills. A skills lesson usually has language as its sub aim.';
+  return '';
+}
 function sel(cls, value, opts, editable){
-  if (!editable) return `<div class="ro${value ? '' : ' empty'}">${esc(aimWord(value) || 'not chosen')}</div>`;
+  const v = aimWord(value);
+  if (!editable) return `<div class="ro${value ? '' : ' empty'}">${v ? `<span class="pill on">${esc(v)}</span>` : 'not chosen'}</div>`;
+  return `<div class="pills" role="radiogroup">${AIMS.map(a => `<button type="button" class="pill${v === a ? ' on' : ''}" role="radio" aria-checked="${v === a}" data-v="${esc(a)}">${esc(a)}</button>`).join('')}</div>`
+    + `<select class="${cls}" hidden aria-hidden="true" tabindex="-1"><option value=""></option>${AIMS.map(a => `<option value="${esc(a)}"${v === a ? ' selected' : ''}>${a}</option>`).join('')}</select>`;
+}
+function selOld(cls, value, opts, editable){
   return `<div class="house-sel"><select class="${cls}"><option value="">Choose…</option>${AIMS.map(a => `<option value="${esc(a)}"${aimWord(value) === a ? ' selected' : ''}>${a}</option>`).join('')}</select></div>`;
+}
+/* OPENING ON THE TIMETABLE (Ramy, 26 Nov 2026: "there is release it now, but also it could be set on a timer and linked
+   to a timetable"). The suggested time is the start of the first session still to come whose title names syllabus
+   planning or TP7; the tutor can change it. The store holds the grid back until then (openAt). */
+function ttSuggest(){
+  const tt = rec('connect_timetable_v1') || {}, days = Array.isArray(tt.days) ? tt.days : [];
+  const re = new RegExp('syllabus|\\bTP\\s*' + TPS[0] + '\\b|planning grid', 'i'), today = new Date().toISOString().slice(0, 10);
+  for (const d of days.slice().sort((x, y) => String(x.date).localeCompare(String(y.date)))) {
+    if (!d || !d.date || d.date < today) continue;
+    const ss = (d.sessions || []).filter(x => x && re.test(String(x.t || '')) && /^\d{1,2}:\d{2}$/.test(String(x.s || ''))).sort((x, y) => String(x.s).localeCompare(String(y.s)));
+    if (ss.length) return { local: d.date + 'T' + String(ss[0].s).padStart(5, '0'), title: String(ss[0].t) };
+  }
+  return null;
+}
+function whenLabel(iso){
+  const loc = window.HubDue ? HubDue.toLocalInput(iso) : String(iso).slice(0, 16); if (!loc) return '';
+  const d = new Date(loc.slice(0, 10) + 'T12:00:00Z'), hm = loc.slice(11, 16);
+  return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) + ', ' + (window.hubClock ? hubClock(hm) : hm);
+}
+let openMode = 'tt';
+function openBox(g, n){
+  const grp = esc(g.group) || '—';
+  if (!pendingRelease.on) return `<div class="check" role="alert"><div class="ttl">Take it back?</div><div class="msg">The grid disappears from <b>Group ${grp}</b>’s home, and any time set to open it is cleared. Nothing typed is lost.</div><div class="acts"><button class="btn quiet" type="button" data-rel-cancel="1">Cancel</button><button class="btn primary" type="button" data-rel-go="${esc(g.group)}"${busy ? ' disabled' : ''}>Take it back</button></div></div>`;
+  const sug = ttSuggest(), was = (((grid && grid.openAt) || {})[g.group]) || '';
+  const at = was && window.HubDue ? HubDue.toLocalInput(was) : (sug ? sug.local : '');
+  const tt = openMode === 'tt';
+  return `<div class="check openbox" role="alert"><div class="ttl">Open the grid for Group ${grp}</div>
+    <label class="opt${tt ? '' : ' on'}"><input type="radio" name="openMode" value="now"${tt ? '' : ' checked'}><span><b>Open it now</b><small>${n} trainee${n === 1 ? '' : 's'} see it on their home straight away.</small></span></label>
+    <label class="opt${tt ? ' on' : ''}"><input type="radio" name="openMode" value="tt"${tt ? ' checked' : ''}><span><b>Open it on the timetable</b><small>${sug ? `Lite suggests the start of <i>${esc(sug.title)}</i>. Change the time if you like.` : 'No syllabus planning session on the timetable yet. Choose the time.'}</small>
+      <input type="datetime-local" id="relAt" value="${esc(at)}"></span></label>
+    <div class="opts"><div><label class="f">Fill in by <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></label><input type="datetime-local" id="relDue" value="${esc(window.HubDue ? HubDue.toLocalInput(((grid && grid.due) || {})[g.group] || '') : '')}"></div><label class="tick"><input type="checkbox" id="relPost" checked> Post it to the course noticeboard when it opens</label>${tutorName() ? '' : `<div style="grid-column:1/-1"><label class="f">Your name, to sign the post</label><input type="text" id="relName" placeholder="Type your name"></div>`}</div>
+    <div class="acts"><button class="btn quiet" type="button" data-rel-cancel="1">Cancel</button><button class="btn primary" type="button" data-rel-go="${esc(g.group)}"${busy ? ' disabled' : ''}>${tt ? 'Set it to open' : 'Open it now'}</button></div></div>`;
 }
 function render(){
   const app = $('app');
   const groups = groupsOf();
   const head = `<p class="eyebrow">Teaching practice</p><h1>TP${TPS[0]} &amp; TP${TPS[1]} planning grid</h1>
-    <p class="lede">${IS_TRAINEE ? `The last two teaching practices are yours to plan. Choose a main aim and a sub aim for each, and say what material you will use, so your group and your tutors can see who is teaching what. Your row is yours; the others are your group’s to read.` : `The trainees’ own aims for the last two teaching practices, one grid per group. Release a group’s grid when you want them to start filling it in; you can edit any row.`}</p>`;
-  if (IS_TRAINEE && !released()) { app.innerHTML = head + `<div class="empty">Your tutor has not released the planning grid yet.</div>`; return; }
+    <p class="lede">You plan your last two teaching practices. Choose a main aim and a sub aim for each, and the material you will use. Your group can see your row, and you can see theirs.</p>`;
+  if (IS_TRAINEE && !released()) { app.innerHTML = head + `<div class="empty">Your tutor has not opened the planning grid yet.</div>`; return; }
   if (!groups.length) { app.innerHTML = head + `<div class="empty">No trainees on the roster yet.</div>`; return; }
   app.innerHTML = head + groups.map(g => {
     const n = g.rows.length; const on = released(g.group);
     const clash = {}; TPS.forEach(tp => { const c = {}; g.rows.forEach(r => { const m = aimWord((r.plan['tp' + tp] || {}).main); if (m) c[m] = (c[m] || 0) + 1; }); clash[tp] = c; });
     const anyClash = TPS.some(tp => Object.values(clash[tp]).some(v => v > 1));
-    const relbar = IS_TUTOR ? (pendingRelease && pendingRelease.group === g.group
-      ? `<div class="check" role="alert"><div class="ttl">Are you sure?</div><div class="msg">${pendingRelease.on ? `<b>Group ${esc(g.group) || '—'}</b> — ${n} trainee${n === 1 ? '' : 's'} — will see the grid on their home the moment you release it. Releasing is the main course tutor’s call.` : `The grid disappears from <b>Group ${esc(g.group) || '—'}</b>’s home. Nothing typed is lost; release it again to show it.`}</div>${pendingRelease.on ? `<div class="opts"><div><label class="f">Fill in by <span style="font-weight:500;text-transform:none;letter-spacing:0">(optional)</span></label><input type="datetime-local" id="relDue" value="${esc(window.HubDue ? HubDue.toLocalInput(((grid && grid.due) || {})[g.group] || '') : '')}"></div><label class="tick"><input type="checkbox" id="relPost" checked> Post it to the course noticeboard</label>${tutorName() ? '' : `<div style="grid-column:1/-1"><label class="f">Your name, to sign the post</label><input type="text" id="relName" placeholder="Type your name"></div>`}</div>` : ''}<div class="acts"><button class="btn quiet" type="button" data-rel-cancel="1">Cancel</button><button class="btn primary" type="button" data-rel-go="${esc(g.group)}"${busy ? ' disabled' : ''}>${pendingRelease.on ? 'Release anyway' : 'Take it back'}</button></div></div>`
-      : `<div class="relbar">${on ? `<span class="chip fine">Released</span><button class="btn quiet" type="button" data-rel="${esc(g.group)}" data-on="0">Unrelease</button>` : `<span class="chip nd">Not released</span><button class="btn primary" type="button" data-rel="${esc(g.group)}" data-on="1">Release to Group ${esc(g.group) || '—'}</button>`}<span class="relnote">${on ? 'The trainees can see and fill their rows.' : 'Only tutors can see it until it is released.'}</span><span class="status">${esc(note)}</span></div>`) : (IS_TRAINEE ? `<div class="relbar"><span class="status">${esc(note)}</span></div>` : '');
+    const waitAt = on ? '' : (((grid && grid.openAt) || {})[g.group]) || '';
+    const relbar = IS_TUTOR ? (pendingRelease && pendingRelease.group === g.group ? openBox(g, n) : `<div class="relbar">${on
+        ? `<span class="chip fine">Open</span><span class="relnote">The trainees can fill in their rows.</span><button class="btn quiet" type="button" data-rel="${esc(g.group)}" data-on="0">Take it back</button>`
+        : waitAt
+        ? `<span class="chip wait">Opens ${esc(whenLabel(waitAt))}</span><button class="btn quiet" type="button" data-rel="${esc(g.group)}" data-on="1">Change</button><button class="btn quiet" type="button" data-rel-now="${esc(g.group)}">Open it now</button><button class="btn quiet" type="button" data-rel="${esc(g.group)}" data-on="0">Take it back</button>`
+        : `<span class="chip nd">Not open</span><button class="btn primary" type="button" data-rel="${esc(g.group)}" data-on="1">Open for Group ${esc(g.group) || '—'}</button><span class="relnote">Only tutors can see it until it opens.</span>`
+      }<span class="status">${esc(note)}</span></div>`) : (IS_TRAINEE ? `<div class="relbar"><span class="status">${esc(note)}</span></div>` : '');
     const rows = g.rows.map(r => {
       const editable = IS_TUTOR || (IS_TRAINEE && r.mine);
       const sf = r.tr ? soFar(r.tr) : '';
-      return `<tr class="${r.mine ? 'mine' : ''}" data-token="${esc(r.token || '')}"><td><div class="nm">${r.letter ? `<span class="avi avi-cand" aria-hidden="true">${esc(r.letter)}</span>` : ''}${esc(r.name)}${r.mine ? '<span class="you">you</span>' : ''}</div>${sf ? `<div class="sofar">So far: <b>${esc(sf)}</b></div>` : ''}</td>`
-        + TPS.map(tp => { const p = r.plan['tp' + tp] || {}; const isClash = aimWord(p.main) && clash[tp][aimWord(p.main)] > 1;
-          return `<td class="cell first${isClash ? ' clash' : ''}" data-tp="${tp}" data-f="main">${sel('main', p.main, AIMS, editable)}</td><td class="cell" data-tp="${tp}" data-f="sub">${sel('sub', p.sub, AIMS, editable)}</td><td class="cell" data-tp="${tp}" data-f="material">${editable ? `<input type="text" class="material" value="${esc(p.material || '')}" placeholder="Coursebook, pages…">` : `<div class="ro${p.material ? '' : ' empty'}">${esc(p.material || 'not yet')}</div>`}</td>`; }).join('')
+      return `<tr class="${r.mine ? 'mine' : ''}" data-token="${esc(r.token || '')}"><td><div class="nm">${r.letter ? `<span class="avi avi-cand" aria-hidden="true">${esc(r.letter)}</span>` : ''}${esc(r.name)}${r.mine ? '<span class="you">you</span>' : ''}</div>${sf ? `<div class="sofar"><span class="lab">Taught so far</span><b>${esc(sf).split(/,\s*/).join('</b><b>')}</b></div>` : ''}</td>`
+        + TPS.map((tp, ti) => { const p = r.plan['tp' + tp] || {}; const isClash = aimWord(p.main) && clash[tp][aimWord(p.main)] > 1;
+          return `<td class="tpcol tp${ti % 2 ? 'b' : 'a'}"><div class="tpbox"><div class="tph">TP${tp}</div><div class="cell${isClash ? ' clash' : ''}" data-tp="${tp}" data-f="main"><span class="lab">Main aim</span>${sel('main', p.main, AIMS, editable)}</div><div class="cell" data-tp="${tp}" data-f="sub"><span class="lab">Sub aim</span>${sel('sub', p.sub, AIMS, editable)}</div>${(w => `<p class="aimwarn" role="status"${w ? '' : ' hidden'}>${w}</p>`)(aimWarn(p.main, p.sub))}<div class="cell mat" data-tp="${tp}" data-f="material"><span class="lab">Material</span>${editable ? `<input type="text" class="material" value="${esc(p.material || '')}" placeholder="Coursebook, pages…">` : `<div class="ro${p.material ? '' : ' empty'}">${esc(p.material || 'not yet')}</div>`}</div></div></td>`; }).join('')
         + `</tr>`;
     }).join('');
     /* Ramy, 28 Sep 2026: "you can't have more than six per TP group." A
@@ -201,7 +303,7 @@ function render(){
     const dueLine = (on && ds.has) ? `<p class="dueline${ds.past ? ' past' : ds.soon ? ' soon' : ''}">${ds.past ? `Was due <b>${esc(ds.due)}</b>` : `Fill in your row by <b>${esc(ds.due)}</b> — ${esc(ds.text)}`}</p>` : '';
     const over = n > 6 ? `<p class="clashnote">A teaching practice group is at most six trainees. This one has ${n} \u2014 split it on Course admin.</p>` : '';
     return `<section class="group" data-group="${esc(g.group)}"><h2>Group ${esc(g.group) || '—'} <small>${n} trainee${n === 1 ? '' : 's'}</small></h2>${over}${relbar}${dueLine}
-      <div class="tablewrap"><table class="grid"><thead><tr><th rowspan="2">Trainee</th>${TPS.map(tp => `<th class="tp" colspan="3">TP${tp}</th>`).join('')}</tr><tr>${TPS.map(() => `<th style="border-left:1px solid var(--sand-line)">Main aim</th><th>Sub aim</th><th>Material</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="tablewrap"><table class="grid"><colgroup><col class="c-who">${TPS.map(() => '<col>').join('')}</colgroup><thead><tr><th>Trainee</th>${TPS.map((tp, ti) => `<th class="tp tp${ti % 2 ? 'b' : 'a'}">TP${tp}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
       ${anyClash ? `<p class="clashnote">Two of you have the same main aim for the same teaching practice. Not a problem if the group means it — worth a word if not.</p>` : ''}
       <p class="aims">Main aim: ${AIMS.join(' · ')}. Sub aim: usually a skill for a language lesson, or language for a skills lesson.</p></section>`;
   }).join('');
@@ -211,10 +313,10 @@ function wire(){
   const app = $('app');
   app.querySelectorAll('tr[data-token], tr.mine').forEach(tr => {
     const token = tr.dataset.token || (rec('hub:me') || {}).token || '';
-    tr.querySelectorAll('td.cell').forEach(td => {
+    tr.querySelectorAll('.cell').forEach(td => {
       const el = td.querySelector('select, input'); if (!el) return;
       const fire = async () => {
-        const tp = td.dataset.tp; const cells = [...tr.querySelectorAll(`td.cell[data-tp="${tp}"]`)];
+        const tp = td.dataset.tp; const cells = [...tr.querySelectorAll(`.cell[data-tp="${tp}"]`)];
         const val = f => { const c = cells.find(x => x.dataset.f === f); const e = c && c.querySelector('select, input'); return e ? e.value : ''; };
         note = 'Saving…'; setStatus();
         try {
@@ -226,27 +328,48 @@ function wire(){
       else { let t = null; el.addEventListener('input', () => { clearTimeout(t); t = setTimeout(fire, 900); }); el.addEventListener('blur', () => { clearTimeout(t); fire(); }); }
     });
   });
-  app.querySelectorAll('[data-rel]').forEach(b => b.addEventListener('click', () => { pendingRelease = { group: b.dataset.rel, on: b.dataset.on === '1' }; render(); }));
+  app.querySelectorAll('.pills .pill').forEach(b => b.addEventListener('click', () => {
+    const cell = b.closest('.cell'), s = cell && cell.querySelector('select'); if (!s) return;
+    const v = b.classList.contains('on') ? '' : b.dataset.v;
+    cell.querySelectorAll('.pill').forEach(x => { const on = x === b && !!v; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
+    s.value = v;
+    const box = b.closest('.tpbox'), w = box && box.querySelector('.aimwarn');
+    if (w) { const pick = f => { const x = box.querySelector('.cell[data-f="' + f + '"] select'); return x ? x.value : ''; }; const t = aimWarn(pick('main'), pick('sub')); w.innerHTML = t; w.hidden = !t; }
+    s.dispatchEvent(new Event('change'));
+  }));
+  app.querySelectorAll('[data-rel]').forEach(b => b.addEventListener('click', () => { pendingRelease = { group: b.dataset.rel, on: b.dataset.on === '1' }; openMode = 'tt'; render(); }));
+  app.querySelectorAll('input[name="openMode"]').forEach(r => r.addEventListener('change', () => { const keep = $('relAt') ? $('relAt').value : ''; openMode = r.value; render(); if (keep && $('relAt')) $('relAt').value = keep; }));
+  app.querySelectorAll('[data-rel-now]').forEach(b => b.addEventListener('click', () => { pendingRelease = { group: b.dataset.relNow, on: true }; openMode = 'now'; render(); }));
   app.querySelectorAll('[data-rel-cancel]').forEach(b => b.addEventListener('click', () => { pendingRelease = null; render(); }));
   app.querySelectorAll('[data-rel-go]').forEach(b => b.addEventListener('click', async () => {
     const { group, on } = pendingRelease;
     const dueEl = $('relDue'), postEl = $('relPost'), nameEl = $('relName');
     const due = on && dueEl && dueEl.value && window.HubDue ? HubDue.fromLocalInput(dueEl.value) : (on ? '' : undefined);
     const wantPost = on && postEl && postEl.checked;
+    const atEl = $('relAt'), timed = on && openMode === 'tt';
+    const openAt = timed && atEl && atEl.value && window.HubDue ? HubDue.fromLocalInput(atEl.value) : '';
+    if (timed && !openAt) { if (atEl) atEl.focus(); return; }
+    if (timed && new Date(openAt).getTime() <= Date.now()) { note = 'That time has passed. Choose a later one, or open it now.'; setStatus(); if (atEl) atEl.focus(); return; }
     const by = tutorName() || (nameEl ? nameEl.value.trim() : '');
     if (wantPost && !by) { if (nameEl) nameEl.focus(); return; }
     if (by && !tutorName()) { if (window.hubKeepTutorName) hubKeepTutorName(by); else localStorage.setItem('chub:tutorName', by); }
     busy = true; render();
+    /* A grid set to open on a time has its notice held back for the same time. Changing that time, opening it now or
+       taking it back first lifts the held notice, so it cannot go up on its own. */
+    if ((((grid && grid.openAt) || {})[group])) {
+      const held = (rec('connect_course_stream_v1') || []).filter(p => p && String(p.to || '') === String(group) && p.publishAt && Date.parse(p.publishAt) > Date.now() && /planning grid is open/i.test(String(p.text || '')));
+      for (const p of held) { try { const u = await window.HubStore.call({ op: 'unpost', id: p.id }); if (u && u.stream) localStorage.setItem('connect_course_stream_v1', JSON.stringify(u.stream)); } catch(e) {} }
+    }
     try {
-      const r = await window.HubStore.call(Object.assign({ op: 'gridRelease', group, released: on }, due === undefined ? {} : { due }));
-      grid = r.grid; localStorage.setItem(KEY, JSON.stringify(grid)); note = on ? 'Released.' : 'Taken back.';
+      const r = await window.HubStore.call(Object.assign({ op: 'gridRelease', group, released: on }, due === undefined ? {} : { due }, openAt ? { openAt } : {}));
+      grid = r.grid; localStorage.setItem(KEY, JSON.stringify(grid)); note = !on ? 'Taken back.' : openAt ? 'Set to open ' + whenLabel(openAt) + '.' : 'Open.';
       /* The release IS the announcement: one post to that group's stream,
          under the tutor's name, with the date when there is one. */
       if (wantPost) {
         const ds = window.HubDue && due ? HubDue.state(due) : { has: false };
         const text = `The TP${TPS[0]} & TP${TPS[1]} planning grid is open — choose your main aim, sub aim and material for each. ${ds.has ? 'Fill in your row by ' + ds.due + '.' : 'Fill in your row when you can.'}`;
-        try { const p = await window.HubStore.call({ op: 'post', by, to: group, text }); localStorage.setItem('connect_course_stream_v1', JSON.stringify(p.stream || [])); note = 'Released, and posted to Group ' + (group || '—') + '.'; }
-        catch(err) { note = 'Released, but the post did not go — ' + (err.message || err); }
+        try { const p = await window.HubStore.call(Object.assign({ op: 'post', by, to: group, text }, openAt ? { publishAt: openAt } : {})); localStorage.setItem('connect_course_stream_v1', JSON.stringify(p.stream || [])); note = openAt ? 'Set to open ' + whenLabel(openAt) + '. The notice goes up then.' : 'Open, and posted to Group ' + (group || '—') + '.'; }
+        catch(err) { note = (openAt ? 'Set to open, ' : 'Open, ') + 'but the notice did not go: ' + (err.message || err); }
       }
     }
     catch(err) { note = 'Could not — ' + (err.message || err); }
@@ -268,10 +391,10 @@ render();
   function apply(){
     app.querySelectorAll('section.group').forEach(sec => {
       const rows = [...sec.querySelectorAll('table.grid tbody tr')]; if (!rows.length) return;
-      const tps = [...new Set([...sec.querySelectorAll('td.cell[data-tp]')].map(td => td.dataset.tp))];
+      const tps = [...new Set([...sec.querySelectorAll('.cell[data-tp]')].map(td => td.dataset.tp))];
       const lines = tps.map(tp => {
         const c = {}; let none = 0;
-        rows.forEach(tr => { const v = cellVal(tr.querySelector('td.cell[data-tp="' + tp + '"][data-f="main"]')); if (v) c[v] = (c[v] || 0) + 1; else none++; });
+        rows.forEach(tr => { const v = cellVal(tr.querySelector('.cell[data-tp="' + tp + '"][data-f="main"]')); if (v) c[v] = (c[v] || 0) + 1; else none++; });
         const chips = Object.keys(c).sort((a, b) => c[b] - c[a] || a.localeCompare(b)).map(a =>
           '<span class="ag-chip' + (c[a] > 1 ? ' clash' : '') + '" data-ag-tp="' + esc(tp) + '" data-ag-aim="' + esc(a) + '" title="' + c[a] + ' chose ' + esc(a) + '">' + esc(a) + (c[a] > 1 ? ' <b>\u00d7' + c[a] + '</b>' : '') + '</span>').join('');
         return '<span class="tp">TP' + esc(tp) + '</span><div class="ag-chips">' + chips
@@ -283,7 +406,7 @@ render();
       else { const tw = sec.querySelector('.tablewrap'); if (tw) tw.insertAdjacentHTML('beforebegin', html); }
       let full = 0;
       rows.forEach(tr => {
-        const cells = [...tr.querySelectorAll('td.cell')], ok = cells.length && cells.every(td => cellVal(td));
+        const cells = [...tr.querySelectorAll('.cell')], ok = cells.length && cells.every(td => cellVal(td));
         if (ok) full++;
         const nm = tr.querySelector('.nm'); if (!nm) return;
         const tick = nm.querySelector('.ag-ok');
@@ -300,7 +423,7 @@ render();
     const chip = e.target.closest('.ag-chip'); app.querySelectorAll('.ag-lit').forEach(x => x.classList.remove('ag-lit'));
     if (!chip) return;
     const sec = chip.closest('section.group');
-    sec.querySelectorAll('td.cell[data-tp="' + chip.dataset.agTp + '"][data-f="main"]').forEach(td => { if (cellVal(td) === chip.dataset.agAim) td.classList.add('ag-lit'); });
+    sec.querySelectorAll('.cell[data-tp="' + chip.dataset.agTp + '"][data-f="main"]').forEach(td => { if (cellVal(td) === chip.dataset.agAim) td.classList.add('ag-lit'); });
   });
   let t = null; const soon = () => { clearTimeout(t); t = setTimeout(apply, 120); };
   new MutationObserver(m => { if (m.some(r => [...r.addedNodes].some(n => n.nodeType === 1 && !String(n.className || '').startsWith('ag-')))) soon(); }).observe(app, { childList: true });

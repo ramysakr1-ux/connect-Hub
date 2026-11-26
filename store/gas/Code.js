@@ -3624,7 +3624,16 @@ case 'inbox': {
       // An optional 'fill in by' date rides with the release (28 Sep 2026); a
       // reminder the pages show, never a lock. Unreleasing keeps it.
       var gdue = req.due === undefined ? undefined : String(req.due || '').slice(0, 40);
-      var gnext2 = courseUpdateObj_(course.id, 'grid', function (g) { g.released = g.released || {}; g.due = g.due || {}; if (gon) g.released[ggrp] = true; else delete g.released[ggrp]; if (gdue !== undefined) { if (gdue) g.due[ggrp] = gdue; else delete g.due[ggrp]; } return g; });
+      /* v313 (26 Nov 2026): opening on a time. Ramy: "there is release it now, but also it could be set on a timer and
+         linked to a timetable." openAt, a time still to come, holds the group's grid back until then; gridFor_ opens it
+         when the time passes. Opening now, or taking it back, clears it. */
+      var gopen = '';
+      if (gon && req.openAt && /^\d{4}-\d{2}-\d{2}T/.test(String(req.openAt))) { var goAt = new Date(String(req.openAt)); if (!isNaN(goAt.getTime()) && goAt.getTime() > Date.now()) gopen = goAt.toISOString(); }
+      var gnext2 = courseUpdateObj_(course.id, 'grid', function (g) { g.released = g.released || {}; g.due = g.due || {}; g.openAt = g.openAt || {};
+        if (gon && gopen) { delete g.released[ggrp]; g.openAt[ggrp] = gopen; }
+        else if (gon) { g.released[ggrp] = true; delete g.openAt[ggrp]; }
+        else { delete g.released[ggrp]; delete g.openAt[ggrp]; }
+        if (gdue !== undefined) { if (gdue) g.due[ggrp] = gdue; else delete g.due[ggrp]; } return g; });
       return { saved: true, grid: gridFor_(course, gnext2, true, null) };
     }    /* v73: a held-back post (scheduled, or carried from the last course by
        cloneCourse) is posted now, or given a date. publishAt '' means now:
@@ -5238,8 +5247,11 @@ function folProfilesFor_(prof, forTutor, courseId, me) {
 // group is released, then their group's rows BY NAME, their own marked.
 function gridFor_(course, g, reader, me) {
   g = (g && typeof g === 'object' && !Array.isArray(g)) ? g : {};
-  var rows = g.rows || {}, rel = g.released || {}, due = g.due || {};
-  if (reader) return { rows: rows, released: rel, due: due };
+  var rows = g.rows || {}, rel = {}, due = g.due || {}, wait = {}, now = Date.now();
+  Object.keys(g.released || {}).forEach(function (k) { if (g.released[k]) rel[k] = true; });
+  // v313: a group whose opening time has come is open; one still to come waits (tutors and the assessor see when)
+  Object.keys(g.openAt || {}).forEach(function (k) { var t = new Date(String(g.openAt[k])).getTime(); if (isNaN(t)) return; if (t <= now) rel[k] = true; else if (!rel[k]) wait[k] = String(g.openAt[k]); });
+  if (reader) return { rows: rows, released: rel, due: due, openAt: wait };
   if (!me) return null;
   var grp = String(me.group || '');
   if (!rel[grp]) return { released: false };

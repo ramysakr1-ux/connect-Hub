@@ -40,7 +40,7 @@
 <title>Connect Lite — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261932">
+<link rel="stylesheet" href="hub-tokens.css?v=202611262035">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1180px; margin:0 auto; padding:26px 20px 80px;}
@@ -874,27 +874,27 @@
   @media print{ .smode, .swk, .stool .sacts, .slib, .ttpop, .ttshade{display:none !important;} .slayout{display:block;} }
   .confirm-message{white-space:pre-line;}   /* the close-a-day preview is a list (R03) */
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261932">
+<link rel="stylesheet" href="hub-house.css?v=202611262035">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611261932"></script>
-<script src="hub-tracker.js?v=202611261932"></script>
-<script src="hub-rotation.js?v=202611261932"></script>
-<script src="hub-xlsx.js?v=202611261932"></script>
-<script src="hub-docx.js?v=202611261932"></script>
-<script src="hub-timetable-parse.js?v=202611261932"></script>
-<script src="assignment-defaults.js?v=202611261932"></script>
-<script src="hub-shared.js?v=202611261932"></script>
+<script src="hub-due.js?v=202611262035"></script>
+<script src="hub-tracker.js?v=202611262035"></script>
+<script src="hub-rotation.js?v=202611262035"></script>
+<script src="hub-xlsx.js?v=202611262035"></script>
+<script src="hub-docx.js?v=202611262035"></script>
+<script src="hub-timetable-parse.js?v=202611262035"></script>
+<script src="assignment-defaults.js?v=202611262035"></script>
+<script src="hub-shared.js?v=202611262035"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611261932"></script>
-<script src="hub-say.js?v=202611261932"></script>
-<script src="hub-sync.js?v=202611261932"></script>
-<script src="hub-notebook.js?v=202611261932"></script>
+<script src="hub-store.js?v=202611262035"></script>
+<script src="hub-say.js?v=202611262035"></script>
+<script src="hub-sync.js?v=202611262035"></script>
+<script src="hub-notebook.js?v=202611262035"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 /* A volunteer student is not on the course: their own page carries the
@@ -1194,6 +1194,10 @@ function outs(){
     const i = TUTORS.indexOf(String(a.setBy || ''));
     (out[iso] = out[iso] || []).push({ key: k, at: a.outAt, title: a.title || k.toUpperCase(), by: i === -1 ? '' : TUTORS[i], col: null });
   });
+  /* The TP7-TP8 planning grid, when a group's is set to open on a time (26 Nov 2026). Shown, not dragged: it is set on the grid's own page. */
+  const gr = rec('connect_tp_grid_v1') || {}, n = parseInt(SETTINGS.tpCount, 10) >= 2 ? parseInt(SETTINGS.tpCount, 10) : 8;
+  Object.keys(gr.openAt || {}).forEach(g => { const at = gr.openAt[g], iso = at && dayOf(at); if (!iso) return;
+    (out[iso] = out[iso] || []).push({ key: 'grid', grid: true, at, title: 'TP' + (n - 1) + '–' + n + ' grid' + (Object.keys(gr.openAt).length > 1 ? ' G' + (g || '—') : ''), by: '', col: null }); });
   return out;
 }
 /* SHORT NAMES ON THE FLAGS (Ramy, 29 Oct 2026: "use acronyms ... LRT out, LRT in ... resubs in, keep it short") */
@@ -1202,8 +1206,8 @@ const asgShort = (k, title) => ASG_SHORT[String(k).toLowerCase()] || title || St
 function outFlag(o, style){
   const local = window.HubDue ? HubDue.toLocalInput(o.at).slice(11, 16) : '';
   /* an "out" moves too (Ramy, 7 Nov 2026: "why can't I drag ... LSRT from Wednesday to Thursday") */
-  if (EDIT) return `<button type="button" class="due out asbtn${o.col != null ? ' by-' + o.col : ''}" data-move="${esc(o.key)}" data-field="out"${style ? ` style="${style}"` : ''} title="Drag to another day: when ${esc(o.title)} goes out"><i class="fl" aria-hidden="true"></i>${esc(asgShort(o.key, o.title))} out${local ? ' · ' + esc(hubClock(local)) : ''}</button>`;
-  return `<div class="due out${o.col != null ? ' by-' + o.col : ''}"${style ? ` style="${style}"` : ''} title="${esc(o.title + ' goes out' + (o.by ? ' · set by ' + o.by : ''))}"><i class="fl" aria-hidden="true"></i>${esc(asgShort(o.key, o.title))} out${local ? ' · ' + esc(hubClock(local)) : ''}</div>`;   // the tutor is the color, not a name (Ramy); named in the tooltip
+  if (EDIT && !o.grid) return `<button type="button" class="due out asbtn${o.col != null ? ' by-' + o.col : ''}" data-move="${esc(o.key)}" data-field="out"${style ? ` style="${style}"` : ''} title="Drag to another day: when ${esc(o.title)} goes out"><i class="fl" aria-hidden="true"></i>${esc(asgShort(o.key, o.title))} out${local ? ' · ' + esc(hubClock(local)) : ''}</button>`;
+  return `<div class="due out${o.col != null ? ' by-' + o.col : ''}"${style ? ` style="${style}"` : ''} title="${esc(o.title + (o.grid ? ' opens for the trainees' : ' goes out') + (o.by ? ' · set by ' + o.by : ''))}"><i class="fl" aria-hidden="true"></i>${esc(asgShort(o.key, o.title))} ${o.grid ? 'opens' : 'out'}${local ? ' · ' + esc(hubClock(local)) : ''}</div>`;   // the tutor is the color, not a name (Ramy); named in the tooltip
 }
 
 /* The skeleton: every weekday from the start to the end, with the teaching
@@ -4518,7 +4522,7 @@ async function checkLock(){
 }
 document.addEventListener('click', async e => {
   if (!e.target.closest('#ttUnlock')) return;
-  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611261932'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+  const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611262035'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
   if (!sheet) return;
   const given = await sheet.ask({ who: 'admin' }); if (!given) return;
   window.HubStore.adminEnter(given);
