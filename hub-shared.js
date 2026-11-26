@@ -3380,7 +3380,10 @@ window.hubHeadHTML = function (text, heads) {
 /* BACK IS BACK (Ramy, 29 Oct 2026: "going back does not take me back to the door I came from ... it takes me back to the
    dashboard. If I want to go to the dashboard, I'll click on Tutor home. Back is back."). Any link on a page that says
    Back, or that is the page's back link (a.back, #back, #backLink), goes to the page this one was opened from, when that
-   was a Lite page in this tab; the link's own address stays for a page opened fresh (a new tab, a bookmark, an email). */
+   was a Lite page in this tab; the link's own address stays for a page opened fresh (a new tab, a bookmark, an email). 
+   26 Nov 2026 ("stuck in a loop ... between the assignment and the tracker"): a named Back button (data-back) steps back
+   too; the marking page's own Back steps back when it was opened from a Lite page, and its arrows replace. A Back that
+   opens a page instead of stepping back makes a loop: the page it opens steps back into the one you left. */
 (function () {
   function sameSite() {
     try { var r = document.referrer ? new URL(document.referrer) : null; return !!(r && r.origin === location.origin && r.pathname + r.search !== location.pathname + location.search); } catch (e) { return false; }
@@ -3390,10 +3393,10 @@ window.hubHeadHTML = function (text, heads) {
     if (a.id === 'hubAkBack') return false;   /* the assessor's pill goes to the pack, by name */
     if (a.id === 'mknAll' || a.id === 'mknAll2') return false;   /* the marking page's Back goes to where the marking was opened from, not to the trainee before (24 Nov 2026) */
     var t = (a.textContent || '').trim();
-    return /^back$/i.test(t) || ((a.classList.contains('back') || a.id === 'back' || a.id === 'backLink') && /^back\b/i.test(t));
+    return /^back$/i.test(t) || ((a.classList.contains('back') || a.id === 'back' || a.id === 'backLink' || a.hasAttribute('data-back')) && /^back\b/i.test(t));
   }
   /* a back link that names a place ("Back to dashboard") says Back when it goes back, so it never names the wrong place */
-  function relabel() { if (!sameSite()) return; document.querySelectorAll('a.back, a#back, a#backLink').forEach(function (a) { if (a.id !== 'hubAkBack' && /^back to\b/i.test((a.textContent || '').trim())) a.textContent = 'Back'; }); }
+  function relabel() { if (!sameSite()) return; document.querySelectorAll('a.back, a#back, a#backLink, a[data-back]').forEach(function (a) { if (a.id !== 'hubAkBack' && /^back to\b/i.test((a.textContent || '').trim())) a.textContent = 'Back'; }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', relabel); else relabel();
   setTimeout(relabel, 1500);
   document.addEventListener('click', function (e) {

@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261026">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261047">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -525,7 +525,7 @@
   @media (prefers-reduced-motion:reduce){ body.mkn .mkn-panel, body.mkn .mkn-panel.open{transition:none;} }
   @media print{ #mknFoot, #mknScrim, .mkn-phead{display:none !important;} body.mkn .mkn-panel{position:static !important; transform:none !important; visibility:visible !important; max-height:none !important; box-shadow:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261026">
+<link rel="stylesheet" href="hub-house.css?v=202611261047">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -534,18 +534,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611261026"></script>
-<script src="assignment-history.js?v=202611261026"></script>
-<script src="hub-exchange.js?v=202611261026"></script>
-<script src="hub-docx.js?v=202611261026"></script>
-<script src="hub-marking.js?v=202611261026"></script>
-<script src="hub-due.js?v=202611261026"></script>
-<script src="hub-shared.js?v=202611261026"></script>
-<script src="hub-store.js?v=202611261026"></script>
-<script src="hub-say.js?v=202611261026"></script>
-<script src="hub-sync.js?v=202611261026"></script>
-<script src="hub-notebook.js?v=202611261026"></script>
-<script src="fol-interview.js?v=202611261026"></script>
+<script src="assignment-defaults.js?v=202611261047"></script>
+<script src="assignment-history.js?v=202611261047"></script>
+<script src="hub-exchange.js?v=202611261047"></script>
+<script src="hub-docx.js?v=202611261047"></script>
+<script src="hub-marking.js?v=202611261047"></script>
+<script src="hub-due.js?v=202611261047"></script>
+<script src="hub-shared.js?v=202611261047"></script>
+<script src="hub-store.js?v=202611261047"></script>
+<script src="hub-say.js?v=202611261047"></script>
+<script src="hub-sync.js?v=202611261047"></script>
+<script src="hub-notebook.js?v=202611261047"></script>
+<script src="fol-interview.js?v=202611261047"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -727,7 +727,7 @@ function renderPicker(){
     `<button class="${k===CURRENT?'active':''}" data-a="${k}">${NAMES[k]}</button>`).join('')
 ;
 }
-$('picker').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; location.search='?a='+b.dataset.a+(TRAINEE_ID?'&trainee='+encodeURIComponent(TRAINEE_ID):''); });
+$('picker').addEventListener('click', e => { const b=e.target.closest('button'); if(!b) return; location.replace(location.pathname+'?a='+b.dataset.a+(TRAINEE_ID?'&trainee='+encodeURIComponent(TRAINEE_ID):'')); });
 
 function summarize(a, snap, round){
   if (!snap) return '<p class="note">Nothing submitted yet.</p>';
@@ -969,7 +969,7 @@ function render(){
       '<div style="max-width:560px; padding:26px 0;">' +
       '<h2 style="margin:0 0 10px; font-family:\'Newsreader\',Georgia,serif; font-weight:600; font-size:1.3rem;">Which trainee’s work?</h2>' +
       '<p style="margin:0 0 20px; font-size:0.9rem; line-height:1.6; color:var(--grey);">A mark sheet belongs to one trainee and one assignment. Open it from the dashboard or the trainee tracker, where the row you click says which.</p>' +
-      '<a class="btn" href="5_tutor_dashboard.html">Back to dashboard</a></div>';
+      '<a class="btn" data-back href="5_tutor_dashboard.html">Back to dashboard</a></div>';
     return;
   }
   const a = WORDING && WORDING[CURRENT];
@@ -1664,7 +1664,9 @@ document.addEventListener('click', e => {
   if (!document.body.classList.contains('mkn')) return;
   const t = e.target; if (!t || !t.closest) return;
   const go = t.closest('[data-mkngo]');
-  if (go && !go.disabled) { location.search = '?a=' + encodeURIComponent(CURRENT) + '&trainee=' + encodeURIComponent(go.dataset.mkngo); return; }
+  /* REPLACE, NOT PUSH (26 Nov 2026): moving between trainees takes no step in the tab's history, so Back is one step to
+     where the marking was opened from, however many trainees were marked on the way. */
+  if (go && !go.disabled) { location.replace(location.pathname + '?a=' + encodeURIComponent(CURRENT) + '&trainee=' + encodeURIComponent(go.dataset.mkngo)); return; }
   /* the door back opens the list on this assignment, as the dashboard remembers it */
   if (t.closest('#mknAll, #mknAll2')) { try { localStorage.setItem('chub:asgOpen', CURRENT); } catch (err) {} return; }
   const met = t.closest('#mkPanel button[data-crit]'), not = t.closest('#mkPanel button[data-critno]');
@@ -1693,11 +1695,23 @@ const MKN_BACK = (function(){
     const r = document.referrer ? new URL(document.referrer) : null;
     if (r && r.origin === location.origin) {
       const page = r.pathname.split('/').pop() || '';
-      if (page && !/^10_tutor_assignment_marking\.html$/.test(page)) sessionStorage.setItem(K, /^5_tutor_dashboard\.html$/.test(page) ? HOME : page + r.search);
-    }
+      if (page && !/^10_tutor_assignment_marking\.html$/.test(page)) { sessionStorage.setItem(K, /^5_tutor_dashboard\.html$/.test(page) ? HOME : page + r.search); sessionStorage.setItem(K + ':step', '1'); }
+    } else sessionStorage.removeItem(K + ':step');
     return sessionStorage.getItem(K) || HOME;
   } catch (e) { return HOME; }
 })();
+
+/* BACK IS A STEP, NOT A NEW PAGE (Ramy, 26 Nov 2026: "I feel like I'm stuck in a loop ... between the assignment and the
+   tracker instead of going back to the dashboard"). The Back door used to open the tracker as a NEW page, so the tracker's
+   own Back (history) stepped back into the marking, and round again. Opened from a Lite page in this tab, Back now steps
+   back in the tab's history (the arrows replace, so that step is the page it was opened from); opened fresh, it opens
+   MKN_BACK as before. */
+document.addEventListener('click', e => {
+  const a = e.target && e.target.closest ? e.target.closest('#mknAll, #mknAll2') : null;
+  if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  let step = false; try { step = sessionStorage.getItem('mkn:back:step') === '1'; } catch (er) {}
+  if (step && window.history.length > 1) { e.preventDefault(); window.history.back(); }
+});
 
 /* how tall the two rows at the top are, for everything that sticks under them */
 function mknSetTop(){
