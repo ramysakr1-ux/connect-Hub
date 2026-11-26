@@ -29,7 +29,7 @@
 <title>Connect Lite — TP planning grid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611262358">
+<link rel="stylesheet" href="hub-tokens.css?v=202611270020">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -162,7 +162,9 @@
   .done .lab3{display:block; font-size:0.64rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin:0 0 4px;}
   .chips{display:flex; flex-wrap:wrap; gap:4px; margin:0 0 8px;}
   .chips em{font-style:normal; font-size:0.74rem; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--sand-deep);}
-  .chips em.l{background:oklch(93% 0.03 170);} .chips em.s{background:oklch(93% 0.03 300);} .chips em.n{background:oklch(84% 0.12 78);}
+  .chips em.n{background:var(--gold-wash); border:1px solid var(--amber-edge);}
+  .done .kind{display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin:0 0 6px;} .done .kind > span{font-size:0.72rem; font-weight:600; color:var(--grey); min-width:62px;}
+  .done .kind em{font-style:normal; font-size:0.74rem; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--sand-deep);}
   .theirs{display:inline-block; font-size:0.8rem; font-weight:700; color:var(--teal);}
   .tpbox .chosen{background:var(--c2); border:1px solid var(--cl); border-radius:10px; padding:10px 12px; font-size:0.84rem; line-height:1.45;}
   .tpbox .chosen b{display:block; font-size:0.86rem;} .tpbox .chosen span{color:var(--cd);} .tpbox .chosen.empty{color:var(--cd); font-style:italic;}
@@ -214,21 +216,21 @@
   @media(max-width:560px){ .ag-map{grid-template-columns:1fr; gap:4px;} .ag-map .tp{margin-top:6px;} }
   @media print{ .ag-map, .ag-count{display:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611262358">
+<link rel="stylesheet" href="hub-house.css?v=202611270020">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611262358"></script>
-<script src="hub-tracker.js?v=202611262358"></script>
-<script src="hub-rotation.js?v=202611262358"></script>
-<script src="hub-shared.js?v=202611262358"></script>
-<script src="hub-store.js?v=202611262358"></script>
-<script src="hub-say.js?v=202611262358"></script>
-<script src="hub-sync.js?v=202611262358"></script>
-<script src="hub-notebook.js?v=202611262358"></script>
+<script src="hub-due.js?v=202611270020"></script>
+<script src="hub-tracker.js?v=202611270020"></script>
+<script src="hub-rotation.js?v=202611270020"></script>
+<script src="hub-shared.js?v=202611270020"></script>
+<script src="hub-store.js?v=202611270020"></script>
+<script src="hub-say.js?v=202611270020"></script>
+<script src="hub-sync.js?v=202611270020"></script>
+<script src="hub-notebook.js?v=202611270020"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor', IS_STAFF = MODE === 'tutor' || MODE === 'assessor';
@@ -395,7 +397,8 @@ function render(){
       if (r.tr) { const t = taughtOf(r.tr), cnt = {}; t.forEach(a => cnt[a] = (cnt[a] || 0) + 1);
         const chip = a => `<em class="${isLang(a) ? 'l' : 's'}">${esc(a)}${cnt[a] > 1 ? ' ×' + cnt[a] : ''}</em>`;
         const lang = LANG_AIMS.filter(a => cnt[a]), sk = AIMS.filter(a => !LANG_AIMS.includes(a) && cnt[a]), notYet = AIMS.filter(a => !cnt[a]);
-        if (t.length) who += `<div class="done"><span class="lab3">Taught so far</span><div class="chips">${lang.map(chip).join('')}${sk.map(chip).join('')}</div>${notYet.length ? `<span class="lab3">Not yet</span><div class="chips">${notYet.map(a => `<em class="n">${esc(a)}</em>`).join('')}</div>` : ''}</div>`; }
+        /* Ramy, 26 Nov 2026: no colours for the aims taught; the kind is a word */
+        if (t.length) who += `<div class="done"><span class="lab3">Taught so far</span>${lang.length ? `<p class="kind"><span>Language</span>${lang.map(chip).join('')}</p>` : ''}${sk.length ? `<p class="kind"><span>Skills</span>${sk.map(chip).join('')}</p>` : ''}${notYet.length ? `<span class="lab3">Not yet</span><div class="chips">${notYet.map(a => `<em class="n">${esc(a)}</em>`).join('')}</div>` : ''}</div>`; }
       if (IS_STAFF && tk) who += `<a class="theirs" href="43_tp78_material.html?t=${encodeURIComponent(tk)}">Their material</a>`;
       const mains = TPS.map(tp => aimWord((r.plan['tp' + tp] || {}).main));
       const bothSame = mains[0] && mains[1] && isLang(mains[0]) === isLang(mains[1]);

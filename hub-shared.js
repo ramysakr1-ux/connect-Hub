@@ -3730,6 +3730,13 @@ window.hubTp78Pick = function(o){
         if (pass === 0 && books[c.set]) return;                       // a different book each, first
         if (pass === 0 && aims.length > 1 && got.some(function(g){ return g.t === c.t; }) && pool.some(function(x){ return got.indexOf(x) === -1 && !got.some(function(g){ return g.t === x.t; }); })) return;
         got.push(c); books[c.set] = 1; });
+      /* Too few lessons for the new aim at this level (Group 1, 27 Nov 2026: two functional language lessons in the two
+         pre-intermediate books that play): the rest of the three come from the aim of that kind taught least. */
+      if (got.length < 3) {
+        var rest = cands.filter(function(c){ return kind.indexOf(c.t) !== -1 && aims.indexOf(c.t) === -1 && got.indexOf(c) === -1; })
+          .sort(function(a, b){ return (count[a.t] || 0) - (count[b.t] || 0) || (used[a.k] || 0) - (used[b.k] || 0) || hash(t.token + a.k) - hash(t.token + b.k); });
+        while (got.length < 3 && rest.length) got.push(rest.shift());
+      }
       got.forEach(function(c){ used[c.k] = (used[c.k] || 0) + 1; });
       return got.map(function(c){ return { k: c.k, t: c.t }; });
     };
@@ -3765,7 +3772,7 @@ window.hubTp78Ensure = function(){
       if (a) { if (a === 'Pronunciation') continue; if (f['tp' + n] === 'NOTSTD') failed.push(norm(a)); else taught.push(norm(a)); continue; }
       var c = cells['tp' + n]; if (c && c.aim) taught.push(norm(c.aim)); }
     taught.sort(); failed.sort();
-    return { taught: taught, failed: failed, sig: 'v3|' + taught.join(',') + '|' + failed.join(',') };   // v2: lessons built on an earlier one marked in four more books (26 Nov 2026)
+    return { taught: taught, failed: failed, sig: 'v4|' + taught.join(',') + '|' + failed.join(',') };   // v2: lessons built on an earlier one marked in four more books (26 Nov 2026)
   };
   var chose = function(id){ var r = (g.rows || {})[id] || {}; return tps.some(function(n){ return (r['tp' + n] || {}).lesson; }); };
   var sigs = rec('chub:tp78Sig') || {};
