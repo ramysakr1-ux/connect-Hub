@@ -65,6 +65,12 @@
     if (text === 'Live \u2014 saved to the course as you go' && document.body && document.body.dataset.syncOk) text = narrow ? (document.body.dataset.syncOkShort || document.body.dataset.syncOk) : document.body.dataset.syncOk;
     /* Shorter everywhere (Ramy, 19 Oct 2026: "unnecessarily big"). */
     if (text === 'Live \u2014 saved to the course as you go') text = 'Saved as you go';
+    /* SAY WHAT TO DO (Ramy, 26 Nov 2026: "it'd be good to get a clear warning that they should wait until it is saved ...
+       flash something that now it's saved, like it's safe to leave"). While a save is out the pill says to stay; when the
+       course has it, that it is safe to leave; a save that failed says to stay, with the reason after it. */
+    if (kind === 'busy' && text === 'Saving\u2026') text = narrow ? 'Saving\u2026 stay here' : 'Saving\u2026 stay on this page';
+    if (kind === 'ok' && text === 'Saved to the course') text = 'Saved. Safe to leave.';
+    if (kind === 'error' && /^Not saved \u2014 /.test(text)) text = 'Not saved yet. Stay on this page. ' + text.replace(/^Not saved \u2014 /, '');
     try { var cs0 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; if (cs0.demoToday && kind === 'ok' && !/^Demo/.test(text)) { text = narrow ? (text === 'Saved as you go' ? 'Saved' : text) + ' \u00b7 Demo ' + cs0.demoToday : text + ' \u00b7 Demo, today is ' + cs0.demoToday; kind = 'demo'; } } catch (e) {}
     /* Until the page has measured its bar (hubReserveForBar, once the app has
        run), the pill sat at the corner -- on top of Turn in for the whole of
@@ -77,12 +83,12 @@
         if (bar0 && getComputedStyle(bar0).position === 'fixed') { var h0 = bar0.getBoundingClientRect().height; if (h0 > 0) root.style.setProperty('--sync-bottom', Math.ceil(h0 + 14) + 'px'); }
       }
     } catch (e) {}
-    if (!pill){ pill = document.createElement('div'); pill.id = 'hubSync'; pill.style.cssText = 'position:fixed;left:14px;bottom:var(--sync-bottom,14px);z-index:900;font:600 11px/1 Karla,sans-serif;padding:7px 11px;border-radius:999px;background:oklch(37.5% 0.058 195);color:#fff;opacity:.85;pointer-events:none;transition:opacity .3s;'; document.body.appendChild(pill); }
+    if (!pill){ pill = document.createElement('div'); pill.id = 'hubSync'; pill.style.cssText = 'position:fixed;left:14px;bottom:var(--sync-bottom,14px);z-index:900;font:700 13.5px/1.25 Karla,sans-serif;padding:10px 15px;border-radius:999px;background:oklch(37.5% 0.058 195);color:#fff;opacity:1;pointer-events:none;transition:opacity .3s;box-shadow:0 6px 18px rgba(0,0,0,.14);max-width:calc(100vw - 28px);'; document.body.appendChild(pill); }
     pill.textContent = text; pill.style.background = kind === 'error' ? '#7A2E2E' : kind === 'busy' ? '#6B6963' : '#1E3B2F';
     /* the mark turns beside anything Lite is waiting on (21 Oct 2026) */
     if (kind === 'busy' && window.hubSpinner) { pill.insertAdjacentHTML('afterbegin', window.hubSpinner(14)); pill.style.display = 'inline-flex'; pill.style.alignItems = 'center'; pill.style.gap = '7px'; }
-    pill.style.opacity = '.85';
-    if (kind === 'ok' || kind === 'demo') setTimeout(function(){ if (pill.textContent === text) pill.style.opacity = '0'; }, kind === 'demo' ? 4000 : 1800);
+    pill.style.opacity = '1'; pill.style.fontSize = narrow ? '12.5px' : '13.5px';
+    if (kind === 'ok' || kind === 'demo') setTimeout(function(){ if (pill.textContent === text) pill.style.opacity = '0'; }, kind === 'demo' ? 4000 : (text === 'Saved. Safe to leave.' ? 4000 : 1800));
     if (kind === 'demo') pill.style.background = 'oklch(52% 0.098 70)';   // gold: a demo, and it stays up
   }
   function parse(v){ try { return JSON.parse(v); } catch (e) { return null; } }
@@ -497,12 +503,43 @@
    * never interrupted. */
   window.addEventListener('beforeunload', function(e){
     if (DEMO) return;   /* a demo's writes are meant to stay behind */
+    if (window.__hubLeaveOk) return;   /* Leave anyway was pressed in Lite's own red box: one question is enough */
     var pending = Object.keys(queue).length || Object.keys(ledger()).length;
     if (!pending) return;
     e.preventDefault();
     e.returnValue = '';           // required for the dialog to appear at all
     return '';
   });
+  /* A RED WARNING OF LITE'S OWN (Ramy, 26 Nov 2026: "that leave site should be reddish"). The browser's Leave site? box
+     cannot be coloured or reworded, so a press on Back or any link to another Lite page, while something is still on its
+     way to the course, gets Lite's own box first: red, saying to wait. It goes on by itself the moment the save lands, or
+     at once on Leave anyway. Closing the tab and the browser's own back still get the browser's box above. */
+  var leaveBox = null, leavePass = false;
+  function pendingNow(){ return !DEMO && (Object.keys(queue).length || Object.keys(ledger()).length); }
+  window.addEventListener('click', function(e){
+    if (leavePass || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+    var href = a.getAttribute('href') || '';
+    if (!href || href.charAt(0) === '#' || /^(mailto|tel|javascript):/i.test(href)) return;
+    try { if (new URL(a.href, location.href).origin !== location.origin) return; } catch (er) { return; }
+    if (!pendingNow()) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var go = function(){ if (leaveBox) { leaveBox.remove(); leaveBox = null; } window.__hubLeaveOk = true; setTimeout(function(){ window.__hubLeaveOk = false; }, 3000); leavePass = true; try { a.click(); } finally { leavePass = false; } };
+    if (leaveBox) leaveBox.remove();
+    leaveBox = document.createElement('div');
+    leaveBox.setAttribute('role', 'alertdialog'); leaveBox.setAttribute('aria-live', 'assertive');
+    leaveBox.style.cssText = 'position:fixed;inset:0;z-index:9990;background:rgba(35,34,32,.32);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Karla,sans-serif;';
+    leaveBox.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:380px;width:100%;box-shadow:0 18px 40px rgba(0,0,0,.25);border-top:4px solid #7A2E2E;padding:18px 20px;">'
+      + '<b style="display:block;font-size:17px;color:#7A2E2E;margin-bottom:6px;">Still saving</b>'
+      + '<p style="margin:0 0 16px;font-size:14.5px;line-height:1.5;color:#232220;">This takes a few seconds. What you wrote is on its way to the course, and this page moves on by itself as soon as it is saved.</p>'
+      + '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;"><button type="button" data-lv="go" style="font:700 14px Karla,sans-serif;padding:9px 14px;border-radius:999px;border:1.5px solid #DCDCE3;background:#fff;color:#6B6963;cursor:pointer;">Leave anyway</button>'
+      + '<button type="button" data-lv="stay" style="font:700 14px Karla,sans-serif;padding:9px 16px;border-radius:999px;border:0;background:#7A2E2E;color:#fff;cursor:pointer;">Wait</button></div></div>';
+    document.body.appendChild(leaveBox);
+    var stay = leaveBox.querySelector('[data-lv="stay"]'); try { stay.focus(); } catch (er) {}
+    leaveBox.addEventListener('click', function(ev){ var b = ev.target.closest('[data-lv]'); if (!b) return; if (b.dataset.lv === 'go') go(); else { leaveBox.remove(); leaveBox = null; } });
+    var tick = setInterval(function(){ if (!leaveBox) { clearInterval(tick); return; } if (!pendingNow()) { clearInterval(tick); go(); } }, 300);
+  }, true);
   function recordOf(tr){ return { plan: (tr.tp && tr.tp.plan) || null, selfeval: (tr.tp && tr.tp.selfeval) || null, feedback: (tr.tp && tr.tp.feedback) || null, tpHistory: (tr.tp && tr.tp.history) || {}, assignments: tr.assignments || {}, tracker: tr.tracker || {}, observations: tr.observations || {}, links: tr.links || [], staffLinks: tr.staffLinks || [], celta5: tr.celta5 || {}, celta5t: tr.celta5t || {} }; }
   /* The store's roster, with this browser's own unconfirmed records laid over
      it -- one trainee's one record at a time.
