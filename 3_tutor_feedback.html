@@ -15,7 +15,7 @@
 <title>3 · TP Feedback — Tutor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261443">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261523">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink);
@@ -646,7 +646,7 @@
   .back:hover{text-decoration:underline;}
   .draftby{font-size:.78rem; color:var(--grey); margin-right:10px;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261443">
+<link rel="stylesheet" href="hub-house.css?v=202611261523">
 </head>
 <body>
 <div class="board">
@@ -838,14 +838,14 @@
   </div>
 </div>
 
-<script src="hub-exchange.js?v=202611261443"></script>
-<script src="hub-shared.js?v=202611261443"></script>
-<script src="hub-store.js?v=202611261443"></script>
-<script src="hub-say.js?v=202611261443"></script>
-<script src="hub-crit-learn.js?v=202611261443"></script>
-<script src="hub-crit-vocab.js?v=202611261443"></script>
-<script src="hub-sync.js?v=202611261443"></script>
-<script src="hub-notebook.js?v=202611261443"></script>
+<script src="hub-exchange.js?v=202611261523"></script>
+<script src="hub-shared.js?v=202611261523"></script>
+<script src="hub-store.js?v=202611261523"></script>
+<script src="hub-say.js?v=202611261523"></script>
+<script src="hub-crit-learn.js?v=202611261523"></script>
+<script src="hub-crit-vocab.js?v=202611261523"></script>
+<script src="hub-sync.js?v=202611261523"></script>
+<script src="hub-notebook.js?v=202611261523"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -3002,6 +3002,31 @@ function askLimits(notes){
   return { maxS: Math.max(1, Math.min(capS, Math.ceil(lines * 0.6))), maxA: Math.max(1, Math.min(capA, Math.ceil(lines * 0.4))),
     maxSP: Math.max(1, Math.min(3, Math.ceil(lines * 0.3))), maxAP: Math.max(1, Math.min(2, Math.ceil(lines * 0.2))) };
 }
+/* NO POINT TWICE, AND GROUPED BY CRITERION (Ramy, 26 Nov 2026, Ilim's TP4: Ask Connect's sorted points sat beside the
+   ones he had already typed, so the draft said the lead-in, rapport, form and pronunciation twice, and once disagreed with
+   itself; "group them based on criteria ... or delete the duplicates"). Ask Connect is sent the points already in the four
+   boxes and leaves out anything they already say (store v312). Afterwards each box is put in criterion order, 1a to 5n,
+   so points about the same thing sit together; a point with no code goes after them, and the empty line stays last. */
+function existingPoints(){
+  const lists={ sp:'lSP', ap:'lAP', st:'lST', at:'lAT' }, out={};
+  Object.keys(lists).forEach(k=>{
+    /* a box can hold more than one bulleted point: each is its own point */
+    out[k]=[...$(lists[k]).querySelectorAll('.pt .pt-text')].flatMap(b=>{ const c=b.cloneNode(true); c.querySelectorAll('.tag').forEach(t=>t.remove()); return String(c.textContent||'').replace(/\u00a0/g,' ').split('\u2022'); })
+      .map(t=>t.replace(/\s+/g,' ').trim()).filter(t=>t.length>2).slice(0,12).map(t=>t.slice(0,300));
+  });
+  return out;
+}
+function groupByCriterion(){
+  const ORDER=CRITERIA.map(c=>String(c[0]).toLowerCase());
+  ['lSP','lAP','lST','lAT'].forEach(id=>{
+    const host=$(id), rows=[...host.querySelectorAll(':scope > .pt')];
+    const rank=row=>{ const box=row.querySelector('.pt-text'); if(isBlankPoint(box)) return 1e6;
+      const t=box.querySelector('.tag[data-c]'), c=String((t && t.dataset.c) || (row.dataset.ai||'').split(',')[0] || '').toLowerCase();
+      const i=ORDER.indexOf(c); return i>=0 ? i : 1e5; };
+    const sorted=rows.map((r,i)=>({ r, k:rank(r), i })).sort((a,b)=>a.k-b.k || a.i-b.i);
+    if(sorted.some((x,i)=>x.r!==rows[i])) { sorted.forEach(x=>host.appendChild(x.r)); dirty=true; }
+  });
+}
 function placePoints(r){
   const lists={ sp:'lSP', ap:'lAP', st:'lST', at:'lAT' }; const added=[]; let n=0;
   Object.keys(lists).forEach(k=>{
@@ -3029,11 +3054,11 @@ async function askConnect(){
   const sort=$('optSort').checked, draft=$('optDraft').checked;
   const skip=Promise.resolve(null);
   const [pts, ov] = await Promise.allSettled([
-    sort ? HubStore.call(withTok(Object.assign({ op:'tidyNotes', notes, criteria:CRITERIA.map(c=>[c[0], c[2]]) }, askLimits(notes))), 60000) : skip,
+    sort ? HubStore.call(withTok(Object.assign({ op:'tidyNotes', notes, already:existingPoints(), criteria:CRITERIA.map(c=>[c[0], c[2]]) }, askLimits(notes))), 60000) : skip,
     draft ? HubStore.call(withTok({ op:'overallFromNotes', notes, tone:TONE, tp:notesTP() }), 60000) : skip
   ]);
   const said=[];
-  if(pts.status==='fulfilled' && pts.value){ const { added, n }=placePoints(pts.value); ASK_ADDED=added; if(n) said.push(n+(n===1?' point':' points')+' in the boxes below, as you wrote '+(n===1?'it':'them')); }
+  if(pts.status==='fulfilled' && pts.value){ const { added, n }=placePoints(pts.value); ASK_ADDED=added; groupByCriterion(); if(n) said.push(n+(n===1?' point':' points')+' in the boxes below, as you wrote '+(n===1?'it':'them')); }
   const text=ov.status==='fulfilled' && ov.value ? String((ov.value && ov.value.text)||'').trim() : '';
   if(text){ ASK_OVERALL_WAS=out.value; out.value=text; autoGrow(out); out.dispatchEvent(new Event('input',{bubbles:true})); said.push('the overall comment drafted'); }
   btn.classList.remove('busy'); askSay();

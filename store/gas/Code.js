@@ -2863,10 +2863,19 @@ case 'inbox': {
         + 'Answer: {"sp":[{"text":"Clear vocabulary analysis in your plan.","codes":["4i"]}],"ap":[{"text":"The handout did not say where its material came from. Remember to put the source at the foot of every handout.","codes":["4d"]}],'
         + '"st":[{"text":"Good rapport from the start, and the students were laughing in the lead-in.","codes":["1d"]}],"at":[{"text":"Your instructions for exercise 2 were too long and there was no demonstration, so the students could not see what to do. Next time, keep the instructions short and do the first item with them before they start.","codes":["5f"]}]}. '
         + 'Answer as JSON with the four lists sp, ap, st, at.';
+      /* v312 (26 Nov 2026, Ilim's TP4: Ask Connect's points sat beside the ones the tutor had already typed, and said the same
+         things again, once the opposite). The page sends what the four boxes already hold; a note that those points already
+         cover is left out, and nothing given may contradict them. */
+      var tnAlready = req.already && typeof req.already === 'object' ? req.already : {}, tnHave = [];
+      [['sp', 'Strengths in planning'], ['ap', 'Action points in planning'], ['st', 'Strengths in teaching'], ['at', 'Action points in teaching']].forEach(function(b){
+        (Array.isArray(tnAlready[b[0]]) ? tnAlready[b[0]] : []).slice(0, 12).forEach(function(t){ t = String(t || '').trim().slice(0, 300); if (t) tnHave.push(b[1] + ': ' + t); });
+      });
+      if (tnHave.length) tnSys += ' The tutor has already written the points listed after the notes. Never give a point that says the same as one of them, even in other words: leave that part of the notes out. Never give a point that contradicts one of them. Give only what the notes add.';
+      var tnUser = tnNotes + (tnHave.length ? '\n\nAlready written by the tutor (do not repeat or contradict):\n- ' + tnHave.join('\n- ') : '');
       var tnResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + tnKey },
         payload: JSON.stringify({ model: 'gpt-4.1', temperature: 0, response_format: { type: 'json_object' },
-          messages: [{ role: 'system', content: tnSys }, { role: 'user', content: tnNotes }] })
+          messages: [{ role: 'system', content: tnSys }, { role: 'user', content: tnUser }] })
       });
       if (tnResp.getResponseCode() !== 200) throw new Error('The notes could not be tidied (' + tnResp.getResponseCode() + ')');
       var tnOut = JSON.parse(JSON.parse(tnResp.getContentText()).choices[0].message.content || '{}');
