@@ -5715,6 +5715,19 @@ function tpOver_(courseId, token, n, fb, ctx) {
   var h = readHistory_(courseId, token, ctx);
   return !!(h[n] || h[String(n)]);
 }
+/* v311 (26 Nov 2026). Ramy: "there is a problem with returning the LP ... and the trainees reopening it" (Arad's TP4, given
+   back for a last-minute edit, still locked after he reloaded). A give-back (or a take-back) makes the stored plan a draft
+   that says when (givenBackAt / takenBackAt). A device still holding the turned-in copy sent it again, and over a draft
+   anything was taken, so the old turn-in came straight back and locked the plan. Over a draft that was given or taken
+   back, a turn-in is taken only when it was made after that (allowing for a clock a few minutes behind): an older one is
+   refused, and the device is handed the draft. */
+function oldTurnInOverBack_(was, data) {
+  if (!was || typeof was !== 'object' || was.status === 'turned_in') return false;
+  if (!data || typeof data !== 'object' || data.status !== 'turned_in') return false;
+  var back = Math.max(Number(was.givenBackAt || 0), Number(was.takenBackAt || 0));
+  /* the TAKEBACK_SKEW_ allowance: a new turn-in from a device whose clock is a few minutes behind the tutor's is still taken */
+  return !!back && Number(data.turnedInAt || 0) <= back - TAKEBACK_SKEW_;
+}
 /* a save of the same TP over a turned-in record: is it the same turn-in, a newer one, or a take-back of that one? */
 function sameTpTaken_(was, now, nW, nN) {
   var at = Number(was.turnedInAt || 0);
@@ -5841,6 +5854,7 @@ function putTurnedIn_(courseId, token, kind, data) {
       else if (turned && (!nW || tpOver_(courseId, token, nW, got.feedback, ctx))) putOne_(courseId, token, kind, null, was, ctx);   // an old record with no TP, or a TP already over
       else return refuseTurnedIn_(courseId, token, kind, was, got, data);   // a draft is never cleared by a trainee's page: moving on clears only what is turned in
     } else if (!nW) {
+      if (oldTurnInOverBack_(was, data)) return refuseTurnedIn_(courseId, token, kind, was, got, data);   // v311: a give-back is not undone by the old turn-in
       putOne_(courseId, token, kind, data, was, ctx);   // nothing turned in, or an old record with no TP: as before
     } else if (!(turnTp_(kind, data) > nW)) {
       if (!sameTpTaken_(was, data, nW, turnTp_(kind, data))) return refuseTurnedIn_(courseId, token, kind, was, got, data);
