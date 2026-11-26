@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261703">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261724">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -234,21 +234,21 @@
   .aud{font-size:.74rem; color:var(--grey); margin-left:8px;}
   .aud.now{font-size:.84rem; color:inherit; font-weight:600; flex:1 1 220px; line-height:1.45;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261703">
+<link rel="stylesheet" href="hub-house.css?v=202611261724">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202611261703"></script>
-<script src="hub-shared.js?v=202611261703"></script>
-<script src="hub-store.js?v=202611261703"></script>
-<script src="hub-say.js?v=202611261703"></script>
-<script src="hub-rotation.js?v=202611261703"></script>
-<script src="hub-peers.js?v=202611261703"></script>
-<script src="hub-sync.js?v=202611261703"></script>
-<script src="hub-notebook.js?v=202611261703"></script>
+<script src="observation-defaults.js?v=202611261724"></script>
+<script src="hub-shared.js?v=202611261724"></script>
+<script src="hub-store.js?v=202611261724"></script>
+<script src="hub-say.js?v=202611261724"></script>
+<script src="hub-rotation.js?v=202611261724"></script>
+<script src="hub-peers.js?v=202611261724"></script>
+<script src="hub-sync.js?v=202611261724"></script>
+<script src="hub-notebook.js?v=202611261724"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -505,7 +505,13 @@ function obsDue(t){
   if (m[1] === 'filmed') {
     /* the tile can say Film or Filmed, observation or observations (C/21: "Filmed observations 1") */
     const re = new RegExp('^\\s*film(?:ed)?\\s+observations?\\s*' + m[2] + '\\b', 'i');
-    for (const d of TT.days) { const x = ((d && d.sessions) || []).find(x => x && x.e && re.test(String(x.t || ''))); if (x) { date = d.date; end = x.e; break; } }
+    for (const d of TT.days) { const x = ((d && d.sessions) || []).find(x => x && x.e && re.test(String(x.t || ''))); if (x) { date = d.date; end = x.e;
+      /* FILMS BACK TO BACK SHARE ONE DEADLINE (Ramy, 26 Nov 2026: "make films 2 to 4 all due at 5:30 PM"). On C/21 Films 2, 3 and 4
+         run 3:00 to 5:00 PM without a gap, and a sheet due while the next film is playing is no deadline at all. A film whose
+         tile is followed at once by another film's takes the deadline of the last film in that run. */
+      const films = ((d && d.sessions) || []).filter(y => y && y.s && y.e && /^\s*film(?:ed)?\s+observations?\s*\d+\b/i.test(String(y.t || '')));
+      for (let next; (next = films.find(y => String(y.s) === String(end)));) end = next.e;
+      break; } }
   } else {
     const n = posOf(t) || +m[2], list = window.hubDemoLessons ? hubDemoLessons(TT) : [], d = list.find(x => x.n === n) || list[n - 1];
     if (d) { date = d.date; end = d.to; }
@@ -517,7 +523,8 @@ function obsDue(t){
   const tz = CSET.timeZone || '';
   const inst = window.hubZonedInstant && tz ? hubZonedInstant(date, at, tz) : new Date(date + 'T' + at).getTime();
   const day = new Date(date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
-  return { at: inst, label: at + ', ' + day };
+  /* the time as the course's clock says it everywhere else (5:30 PM on C/21) */
+  return { at: inst, label: (window.hubClock ? hubClock(at) : at) + ', ' + day };
 }
 const dueTag = (t, k) => { const due = obsDue(t); if (!due) return ''; const r = WORK[k] || {};
   if (r.turnedInAt) return new Date(r.turnedInAt).getTime() > due.at ? '<span class="due late">Turned in late</span>' : '';
