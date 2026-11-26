@@ -6371,11 +6371,13 @@ function stage2CloseWrite_(key, name, close, res, stage) {
       if (fix && stage2CloseBanned_(fix).length < bad.length && words(fix) >= 0.85 * words(out)) out = fix;
     } catch (e) {}
   }
+  /* v309 (26 Nov 2026, Layla's Stage 2 ended "(208 words)"): the writer's own count is never part of the comment */
+  out = String(out || '').replace(/\s*(?:[\[(]\s*(?:word\s*count\s*[:=]?\s*)?\d{2,4}\s*(?:words?)?\s*[\])]|word\s*count\s*[:=]?\s*\d{2,4})\s*\.?\s*$/i, '').trim();
   return out;
 }
 function stage2ClosePrompt_(name, hasVoice, prof, three) {
   return (three ? 'Also write the Overall comment that closes Stage 3, the tutorial in the final third of the course, with only the last teaching practices still to come: ' : 'Also write the Overall comment that closes Stage 2, the tutorial at the midpoint of the course: ')
-    + 'one paragraph to the trainee of 180 to 230 words (never shorter than 160 words; count them before you answer), in "overall". '
+    + 'one paragraph to the trainee of 180 to 230 words (never shorter than 160 words; count them before you answer, and never write the count or any note about length in the text), in "overall". '
     + (three
       ? 'Its shape: first how far the trainee has come since the midpoint of the course, with their first name' + (name ? ' (' + name + ')' : '') + ' once in that opening sentence; '
         + 'then what is working well in their planning and teaching, lesson after lesson; then what to put their attention on in the final lessons of the course, as instructions. '
