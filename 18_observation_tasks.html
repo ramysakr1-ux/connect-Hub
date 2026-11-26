@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261724">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261856">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -234,21 +234,21 @@
   .aud{font-size:.74rem; color:var(--grey); margin-left:8px;}
   .aud.now{font-size:.84rem; color:inherit; font-weight:600; flex:1 1 220px; line-height:1.45;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261724">
+<link rel="stylesheet" href="hub-house.css?v=202611261856">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202611261724"></script>
-<script src="hub-shared.js?v=202611261724"></script>
-<script src="hub-store.js?v=202611261724"></script>
-<script src="hub-say.js?v=202611261724"></script>
-<script src="hub-rotation.js?v=202611261724"></script>
-<script src="hub-peers.js?v=202611261724"></script>
-<script src="hub-sync.js?v=202611261724"></script>
-<script src="hub-notebook.js?v=202611261724"></script>
+<script src="observation-defaults.js?v=202611261856"></script>
+<script src="hub-shared.js?v=202611261856"></script>
+<script src="hub-store.js?v=202611261856"></script>
+<script src="hub-say.js?v=202611261856"></script>
+<script src="hub-rotation.js?v=202611261856"></script>
+<script src="hub-peers.js?v=202611261856"></script>
+<script src="hub-sync.js?v=202611261856"></script>
+<script src="hub-notebook.js?v=202611261856"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -549,6 +549,7 @@ function demoFacts(t){
       const own = parts.find(x => /\bdemo/i.test(x)) || d.title;
       out.lesson = own.trim();
       if (d.minutes && parts.length === 1) out.length = String(d.minutes);
+      out.day = d.date;
       try { out.date = new Date(d.date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { out.date = d.date; }
     }
   } catch (e) {}
@@ -561,7 +562,12 @@ function demoFacts(t){
     const mine = g && contacts.find(c => String(c.group || '') === g);
     const main = contacts.find(c => /main/i.test(String(c.role || '')));
     const names = window.hubTutorNames ? (hubTutorNames(CSET) || []) : String(CSET.tutorNames || '').split(/[,\n;]+/).map(x => x.trim()).filter(Boolean);
-    const who = (mine && mine.name) || (main && main.name) || names[0];
+    /* THE DEMO AFTER THE SWAP (Ramy, 26 Nov 2026, checking C/21's change of class: "my trainees are going to her and her
+       trainees coming to me"). From the new class, a group watches its NEW tutor's demo lesson at the new level, so the
+       teacher is the tutor of the class the group has on the demo's day (Course admin > Classes); the contact row and the
+       main tutor stand in only where there are no classes. */
+    const onDay = (out.day && window.hubTutorOn && window.hubClassPlan && hubClassPlan(CSET, g)) ? String(hubTutorOn(CSET, g, out.day) || '') : '';
+    const who = onDay || (mine && mine.name) || (main && main.name) || names[0];
     if (who) out.teacher = String(who);
   } catch (e) {}
   try {
@@ -571,7 +577,7 @@ function demoFacts(t){
     const setFor = (pts.set && pts.set.setFor) || {}, lib = (pts.set && pts.set.library) || {};
     const id = setFor[VIEWER.group];
     let cs8 = {}; try { cs8 = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
-    const level = (window.hubLevelOn && hubLevelOn(cs8, VIEWER.group)) || pts.level || (id && lib[id] && lib[id].level);   /* the class they are with today first (7 Nov 2026) */
+    const level = (window.hubLevelOn && hubLevelOn(cs8, VIEWER.group, out.day || undefined)) || pts.level || (id && lib[id] && lib[id].level);   /* the class they are with on the demo's day first (7 Nov 2026; the day, 26 Nov) */
     if (level) out.level = String(level);
   } catch (e) {}
   return out;
