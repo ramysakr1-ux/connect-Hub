@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261207">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261222">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -92,6 +92,11 @@
   #s1 textarea.s1write, #s2 textarea.s1write, #s3 textarea.s1write{font-size:0.92rem; line-height:1.75; padding:12px 14px;}
   /* Stage 3's summary, read: PLANNING and TEACHING head their halves, and each list has its own line above it */
   .s1pretty p.s3h{margin:18px 0 4px; padding-top:12px; border-top:1.5px solid var(--sand-line); font-size:0.78rem; font-weight:700; letter-spacing:.12em; color:var(--teal);}
+  /* criteria suggestions while the tutor writes (26 Nov 2026): the feedback sheet's chips */
+  .c5sug{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:6px 0 0;} .c5sug:empty{display:none;}
+  .c5sug .sl{font-size:0.75rem; color:var(--grey); font-style:italic;}
+  .c5sug button{background:none; border:1.5px dashed var(--teal); color:var(--teal); font:700 0.76rem 'Karla',sans-serif; cursor:pointer; padding:3px 9px; border-radius:12px;}
+  .c5sug button:hover{background:rgba(30,107,99,.08);} .c5sug button.taught{border-style:solid;}
   /* Stage 2's summary while the tutor writes: three boxes under headings in the book face, a line between (26 Nov 2026) */
   .s2split p.s2h{margin:16px 0 6px; padding-top:12px; border-top:1px solid var(--sand-line); font:700 1.02rem 'Newsreader',Georgia,serif; color:var(--ink);}
   .s2split p.s2h.first{border-top:0; padding-top:0; margin-top:4px;}
@@ -249,7 +254,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261207">
+<link rel="stylesheet" href="hub-house.css?v=202611261222">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -262,20 +267,22 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611261207"></script>
-<script src="hub-hand.js?v=202611261207"></script>
-<script src="hub-ink.js?v=202611261207"></script>
-<script src="assignment-defaults.js?v=202611261207"></script>
-<script src="celta5-text.js?v=202611261207"></script>
-<script src="celta5-appendix.js?v=202611261207"></script>
-<script src="celta5-criteria.js?v=202611261207"></script>
-<script src="hub-tracker.js?v=202611261207"></script>
-<script src="observation-defaults.js?v=202611261207"></script>
-<script src="hub-shared.js?v=202611261207"></script>
-<script src="hub-store.js?v=202611261207"></script>
-<script src="hub-say.js?v=202611261207"></script>
-<script src="hub-sync.js?v=202611261207"></script>
-<script src="hub-notebook.js?v=202611261207"></script>
+<script src="celta5-pdf.js?v=202611261222"></script>
+<script src="hub-hand.js?v=202611261222"></script>
+<script src="hub-ink.js?v=202611261222"></script>
+<script src="assignment-defaults.js?v=202611261222"></script>
+<script src="celta5-text.js?v=202611261222"></script>
+<script src="celta5-appendix.js?v=202611261222"></script>
+<script src="celta5-criteria.js?v=202611261222"></script>
+<script src="hub-crit-learn.js?v=202611261222"></script>
+<script src="hub-crit-vocab.js?v=202611261222"></script>
+<script src="hub-tracker.js?v=202611261222"></script>
+<script src="observation-defaults.js?v=202611261222"></script>
+<script src="hub-shared.js?v=202611261222"></script>
+<script src="hub-store.js?v=202611261222"></script>
+<script src="hub-say.js?v=202611261222"></script>
+<script src="hub-sync.js?v=202611261222"></script>
+<script src="hub-notebook.js?v=202611261222"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -681,6 +688,74 @@ function s1Pretty(v){
    same "Strengths:" / "Action points:" / "Overall comment:" lines, so the trainee's view, the returned page and the PDF
    are unchanged. A summary that does not split cleanly (words before the first heading, a heading twice) stays one box.
    Stage 3's summary has the same three headings (25 Nov 2026) and the same boxes (Ramy, 26 Nov 2026: "build it"). */
+/* the criteria suggester, as the feedback sheet has it (see CRITERIA SUGGESTIONS IN THE CELTA 5, in bind) */
+const C5Sug = (function(){
+  const CRIT = window.CONNECT_HUB_CRITERIA || [];
+  const STOP = new Set(['the','a','an','and','or','of','to','in','on','for','with','that','is','are','be','as','by','at','their','this','it','was','were','has','have','from','into','not','but','so','than','then','which','who','how','when','where','can','could','will','would']);
+  const stem = w => w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w;
+  const cw = s => ((s || '').toLowerCase().match(/[a-z']+/g) || []).filter(w => w.length > 2 && !STOP.has(w)).map(stem);
+  const DF = Object.create(null); CRIT.forEach(([, , t]) => new Set(cw(t)).forEach(w => { DF[w] = (DF[w] || 0) + 1; }));
+  const wt = w => DF[w] ? Math.log(CRIT.length / DF[w]) : 0;
+  let MODEL = null; try { MODEL = JSON.parse(localStorage.getItem('chub:critlearn') || 'null'); } catch (e) {}
+  try { if (window.HubStore && HubStore.isTutor && HubStore.isTutor() && HubStore.course) HubStore.course().then(c => { if (c && c.critLearn && Number(c.critLearn.n) > 0) MODEL = c.critLearn; }).catch(() => {}); } catch (e) {}
+  function score(text, scope){
+    const words = cw(text); if (!words.length) return [];
+    const topics = scope === 'planning' ? ['4'] : ['1', '2', '3', '5'];
+    const allowed = CRIT.filter(c => topics.indexOf(c[1]) >= 0).map(c => c[0]);
+    const set = new Set(words), wording = {};
+    CRIT.forEach(([code, topic, ctext]) => { if (topics.indexOf(topic) < 0) return; const cs = new Set(cw(ctext)); let sc = 0; set.forEach(w => { if (cs.has(w)) sc += wt(w); }); if (sc > 0) wording[code] = sc; });
+    const learned = (window.HubCritLearn && MODEL) ? HubCritLearn.score(MODEL, words, allowed) : {};
+    const vocab = window.HubCritVocab ? HubCritVocab.score(text, scope) : {};
+    const total = {};
+    [wording, learned, vocab].forEach(m => Object.keys(m).forEach(c => { if (allowed.indexOf(c) >= 0) total[c] = (total[c] || 0) + m[c]; }));
+    const sc = Object.keys(total).map(c => ({ code: c, score: total[c], taught: (learned[c] || 0) > (wording[c] || 0) })).filter(x => x.score > 0).sort((a, b) => b.score - a.score);
+    if (!sc.length) return [];
+    const floor = Math.max(sc[0].score * 0.55, Math.log(CRIT.length / 6));
+    return sc.filter(x => x.score >= floor);
+  }
+  /* a CELTA 5 point can be about planning or teaching: both are asked, the best three kept */
+  const suggest = text => { const all = [...score(text, 'teaching'), ...score(text, 'planning')].sort((a, b) => b.score - a.score);
+    return all.length ? all.filter(x => x.score >= all[0].score * 0.55).slice(0, 3) : []; };   // the clear winner silences the also-rans across both
+  const TAIL = /\s*\(((?:\s*\d{1,2}[a-z]?\s*,?)+)\)\s*\.?\s*$/i;
+  function lineAt(t){ const v = t.value, at = t.selectionStart == null ? v.length : t.selectionStart; const a = v.lastIndexOf('\n', at - 1) + 1, b0 = v.indexOf('\n', at); return { a, b: b0 < 0 ? v.length : b0, text: v.slice(a, b0 < 0 ? v.length : b0) }; }
+  function add(t, ln, code){
+    const line = t.value.slice(ln.a, ln.b), m = line.match(TAIL);
+    const next = m ? line.slice(0, m.index) + ' (' + m[1].split(',').map(x => x.trim()).filter(Boolean).concat(code).join(', ') + ')' : line.replace(/\s*\.\s*$/, '').replace(/\s+$/, '') + ' (' + code + ')';
+    t.value = t.value.slice(0, ln.a) + next + t.value.slice(ln.b);
+    const end = ln.a + next.length; try { t.setSelectionRange(end, end); } catch (e) {}
+    t.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  function bind(app){
+    const boxes = app.querySelectorAll('[data-s2split] [data-s2part="s"], [data-s2split] [data-s2part="a"], #s1 textarea[data-o="s1"][data-k="strengths"]:not([readonly]), #s1 textarea[data-o="s1"][data-k="actionPlan"]:not([readonly])');
+    boxes.forEach(t => {
+      const row = document.createElement('div'); row.className = 'c5sug'; t.insertAdjacentElement('afterend', row);
+      let timer = null, linger = null, picked = null;
+      const draw = () => {
+        if (linger) return;
+        if (document.activeElement !== t) { row.innerHTML = ''; return; }
+        const ln = lineAt(t), body = ln.text.replace(/^\s*[•\-*–]\s*/, '');
+        if (TAIL.test(body) || cw(body).length < 2) { row.innerHTML = ''; return; }
+        const picks = suggest(body);
+        row.innerHTML = picks.length ? '<span class="sl">Suggested:</span>' + picks.map(x => `<button type="button" class="${x.taught ? 'taught' : ''}" data-code="${x.code}" title="${esc((CRIT.find(c => c[0] === x.code) || [])[2] || '')}">+ ${x.code}</button>`).join('') : '';
+      };
+      const soon = () => { clearTimeout(timer); timer = setTimeout(draw, 160); };
+      t.addEventListener('input', () => { if (picked) return; clearTimeout(linger); linger = null; soon(); });
+      t.addEventListener('keyup', e => { if (/^Arrow|^Home$|^End$/.test(e.key)) { clearTimeout(linger); linger = null; soon(); } });
+      t.addEventListener('click', () => { clearTimeout(linger); linger = null; soon(); });
+      t.addEventListener('focus', soon);
+      t.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== t) { clearTimeout(linger); linger = null; row.innerHTML = ''; } }, 120));
+      row.addEventListener('mousedown', e => e.preventDefault());
+      row.addEventListener('click', e => {
+        const b = e.target.closest('button[data-code]'); if (!b) return;
+        const ln = lineAt(t); picked = true; try { add(t, ln, b.dataset.code); } finally { picked = null; }
+        /* the others wait a moment, as on the feedback sheet, so a second can be added */
+        b.remove(); if (!row.querySelector('button')) row.innerHTML = '';
+        clearTimeout(linger); linger = setTimeout(() => { linger = null; row.innerHTML = ''; }, 6000);
+      });
+    });
+  }
+  return { bind, suggest };
+})();
 const S2_HEADS = [['s', 'Strengths'], ['a', 'Action points'], ['o', 'Overall comment']];
 function s2Split(v){
   const out = {}; let cur = null, buf = [], ok = true;
@@ -1363,6 +1438,12 @@ function bind(){
       t.addEventListener('blur', () => { if (t.value !== '' && t.value.replace(/•/g, '').trim() === '') { t.value = ''; write(); } });
     });
   });
+  /* CRITERIA SUGGESTIONS IN THE CELTA 5 (Ramy, 26 Nov 2026: "if a trainer is typing in the CELTA 5, they can also get
+     the criteria suggestions"). The feedback sheet's suggester -- the criteria wording, the everyday words of a tutor
+     (hub-crit-vocab.js) and what this course's tutors have tagged (hub-crit-learn.js) -- for the line being written in a
+     tutor's Strengths, Action points or Stage 1 Action plan box. Pressing one puts "(2e)" at the end of that line, the
+     form Stage 1's points already have; a line with codes is suggested nothing more. Never applied by itself. */
+  if (IS_TUTOR) C5Sug.bind(app);
   /* STAGE 2 IN BULLETS (Ramy, 26 Nov 2026: "it should already give them bullet points the same way it works with their
      lesson plan procedure"). The trainee's three Stage 2 boxes start with a bullet when they are pressed empty, and Enter
      starts the next one. A box left holding only a bullet is saved empty; words already written are never touched. */
