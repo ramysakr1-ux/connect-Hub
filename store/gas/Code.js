@@ -3644,12 +3644,34 @@ case 'inbox': {
       requireTutor_(tutor);
       var toIn = req.offers || {}, toN = 0;
       var toNext = courseUpdateObj_(course.id, 'tp78', function (o) { o.offers = o.offers || {};
-        Object.keys(toIn).forEach(function (tk) { if (!/^[\w-]{4,80}$/.test(tk)) return; if (o.offers[tk] && o.offers[tk].length && !req.replace) return;
+        o.sig = o.sig || {};
+        var again = Array.isArray(req.replace) ? req.replace : [];
+        Object.keys(toIn).forEach(function (tk) { if (!/^[\w-]{4,80}$/.test(tk)) return; if (o.offers[tk] && o.offers[tk].length && req.replace !== true && again.indexOf(tk) === -1) return;
+          if (req.sigs && req.sigs[tk] != null) o.sig[tk] = String(req.sigs[tk]).slice(0, 400);
           var list = (Array.isArray(toIn[tk]) ? toIn[tk] : []).filter(function (x) { return x && /^s\d{1,3}\|\d{1,2}[AB]\|\d$/.test(String(x.k || '')); }).slice(0, 8)
             .map(function (x) { return { k: String(x.k), t: String(x.t || '').slice(0, 30) }; });
           if (list.length) { o.offers[tk] = list; toN++; } });
         o.at = new Date().toISOString(); return o; });
       return { saved: toN, tp78: tp78For_(course, true, null, toNext) };
+    }
+    /* v315: which Pool sets the store can open (a track, else a page, of each): the three oldest library books sit in a
+       Drive the store cannot read, so their tracks never played (Ramy, 26 Nov 2026). Asked by the tutor's page before it
+       picks; kept six hours. */
+    case 'tp78Check': {
+      requireTutor_(tutor);
+      var tcOut = {}, tcCache = CacheService.getScriptCache();
+      (Array.isArray(req.sets) ? req.sets : []).slice(0, 30).forEach(function (sid) {
+        sid = String(sid || ''); if (!/^s\d{1,3}$/.test(sid)) return;
+        var hit = tcCache.get('tp78ok:' + sid); if (hit) { tcOut[sid] = hit === '1'; return; }
+        var lib = libraryCourse_(), set = lib && (((courseRead_(lib.id, 'tppoints') || {}).set || {}).library || {})[sid], ids = [];
+        Object.keys((set && set.sessions) || {}).forEach(function (d) { ((set.sessions[d] || {}).slots || []).forEach(function (sl) {
+          var m = /\/d\/([\w-]{20,})/.exec(String((sl && sl.tracks) || '')); if (m) ids.push(m[1]);
+          ((sl && sl.files) || []).forEach(function (f) { var n = /\/d\/([\w-]{20,})|[?&]id=([\w-]{20,})/.exec(String((f && f.url) || '')); if (n) ids.push(n[1] || n[2]); }); }); });
+        var ok = false;
+        for (var i = 0; i < Math.min(ids.length, 2); i++) { try { DriveApp.getFileById(ids[i]).getName(); ok = true; } catch (e) { ok = false; break; } }
+        tcOut[sid] = ok; tcCache.put('tp78ok:' + sid, ok ? '1' : '0', 21600);
+      });
+      return { sets: tcOut };
     }
     case 'tp78': {
       if (!course) throw new Error('Open your course link first');
@@ -5282,17 +5304,18 @@ function folProfilesFor_(prof, forTutor, courseId, me) {
 // What each reader may see of the grid. Tutors and the assessor: the whole
 // thing, rows by token (theirs to know). A candidate: nothing until their
 // group is released, then their group's rows BY NAME, their own marked.
+var TP78_LIB_ = null;   // the Pool's sets, read once per request
 function tp78Slot_(key) {
   var m = /^(s\d{1,3})\|(\d{1,2}[AB])\|(\d)$/.exec(String(key || '')); if (!m) return null;
-  var lib = libraryCourse_(); if (!lib) return null;
-  var set = (((courseRead_(lib.id, 'tppoints') || {}).set || {}).library || {})[m[1]]; if (!set) return null;
+  if (!TP78_LIB_) { var lib = libraryCourse_(); if (!lib) return null; TP78_LIB_ = (((courseRead_(lib.id, 'tppoints') || {}).set || {}).library || {}); }
+  var set = TP78_LIB_[m[1]]; if (!set) return null;
   var sl = (((set.sessions || {})[m[2]] || {}).slots || [])[+m[3]]; if (!sl) return null;
   return { set: set, day: (set.sessions || {})[m[2]] || {}, slot: sl };
 }
 function tp78For_(course, reader, me, rec) {
   var o = rec || courseRead_(course.id, 'tp78') || {}, offers = o.offers || {}, out = { lessons: {} };
   var keys = [];
-  if (reader) { out.offers = offers; Object.keys(offers).forEach(function (tk) { (offers[tk] || []).forEach(function (x) { if (keys.indexOf(x.k) === -1) keys.push(x.k); }); }); }
+  if (reader) { out.offers = offers; out.sig = o.sig || {}; Object.keys(offers).forEach(function (tk) { (offers[tk] || []).forEach(function (x) { if (keys.indexOf(x.k) === -1) keys.push(x.k); }); }); }
   else if (me) { out.offers = (offers[me.token] || []).map(function (x) { return { k: x.k }; }); out.offers.forEach(function (x) { keys.push(x.k); }); }
   else return out;
   keys.forEach(function (k) { var f = tp78Slot_(k); if (!f) return; var sl = f.slot;

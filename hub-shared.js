@@ -3720,7 +3720,7 @@ window.hubTp78Pick = function(o){
         cands.push({ k: id + '|' + day + '|' + i, t: sl.type || '', set: id }); }); }); });
     var count = {}; (t.taught || []).forEach(function(a){ count[a] = (count[a] || 0) + 1; });
     var pick = function(kind){
-      var fresh = kind.filter(function(a){ return !count[a]; });
+      var fresh = kind.filter(function(a){ return !count[a] || (t.failed || []).indexOf(a) !== -1; });
       var aims = fresh.length ? fresh : (function(){ var have = kind.filter(function(a){ return cands.some(function(c){ return c.t === a; }); }); var min = Math.min.apply(null, have.map(function(a){ return count[a] || 0; })); return have.filter(function(a){ return (count[a] || 0) === min; }); })();
       var pool = cands.filter(function(c){ return aims.indexOf(c.t) !== -1; })
         .sort(function(a, b){ return (used[a.k] || 0) - (used[b.k] || 0) || hash(t.token + a.k) - hash(t.token + b.k); });
@@ -3749,25 +3749,42 @@ window.hubTp78Ensure = function(){
   var rec = function(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   var cs = rec('connect_course_settings') || {}, g = rec('connect_tp_grid_v1') || {}, ro = (rec('connect_roster_v1') || {}).trainees || {};
   var total = parseInt(cs.tpCount, 10); total = (total >= 2 && total <= 12) ? total : 8;
-  var now = Date.now(), open = function(grp){ return !!((g.released || {})[grp] || ((g.openAt || {})[grp] && Date.parse(g.openAt[grp]) <= now)); };
-  var done = rec('chub:tp78Done') || [];
-  var people = Object.keys(ro).map(function(k){ return ro[k]; }).filter(function(t){ return t && t.id && open(String(t.group || '')) && done.indexOf(t.id) === -1; });
+  var T = window.HubTracker, tps = [total - 1, total];
+  var P = rec('connect_tp_points_v1') || {}, plib = (P.set && P.set.library) || {};
+  var norm = function(a){ a = String(a || ''); return /^lexis|^vocab/i.test(a) ? 'Vocabulary' : /^function/i.test(a) ? 'Functional language' : a; };
+  /* What a trainee has taught, and what they will teach before TP7 (Ramy, 26 Nov 2026: "Light should know what their aims
+     are for TP5 and TP6 ... if someone was to fail one of those lessons, then Light will just have to suggest that sort of
+     same aim again"): a returned TP gives its aim, unless it was not to standard, when the aim is offered again; a TP not
+     yet returned gives the aim on the trainee's TP points. */
+  var facts = function(t){
+    var taught = [], failed = [], f = {};
+    try { f = T.recordFor(t); } catch (e) {}
+    var cells = ((P.groups || {})[String(t.group || '')] || {})[t.id] || {};
+    for (var n = 1; n <= total; n++) { if (tps.indexOf(n) !== -1) continue;
+      var a = f['tp' + n + '_aim'];
+      if (a) { if (a === 'Pronunciation') continue; if (f['tp' + n] === 'NOTSTD') failed.push(norm(a)); else taught.push(norm(a)); continue; }
+      var c = cells['tp' + n]; if (c && c.aim) taught.push(norm(c.aim)); }
+    taught.sort(); failed.sort();
+    return { taught: taught, failed: failed, sig: taught.join(',') + '|' + failed.join(',') };
+  };
+  var chose = function(id){ var r = (g.rows || {})[id] || {}; return tps.some(function(n){ return (r['tp' + n] || {}).lesson; }); };
+  var sigs = rec('chub:tp78Sig') || {};
+  var people = Object.keys(ro).map(function(k){ return ro[k]; }).filter(function(t){ return t && t.id; }).map(function(t){ var x = facts(t); return { t: t, x: x }; })
+    .filter(function(p){ return p.x.taught.length && sigs[p.t.id] !== p.x.sig && !chose(p.t.id); });
   if (!people.length) return Promise.resolve(0);
   window.__tp78Busy = true;
-  var T = window.HubTracker, tps = [total - 1, total];
-  var taught = function(tr){ try { var f = T.recordFor(tr), out = []; for (var n = 1; n <= total; n++) { if (tps.indexOf(n) !== -1) continue; var a = f['tp' + n + '_aim']; if (a && a !== 'Pronunciation') out.push(a === 'Lexis' ? 'Vocabulary' : a); } return out; } catch (e) { return []; } };
-  var P = rec('connect_tp_points_v1') || {}, plib = (P.set && P.set.library) || {};
   var skip = Object.keys(plib).map(function(k){ return plib[k] && plib[k].from; }).filter(Boolean);
   var levelOf = function(grp){ var k = window.hubClassAtTp ? window.hubClassAtTp(cs, grp, tps[0]) : null, lv = k && k.level ? String(k.level) : '';
     if (!lv) { var id = ((P.set || {}).setFor || {})[String(grp)]; lv = (plib[id] || {}).level || ''; }
     return lv && window.hubLevelName ? window.hubLevelName(lv) : lv; };
   var band = function(v){ var m = /\(([^)]+)\)/.exec(String(v || '')); return String(m ? m[1] : v || '').trim().toLowerCase(); };
   var finish = function(n){ window.__tp78Busy = false; return n; };
+  var keep = function(){ try { localStorage.setItem('chub:tp78Sig', JSON.stringify(sigs)); } catch (e) {} };
   return window.HubStore.call({ op: 'tp78' }).then(function(r){
-    var have = ((r && r.tp78) || {}).offers || {};
-    people.forEach(function(t){ if ((have[t.id] || []).length && done.indexOf(t.id) === -1) done.push(t.id); });
-    var need = people.filter(function(t){ return !(have[t.id] || []).length; }).map(function(t){ return { token: t.id, group: String(t.group || ''), taught: taught(t) }; });
-    try { localStorage.setItem('chub:tp78Done', JSON.stringify(done)); } catch (e) {}
+    var have = ((r && r.tp78) || {}).offers || {}, stored = ((r && r.tp78) || {}).sig || {};
+    var need = people.filter(function(p){ if ((have[p.t.id] || []).length && stored[p.t.id] === p.x.sig) { sigs[p.t.id] = p.x.sig; return false; } return true; })
+      .map(function(p){ return { token: p.t.id, group: String(p.t.group || ''), taught: p.x.taught, failed: p.x.failed, sig: p.x.sig }; });
+    keep();
     if (!need.length) return finish(0);
     return fetch('library/tp-point-sets.json', { cache: 'no-store' }).then(function(x){ return x.json(); }).then(function(lib){
       var all = (lib && !Array.isArray(lib) && lib.sets) || lib, meta = {};
@@ -3776,16 +3793,16 @@ window.hubTp78Ensure = function(){
       var want = {}; need.forEach(function(t){ var b = band(levelOf(t.group)); if (b) want[b] = 1; });
       var ids = Object.keys(meta).filter(function(id){ return want[band(meta[id].level)] && skip.indexOf(id) === -1; });
       var sets = {};
-      return Promise.all(ids.map(function(id){ return window.HubStore.poolSet(id).then(function(p){ if (p && p.found && p.data) sets[id] = Object.assign({}, p.data, { level: p.data.level || meta[id].level }); }, function(){}); }))
+      /* only the books whose files the store can open */
+      return window.HubStore.call({ op: 'tp78Check', sets: ids }).then(function(c){ var ok = (c && c.sets) || {}; ids = ids.filter(function(id){ return ok[id] !== false; }); }, function(){})
+        .then(function(){ return Promise.all(ids.map(function(id){ return window.HubStore.poolSet(id).then(function(p){ if (p && p.found && p.data) sets[id] = Object.assign({}, p.data, { level: p.data.level || meta[id].level }); }, function(){}); })); })
         .then(function(){ return fetch('library/follows.json', { cache: 'no-store' }).then(function(x){ return x.json(); }, function(){ return {}; }); })
         .then(function(follows){
           var offers = window.hubTp78Pick({ trainees: need, level: levelOf, sets: sets, skip: skip, follows: follows || {} });
-          if (!Object.keys(offers).length) return finish(0);
-          return window.HubStore.call({ op: 'tp78Offer', offers: offers }).then(function(){
-            Object.keys(offers).forEach(function(k){ if (done.indexOf(k) === -1) done.push(k); });
-            try { localStorage.setItem('chub:tp78Done', JSON.stringify(done)); } catch (e) {}
-            return finish(Object.keys(offers).length);
-          });
+          var toks = Object.keys(offers); if (!toks.length) return finish(0);
+          var sg = {}; need.forEach(function(t){ sg[t.token] = t.sig; });
+          return window.HubStore.call({ op: 'tp78Offer', offers: offers, replace: toks, sigs: sg }).then(function(){
+            toks.forEach(function(k){ sigs[k] = sg[k]; }); keep(); return finish(toks.length); });
         });
     });
   }).catch(function(){ return finish(0); });
