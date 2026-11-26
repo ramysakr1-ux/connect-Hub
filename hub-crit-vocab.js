@@ -30,7 +30,9 @@
     ['1a', L, /\b(their own (lives|life|families|friends|town|experience)|personal(i[sz]ed)?|relevant to (them|the class)|interests?)\b/],
     ['1b', S, /\b(learning (preferences?|styles?)|cultur(e|al)|first languages?|\bl1\b)/],
     ['1c', S, /\b(backgrounds?|previous learning|what they (already )?know from)\b/],
-    ['1d', S, /\b(rapport|warm(th|ly)?|friendly|patient|encouraging|manner|by name|uses? (their |the learners' |learners' )?names|nominat\w*|quiet(er)? (students|ones|learners)|involved|presence|engaging)\b/],
+    /* atmosphere, support and encouragement are rapport (Ramy, 26 Nov 2026, Ilim's TP4: "continue to provide the Ss with support
+       and encouragement and continue to build positive classroom atmosphere" was suggested 4d) */
+    ['1d', S, /\b(rapport|warm(th|ly)?|friendly|patient|encourag\w*|atmosphere|supportive|support and encouragement|praise[sd]?|praising|manner|by name|uses? (their |the learners' |learners' )?names|nominat\w*|quiet(er)? (students|ones|learners)|involved|presence|engaging)\b/],
     ['2a', S, /\b(teacher talk|ttt|grad(e|ed|ing) (your|the) language|your (own )?(voice|speech|talk(ing)?)|speak(ing)? (more )?slowly|slow (down )?your|volume|project your voice|calmer and clearer|talk(ed)? too much)\b/],
     ['2b', S, /\b(correct(ion|ed|ing|s)?|errors?|mistakes?|recast\w*|slips?)\b/],
     ['2c', L, /\b(contexts?|situation|way in|lead-in)\b/],

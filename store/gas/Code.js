@@ -2855,6 +2855,8 @@ case 'inbox': {
         + 'A point that praises or says something went well is a strength; a point that names a problem, a lack or something to change is an action point. Most notes are about teaching. '
         + 'For each point give the one or two criterion codes that fit it best: planning points use 4a to 4n only, teaching points use 1a to 3b and 5a to 5n only. '
         + '"Not referenced", "no refs" or "no sources" about materials means the sources were not acknowledged (4d). '
+        /* v310 (26 Nov 2026, Ilim's TP4: a line about support, encouragement and a positive atmosphere came back as a planning point, 4d) */
+        + 'Rapport, a positive classroom atmosphere, and support, encouragement or praise for the students happen in the room: they are always teaching points (st or at), usually 1d, never planning. '
         + 'Criteria: ' + tnCrit.join('; ') + '. '
         + celtaShorthand_()
         + 'Example. Notes: "good rapport, Ss laughing in lead-in. instr for ex 2 too long. no demo. vocab analysis clear. no sources on handout". '
