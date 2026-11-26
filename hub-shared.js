@@ -3765,7 +3765,7 @@ window.hubTp78Ensure = function(){
       if (a) { if (a === 'Pronunciation') continue; if (f['tp' + n] === 'NOTSTD') failed.push(norm(a)); else taught.push(norm(a)); continue; }
       var c = cells['tp' + n]; if (c && c.aim) taught.push(norm(c.aim)); }
     taught.sort(); failed.sort();
-    return { taught: taught, failed: failed, sig: taught.join(',') + '|' + failed.join(',') };
+    return { taught: taught, failed: failed, sig: 'v2|' + taught.join(',') + '|' + failed.join(',') };   // v2: lessons built on an earlier one marked in four more books (26 Nov 2026)
   };
   var chose = function(id){ var r = (g.rows || {})[id] || {}; return tps.some(function(n){ return (r['tp' + n] || {}).lesson; }); };
   var sigs = rec('chub:tp78Sig') || {};
