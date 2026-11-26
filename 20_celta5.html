@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611270020">
+<link rel="stylesheet" href="hub-tokens.css?v=202611270035">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -254,7 +254,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611270020">
+<link rel="stylesheet" href="hub-house.css?v=202611270035">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -267,22 +267,22 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611270020"></script>
-<script src="hub-hand.js?v=202611270020"></script>
-<script src="hub-ink.js?v=202611270020"></script>
-<script src="assignment-defaults.js?v=202611270020"></script>
-<script src="celta5-text.js?v=202611270020"></script>
-<script src="celta5-appendix.js?v=202611270020"></script>
-<script src="celta5-criteria.js?v=202611270020"></script>
-<script src="hub-crit-learn.js?v=202611270020"></script>
-<script src="hub-crit-vocab.js?v=202611270020"></script>
-<script src="hub-tracker.js?v=202611270020"></script>
-<script src="observation-defaults.js?v=202611270020"></script>
-<script src="hub-shared.js?v=202611270020"></script>
-<script src="hub-store.js?v=202611270020"></script>
-<script src="hub-say.js?v=202611270020"></script>
-<script src="hub-sync.js?v=202611270020"></script>
-<script src="hub-notebook.js?v=202611270020"></script>
+<script src="celta5-pdf.js?v=202611270035"></script>
+<script src="hub-hand.js?v=202611270035"></script>
+<script src="hub-ink.js?v=202611270035"></script>
+<script src="assignment-defaults.js?v=202611270035"></script>
+<script src="celta5-text.js?v=202611270035"></script>
+<script src="celta5-appendix.js?v=202611270035"></script>
+<script src="celta5-criteria.js?v=202611270035"></script>
+<script src="hub-crit-learn.js?v=202611270035"></script>
+<script src="hub-crit-vocab.js?v=202611270035"></script>
+<script src="hub-tracker.js?v=202611270035"></script>
+<script src="observation-defaults.js?v=202611270035"></script>
+<script src="hub-shared.js?v=202611270035"></script>
+<script src="hub-store.js?v=202611270035"></script>
+<script src="hub-say.js?v=202611270035"></script>
+<script src="hub-sync.js?v=202611270035"></script>
+<script src="hub-notebook.js?v=202611270035"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -636,6 +636,11 @@ function stageFill(cfg){
         if (cfg.shape === 'sao') {
           const body = { op: 'stage1Words', strengths: [...pts.planS, ...pts.teachS], actions: [...pts.planA, ...pts.teachA].sort((x, y) => (y.star ? 1 : 0) - (x.star ? 1 : 0)),
             overall: true, name: String((who && who.name) || '').trim().split(/\s+/)[0], stage: cfg.stage || 2, voice: close.samples, lessons: close.lessons };
+          /* the class they teach next, and the one so far (Ramy, 27 Nov 2026: Ilim's overall comment said she was moving to a
+             higher level; Group 1 goes from upper-intermediate to pre-intermediate) */
+          try { const cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}'), g = who && ((who.tr && who.tr.group) || who.group), n = window.hubLevelAt ? hubLevelAt(cs) : 5;
+            const a = window.hubClassAtTp && hubClassAtTp(cs, g, n - 1), b = window.hubClassAtTp && hubClassAtTp(cs, g, n);
+            if ((cfg.stage || 2) === 2 && a && b && a.level && b.level && a.level !== b.level) body.levels = { now: hubLevelName ? hubLevelName(a.level) : a.level, next: hubLevelName ? hubLevelName(b.level) : b.level }; } catch (e) {}
           if (HubStore.token && HubStore.token()) body.token = HubStore.token();
           const a = await HubStore.call(body, 60000);
           if (!a || !Array.isArray(a.strengths) || !Array.isArray(a.actions) || (!a.strengths.length && !a.actions.length)) throw new Error('no words');

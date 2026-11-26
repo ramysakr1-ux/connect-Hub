@@ -3038,6 +3038,13 @@ case 'inbox': {
          language of imperative, not past, just telling them what to do". One prompt for Stage 1, 2 and 3 (the CELTA 5
          page asks once for planning and once for teaching). A read: it writes nothing, so it is in READ_OPS_ and no
          longer moves the course's version. */
+      /* v318 (27 Nov 2026, Ilim's Stage 2 said she was moving to a higher level; Group 1 goes from upper-intermediate to
+         pre-intermediate): the real move, from the page; without it, no direction at all */
+      var swRank = function (v) { v = String(v || '').toLowerCase(); return /beginner|starter/.test(v) ? 1 : /pre[- ]?int/.test(v) ? 3 : /elementary/.test(v) ? 2 : /upper/.test(v) ? 5 : /advanced|proficien/.test(v) ? 6 : /intermediate/.test(v) ? 4 : 0; };
+      var swLv = req.levels && typeof req.levels === 'object' ? { now: levelName_(req.levels.now), next: levelName_(req.levels.next) } : null;
+      var swLevel = (swLv && swLv.now && swLv.next && swRank(swLv.now) && swRank(swLv.next) && swLv.now !== swLv.next)
+        ? 'In the second half of the course this trainee teaches a ' + swLv.next.toLowerCase() + ' class, after a ' + swLv.now.toLowerCase() + ' class so far: a ' + (swRank(swLv.next) < swRank(swLv.now) ? 'LOWER' : 'HIGHER') + ' level. If you mention the level at all, say it this way and no other; never call it ' + (swRank(swLv.next) < swRank(swLv.now) ? 'higher, harder or more complex' : 'lower or easier') + '. '
+        : 'Never say whether the trainee\'s next class is a higher or lower level, harder or easier; you are not told. ';
       var swSys = 'You help a CELTA tutor write a trainee\'s stage record in the CELTA 5 booklet from the tutors\' feedback on the trainee\'s recent lessons. '
         + 'The record is a summary against the CELTA criteria, not a retelling of the lessons. '
         + 'Turn each point into a general, criteria-referenced point: say what it shows about the trainee\'s planning or teaching under its criterion, and leave out everything tied to one lesson: '
@@ -3057,6 +3064,7 @@ case 'inbox': {
         + 'Write "students", never Ss. ' + celtaShorthand_()
         + 'In the points, write shorthand out in full, except TTT, STT, CCQs and ICQs, which trainees know. '
         + 'No praise that is not in the original, no grades, no names, no arrows. American spelling. '
+        + swLevel
         + 'Answer as JSON: {"strengths":[{"text":"...","codes":["1d"]}],"actions":[{"text":"...","codes":["5f"]}]}.';
       var swResp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
         method: 'post', muteHttpExceptions: true, contentType: 'application/json', headers: { Authorization: 'Bearer ' + swKey },
@@ -3073,7 +3081,7 @@ case 'inbox': {
          points' rules (the first real draft read like a report, not like the tutor who signs it) (stage2CloseWrite_) */
       if (swOverall) {
         /* v307 (25 Nov 2026): Stage 3 closes with one too (Ramy: "make stage 3 similar to stage 2") */
-        swRes.overall = stage2CloseWrite_(swKey, swName, swClose, swRes, String(req.stage) === '3' ? 3 : 2);
+        swRes.overall = stage2CloseWrite_(swKey, swName, swClose, swRes, String(req.stage) === '3' ? 3 : 2, swLevel);
         swRes.overall = swRes.overall.slice(0, 2000);
       }
       return swRes;
@@ -6462,14 +6470,14 @@ function stage2CloseAsk_(key, sys, user, temp) {
 }
 /* v306: the Overall comment, written on its own from the points just written, this trainee's lesson comments and the
    signer's samples; lengthened once when short (v295); asked once more without the words it must never carry */
-function stage2CloseWrite_(key, name, close, res, stage) {
+function stage2CloseWrite_(key, name, close, res, stage, levelNote) {
   var three = stage === 3;
   var hasVoice = !!(close && close.voice.length), prof = hasVoice ? stage2CloseProfile_(close.voice) : null;
   var words = function (t) { return String(t || '').split(/\s+/).filter(Boolean).length; };
   var user = { strengths: res.strengths, actions: res.actions, lessonComments: (close && close.lessons) || [] };
   if (hasVoice) user.tutorSamples = close.voice;
   var sys = 'You write the Overall comment that closes Stage ' + (three ? 3 : 2) + ' of a CELTA trainee\'s CELTA 5 booklet, for the tutor who signs it. The strengths and action points given are already in the booklet above it. '
-    + stage2ClosePrompt_(name, hasVoice, prof, three) + ' American spelling. Answer as JSON: {"overall":"..."}.';
+    + stage2ClosePrompt_(name, hasVoice, prof, three) + (levelNote || '') + ' American spelling. Answer as JSON: {"overall":"..."}.';
   var out = '';
   try { out = stage2CloseTidy_(stage2CloseAsk_(key, sys, user, 0.5), name); } catch (e) { out = ''; }
   if (out && words(out) < 150) {
