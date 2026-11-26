@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261222">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261234">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -85,6 +85,10 @@
   .st{flex:none; font-size:0.71rem; font-weight:700; padding:3px 9px; border-radius:999px;
     background:var(--box); color:var(--grey);}
   /* the tracker's 'fine' chip, so done reads the same everywhere */
+  /* a film's deadline (26 Nov 2026): a word, with colour only supporting it */
+  .task .nm .due{display:block; margin-top:3px; font-size:0.74rem; font-weight:700; color:var(--gold);} .task .nm .due.late{color:var(--brick);}
+  .dueline{display:inline-block; margin:2px 0 14px; padding:8px 14px; border-radius:10px; background:oklch(94% 0.05 85); color:var(--ink); font-size:0.92rem;}
+  .dueline.late{background:oklch(94% 0.03 30); color:var(--brick);}
   .st.done{background:oklch(95% 0.02 155); color:oklch(35% 0.08 155);}
   .st.part{background:oklch(94% 0.05 85); color:var(--gold);}
   .after{margin-top:22px; padding-top:16px; border-top:1px solid var(--sand-line);}
@@ -230,21 +234,21 @@
   .aud{font-size:.74rem; color:var(--grey); margin-left:8px;}
   .aud.now{font-size:.84rem; color:inherit; font-weight:600; flex:1 1 220px; line-height:1.45;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261222">
+<link rel="stylesheet" href="hub-house.css?v=202611261234">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202611261222"></script>
-<script src="hub-shared.js?v=202611261222"></script>
-<script src="hub-store.js?v=202611261222"></script>
-<script src="hub-say.js?v=202611261222"></script>
-<script src="hub-rotation.js?v=202611261222"></script>
-<script src="hub-peers.js?v=202611261222"></script>
-<script src="hub-sync.js?v=202611261222"></script>
-<script src="hub-notebook.js?v=202611261222"></script>
+<script src="observation-defaults.js?v=202611261234"></script>
+<script src="hub-shared.js?v=202611261234"></script>
+<script src="hub-store.js?v=202611261234"></script>
+<script src="hub-say.js?v=202611261234"></script>
+<script src="hub-rotation.js?v=202611261234"></script>
+<script src="hub-peers.js?v=202611261234"></script>
+<script src="hub-sync.js?v=202611261234"></script>
+<script src="hub-notebook.js?v=202611261234"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -410,7 +414,7 @@ function row(t, sit){
   const q = `?task=${encodeURIComponent(t.id)}${sit ? '&sit=' + sit : ''}${KEYQ ? '&' + KEYQ : ''}`;
   return `<a class="task" href="${q}" data-n="${answered(k)}" data-exp="${expectedOf(t, sit, k)}" data-in="${turnsIn(t) && (WORK[k] || {}).turnedInAt ? 1 : 0}">
     <span class="tp">${esc(label)}</span>
-    <span class="nm">${esc(t.title)}${subOf(t) ? `<small>${esc(subOf(t))}</small>` : ''}</span>
+    <span class="nm">${esc(t.title)}${subOf(t) ? `<small>${esc(subOf(t))}</small>` : ''}${dueTag(t, k)}</span>
     ${statusOf(k, expectedOf(t, sit, k), turnsIn(t))}
   </a>`;
 }
@@ -487,6 +491,36 @@ const field = (k, name, label, fallback, hint) => {
 let SHARED = []; try { SHARED = JSON.parse(localStorage.getItem('connect_peer_sheets_v1') || '[]') || []; } catch (e) {}
 let TT = null, CSET = {}; try { TT = JSON.parse(localStorage.getItem('connect_timetable_v1') || 'null'); } catch (e) {} try { CSET = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
 let CNOTE = '';
+
+/* EVERY OBSERVATION THAT IS TURNED IN HAS A DEADLINE (Ramy, 26 Nov 2026: "they watch the observation 1 and submit.
+   Should be a deadline there, and the deadline should be clear for them ... there should be a deadline for each one ...
+   give them like 15 minutes ... or half an hour in case they're a bit late"). It comes from the timetable: Film N is
+   the tile called "Film observation N", Live N the course's Nth demo lesson (hubDemoLessons, as demoFacts reads it).
+   The sheet is due half an hour after the tile ends, on the next half hour: 10:00 to 11:15 is due at 12:00. No tile, no
+   deadline. A sheet turned in after it says so; nothing is locked. */
+const OBS_DUE_FROM = '2026-11-27';
+function obsDue(t){
+  const id = String(t && t.id || ''), m = /^(filmed|live)(\d+)$/.exec(id); if (!m || !TT || !Array.isArray(TT.days)) return null;
+  let date = '', end = '';
+  if (m[1] === 'filmed') {
+    const re = new RegExp('^\\s*film(?:ed)?\\s+observation\\s*' + m[2] + '\\b', 'i');
+    for (const d of TT.days) { const x = ((d && d.sessions) || []).find(x => x && x.e && re.test(String(x.t || ''))); if (x) { date = d.date; end = x.e; break; } }
+  } else {
+    const n = posOf(t) || +m[2], list = window.hubDemoLessons ? hubDemoLessons(TT) : [], d = list.find(x => x.n === n) || list[n - 1];
+    if (d) { date = d.date; end = d.to; }
+  }
+  /* deadlines start with Film observation 1 on 27 Nov 2026: a lesson watched before they existed is never called late */
+  if (String(date) < OBS_DUE_FROM) return null;
+  const hm = /^(\d{1,2}):(\d{2})/.exec(String(end || '')); if (!date || !hm) return null;
+  const mins = Math.ceil((+hm[1] * 60 + +hm[2] + 30) / 30) * 30, at = String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0');
+  const tz = CSET.timeZone || '';
+  const inst = window.hubZonedInstant && tz ? hubZonedInstant(date, at, tz) : new Date(date + 'T' + at).getTime();
+  const day = new Date(date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  return { at: inst, label: at + ', ' + day };
+}
+const dueTag = (t, k) => { const due = obsDue(t); if (!due) return ''; const r = WORK[k] || {};
+  if (r.turnedInAt) return new Date(r.turnedInAt).getTime() > due.at ? '<span class="due late">Turned in late</span>' : '';
+  return `<span class="due${Date.now() > due.at ? ' late' : ''}">${Date.now() > due.at ? 'Was due' : 'Due'} ${esc(due.label)}</span>`; };
 /* WHAT LITE ALREADY KNOWS ABOUT A DEMO LESSON (Ramy, 4 Nov 2026: "the top part should be automatically filled
    in ... Lite knows the level the trainee is on, the name of the trainer, that it's 90 minutes from the timetable
    ... the only thing Lite doesn't know is how many learners are present"). For Live N: the course's Nth demo
@@ -717,6 +751,7 @@ function sheet(t, sit){
     <p class="eyebrow">${READONLY && WHO ? esc(WHO) + ' · ' : ''}${t.tp ? 'Peer observation · TP' + t.tp + (sit||'') : (t.id.startsWith('filmed') ? 'Filmed observation' : 'Live observation of experienced teachers')}</p>
     <h1>${esc(t.title)}</h1>
     ${subOf(t) ? `<p class="lede">${esc(subOf(t))}</p>` : ''}
+    ${(() => { const due = obsDue(t); if (!due) return ''; const tin = WORK[k].turnedInAt; return `<p class="dueline${(tin ? new Date(tin).getTime() : Date.now()) > due.at ? ' late' : ''}">${tin ? (new Date(tin).getTime() > due.at ? 'Turned in late. It was due ' : 'Turned in on time. It was due ') : 'Turn this in by '}<b>${esc(due.label)}</b>.</p>`; })()}
     ${turnsIn(t) && turned ? `<div class="turned"><b>Turned in</b> — ${new Date(turned).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}.${READONLY ? '' : ' It is on your record; you can still add to it.'}</div>` : ''}
     ${t.brief ? `<div class="brief">${esc(t.brief)}</div>` : ''}
     ${String(t.id).indexOf('filmed') === 0 && !filmOf(t) ? filmHTML(t) : ''}
