@@ -21,7 +21,7 @@
 <title>Connect Lite — TP7 &amp; TP8 material</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611262252">
+<link rel="stylesheet" href="hub-tokens.css?v=202611262303">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1080px; margin:0 auto; padding:26px 20px 80px;}
@@ -46,6 +46,10 @@
   .ls li i{font-style:normal; font-size:0.68rem; font-weight:700; padding:1px 7px; border-radius:999px; background:var(--sand-deep); flex:none;}
   .ls .aims{background:var(--sand-deep); border-radius:8px; padding:8px 10px; font-size:0.82rem; line-height:1.5;}
   .ls .aims b{display:block; font-size:0.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--grey); margin-top:4px;}
+  .shape{background:var(--sand); border:1px solid var(--sand-line); border-radius:8px; padding:8px 10px; font-size:0.82rem;}
+  .shape summary{cursor:pointer; font-weight:700;}
+  .shape ol{list-style:decimal; margin:8px 0 0; padding-left:20px; line-height:1.45;} .ls .shape li{display:list-item; margin:0 0 6px;} .shape li span{color:var(--grey); font-size:0.76rem;} .shape li small{display:block; color:var(--grey);}
+  .shape .alt{margin:6px 0 0; color:var(--grey);}
   .ls .type{display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 9px; border-radius:999px; background:var(--gold-wash); border:1px solid var(--amber-edge);}
   .ls .acts{display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; padding-top:6px;}
   .ls .b{font:inherit; font-weight:700; font-size:0.82rem; padding:8px 12px; border-radius:8px; border:1px solid var(--teal); color:var(--teal); background:var(--paper); cursor:pointer;}
@@ -69,21 +73,21 @@
   @media (max-width:860px){ .lessons{grid-template-columns:1fr 1fr;} }
   @media (max-width:560px){ .board{padding:18px 12px 60px;} .lessons, .pgs{grid-template-columns:1fr;} .pg iframe{height:420px;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611262252">
+<link rel="stylesheet" href="hub-house.css?v=202611262303">
 </head>
 <body class="hub-grid hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="hub-due.js?v=202611262252"></script>
-<script src="hub-tracker.js?v=202611262252"></script>
-<script src="hub-rotation.js?v=202611262252"></script>
-<script src="hub-shared.js?v=202611262252"></script>
-<script src="hub-store.js?v=202611262252"></script>
-<script src="hub-say.js?v=202611262252"></script>
-<script src="hub-sync.js?v=202611262252"></script>
-<script src="hub-notebook.js?v=202611262252"></script>
+<script src="hub-due.js?v=202611262303"></script>
+<script src="hub-tracker.js?v=202611262303"></script>
+<script src="hub-rotation.js?v=202611262303"></script>
+<script src="hub-shared.js?v=202611262303"></script>
+<script src="hub-store.js?v=202611262303"></script>
+<script src="hub-say.js?v=202611262303"></script>
+<script src="hub-sync.js?v=202611262303"></script>
+<script src="hub-notebook.js?v=202611262303"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;
 if (window.hubNotVolunteerRoom && hubNotVolunteerRoom())
@@ -149,7 +153,7 @@ function render(){
     const acts = IS_TRAINEE ? (tk ? `<span class="tk">${esc(tk)} has chosen this one</span>`
       : TPS.map(tp => `<button class="b${whoTp === tp ? ' yes' : ''}" type="button" data-use="${tp}" data-k="${esc(k)}"${busy ? ' disabled' : ''}>${whoTp === tp ? 'Your TP' + tp : 'Use for TP' + tp}</button>`).join(''))
       : (whoTp ? `<span class="tk">Chosen for TP${whoTp}</span>` : tk ? `<span class="tk">${esc(tk)} has chosen this one</span>` : '');
-    const aims = IS_STAFF ? `<div class="aims"><span class="type">Offered as ${esc(typeOf(k).toLowerCase())}</span>${l.aim ? `<b>Main aim</b>${esc(l.aim)}` : ''}${l.sub ? `<b>Sub aim</b>${esc(l.sub)}` : ''}</div>` : '';
+    const aims = IS_STAFF ? `<div class="aims"><span class="type">Offered as ${esc(typeOf(k).toLowerCase())}</span>${l.aim ? `<b>Main aim</b>${esc(l.aim)}` : ''}${l.sub ? `<b>Sub aim</b>${esc(l.sub)}` : ''}</div>` + shapeBox(l, typeOf(k)) : '';
     return `<div class="ls${whoTp ? ' on' : ''}${tk && !whoTp ? ' taken' : ''}" data-k="${esc(k)}"><span class="num">${n + 1}</span><span class="bk">${esc(shortBook(l))} \u00b7 ${esc(dayOf(k))}</span>${title(l) ? `<span class="t">${esc(title(l))}</span>` : ''}<ul>${li.join('')}</ul>${aims}<button class="open" type="button" data-open="${esc(k)}">${openKey === k ? 'Close the pages' : 'Open the pages and audio'}</button><div class="acts">${acts}</div></div>`
       + (openKey === k ? viewer(l) : '');
   }).join('');
@@ -157,6 +161,17 @@ function render(){
     + (IS_TRAINEE ? `<p class="own">Not for you? Find your own material and <a href="21_tp_grid.html">add it to the planning grid</a>.</p>` : '')
     + `<p class="status" role="status">${esc(note)}</p>`;
   wire();
+}
+/* Tutors only: the lesson's shape and stage order, as the library wrote them for this lesson; for a language lesson, the
+   other shapes it could take. Ramy, 26 Nov 2026: "a suggestion for the lesson shape. Could be more than one potential
+   order". Not a rule: the stages are the library's for this lesson, not a template. */
+const LANG_T = ['Grammar', 'Vocabulary', 'Functional language'];
+const LANG_SHAPES = ['Text-Based Presentation of Language', 'Test – Teach – Test', 'Present – Practice – Produce (PPP)'];
+function shapeBox(l, type){
+  const st = l.stages || [];
+  if (!l.shape && !st.length) return '';
+  const others = LANG_T.includes(type) ? LANG_SHAPES.filter(x => x !== l.shape) : [];
+  return `<details class="shape"><summary>Lesson shape${l.shape ? ': ' + esc(l.shape) : ''}</summary>${st.length ? `<ol>${st.map(x => `<li><b>${esc(x.name)}</b>${x.minutes ? ` <span>${esc(x.minutes)} min${x.interaction ? ' \u00b7 ' + esc(x.interaction) : ''}</span>` : ''}${x.aim ? `<small>${esc(x.aim)}</small>` : ''}</li>`).join('')}</ol>` : ''}${others.length ? `<p class="alt">${l.shape ? 'It could also work as ' : 'Possible shapes: '}${others.map(esc).join(l.shape ? ' or ' : ', ')}, depending on where the language comes from.</p>` : ''}</details>`;
 }
 function viewer(l){
   const pages = (l.files || []).filter(f => driveId(f.url)).map(f => { const id = driveId(f.url);

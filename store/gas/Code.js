@@ -5321,7 +5321,10 @@ function tp78For_(course, reader, me, rec) {
   keys.forEach(function (k) { var f = tp78Slot_(k); if (!f) return; var sl = f.slot;
     var l = { book: String(f.set.book || f.set.name || '').split(',')[0], short: f.set.short || '', level: f.set.level || '', context: f.day.context || '', pages: sl.pages || '', tracks: sl.tracks || '',
       files: (sl.files || []).map(function (x) { return { name: x.name || '', url: x.url || '', src: x.src || '', page: x.page || '', ans: x.ans ? 1 : 0 }; }) };
-    if (reader) { l.type = sl.type || ''; l.aim = sl.aim || ''; l.sub = sl.sub || ''; }
+    if (reader) { l.type = sl.type || ''; l.aim = sl.aim || ''; l.sub = sl.sub || ''; l.shape = sl.shape || '';
+      /* v316: the lesson's shape and stage order for tutors (Ramy, 26 Nov 2026: "the cards for the trainer side should also
+         offer the logical order for the lessons ... a suggestion for the lesson shape") */
+      l.stages = (sl.stages || []).filter(function (x) { return x && x.name; }).map(function (x) { return { name: String(x.name).slice(0, 80), aim: String(x.aim || '').slice(0, 200), minutes: String(x.minutes || '').slice(0, 6), interaction: String(x.interaction || '').slice(0, 20) }; }); }
     out.lessons[k] = l; });
   return out;
 }
