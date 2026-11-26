@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261149">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261157">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -92,6 +92,9 @@
   #s1 textarea.s1write, #s2 textarea.s1write, #s3 textarea.s1write{font-size:0.92rem; line-height:1.75; padding:12px 14px;}
   /* Stage 3's summary, read: PLANNING and TEACHING head their halves, and each list has its own line above it */
   .s1pretty p.s3h{margin:18px 0 4px; padding-top:12px; border-top:1.5px solid var(--sand-line); font-size:0.78rem; font-weight:700; letter-spacing:.12em; color:var(--teal);}
+  /* Stage 2's summary while the tutor writes: three boxes under headings in the book face, a line between (26 Nov 2026) */
+  .s2split p.s2h{margin:16px 0 6px; padding-top:12px; border-top:1px solid var(--sand-line); font:700 1.02rem 'Newsreader',Georgia,serif; color:var(--ink);}
+  .s2split p.s2h.first{border-top:0; padding-top:0; margin-top:4px;}
   /* THE HEADINGS STAND OUT (Ramy, 25 Nov 2026): Strengths, Action points and Overall comment in the book face, a line between */
   .s1pretty p.s3sub{margin:16px 0 4px; padding-top:12px; border-top:1px solid var(--sand-line); font:700 1rem 'Newsreader',Georgia,serif; color:var(--ink);}
   .s1pretty p.s3sub:first-child, .s1pretty .s1edit + p.s3sub, .s1pretty p.s3h + p.s3sub{border-top:0; padding-top:0; margin-top:8px;}
@@ -246,7 +249,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261149">
+<link rel="stylesheet" href="hub-house.css?v=202611261157">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -259,20 +262,20 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611261149"></script>
-<script src="hub-hand.js?v=202611261149"></script>
-<script src="hub-ink.js?v=202611261149"></script>
-<script src="assignment-defaults.js?v=202611261149"></script>
-<script src="celta5-text.js?v=202611261149"></script>
-<script src="celta5-appendix.js?v=202611261149"></script>
-<script src="celta5-criteria.js?v=202611261149"></script>
-<script src="hub-tracker.js?v=202611261149"></script>
-<script src="observation-defaults.js?v=202611261149"></script>
-<script src="hub-shared.js?v=202611261149"></script>
-<script src="hub-store.js?v=202611261149"></script>
-<script src="hub-say.js?v=202611261149"></script>
-<script src="hub-sync.js?v=202611261149"></script>
-<script src="hub-notebook.js?v=202611261149"></script>
+<script src="celta5-pdf.js?v=202611261157"></script>
+<script src="hub-hand.js?v=202611261157"></script>
+<script src="hub-ink.js?v=202611261157"></script>
+<script src="assignment-defaults.js?v=202611261157"></script>
+<script src="celta5-text.js?v=202611261157"></script>
+<script src="celta5-appendix.js?v=202611261157"></script>
+<script src="celta5-criteria.js?v=202611261157"></script>
+<script src="hub-tracker.js?v=202611261157"></script>
+<script src="observation-defaults.js?v=202611261157"></script>
+<script src="hub-shared.js?v=202611261157"></script>
+<script src="hub-store.js?v=202611261157"></script>
+<script src="hub-say.js?v=202611261157"></script>
+<script src="hub-sync.js?v=202611261157"></script>
+<script src="hub-notebook.js?v=202611261157"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -672,6 +675,22 @@ function s1Pretty(v){
     const b = t.match(/^[\u2022\-*\u2013]\s*(.*)$/); if (b) list.push(b[1]); else { flush(); out += '<p>' + tagged(t) + '</p>'; } });
   flush(); return out;
 }
+/* STAGE 2'S SUMMARY IN THREE BOXES (Ramy, 26 Nov 2026: "strengths, action points, overall comment ... a bit more
+   distinct, like as a heading ... it looks the same to me"). A plain box cannot make one line a heading, so while the
+   tutor writes, the summary is three boxes under real headings. They save into the same one summary as before, with the
+   same "Strengths:" / "Action points:" / "Overall comment:" lines, so the trainee's view, the returned page and the PDF
+   are unchanged. A summary that does not split cleanly (words before the first heading, a heading twice) stays one box. */
+const S2_HEADS = [['s', 'Strengths'], ['a', 'Action points'], ['o', 'Overall comment']];
+function s2Split(v){
+  const out = {}; let cur = null, buf = [], ok = true;
+  const put = () => { const t = buf.join('\n').replace(/^\s*\n|\n\s*$/g, '').replace(/^\n+|\n+$/g, '');
+    if (cur) { if (out[cur] != null) ok = false; else out[cur] = t; } else if (t.trim()) ok = false; };
+  String(v || '').split('\n').forEach(l => { const m = l.trim().match(/^(strengths|action points|overall comment)\s*:?$/i);
+    if (m) { put(); cur = S2_HEADS.find(h => h[1].toLowerCase() === m[1].toLowerCase())[0]; buf = []; } else buf.push(l); });
+  put();
+  return ok ? { s: out.s || '', a: out.a || '', o: out.o || '' } : null;
+}
+const s2Compose = p => S2_HEADS.filter(([k]) => String(p[k] || '').trim()).map(([k, h]) => h + ':\n' + String(p[k]).replace(/\s+$/, '')).join('\n\n');
 const field = (obj, key, label, opts) => {
   /* A stage's hours arrive filled in, unless somebody has already changed them
      or the stage has been returned and locked. */
@@ -694,6 +713,8 @@ const field = (obj, key, label, opts) => {
   /* the tutor writes in one steady box: no laid-out copy that swaps for the box when pressed (Ramy, 19 Nov 2026: "as soon
      as I click inside the box, they get closer to each other"). The laid-out version is what the trainee reads, and
      what anyone sees once it is returned. */
+  if (pretty && mine && opts.o === 's2t' && key === 'summary') { const p = s2Split(v);
+    if (p) return `<label class="f">${label}</label><div class="s2split" data-s2split>` + S2_HEADS.map(([k, h], i) => `<p class="s2h${i ? '' : ' first'}">${h}</p><textarea class="s1write s2part" data-s2part="${k}" aria-label="${h}">${esc(p[k])}</textarea>`).join('') + `<textarea data-o="s2t" data-k="summary" hidden>${esc(v)}</textarea></div>`; }
   if (pretty && mine) return `<label class="f">${label}</label><textarea class="s1write" data-o="${opts.o}" data-k="${key}">${esc(v)}</textarea>`;
   if (!mine) return `<label class="f">${label}</label><div class="ro ${v ? '' : 'empty'}">${v ? esc(v) : 'Nothing written yet'}</div>`;
   return `<label class="f">${label}</label>` + (opts.input
@@ -1319,6 +1340,27 @@ function bind(){
     ta.addEventListener('blur', () => { const v = ta.value; view.classList.toggle('blank', !v.trim());
       view.innerHTML = '<button type="button" class="s1edit" tabindex="-1">Edit</button>' + (v.trim() ? s1Pretty(v) : 'Nothing written yet. Press to write.');
       ta.hidden = true; view.hidden = false; });
+  });
+  /* Stage 2's summary in three boxes (see S2_HEADS): each box writes the one summary; when Stage 2 fills itself in from
+     the lessons, the boxes take the new words. Enter in Strengths or Action points starts the next bullet. */
+  app.querySelectorAll('[data-s2split]').forEach(w => {
+    const hid = w.querySelector('textarea[data-k="summary"]'), parts = [...w.querySelectorAll('[data-s2part]')];
+    const proto = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value'); let mute = false;
+    const fit = t => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 4) + 'px'; };
+    const resplit = () => { const p = s2Split(proto.get.call(hid)); if (p) parts.forEach(t => { t.value = p[t.dataset.s2part]; fit(t); }); };
+    Object.defineProperty(hid, 'value', { configurable: true, get(){ return proto.get.call(hid); }, set(x){ proto.set.call(hid, x); if (!mute) resplit(); } });
+    const write = () => { const p = {}; parts.forEach(q => { p[q.dataset.s2part] = q.value; }); mute = true; hid.value = s2Compose(p); mute = false; hid.dispatchEvent(new Event('input', { bubbles: true })); };
+    parts.forEach(t => {
+      t.addEventListener('input', write);
+      if (t.dataset.s2part === 'o') return;
+      t.addEventListener('focus', () => { if (t.value === '') { t.value = '• '; try { t.setSelectionRange(2, 2); } catch (e) {} } });
+      t.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' || e.shiftKey || e.isComposing || !/^\s*•/.test(t.value)) return;
+        e.preventDefault(); const a = t.selectionStart, b = t.selectionEnd;
+        t.value = t.value.slice(0, a) + '\n• ' + t.value.slice(b); t.setSelectionRange(a + 3, a + 3); fit(t); write();
+      });
+      t.addEventListener('blur', () => { if (t.value !== '' && t.value.replace(/•/g, '').trim() === '') { t.value = ''; write(); } });
+    });
   });
   /* STAGE 2 IN BULLETS (Ramy, 26 Nov 2026: "it should already give them bullet points the same way it works with their
      lesson plan procedure"). The trainee's three Stage 2 boxes start with a bullet when they are pressed empty, and Enter
