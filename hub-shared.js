@@ -3738,3 +3738,55 @@ window.hubTp78Pick = function(o){
   });
   return out;
 };
+
+/* TP7 & TP8 MATERIAL, MADE WITHOUT ANYONE OPENING THE GRID (Ramy, 26 Nov 2026: "Light will not just know from the
+   timetable"). Any tutor page calls this once its data is in (the tutor home does, on hub:ready): for each group whose
+   planning grid is open, by hand or by its time, every trainee without lessons gets their six (hubTp78Pick), from the
+   TPs returned so far. A group whose grid is not open yet gets nothing, so the TPs still to come are never left out.
+   Remembers who already has lessons, so a page asks the store only when someone is still waiting. */
+window.hubTp78Ensure = function(){
+  if (window.HubMode !== 'tutor' || !window.HubStore || !window.hubTp78Pick || window.__tp78Busy) return Promise.resolve(0);
+  var rec = function(k){ try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  var cs = rec('connect_course_settings') || {}, g = rec('connect_tp_grid_v1') || {}, ro = (rec('connect_roster_v1') || {}).trainees || {};
+  var total = parseInt(cs.tpCount, 10); total = (total >= 2 && total <= 12) ? total : 8;
+  var now = Date.now(), open = function(grp){ return !!((g.released || {})[grp] || ((g.openAt || {})[grp] && Date.parse(g.openAt[grp]) <= now)); };
+  var done = rec('chub:tp78Done') || [];
+  var people = Object.keys(ro).map(function(k){ return ro[k]; }).filter(function(t){ return t && t.id && open(String(t.group || '')) && done.indexOf(t.id) === -1; });
+  if (!people.length) return Promise.resolve(0);
+  window.__tp78Busy = true;
+  var T = window.HubTracker, tps = [total - 1, total];
+  var taught = function(tr){ try { var f = T.recordFor(tr), out = []; for (var n = 1; n <= total; n++) { if (tps.indexOf(n) !== -1) continue; var a = f['tp' + n + '_aim']; if (a && a !== 'Pronunciation') out.push(a === 'Lexis' ? 'Vocabulary' : a); } return out; } catch (e) { return []; } };
+  var P = rec('connect_tp_points_v1') || {}, plib = (P.set && P.set.library) || {};
+  var skip = Object.keys(plib).map(function(k){ return plib[k] && plib[k].from; }).filter(Boolean);
+  var levelOf = function(grp){ var k = window.hubClassAtTp ? window.hubClassAtTp(cs, grp, tps[0]) : null, lv = k && k.level ? String(k.level) : '';
+    if (!lv) { var id = ((P.set || {}).setFor || {})[String(grp)]; lv = (plib[id] || {}).level || ''; }
+    return lv && window.hubLevelName ? window.hubLevelName(lv) : lv; };
+  var band = function(v){ var m = /\(([^)]+)\)/.exec(String(v || '')); return String(m ? m[1] : v || '').trim().toLowerCase(); };
+  var finish = function(n){ window.__tp78Busy = false; return n; };
+  return window.HubStore.call({ op: 'tp78' }).then(function(r){
+    var have = ((r && r.tp78) || {}).offers || {};
+    people.forEach(function(t){ if ((have[t.id] || []).length && done.indexOf(t.id) === -1) done.push(t.id); });
+    var need = people.filter(function(t){ return !(have[t.id] || []).length; }).map(function(t){ return { token: t.id, group: String(t.group || ''), taught: taught(t) }; });
+    try { localStorage.setItem('chub:tp78Done', JSON.stringify(done)); } catch (e) {}
+    if (!need.length) return finish(0);
+    return fetch('library/tp-point-sets.json', { cache: 'no-store' }).then(function(x){ return x.json(); }).then(function(lib){
+      var all = (lib && !Array.isArray(lib) && lib.sets) || lib, meta = {};
+      if (Array.isArray(all)) all.forEach(function(x){ if (x && /^s\d+$/.test(String(x.id || ''))) meta[x.id] = x; });
+      else Object.keys(all || {}).forEach(function(id){ if (/^s\d+$/.test(id) && all[id]) meta[id] = all[id]; });
+      var want = {}; need.forEach(function(t){ var b = band(levelOf(t.group)); if (b) want[b] = 1; });
+      var ids = Object.keys(meta).filter(function(id){ return want[band(meta[id].level)] && skip.indexOf(id) === -1; });
+      var sets = {};
+      return Promise.all(ids.map(function(id){ return window.HubStore.poolSet(id).then(function(p){ if (p && p.found && p.data) sets[id] = Object.assign({}, p.data, { level: p.data.level || meta[id].level }); }, function(){}); }))
+        .then(function(){ return fetch('library/follows.json', { cache: 'no-store' }).then(function(x){ return x.json(); }, function(){ return {}; }); })
+        .then(function(follows){
+          var offers = window.hubTp78Pick({ trainees: need, level: levelOf, sets: sets, skip: skip, follows: follows || {} });
+          if (!Object.keys(offers).length) return finish(0);
+          return window.HubStore.call({ op: 'tp78Offer', offers: offers }).then(function(){
+            Object.keys(offers).forEach(function(k){ if (done.indexOf(k) === -1) done.push(k); });
+            try { localStorage.setItem('chub:tp78Done', JSON.stringify(done)); } catch (e) {}
+            return finish(Object.keys(offers).length);
+          });
+        });
+    });
+  }).catch(function(){ return finish(0); });
+};
