@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261015">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261026">
 <style>
   /* design_handoff_candidate_tracker (Ramy, 20 Sep 2026), with the Hub's
      colour-coded chips in the cells -- "I like the chips that you created.
@@ -315,6 +315,49 @@
   .page{max-width:1240px;} .page .card{background:none !important; box-shadow:none !important; border:0 !important; padding:0 !important; overflow:visible; border-radius:0;} .page .bar{border:0 !important; padding:0 0 14px !important; background:none !important;} .page .gridwrap{padding:0 !important;}
   .gridbox, .gridwrap{overflow:visible;} .gridbox::after{display:none;}
   .filters{display:flex; gap:8px; flex-wrap:wrap; margin:0;}
+  /* TWO VIEWS, ONE ROOM (Ramy, 26 Nov 2026: "fold it into the tracker"). Tracker is for acting; At a glance is for
+     reading: every trainee's TPs with the lesson in one word, assignments and CELTA 5 stages, groups with their level.
+     View only (Ramy: "keep it simple"): nothing on it is a link; the Tracker view opens the work. */
+  .vsw{margin-left:auto; display:inline-flex; background:var(--paper); border:1px solid var(--sand-line); border-radius:999px; padding:3px;} .vsw[hidden]{display:none;}
+  .vsw button{font:700 14px 'Karla',sans-serif; border:0; background:none; color:var(--grey); padding:7px 14px; border-radius:999px; cursor:pointer;}
+  .vsw button.on{background:var(--ink); color:var(--paper);}
+  #glance[hidden]{display:none;}
+  #glance .gl-card{background:var(--paper); border-radius:14px; border-top:3px solid var(--teal); padding:6px 0 4px; overflow-x:auto;}
+  #glance table{border-collapse:collapse; width:100%;}
+  #glance th{font-family:'Instrument Sans','Karla',sans-serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey); font-weight:600; text-align:center; padding:12px 4px 8px;}
+  #glance th.l{text-align:left; padding-left:20px; vertical-align:bottom;} #glance th.grp{border-bottom:1px solid var(--row-line); padding-bottom:6px;}
+  #glance td{padding:9px 4px; text-align:center; border-top:1px solid var(--row-line); vertical-align:middle;}
+  #glance td.name{white-space:nowrap; padding-right:14px; text-align:left; padding-left:20px; font-family:'Newsreader',Georgia,serif; font-size:17px; font-weight:600;}
+  #glance tr.gh td{background:var(--sand); font-family:'Instrument Sans','Karla',sans-serif; font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--grey); text-align:left; padding:7px 20px;}
+  #glance tr.gh .lvl{font-family:'Karla',sans-serif; font-weight:500; letter-spacing:.02em; text-transform:none; font-size:12.5px; margin-left:10px; color:oklch(62% 0.01 280);}
+  #glance .sep{border-left:1px solid var(--row-line);}
+  #glance .gtp{display:inline-flex; flex-direction:column; align-items:center; gap:3px; min-width:58px; text-decoration:none; color:var(--ink); border-radius:9px; padding:2px;}
+  #glance .sq{width:30px; height:26px; border-radius:7px; display:grid; place-items:center; font-weight:700; font-size:12.5px;}
+  #glance .sq.s{background:oklch(93% 0.035 140); color:oklch(38% 0.08 140);} #glance .sq.a{background:oklch(91% 0.07 92); color:oklch(40% 0.08 85);}
+  #glance .sq.n{background:var(--brick); color:var(--paper);} #glance .sq.u{background:var(--a-navy); color:var(--paper); font-size:10px;} #glance .sq.e{border:1.5px dashed var(--sand-line);}
+  #glance .lw{font-size:11.5px; font-weight:600; min-height:1.2em;}
+  #glance .w{font-size:12px; font-weight:700; padding:4px 7px; border-radius:7px; display:inline-flex; align-items:center; gap:4px; white-space:nowrap; text-decoration:none; color:inherit;}
+  #glance .w.pass{background:oklch(93% 0.035 140); color:oklch(38% 0.08 140);} #glance .w.mark{background:var(--a-navy); color:var(--paper);}
+  #glance .w.res{background:oklch(92% 0.045 65); color:oklch(42% 0.11 55);} #glance .w.fail{background:var(--brick); color:var(--paper);}
+  #glance .w.ab{background:oklch(91% 0.07 92); color:oklch(40% 0.08 85);} #glance .w.given{background:var(--sand); color:var(--ink);} #glance .w.none{color:oklch(66% 0.01 280); font-weight:500;}
+  #glance .dm{font-size:9.5px; letter-spacing:.06em; border:1.1px solid currentColor; border-radius:3px; padding:1px 3px; opacity:.8; line-height:1;}
+  #glance .empty{padding:28px 20px; color:var(--grey);}
+  #glance .pcs{display:none;}
+  @media (max-width:800px){
+    #glance .gl-card{display:none;} #glance .pcs{display:flex; flex-direction:column; gap:12px;}
+    #glance .pc{background:var(--paper); border-radius:14px; border-top:3px solid var(--teal); padding:14px 16px;}
+    #glance .pc h3{margin:0 0 10px; font-family:'Newsreader',Georgia,serif; font-size:20px; font-weight:600;}
+    #glance .pc h3 small{font-family:'Karla',sans-serif; font-size:12.5px; color:var(--grey); font-weight:600; margin-left:6px;}
+    #glance .pc .row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px 4px; margin-bottom:12px;} #glance .pc .gtp{min-width:0;}
+    #glance .pc .lab{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--grey); margin:2px 0 6px;}
+    #glance .pc .as{display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:12px;}
+    #glance .pc .as > div{display:flex; gap:8px; align-items:center; font-weight:700; font-size:13px;}
+    #glance .pc .st{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:13px; font-weight:600;} #glance .pc .st > span{display:flex; flex-direction:column; gap:3px; align-items:flex-start;}
+  }
+  body.v-g .filters, body.v-g #dmStrip, body.v-g #gridbox, body.v-g #detail, body.v-g .t1-key, body.v-g .t1-foot, body.v-g .dmrule{display:none !important;}
+  @media print{ .vsw{display:none;} }
+
+  .page .bar{display:flex; flex-direction:row; align-items:center; gap:12px; flex-wrap:wrap;}
   .filters .filter{font:700 14px 'Karla',sans-serif; padding:9px 14px; border-radius:999px; background:var(--paper); border:1px solid var(--sand-line); color:var(--ink); cursor:pointer;}
   .filters .filter b{font-family:'Newsreader',Georgia,serif; font-size:17px; margin-right:6px;} .filters .filter.mk b{color:var(--a-navy);} .filters .filter.sg b{color:oklch(48% 0.11 60);} .filters .filter.rk b{color:var(--brick);}
   .filters .filter.on{background:var(--teal); border-color:var(--teal); color:var(--paper);} .filters .filter.on b{color:var(--paper);}
@@ -361,7 +404,7 @@
   @media (max-width:560px){ .asg{grid-template-columns:repeat(2, minmax(0,1fr));} }
   @media print{ .filters{display:none;} .t1-row{border:1px solid #ddd; break-inside:avoid;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261015">
+<link rel="stylesheet" href="hub-house.css?v=202611261026">
 </head>
 <body>
 <div class="page">
@@ -383,21 +426,23 @@
   <div class="card">
     <div class="bar">
       <div class="filters" id="filters"></div>
+      <div class="vsw" id="vsw" hidden><button type="button" data-v="t" class="on">Tracker</button><button type="button" data-v="g">At a glance</button></div>
     </div>
     <div id="dmStrip"></div>
     <div class="gridbox" id="gridbox"><div class="gridwrap" id="gridwrap"></div></div>
+    <div id="glance" hidden></div>
   </div>
   <div id="detail"></div>
 </div>
-<script src="hub-due.js?v=202611261015"></script>
-<script src="hub-shared.js?v=202611261015"></script>
-<script src="hub-rotation.js?v=202611261015"></script>
-<script src="assignment-defaults.js?v=202611261015"></script>
-<script src="hub-tracker.js?v=202611261015"></script>
-<script src="hub-store.js?v=202611261015"></script>
-<script src="hub-say.js?v=202611261015"></script>
-<script src="hub-sync.js?v=202611261015"></script>
-<script src="hub-notebook.js?v=202611261015"></script>
+<script src="hub-due.js?v=202611261026"></script>
+<script src="hub-shared.js?v=202611261026"></script>
+<script src="hub-rotation.js?v=202611261026"></script>
+<script src="assignment-defaults.js?v=202611261026"></script>
+<script src="hub-tracker.js?v=202611261026"></script>
+<script src="hub-store.js?v=202611261026"></script>
+<script src="hub-say.js?v=202611261026"></script>
+<script src="hub-sync.js?v=202611261026"></script>
+<script src="hub-notebook.js?v=202611261026"></script>
 <script type="text/x-hub-app">
 const T = window.HubTracker;
 const ROSTER_KEY = 'connect_roster_v1';
@@ -684,6 +729,7 @@ function tpBox(p, t){
 function render(){
   LETTER_OF = null;
   const all = people(); LAST_PEOPLE = all;
+  if (typeof VIEW !== 'undefined' && VIEW === 'g') renderGlance(all);
   const counts = { mark: all.reduce((n, p) => n + toMark(p), 0), sign: all.reduce((n, p) => n + toSign(p), 0), look: all.filter(needsLook).length };
   const F = [['Everyone', 'Everyone', ''], ['mark', 'to mark', 'mk'], ['sign', counts.sign === 1 ? 'stage to sign' : 'stages to sign', 'sg'], ['look', counts.look === 1 ? 'needs a look' : 'need a look', 'rk']];
   if (!F.some(f => f[0] === FILTER)) FILTER = 'Everyone';
@@ -912,6 +958,58 @@ function renderDetail(all){
   wrap.addEventListener('mouseleave', hide);
   addEventListener('scroll', hide, { passive: true });
 })();
+/* AT A GLANCE: the second view, read only (see .vsw in the styles). */
+let VIEW = !ME && location.hash === '#glance' ? 'g' : 't';
+const GL_LETTER = { STD: ['s', 'S'], ABOVE: ['a', 'S+'], NOTSTD: ['n', 'N'] };
+const GL_AW = { PASS: ['pass', 'Pass'], RES: ['pass', 'Pass, second try'], WAIT: ['mark', 'To mark'], WAIT2: ['mark', 'To mark again'], FAILRES: ['res', 'Resubmit'], UNMARKED: ['res', 'Sent back'], FAIL: ['fail', 'Fail'] };
+const GL_SW = { STD: ['pass', 'To standard'], ABOVE: ['ab', 'Above standard'], NOTSTD: ['fail', 'Not to standard'], GIVEN: ['given', 'Returned'] };
+function renderGlance(all){
+  const box = $('glance');
+  const levelOf = g => { try { return window.hubLevelFor ? hubLevelFor(g) : ''; } catch (e) { return ''; } };
+  const tpCell = (p, t) => {
+    const v = p.tps[t.key]; if (!v || v.g === 'nd') return `<span class="gtp"><span class="sq e"></span><span class="lw"></span></span>`;
+    const L = GL_LETTER[v.g] || ['u', 'Mark'], word = v.aim || '';
+    const nm = L[0] === 'u' ? 'To mark' : (T_STATE[v.g] || {}).name || '';
+    const inner = `<span class="sq ${L[0]}">${L[1]}</span><span class="lw">${esc(word)}</span>`;
+    return `<span class="gtp" aria-label="TP${t.n}: ${esc(nm)}${word ? ', ' + esc(word) : ''}">${inner}</span>`;
+  };
+  const asCell = (p, a) => {
+    const s = p.asg[a.key], w = GL_AW[s.code]; if (!w) return `<span class="w none">Not yet</span>`;
+    const inner = `${w[1]}${s.dm ? '<span class="dm">DM</span>' : ''}`;
+    return `<span class="w ${w[0]}">${inner}</span>`;
+  };
+  const stCell = (p, k) => {
+    const w = GL_SW[(p.c || {})[k]]; if (!w) return `<span class="w none">Not yet</span>`;
+    return `<span class="w ${w[0]}">${w[1]}</span>`;
+  };
+  if (!all.length) { box.innerHTML = `<div class="gl-card"><div class="empty">No trainee files imported yet.</div></div>`; return; }
+  const ST = ['stage1', 'stage2', 'stage3'], cols = 1 + TPS.length + ASSN.length + 3;
+  let h = `<thead><tr><th class="l" rowspan="2">Trainee</th><th class="grp" colspan="${TPS.length}">Teaching practice</th><th class="grp sep" colspan="${ASSN.length}">Assignments</th><th class="grp sep" colspan="3">CELTA 5</th></tr><tr>`
+    + TPS.map(t => `<th>TP${t.n}</th>`).join('') + ASSN.map((a, i) => `<th class="${i ? '' : 'sep'}">${esc(a.label)}</th>`).join('')
+    + ST.map((k, i) => `<th class="${i ? '' : 'sep'}">Stage ${i + 1}</th>`).join('') + '</tr></thead><tbody>';
+  let last = null;
+  const grp = p => p.tr.group == null ? '' : String(p.tr.group);
+  all.forEach(p => {
+    const g = grp(p);
+    if (g !== last) { const lv = g ? levelOf(g) : ''; h += `<tr class="gh"><td colspan="${cols}">${g ? 'Group ' + esc(g) : 'No group'}${lv ? `<span class="lvl">${esc(lv)}</span>` : ''}</td></tr>`; last = g; }
+    h += `<tr><td class="name">${esc(p.tr.name)}</td>` + TPS.map(t => `<td>${tpCell(p, t)}</td>`).join('')
+      + ASSN.map((a, i) => `<td class="${i ? '' : 'sep'}">${asCell(p, a)}</td>`).join('') + ST.map((k, i) => `<td class="${i ? '' : 'sep'}">${stCell(p, k)}</td>`).join('') + '</tr>';
+  });
+  box.innerHTML = `<div class="gl-card"><table>${h}</tbody></table></div><div class="pcs">` + all.map(p => {
+    const g = grp(p), lv = g ? levelOf(g) : '';
+    return `<div class="pc"><h3>${esc(p.tr.name)}<small>${g ? 'Group ' + esc(g) : ''}${lv ? ' · ' + esc(lv) : ''}</small></h3>`
+      + `<div class="lab">Teaching practice</div><div class="row">${TPS.map(t => tpCell(p, t)).join('')}</div>`
+      + `<div class="lab">Assignments</div><div class="as">${ASSN.map(a => `<div>${esc(a.label)} ${asCell(p, a)}</div>`).join('')}</div>`
+      + `<div class="lab">CELTA 5</div><div class="st">${ST.map((k, i) => `<span>Stage ${i + 1} ${stCell(p, k)}</span>`).join('')}</div></div>`;
+  }).join('') + '</div>';
+}
+function setView(v){
+  VIEW = v; document.body.classList.toggle('v-g', v === 'g'); $('glance').hidden = v !== 'g';
+  $('vsw').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  try { history.replaceState(null, '', location.pathname + location.search + (v === 'g' ? '#glance' : '')); } catch (e) {}
+  if (v === 'g') renderGlance(LAST_PEOPLE.length ? LAST_PEOPLE : people());
+}
+if (!ME) { $('vsw').hidden = false; $('vsw').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) setView(b.dataset.v); }); }
 $('filters').addEventListener('click', e=>{ const b=e.target.closest('.filter'); if(!b) return; FILTER=b.dataset.f; render(); });
 $('gridwrap').addEventListener('click', e=>{ const c=e.target.closest('.cell'); if(!c) return; SEL={id:c.dataset.id, col:c.dataset.col}; render(); hubScrollIntoView(document.getElementById('detail'), 'nearest'); });
 $('detail').addEventListener('click', e=>{
@@ -928,6 +1026,7 @@ $('detail').addEventListener('click', e=>{
 (function(){ if (ASSESSOR) { document.getElementById('backLink').href='12_assessor_pack.html'; document.getElementById('backLink').innerHTML='Assessor pack'; document.querySelector('.lede').hidden=false; document.querySelector('.lede').textContent='Every trainee\u2019s teaching practice and assignments, read from what the tutors have returned and marked. Nothing here can be changed from this link; the Stage records and standing are as the tutors recorded them.'; }
   if (ME) { document.getElementById('backLink').href='index.html'; document.getElementById('backLink').innerHTML='Back'; document.querySelector('.lede').hidden=false; document.querySelector('.lede').textContent='Every teaching practice and every assignment, read from what you have submitted and what your tutor has returned. Color only marks what needs attention; everything that is fine stays quiet. The Stage records and the standing are your tutor\u2019s, as recorded.'; } try{ const cs = JSON.parse(localStorage.getItem('connect_course_settings')||'{}'); const parts=[ME ? 'Your progress' : ASSESSOR ? 'Assessor view' : '', cs.courseName, cs.centreName].filter(Boolean); $('eyebrow').textContent = parts.join(' · '); }catch(e){} })();
 render();
+if (VIEW === 'g') setView('g');
 
 (function(){
   const box = document.getElementById('gridbox'), wrap = document.getElementById('gridwrap'); if (!box || !wrap) return;
