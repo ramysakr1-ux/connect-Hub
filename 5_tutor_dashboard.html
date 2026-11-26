@@ -23,7 +23,7 @@
 <title>Connect Lite — Tutor dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611261523">
+<link rel="stylesheet" href="hub-tokens.css?v=202611261647">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand); padding:0 20px 90px;}
@@ -748,7 +748,7 @@
   #dv6Tut li{font-size:.84rem; padding:5px 10px; border-radius:999px; background:color-mix(in oklch, var(--a-forest) 9%, var(--paper));}
   #dv6Tut li b{margin-right:4px;} #dv6Tut li.free{background:none; border:1px dashed var(--sand-line); color:var(--grey);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611261523">
+<link rel="stylesheet" href="hub-house.css?v=202611261647">
 </head>
 <body>
 <div class="board">
@@ -880,27 +880,27 @@
 
 </div>
 
-<script src="hub-due.js?v=202611261523"></script>
-<script src="observation-defaults.js?v=202611261523"></script>
-<script src="hub-rotation.js?v=202611261523"></script>
-<script src="hub-peers.js?v=202611261523"></script>
-<script src="hub-shared.js?v=202611261523"></script>
+<script src="hub-due.js?v=202611261647"></script>
+<script src="observation-defaults.js?v=202611261647"></script>
+<script src="hub-rotation.js?v=202611261647"></script>
+<script src="hub-peers.js?v=202611261647"></script>
+<script src="hub-shared.js?v=202611261647"></script>
 <script src="hub-notes.js?v=202611101919"></script>
 <script src="input-sessions/library.js?v=202611101919"></script>
-<script src="hub-store.js?v=202611261523"></script>
-<script src="hub-say.js?v=202611261523"></script>
-<script src="hub-hand.js?v=202611261523"></script>
-<script src="hub-ink.js?v=202611261523"></script>
-<script src="hub-shelf.js?v=202611261523"></script>
+<script src="hub-store.js?v=202611261647"></script>
+<script src="hub-say.js?v=202611261647"></script>
+<script src="hub-hand.js?v=202611261647"></script>
+<script src="hub-ink.js?v=202611261647"></script>
+<script src="hub-shelf.js?v=202611261647"></script>
 <!-- This screen shows no assignment wording. It loads the defaults so the
      tutor's LANDING page is where a course still on the superseded criteria
      adopts the corrected ones and heals the store (hub-sync's plan()), rather
      than waiting for someone to open the tracker or the wording editor. -->
-<script src="assignment-defaults.js?v=202611261523"></script>
-<script src="hub-sync.js?v=202611261523"></script>
-<script src="hub-notebook.js?v=202611261523"></script>
-<script src="hub-tracker.js?v=202611261523"></script>
-<script src="hub-feedback.js?v=202611261523"></script>
+<script src="assignment-defaults.js?v=202611261647"></script>
+<script src="hub-sync.js?v=202611261647"></script>
+<script src="hub-notebook.js?v=202611261647"></script>
+<script src="hub-tracker.js?v=202611261647"></script>
+<script src="hub-feedback.js?v=202611261647"></script>
 <script type="text/x-hub-app">
 /* the course's mismatches, above the working list; drawn once the course is in this browser, and again when it changes */
 function paintCourseNotes(){
@@ -1819,6 +1819,9 @@ function paintBrief(){
       const t = String(x.t || '').toLowerCase();
       if (x.k === 'input' && x.own) return '23_timetable.html';   /* a tutor's own session: its tile, where the materials link lives */
       if (x.k === 'input') { const sl = x.lib || ((window.InputLib && InputLib.slugsFor) ? (InputLib.slugsFor(x.t) || [])[0] : ''); return sl ? 'input-sessions/' + sl + '/' : /^(lesson )?planning/.test(t) ? '24_tp_points.html' : '23_timetable.html'; }   /* a bare "Lesson planning" is the planning slot, not a session (4 Nov 2026): the TP points */
+      /* a filmed observation opens its film and sheet, not the demo lessons (Ramy, 26 Nov 2026: "the shortcut on the hero card leads
+         to the demo lessons, not the filmed observations") */
+      { const fm = /\bfilm(?:ed)?\s+observations?\s*(\d+)/.exec(t); if (fm) return '18_observation_tasks.html?task=filmed' + fm[1]; if (/\bfilm(ed)?\b|\bvideo|\brecord(ed|ing)\b/.test(t)) return '18_observation_tasks.html'; }
       if (x.k === 'demo' && !/interview/.test(t)) return x.lib ? 'input-sessions/' + x.lib + '/' : 'input-sessions/demo-lessons/';
       if (x.k === 'feedback') return '40_tp_feedback.html';
       if (x.k === 'plan') return '24_tp_points.html';
@@ -1834,9 +1837,13 @@ function paintBrief(){
       /* THE LINK DOES WHAT IT SAYS (Ramy, 15 Nov 2026: "choose your demo ... you can't really choose it, it just takes you there"):
          it opens the share box below, at From the library, where the demo lesson is picked and shared */
       /* one link per demo lesson: a lesson taught across two tiles that day ("Demo lesson 1" at 2:00 and at 3:00) is one lesson */
-      const firstOfLesson = x.k === 'demo' && !/interview/i.test(x.t || '') && mine(day).filter(y => y.k === 'demo' && String(y.t || '') === String(x.t || '')).indexOf(x) === 0;
+      /* A FILM IS NOT A DEMO LESSON (Ramy, 26 Nov 2026: "how many times say share a demo? ... Film observations, demo lesson, share a
+         demo lesson. What's that?"). Filmed observations wear the demo kind on the timetable; only a tile that is a demo lesson
+         offers Share your demo lesson, and a film says Filmed observation, not Demo lesson. */
+      const isFilm = /\bfilm(ed)?\b|\bvideo|\brecord(ed|ing)\b/i.test(x.t || '');
+      const firstOfLesson = x.k === 'demo' && !isFilm && /\bdemo/i.test(x.t || '') && !/interview/i.test(x.t || '') && mine(day).filter(y => y.k === 'demo' && String(y.t || '') === String(x.t || '')).indexOf(x) === 0;
       const demoLink = firstOfLesson ? ' <a class="dl" href="#shelf" data-share-demo="' + esc(x.t || '') + '" data-share-lib="' + esc(x.lib || '') + '">Share your demo lesson</a>' : '';
-      return '<li class="k-' + esc(x.k || '') + state + '"><b>' + esc(time) + '</b> <a class="t" href="' + esc(hrefOf(x)) + '">' + esc(x.t || KIND[x.k] || 'Session') + '</a>' + (openDemo(x) ? '' : who) + (state === ' now' ? ' <span class="on">On now</span>' : '') + (KIND[x.k] && x.t && !/demo/i.test(x.t) ? ' <span class="kd">' + esc(KIND[x.k]) + '</span>' : '') + demoLink + '</li>';
+      return '<li class="k-' + esc(x.k || '') + state + '"><b>' + esc(time) + '</b> <a class="t" href="' + esc(hrefOf(x)) + '">' + esc(x.t || KIND[x.k] || 'Session') + '</a>' + (openDemo(x) ? '' : who) + (state === ' now' ? ' <span class="on">On now</span>' : '') + (KIND[x.k] && x.t && !/demo/i.test(x.t) && !isFilm ? ' <span class="kd">' + esc(KIND[x.k]) + '</span>' : '') + demoLink + '</li>';
     }).join('');
     const label = (myI < 0 ? 'The sessions' : 'Your sessions') + (isToday ? ' today' : ', ' + dt(day.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }));
     if (!box) { box = document.createElement('section'); box.id = 'dv6Mine'; host.insertAdjacentElement('afterend', box); }   /* inside the hero, above its button */
@@ -1866,7 +1873,12 @@ function paintBrief(){
     const sheetsOn = d => ((d && d.sessions) || []).filter(x => x && /tutorial|consultation/i.test(x.t || '') && (x.by === undefined || x.by === '' || x.by === 'all' || myI < 0 || +x.by === myI));
     /* ONLY WHEN IT IS NEAR (Ramy, 11 Nov 2026, on C/21 two weeks out: "why does it say your tutorials Thursday?"): the day of the
        tutorials and the course day before, the same window the trainees' home gives "Book your tutorial" */
-    const day = days.filter(d => d && d.date >= TODAY).slice(0, 2).find(d => sheetsOn(d).length);
+    /* A TUTORIAL DAY THAT IS OVER GIVES WAY (Ramy, 26 Nov 2026, the evening of the A&B tutorials: "I'm still looking at stage 2
+       tutorials A and B ... It should now say D and E"). Today's sheets whose time has ended drop out, so the next day's show. */
+    const nowHM = (function(){ const n = window.hubNow ? new Date(hubNow()) : new Date(); try { return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: set.timeZone || undefined }).format(n).replace(/^24/, '00'); } catch (e) { return p2(n.getHours()) + ':' + p2(n.getMinutes()); } })();
+    const sheetsLeft = d => sheetsOn(d).filter(x => d.date !== TODAY || !x.e || String(x.e) > nowHM);
+    const day0 = days.filter(d => d && d.date >= TODAY).slice(0, 3).find(d => sheetsLeft(d).length);
+    const day = day0 && day0.date === TODAY ? Object.assign({}, day0, { sessions: (day0.sessions || []).filter(x => !(x && /tutorial|consultation/i.test(x.t || '')) || sheetsLeft(day0).indexOf(x) >= 0) }) : day0;
     if (!day) return;
     HubStore.call({ op: 'bookings' }).then(r => {
       const B = (r && r.bookings) || {};
