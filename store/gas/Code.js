@@ -3662,14 +3662,16 @@ case 'inbox': {
       var tcOut = {}, tcCache = CacheService.getScriptCache();
       (Array.isArray(req.sets) ? req.sets : []).slice(0, 30).forEach(function (sid) {
         sid = String(sid || ''); if (!/^s\d{1,3}$/.test(sid)) return;
-        var hit = tcCache.get('tp78ok:' + sid); if (hit) { tcOut[sid] = hit === '1'; return; }
-        var lib = libraryCourse_(), set = lib && (((courseRead_(lib.id, 'tppoints') || {}).set || {}).library || {})[sid], ids = [];
+        var hit = tcCache.get('tp78ok2:' + sid); if (hit) { tcOut[sid] = hit === '1'; return; }
+        var lib = libraryCourse_(), set = lib && (((courseRead_(lib.id, 'tppoints') || {}).set || {}).library || {})[sid], trk = [], pgs = [];
         Object.keys((set && set.sessions) || {}).forEach(function (d) { ((set.sessions[d] || {}).slots || []).forEach(function (sl) {
-          var m = /\/d\/([\w-]{20,})/.exec(String((sl && sl.tracks) || '')); if (m) ids.push(m[1]);
-          ((sl && sl.files) || []).forEach(function (f) { var n = /\/d\/([\w-]{20,})|[?&]id=([\w-]{20,})/.exec(String((f && f.url) || '')); if (n) ids.push(n[1] || n[2]); }); }); });
-        var ok = false;
-        for (var i = 0; i < Math.min(ids.length, 2); i++) { try { DriveApp.getFileById(ids[i]).getName(); ok = true; } catch (e) { ok = false; break; } }
-        tcOut[sid] = ok; tcCache.put('tp78ok:' + sid, ok ? '1' : '0', 21600);
+          String((sl && sl.tracks) || '').replace(/\/d\/([\w-]{20,})/g, function (m, id) { trk.push(id); return m; });
+          ((sl && sl.files) || []).forEach(function (f) { var n = /\/d\/([\w-]{20,})|[?&]id=([\w-]{20,})/.exec(String((f && f.url) || '')); if (n) pgs.push(n[1] || n[2]); }); }); });
+        /* v317: a page AND a track, from the start, middle and end of the book (Empower B1's pages open, its tracks do not) */
+        var pick = function (a) { return a.length ? [a[0], a[Math.floor(a.length / 2)], a[a.length - 1]] : []; };
+        var probe = pick(pgs).concat(pick(trk)), ok = pgs.length > 0;
+        for (var i = 0; ok && i < probe.length; i++) { try { DriveApp.getFileById(probe[i]).getName(); } catch (e) { ok = false; } }
+        tcOut[sid] = ok; tcCache.put('tp78ok2:' + sid, ok ? '1' : '0', 21600);
       });
       return { sets: tcOut };
     }
@@ -5319,7 +5321,7 @@ function tp78For_(course, reader, me, rec) {
   else if (me) { out.offers = (offers[me.token] || []).map(function (x) { return { k: x.k }; }); out.offers.forEach(function (x) { keys.push(x.k); }); }
   else return out;
   keys.forEach(function (k) { var f = tp78Slot_(k); if (!f) return; var sl = f.slot;
-    var l = { book: String(f.set.book || f.set.name || '').split(',')[0], short: f.set.short || '', level: f.set.level || '', context: f.day.context || '', pages: sl.pages || '', tracks: sl.tracks || '',
+    var l = { book: String(f.set.book || f.set.name || '').replace(/\s*\([^)]*\)\s*$/, ''), short: f.set.short || '', level: f.set.level || '', context: f.day.context || '', pages: sl.pages || '', tracks: sl.tracks || '',
       files: (sl.files || []).map(function (x) { return { name: x.name || '', url: x.url || '', src: x.src || '', page: x.page || '', ans: x.ans ? 1 : 0 }; }) };
     if (reader) { l.type = sl.type || ''; l.aim = sl.aim || ''; l.sub = sl.sub || ''; l.shape = sl.shape || '';
       /* v316: the lesson's shape, for the tutors' one-line suggestion (Ramy, 26 Nov 2026) */ }
