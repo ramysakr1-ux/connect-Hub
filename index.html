@@ -38,7 +38,7 @@
 <meta name="twitter:image" content="https://lite.celtaconnect.com/brand/share-card.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611271332">
+<link rel="stylesheet" href="hub-tokens.css?v=202611271522">
 <style>
   :root{
     /* The pane. A card on this page is a sheet of glass lying on the paper,
@@ -469,7 +469,7 @@
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611271332">
+<link rel="stylesheet" href="hub-house.css?v=202611271522">
 </head>
 <body>
 <div class="board">
@@ -691,20 +691,20 @@
   <footer class="foot"><span class="foot-mark"><svg viewBox="8 28 104 64" width="12" height="7" fill="none"><path d="M56.1 42.2 A 24 24 0 1 0 56.1 77.8" stroke="var(--gold-lifted)" stroke-width="13" stroke-linecap="round"></path><path d="M96.1 42.2 A 24 24 0 1 0 96.1 77.8" stroke="var(--paper)" stroke-width="13" stroke-linecap="round"></path></svg></span><span class="hub-credit">designed and built by <b>Ramy</b></span></footer>
 
 </div>
-<script src="hub-due.js?v=202611271332"></script>
-<script src="observation-defaults.js?v=202611271332"></script>
-<script src="hub-shared.js?v=202611271332"></script>
-<script src="hub-hand.js?v=202611271332"></script>
-<script src="hub-ink.js?v=202611271332"></script>
+<script src="hub-due.js?v=202611271522"></script>
+<script src="observation-defaults.js?v=202611271522"></script>
+<script src="hub-shared.js?v=202611271522"></script>
+<script src="hub-hand.js?v=202611271522"></script>
+<script src="hub-ink.js?v=202611271522"></script>
 <script src="input-sessions/library.js?v=202611221105"></script>
-<script src="hub-store.js?v=202611271332"></script>
-<script src="hub-say.js?v=202611271332"></script>
-<script src="hub-shelf.js?v=202611271332"></script>
-<script src="hub-front.js?v=202611271332"></script>
-<script src="hub-sync.js?v=202611271332"></script>
-<script src="hub-notebook.js?v=202611271332"></script>
-<script src="hub-feedback.js?v=202611271332"></script>
-<script src="hub-about.js?v=202611271332"></script>
+<script src="hub-store.js?v=202611271522"></script>
+<script src="hub-say.js?v=202611271522"></script>
+<script src="hub-shelf.js?v=202611271522"></script>
+<script src="hub-front.js?v=202611271522"></script>
+<script src="hub-sync.js?v=202611271522"></script>
+<script src="hub-notebook.js?v=202611271522"></script>
+<script src="hub-feedback.js?v=202611271522"></script>
+<script src="hub-about.js?v=202611271522"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTraineeRoomOnly in hub-shared.js. These are the
    trainee's own screens; nothing in the tutor or assessor flow links to them,
@@ -1622,6 +1622,46 @@ if (fbBack){
       if ((rec('connect_shared_v1') || []).some(x => x && x.kind === 'gtky' && x.by === ME.name && (!x.at || new Date(x.at).getTime() >= since))) return;
       const wd = new Date(day.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' });
       add('Pick your getting-to-know-you activity for ' + (day.date === TODAY ? 'today' : wd), '31_getting_to_know_you.html?view=activities&on=' + day.date);
+    } catch (e) {}
+  })();
+  /* FILMED OBSERVATIONS DUE TODAY (Ramy, 27 Nov 2026: "can we just add it to their cards without a notice?"). The deadline
+     showed on the Observation tasks page only. One line on the day of the film, and after it while a sheet is still not
+     turned in: films that share a deadline share a line. The time is the one 18_observation_tasks works out (the end of
+     the film, or of the last film in a back-to-back run, plus half an hour, to the next half hour), or the one a tutor
+     moved it to (tracker.extensions['o:filmedN']). Nothing locks. */
+  (function(){
+    try {
+      if (beforeStart || afterEnd || lastWrap || !TODAY || !TT || !Array.isArray(TT.days)) return;
+      const OBS = rec('connect_observations_v1') || {}, ext = (rec('chub:tracker') || {}).extensions || {};
+      const now = window.hubNow ? hubNow() : Date.now(), tz = CS.timeZone || '', reF = /^\s*film(?:ed)?\s+observations?\s*(\d+)\b/i;
+      const groups = {};
+      TT.days.forEach(function(d){
+        if (!d || !d.date || String(d.date) < '2026-11-27' || String(d.date) > TODAY) return;
+        const films = (d.sessions || []).filter(y => y && y.s && y.e && reF.test(String(y.t || '')));
+        films.forEach(function(x){
+          const n = +reF.exec(String(x.t))[1], id = 'filmed' + n;
+          if (OBS[id] && OBS[id].turnedInAt) return;
+          let end = x.e; for (let next; (next = films.find(y => String(y.s) === String(end)));) end = next.e;
+          const hm = /^(\d{1,2}):(\d{2})/.exec(String(end)); if (!hm) return;
+          const mins = Math.ceil((+hm[1] * 60 + +hm[2] + 30) / 30) * 30;
+          let at = slotInstant(d.date, String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0'));
+          const xt = typeof ext['o:' + id] === 'string' ? new Date(ext['o:' + id]).getTime() : NaN; if (isFinite(xt)) at = xt;
+          if (at == null) return;
+          if (d.date !== TODAY && at > now) return;
+          (groups[at] = groups[at] || []).push(n);
+        });
+      });
+      Object.keys(groups).map(Number).sort((a, b) => a - b).forEach(function(at){
+        const ns = groups[at].sort((a, b) => a - b), many = ns.length > 1;
+        const list = many ? ns.slice(0, -1).join(', ') + ' and ' + ns[ns.length - 1] : String(ns[0]);
+        const opt = tz ? { timeZone: tz } : {};
+        const hm = new Intl.DateTimeFormat('en-GB', Object.assign({ hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }, opt)).format(new Date(at));
+        const ymd = new Intl.DateTimeFormat('en-CA', Object.assign({ year: 'numeric', month: '2-digit', day: '2-digit' }, opt)).format(new Date(at));
+        const when = (window.hubClock ? hubClock(hm) : hm) + (ymd === TODAY ? ' today' : ', ' + new Date(ymd + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }));
+        const late = at <= now;
+        add('Filmed observation' + (many ? 's ' : ' ') + list + (late ? (many ? ': your sheets were due by ' : ': your sheet was due by ') + when + '. Turn ' + (many ? 'them' : 'it') + ' in'
+          : ': turn in your sheet' + (many ? 's' : '') + ' by ' + when), '18_observation_tasks.html?task=filmed' + ns[0], late ? 'red' : 'amber');
+      });
     } catch (e) {}
   })();
   /* the deadline, on the hero only the day before, the day itself, and once it is late */
