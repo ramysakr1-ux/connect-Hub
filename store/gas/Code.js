@@ -4370,6 +4370,11 @@ function submissionText_(sub) {
      source) are shared by anyone who chose the same text, which is not copying. */
   var parts = [], t = sub.text || {};
   Object.keys(t).sort().forEach(function (k) { parts.push(String(t[k] || '')); });
+  /* v320 (27 Nov 2026; Ramy: "why can't I check my own work?"): the Language Related Tasks keep each item's answers in
+     sub.fields (s3_i0_f0 ...), not in sub.text, so the own-work check read nothing there and said "Nothing submitted".
+     The fields are read too, in their own order; a phrase every trainee writes is common property (similar_). */
+  var f = sub.fields || {};
+  Object.keys(f).sort().forEach(function (k) { if (typeof f[k] === 'string') parts.push(f[k]); });
   return parts.join('\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
 }
 function words_(s) { return String(s || '').toLowerCase().replace(/[\u2019']/g, '').match(/[a-z0-9\u00c0-\u024f]+/g) || []; }
