@@ -41,7 +41,7 @@
 <title>Connect Lite — CELTA 5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611271221">
+<link rel="stylesheet" href="hub-tokens.css?v=202611271332">
 <style>
   body{background:var(--sand); color:var(--ink); font-family:'Karla',sans-serif; margin:0;}
   .board{max-width:1240px; margin:0 auto; padding:26px 20px 80px;}   /* wider, so the writing is not tight (Ramy, 19 Nov 2026); was 980px, same layout */
@@ -254,7 +254,7 @@
   @media(prefers-reduced-motion:reduce){ .c5r i{transition:none;} .c5r li.attn.first i, section.part:target{animation:none;} }
   @media print{ .c5r{display:none !important;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611271221">
+<link rel="stylesheet" href="hub-house.css?v=202611271332">
 </head>
 <body class="hub-celta5 hub-paper hub-course">
 <div class="board">
@@ -267,22 +267,22 @@
      fonts come from the store only when the button is pressed. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-<script src="celta5-pdf.js?v=202611271221"></script>
-<script src="hub-hand.js?v=202611271221"></script>
-<script src="hub-ink.js?v=202611271221"></script>
-<script src="assignment-defaults.js?v=202611271221"></script>
-<script src="celta5-text.js?v=202611271221"></script>
-<script src="celta5-appendix.js?v=202611271221"></script>
-<script src="celta5-criteria.js?v=202611271221"></script>
-<script src="hub-crit-learn.js?v=202611271221"></script>
-<script src="hub-crit-vocab.js?v=202611271221"></script>
-<script src="hub-tracker.js?v=202611271221"></script>
-<script src="observation-defaults.js?v=202611271221"></script>
-<script src="hub-shared.js?v=202611271221"></script>
-<script src="hub-store.js?v=202611271221"></script>
-<script src="hub-say.js?v=202611271221"></script>
-<script src="hub-sync.js?v=202611271221"></script>
-<script src="hub-notebook.js?v=202611271221"></script>
+<script src="celta5-pdf.js?v=202611271332"></script>
+<script src="hub-hand.js?v=202611271332"></script>
+<script src="hub-ink.js?v=202611271332"></script>
+<script src="assignment-defaults.js?v=202611271332"></script>
+<script src="celta5-text.js?v=202611271332"></script>
+<script src="celta5-appendix.js?v=202611271332"></script>
+<script src="celta5-criteria.js?v=202611271332"></script>
+<script src="hub-crit-learn.js?v=202611271332"></script>
+<script src="hub-crit-vocab.js?v=202611271332"></script>
+<script src="hub-tracker.js?v=202611271332"></script>
+<script src="observation-defaults.js?v=202611271332"></script>
+<script src="hub-shared.js?v=202611271332"></script>
+<script src="hub-store.js?v=202611271332"></script>
+<script src="hub-say.js?v=202611271332"></script>
+<script src="hub-sync.js?v=202611271332"></script>
+<script src="hub-notebook.js?v=202611271332"></script>
 <script type="text/x-hub-app">
 const MODE = window.HubMode;            // trainee | tutor | assessor
 const IS_TRAINEE = MODE === 'trainee', IS_TUTOR = MODE === 'tutor';
@@ -1059,6 +1059,10 @@ function render(){
   const again = (o, cur) => (o && o.signed && o.signed.at && !cur) ? 'Sign again' : 'Sign';
   /* her half of Stage 2 is hers until she submits it, or until her tutor returns Stage 2 (a return before she submitted) */
   const c2lock = !!s2c.submittedAt || !!(s2c.signed && s2c.signed.at) || !!s2t.returnedAt;
+  /* THE TRAINEE'S HALF IS THEIRS UNTIL THEY SUBMIT IT (Ramy, 27 Nov 2026: "Why is it that I can see Ilim's and Arad's Celta 5
+     before they turn it in? I can see the grades they're giving themselves."). A tutor or the assessor sees it once it is
+     submitted (or signed, or the stage returned); before that, the marks and notes they are still writing stay off this page. */
+  const s2cSeen = my || c2lock;
   const st1 = stageState(false, s1.returnedAt, s1.signedBy && s1.signedBy.at && c1sig, true);
   const st2 = stageState(s2c.submittedAt, s2t.returnedAt, c2sig);
   const st3 = stageState(false, s3.returnedAt, c3sig, true);
@@ -1131,13 +1135,13 @@ function render(){
   <section class="part" id="s2"><h2>Stage 2 <small>progress record</small> ${pill(st2[0], st2[1])}</h2>
     ${stageText('stage2')}
     ${tut || s2t.hoursTaught ? `<div class="oneline"><div class="ol">${field(s2t, 'hoursTaught', 'Hours taught at this stage', { o:'s2t', mine: tut, input:'text', locked: !!s2t.returnedAt })}</div></div>` : ''}
-    ${marksGrid(s2c.marks, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !c2lock, tutorMine: tut && !s2t.returnedAt, tutorX:true })}
+    ${marksGrid(s2cSeen ? s2c.marks : null, s2t.marks, { topics:['1','2','3','4','5'], showCand:true, candMine: my && !c2lock, tutorMine: tut && !s2t.returnedAt, tutorX:true })}
     <div class="halves" style="margin-top:14px">
       <div class="half ${my?'mine':''}"><h3>Candidate <small>${s2c.submittedAt ? 'submitted ' + when(s2c.submittedAt) : ''}</small></h3>
-        ${field(s2c, 'notesWA', 'Notes on your written assignments', { o:'s2c', mine: my, locked: c2lock })}
+        ${s2cSeen ? `${field(s2c, 'notesWA', 'Notes on your written assignments', { o:'s2c', mine: my, locked: c2lock })}
         ${field(s2c, 'notesOther', 'Other notes', { o:'s2c', mine: my, locked: c2lock })}
         <label class="f">Your overall self-assessment at this stage</label>${rating(s2c, 'overall', { o:'s2c', mine: my, locked: c2lock })}
-        ${field(s2c, 'areas', 'Areas you need to work on', { o:'s2c', mine: my, locked: c2lock })}
+        ${field(s2c, 'areas', 'Areas you need to work on', { o:'s2c', mine: my, locked: c2lock })}` : '<div class="ro empty">Not submitted yet. Their notes and marks show here once they submit.</div>'}
         ${my ? (c2lock ? (s2c.submittedAt && !s2t.returnedAt && !(s2c.signed && s2c.signed.at) ? `<div class="bar"><button class="btn quiet" type="button" data-takeback="stage2">Take it back</button><span class="status">You can take it back to change it until your tutor returns Stage 2.</span></div>` : '') : `<div class="bar"><button class="btn primary" type="button" data-submit="stage2">Submit to your tutor</button><span class="status" id="savedNote"></span></div>`) : ''}
         ${election(s2c, 'accurate', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!c2sig, yes:'is', no:'is not', lead:'This <b>is/is not</b> an accurate record of the tutorial discussion and my progress to date.' })}
         ${election(s2c, 'agrees', { o:'s2c', mine: my && !!s2t.returnedAt, locked: !!c2sig, yes:'I agree', no:'I do not agree', lead:'I have read and <b>agree/do not agree</b> with the summarising comments.' })}
@@ -1265,7 +1269,9 @@ function bookletInput(asTrainee){
      stage 1 while the tutor is writing it?"). They could: the tutors' half reached the trainee whole, draft and all. The
      store now holds an unreturned stage back (traineeCelta5t_), and this page shows a trainee nothing of one either. */
   const ret = x => (HOLD && !(x && x.returnedAt)) ? {} : (x || {});
-  const s1 = ret(TT.stage1), s2c = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (HOLD && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
+  const s1 = ret(TT.stage1), s2cAll = C.stage2 || {}, s2t = ret(TT.stage2), s3 = ret(TT.stage3), att = TT.attendance || {}, fin = C.final || {}, fint = (HOLD && !((TT.final || {}).signed && TT.final.signed.at)) ? {} : (TT.final || {}), conf = C.confirms || {};
+  /* a tutor's or assessor's PDF leaves out a Stage 2 the trainee has not submitted yet (27 Nov 2026), as the page does */
+  const s2c = (IS_TRAINEE || s2cAll.submittedAt || (s2cAll.signed && s2cAll.signed.at) || s2t.returnedAt) ? s2cAll : {};
   /* a candidate's signature only for the return it signed (sigFor); her choices under an earlier one are left out too */
   const c1sig = sigFor((C.stage1 || {}).signed, s1), c2sig = sigFor(s2c.signed, s2t), c3sig = sigFor((C.stage3 || {}).signed, s3);
   const choice = (o, cur, k) => (o && o.signed && o.signed.at && !cur) ? null : (typeof (o || {})[k] === 'boolean' ? o[k] : null);
