@@ -51,7 +51,7 @@
 <title>Connect Lite — Observation tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611271202">
+<link rel="stylesheet" href="hub-tokens.css?v=202611271209">
 <style>
   /* The palette lives on each screen, not in hub-house.css. */
   :root{
@@ -89,6 +89,9 @@
   .task .nm .due{display:block; margin-top:3px; font-size:0.74rem; font-weight:700; color:var(--gold);} .task .nm .due.late{color:var(--brick);}
   .dueline{display:inline-block; margin:2px 0 14px; padding:8px 14px; border-radius:10px; background:oklch(94% 0.05 85); color:var(--ink); font-size:0.92rem;}
   .dueline.late{background:oklch(94% 0.03 30); color:var(--brick);}
+  .obsmore{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:-4px 0 16px; padding:10px 12px; border:1px solid var(--sand-line); border-radius:10px; background:var(--paper);}
+  .obsmore .l{flex:1 1 220px; font-size:0.86rem; font-weight:600;} .obsmore input{font:inherit; font-size:0.86rem; padding:6px 10px; border:1px solid var(--sand-line); border-radius:8px;}
+  .obsmore .btn{padding:6px 12px; font-size:0.84rem;} .obsmore .btn:disabled{opacity:.45; cursor:default;} .obsmore .extsaved{font-weight:700; font-size:0.86rem; color:var(--teal);} .obsmore .extsaved:empty{display:none;}
   .st.done{background:oklch(95% 0.02 155); color:oklch(35% 0.08 155);}
   .st.part{background:oklch(94% 0.05 85); color:var(--gold);}
   .after{margin-top:22px; padding-top:16px; border-top:1px solid var(--sand-line);}
@@ -234,21 +237,21 @@
   .aud{font-size:.74rem; color:var(--grey); margin-left:8px;}
   .aud.now{font-size:.84rem; color:inherit; font-weight:600; flex:1 1 220px; line-height:1.45;}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611271202">
+<link rel="stylesheet" href="hub-house.css?v=202611271209">
 </head>
 <body class="hub-obs hub-paper hub-course">
 <div class="board">
   <a class="back" id="back" href="index.html">Back</a>
   <div id="app"></div>
 </div>
-<script src="observation-defaults.js?v=202611271202"></script>
-<script src="hub-shared.js?v=202611271202"></script>
-<script src="hub-store.js?v=202611271202"></script>
-<script src="hub-say.js?v=202611271202"></script>
-<script src="hub-rotation.js?v=202611271202"></script>
-<script src="hub-peers.js?v=202611271202"></script>
-<script src="hub-sync.js?v=202611271202"></script>
-<script src="hub-notebook.js?v=202611271202"></script>
+<script src="observation-defaults.js?v=202611271209"></script>
+<script src="hub-shared.js?v=202611271209"></script>
+<script src="hub-store.js?v=202611271209"></script>
+<script src="hub-say.js?v=202611271209"></script>
+<script src="hub-rotation.js?v=202611271209"></script>
+<script src="hub-peers.js?v=202611271209"></script>
+<script src="hub-sync.js?v=202611271209"></script>
+<script src="hub-notebook.js?v=202611271209"></script>
 <script type="text/x-hub-app">
 /* A trainee's own work. A tutor or an assessor READS it -- they have to, it
    is portfolio evidence -- so the page is not refused them; the fields are
@@ -524,7 +527,30 @@ function obsDue(t){
   const inst = window.hubZonedInstant && tz ? hubZonedInstant(date, at, tz) : new Date(date + 'T' + at).getTime();
   const day = new Date(date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
   /* the time as the course's clock says it everywhere else (5:30 PM on C/21) */
-  return { at: inst, label: (window.hubClock ? hubClock(at) : at) + ', ' + day };
+  const base = { at: inst, label: (window.hubClock ? hubClock(at) : at) + ', ' + day };
+  /* MORE TIME (Ramy, 27 Nov 2026: "we should have deadlines for observations as well"): a tutor can move it for one trainee
+     or for everyone, kept with the assignment extensions on each trainee's tracker record ('o:filmed1'). Nothing locks. */
+  const ex = obsExtOf(id), xt = ex ? new Date(ex).getTime() : NaN;
+  if (isFinite(xt)) return { at: xt, label: obsLabel(xt), extended: true, base };
+  return base;
+}
+function obsExtAll(){
+  try {
+    if (!READONLY) return (JSON.parse(localStorage.getItem('chub:tracker') || '{}') || {}).extensions || {};
+    const r = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {}, tr = (r.trainees || {})[P.get('trainee') || ''];
+    return (tr && tr.tracker && tr.tracker.extensions) || {};
+  } catch (e) { return {}; }
+}
+function obsExtOf(id){ const v = obsExtAll()['o:' + id]; return typeof v === 'string' ? v : ''; }
+/* an instant said in the course's own zone and clock, as the deadline line says it */
+function obsParts(ms){
+  const tz = CSET.timeZone || undefined, p = {};
+  try { new Intl.DateTimeFormat('en-GB', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(ms)).forEach(x => { p[x.type] = x.value; }); } catch (e) {}
+  return { date: p.year + '-' + p.month + '-' + p.day, hm: p.hour + ':' + p.minute };
+}
+function obsLabel(ms){
+  const q = obsParts(ms), day = new Date(q.date + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  return (window.hubClock ? hubClock(q.hm) : q.hm) + ', ' + day;
 }
 const dueTag = (t, k) => { const due = obsDue(t); if (!due) return ''; const r = WORK[k] || {};
   if (r.turnedInAt) return new Date(r.turnedInAt).getTime() > due.at ? '<span class="due late">Turned in late</span>' : '';
@@ -696,6 +722,38 @@ if (!READONLY && window.HubStore && HubStore.call) {
   }, () => {}); } catch (e) {}
 }
 
+/* THE TUTOR'S BOX (27 Nov 2026): on a trainee's sheet not yet turned in, a new deadline for this trainee or for everyone.
+   It says Saved, and the trainee's button stays grey until a different time is chosen, as on assignments. */
+let OBS_SAVED = '';
+function obsMoreHTML(t, k){
+  if (window.HubMode !== 'tutor' || !P.get('trainee') || !turnsIn(t) || (WORK[k] || {}).turnedInAt) return '';
+  const due = obsDue(t); if (!due) return '';
+  const q = obsParts(due.at), val = q.date + 'T' + q.hm, first = String(WHO || 'this trainee').split(/\s+/)[0];
+  return `<div class="obsmore"><span class="l">${due.extended ? 'Extended for ' + esc(first) + '. Lite\u2019s time was ' + esc(due.base.label) + '.' : 'New deadline'}</span>
+    <input type="datetime-local" id="obsExtAt" data-saved="${due.extended ? esc(val) : ''}" value="${esc(val)}">
+    <button type="button" class="btn" id="obsExtOne" data-obs="${esc(t.id)}"${due.extended ? ' disabled' : ''}>For ${esc(first)}</button>
+    <button type="button" class="btn" id="obsExtAll" data-obs="${esc(t.id)}">For everyone</button>
+    ${due.extended ? `<button type="button" class="btn" id="obsExtClear" data-obs="${esc(t.id)}">Back to Lite\u2019s time</button>` : ''}
+    <span class="extsaved" role="status">${esc(OBS_SAVED)}</span></div>`;
+}
+function obsExtSave(id, iso, everyone){
+  let r = {}; try { r = JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {}; } catch (e) {}
+  const all = r.trainees || {}, ids = everyone ? Object.keys(all) : [P.get('trainee') || ''];
+  ids.forEach(tid => { const tr = all[tid]; if (!tr) return; tr.tracker = tr.tracker || {}; tr.tracker.extensions = tr.tracker.extensions || {};
+    if (iso) tr.tracker.extensions['o:' + id] = iso; else delete tr.tracker.extensions['o:' + id]; });
+  localStorage.setItem('connect_roster_v1', JSON.stringify(r));
+  OBS_SAVED = everyone ? 'Saved for everyone' : 'Saved'; setTimeout(() => { OBS_SAVED = ''; document.querySelectorAll('.obsmore .extsaved').forEach(x => { x.textContent = ''; }); }, 5000);
+  const t = ['filmed', 'live'].map(g => (TASKS[g] || []).find(x => x.id === id)).filter(Boolean)[0]; if (t) sheet(t, '');
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('#obsExtOne, #obsExtAll, #obsExtClear'); if (!b || b.disabled) return;
+  if (b.id === 'obsExtClear') return obsExtSave(b.dataset.obs, '', false);
+  const v = ($('obsExtAt') || {}).value || '', m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(v); if (!m) return;
+  const ms = window.hubZonedInstant && CSET.timeZone ? hubZonedInstant(m[1], m[2], CSET.timeZone) : new Date(v).getTime(); if (!isFinite(ms)) return;
+  obsExtSave(b.dataset.obs, new Date(ms).toISOString(), b.id === 'obsExtAll');
+});
+document.addEventListener('input', e => { if (!e.target || e.target.id !== 'obsExtAt') return; const b = $('obsExtOne'); if (!b) return;
+  const saved = e.target.dataset.saved || ''; b.disabled = !!saved && e.target.value === saved; if (!b.disabled) document.querySelectorAll('.obsmore .extsaved').forEach(x => { x.textContent = ''; }); });
 function sheet(t, sit){
   const k = recKey(t.id, sit);
   rec(k);
@@ -766,6 +824,7 @@ function sheet(t, sit){
     <h1>${esc(t.title)}</h1>
     ${subOf(t) ? `<p class="lede">${esc(subOf(t))}</p>` : ''}
     ${(() => { const due = obsDue(t); if (!due) return ''; const tin = WORK[k].turnedInAt; return `<p class="dueline${(tin ? new Date(tin).getTime() : Date.now()) > due.at ? ' late' : ''}">${tin ? (new Date(tin).getTime() > due.at ? 'Turned in late. It was due ' : 'Turned in on time. It was due ') : 'Turn this in by '}<b>${esc(due.label)}</b>.</p>`; })()}
+    ${obsMoreHTML(t, k)}
     ${turnsIn(t) && turned ? `<div class="turned"><b>Turned in</b> — ${new Date(turned).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}.${READONLY ? '' : ' It is on your record; you can still add to it.'}</div>` : ''}
     ${t.brief ? `<div class="brief">${esc(t.brief)}</div>` : ''}
     ${String(t.id).indexOf('filmed') === 0 && !filmOf(t) ? filmHTML(t) : ''}
