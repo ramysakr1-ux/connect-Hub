@@ -91,7 +91,7 @@ window.HubStore = (function(){
     try {
       res = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), signal: ctl ? ctl.signal : undefined });
       text = await res.text();
-    } catch (e) { var ne = new Error(e && e.name === 'AbortError' ? 'The store took too long to answer' : 'Could not reach the store'); ne.transient = true; throw ne; }
+    } catch (e) { var ne = new Error(e && e.name === 'AbortError' ? 'The store took too long to answer' : 'Could not reach the store'); ne.transient = true; ne.timedOut = !!(e && e.name === 'AbortError'); throw ne; }
     finally { if (timer) clearTimeout(timer); }
     try { return JSON.parse(text); } catch (e) { var title = (text.match(/<title>([^<]*)<\/title>/) || [])[1] || ''; var err = new Error('The store did not answer as expected' + (title ? ' (' + title + ')' : '')); err.transient = true; throw err; }
   }
@@ -160,9 +160,13 @@ window.HubStore = (function(){
     var onlyOnce = /^(deleteCourse|undeleteCourse|purgeCourse|restoreFromBackup|putInterviewAudio|transcribeInterview)$/.test(payload.op);
     /* a read that only asks whether the store can be reached at all (hub-sync's waiting pages, 24 Nov 2026): tried once */
     if (payload.noRetry) { onlyOnce = true; delete payload.noRetry; }
+    /* A WRITE THAT MAKES SOMETHING NEW IS NOT SENT AGAIN AFTER A TIMEOUT (27 Nov 2026): a notice went up three times when
+       the store was slow. A call that timed out may still be running on the store, so sending it again makes a second
+       notice, a second file or a second email. An error page (the store never ran it) is still tried again. */
+    var newThing = /^(post|replyNote|askQuestion|putTutorNote|volunteerNote|putMaterial|putAsset|putNoteAudio|sendCard|giftMail|mailCourseFeedback|presentMail|traineeInvite|volunteerInvite|addTrainee|addTrainees|createPresentation|cloneCourse|createCourse)$/.test(payload.op);
     for (;;) {
       try { out = await once(payload, timeoutMs); }
-      catch (e) { if (!e.transient || onlyOnce || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }
+      catch (e) { if (!e.transient || onlyOnce || (newThing && e.timedOut) || tries >= waits.length) throw e; await new Promise(function(r){ setTimeout(r, waits[tries++]); }); continue; }
       // The store wants a PIN this device does not have, or has wrong: ask once
       // per refusal, up to three, then give up like any other refusal.
       // 'PIN needed' is the first open of a link on a course with PINs on:
