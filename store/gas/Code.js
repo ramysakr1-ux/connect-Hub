@@ -425,7 +425,12 @@ function doPost(e) {
 var IN_REQUEST_ = false, CHANGED_ = {}, REQ_COURSE_ = null, REQ_VER_ = '', REQ_OP_ = '';
 var READ_OPS_ = { tutorPhrases: 1, stage1Words: 1, adminPin: 1, ping: 1, boot: 1, shapeCv: 1, version: 1, me: 1, get: 1, course: 1, roster: 1, celta5Assets: 1, audio: 1, materials: 1,
   questions: 1, getQuestionAudio: 1, getNoteAudio: 1, getInterviewAudio: 1, trainerNotes: 1, peerSheets: 1, passInfo: 1,
-  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1, health: 1 };
+  ownerCourses: 1, centres: 1, volunteerCards: 1, readContribution: 1, bookings: 1, poolSet: 1, traineeViewLink: 1, folderTrainees: 1, folderRead: 1, rehearsalNotes: 1, ivClaims: 1, checkLink: 1, drivePicker: 1, health: 1,
+  /* v319 (27 Nov 2026; Ramy: "Light is getting a bit slower now"): reads that were counted as changes, so each one moved
+     the course's version and every open page booted the whole course again (3.2 MB, 20 seconds on C/21). Each writes
+     nothing: the TP7 & TP8 material (opened by every trainee), the store's check of the library books, the tutor's
+     notebook list, the link PINs list and which plan checks are on. */
+  tp78: 1, tp78Check: 1, tutorNotes: 1, pins: 1, checksOn: 1 };
 function verKey_(id) { return 'ver:' + id; }
 function versionStamp_(id) {
   var v = PropertiesService.getScriptProperties().getProperty(verKey_(id)) || '0';
