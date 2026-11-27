@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611271145">
+<link rel="stylesheet" href="hub-tokens.css?v=202611271202">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -104,6 +104,7 @@
   .duerow .dueline{flex:1; min-width:220px; font-size:0.84rem; font-weight:600; color:var(--ink-warm);}
   .duerow.past .dueline{color:oklch(45% 0.15 27);}
   .duerow .dueacts{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .duerow .btn:disabled{opacity:.45; cursor:default;} .duerow .extsaved{font-size:0.82rem; font-weight:700; color:var(--teal);} .duerow .extsaved:empty{display:none;}
   .duerow input{font-family:'Karla',sans-serif; font-size:0.82rem; padding:6px 10px;
     border:1.5px solid var(--sand-line); border-radius:6px; background:var(--field);}
   .stage-pill{display:inline-block; font-size:0.78rem; font-weight:700; padding:3px 10px; border-radius:10px; margin-top:8px;}
@@ -525,7 +526,7 @@
   @media (prefers-reduced-motion:reduce){ body.mkn .mkn-panel, body.mkn .mkn-panel.open{transition:none;} }
   @media print{ #mknFoot, #mknScrim, .mkn-phead{display:none !important;} body.mkn .mkn-panel{position:static !important; transform:none !important; visibility:visible !important; max-height:none !important; box-shadow:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611271145">
+<link rel="stylesheet" href="hub-house.css?v=202611271202">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -534,18 +535,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611271145"></script>
-<script src="assignment-history.js?v=202611271145"></script>
-<script src="hub-exchange.js?v=202611271145"></script>
-<script src="hub-docx.js?v=202611271145"></script>
-<script src="hub-marking.js?v=202611271145"></script>
-<script src="hub-due.js?v=202611271145"></script>
-<script src="hub-shared.js?v=202611271145"></script>
-<script src="hub-store.js?v=202611271145"></script>
-<script src="hub-say.js?v=202611271145"></script>
-<script src="hub-sync.js?v=202611271145"></script>
-<script src="hub-notebook.js?v=202611271145"></script>
-<script src="fol-interview.js?v=202611271145"></script>
+<script src="assignment-defaults.js?v=202611271202"></script>
+<script src="assignment-history.js?v=202611271202"></script>
+<script src="hub-exchange.js?v=202611271202"></script>
+<script src="hub-docx.js?v=202611271202"></script>
+<script src="hub-marking.js?v=202611271202"></script>
+<script src="hub-due.js?v=202611271202"></script>
+<script src="hub-shared.js?v=202611271202"></script>
+<script src="hub-store.js?v=202611271202"></script>
+<script src="hub-say.js?v=202611271202"></script>
+<script src="hub-sync.js?v=202611271202"></script>
+<script src="hub-notebook.js?v=202611271202"></script>
+<script src="fol-interview.js?v=202611271202"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -664,8 +665,16 @@ function setExtension(sub, iso){
   tr.tracker.extensions = tr.tracker.extensions || {};
   if (iso) tr.tracker.extensions[extKey(sub)] = iso; else delete tr.tracker.extensions[extKey(sub)];
   saveRoster(roster);
+  EXT_SAVED = true; clearTimeout(EXT_SAVED_T); EXT_SAVED_T = setTimeout(() => { EXT_SAVED = false; document.querySelectorAll('.extsaved').forEach(x => { x.textContent = ''; }); }, 5000);
   render();
 }
+/* THE DATE BOX SAYS WHAT HAPPENED (Ramy, 27 Nov 2026: "when I say change it, it should do something ... otherwise you can't
+   tell that it's changed"). After a save the box says Saved, and Change it stays grey until a different date is chosen. */
+var EXT_SAVED = false, EXT_SAVED_T = 0;
+document.addEventListener('input', e => { const i = e.target; if (!i || !/^(extAt|mknExtAt)$/.test(i.id)) return;
+  const b = document.getElementById(i.id === 'extAt' ? 'extSet' : 'mknExtSet'); if (!b) return;
+  const saved = i.dataset.saved || ''; b.disabled = !!saved && i.value === saved;
+  if (!b.disabled) document.querySelectorAll('.extsaved').forEach(x => { x.textContent = ''; }); });
 function baseDue(a, sub){
   if (sub && sub.stage === 'resubmission_needed') return HubDue.resubFor(a, sub);
   /* the deadline of the teaching set this trainee is in, where the assignment has one per set */
@@ -695,9 +704,10 @@ function dueRowHTML(a, sub){
   return `<div class="duerow ${st.past && !settled ? 'past' : ''}">
     <span class="dueline">${line}</span>
     ${settled ? '' : `<span class="dueacts">
-      <input type="datetime-local" id="extAt" value="${esc(HubDue.toLocalInput(mine.extended ? mine.iso : '') || prefill)}">
-      <button type="button" class="btn btn-quiet" id="extSet">${mine.extended ? 'Change it' : 'Give more time'}</button>
+      <input type="datetime-local" id="extAt" data-saved="${esc(mine.extended ? HubDue.toLocalInput(mine.iso) : '')}" value="${esc(HubDue.toLocalInput(mine.extended ? mine.iso : '') || prefill)}">
+      <button type="button" class="btn btn-quiet" id="extSet"${mine.extended ? ' disabled' : ''}>${mine.extended ? 'Change it' : 'Give more time'}</button>
       ${mine.extended ? '<button type="button" class="btn btn-quiet" id="extClear">Remove</button>' : ''}
+      <span class="extsaved" role="status">${EXT_SAVED ? 'Saved' : ''}</span>
     </span>`}
   </div>`;
 }
