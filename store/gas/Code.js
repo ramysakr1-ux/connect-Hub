@@ -1873,6 +1873,7 @@ case 'inbox': {
         if (assessor) boot.roster.forEach(function (t) { if (t && t.records) { delete t.records.about; delete t.records.intake; } });
       } else if (me) {
         boot.me = { token: me.token, name: me.name, group: me.group, email: me.email || '', records: recordsFor_(course.id, me.token, TRAINEE_READS) };
+        if (me.template) { var mayaB = mayaTracker_(course.id); if (mayaB) { boot.me.records = boot.me.records || {}; boot.me.records.tracker = mayaB; } }
         /* v129: the notes classmates shared with this trainee's group or with the whole course */
         boot.course.notes = sharedNotesFor_(course.id, me);
         /* v133: the peer sheets a classmate connected with this trainee (answers held back until their own self-evaluation is in) */
@@ -1901,13 +1902,16 @@ case 'inbox': {
          through 'get' and the roster, with their own limits; 'me' is the trainee's door. */
       /* The owner key too (1 Nov 2026, Ramy: "close it"): the console never calls 'me', and Connect's own key does not open a trainee's notebook. */
       if (reader || owner) throw new Error('Not yours to read');
-      return { token: me.token, name: me.name, group: me.group, email: me.email || '', records: recordsFor_(course.id, me.token, TRAINEE_READS) };
+      var bootRecs = recordsFor_(course.id, me.token, TRAINEE_READS);
+      if (me.template) { var mayaT = mayaTracker_(course.id); if (mayaT) { bootRecs = bootRecs || {}; bootRecs.tracker = mayaT; } }
+      return { token: me.token, name: me.name, group: me.group, email: me.email || '', records: bootRecs };
     }
     case 'get': {
       var kind = String(req.kind || '');
       if (reader) { if (PRIVATE_KINDS[kind] || (assessor && kind === 'about')) throw new Error('Not yours to read: ' + kind); return { data: read_(course.id, String(req.token || ''), kind) }; }
       if (!me) throw new Error('No token');
       if (!TRAINEE_READS[kind]) throw new Error('Not yours to read: ' + kind);
+      if (kind === 'tracker' && me.template) return { data: mayaTracker_(course.id) };
       if (kind === 'tracker') return { data: traineeTracker_(read_(course.id, me.token, kind)) };
       if (kind === 'celta5t') return { data: traineeCelta5t_(read_(course.id, me.token, kind)) };
       /* v263: feedback and its history go through the same hold as a boot (traineeHold_) */
@@ -5602,6 +5606,19 @@ function tpOf_(kind) { var m = /^tpHistory:(\d+)$/.exec(String(kind)); return m 
    malpractice warning. A trainee's pages show only their extensions, an issued letter (its date, signer and text), the
    provisional and final grade on their own tracker view, and the old hand-set stages and withdrawn flag. Everything else
    stays on the staff side. Before this the whole object went to the trainee's browser and only the pages hid it. */
+/* MAYA KEEPS THE WHOLE COURSE'S DEADLINES (Ramy, 27 Nov 2026: "add Maya to the 7:30 deadline too"). The trainee view's made-up
+   trainee is on no roster, so a deadline a tutor moved "for everyone" never reached her and her pages showed Lite's own
+   time. She is given every extension that all the course's trainees hold with the same time: what was moved for everyone,
+   and nothing that was one person's. Read only, like the rest of her. */
+function mayaTracker_(courseId) {
+  var people = rosterWithRecords_(courseId, { tracker: true }), out = {}, first = true;
+  people.forEach(function (t) {
+    var ex = (t.records && t.records.tracker && t.records.tracker.extensions) || {};
+    if (first) { Object.keys(ex).forEach(function (k) { if (typeof ex[k] === 'string' && ex[k]) out[k] = ex[k]; }); first = false; return; }
+    Object.keys(out).forEach(function (k) { if (ex[k] !== out[k]) delete out[k]; });
+  });
+  return Object.keys(out).length ? { extensions: out } : null;
+}
 function traineeTracker_(t) {
   if (!t || typeof t !== 'object') return t;
   var out = {};
