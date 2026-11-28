@@ -17,7 +17,7 @@
 <title>Connect Lite — Course admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Serif:ital@1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611281020">
+<link rel="stylesheet" href="hub-tokens.css?v=202611281031">
 <style>
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Karla',sans-serif; color:var(--ink); background:var(--sand);
@@ -724,7 +724,7 @@
   @media (max-width:560px){ .readylist li{grid-template-columns:1fr auto;} .readylist .rk{grid-column:1 / -1;} }
   .datewarn{color:var(--brick); font-weight:600;} .datewarn a{color:var(--brick);}
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611281020">
+<link rel="stylesheet" href="hub-house.css?v=202611281031">
 </head>
 <body>
 <div class="board">
@@ -1358,20 +1358,20 @@
 
 </div>
 
-<script src="assignment-defaults.js?v=202611281020"></script>
-<script src="hub-store.js?v=202611281020"></script>
-<script src="hub-xlsx.js?v=202611281020"></script>
-<script src="hub-say.js?v=202611281020"></script>
-<script src="agreement-defaults.js?v=202611281020"></script>
-<script src="observation-defaults.js?v=202611281020"></script>
-<script src="hub-shared.js?v=202611281020"></script>
+<script src="assignment-defaults.js?v=202611281031"></script>
+<script src="hub-store.js?v=202611281031"></script>
+<script src="hub-xlsx.js?v=202611281031"></script>
+<script src="hub-say.js?v=202611281031"></script>
+<script src="agreement-defaults.js?v=202611281031"></script>
+<script src="observation-defaults.js?v=202611281031"></script>
+<script src="hub-shared.js?v=202611281031"></script>
 <script src="hub-notes.js?v=202611101919"></script>
-<script src="hub-rotation.js?v=202611281020"></script>
-<script src="hub-due.js?v=202611281020"></script>
-<script src="hub-sync.js?v=202611281020"></script>
-<script src="hub-notebook.js?v=202611281020"></script>
-<script src="hub-hand.js?v=202611281020"></script>
-<script src="hub-ink.js?v=202611281020"></script>
+<script src="hub-rotation.js?v=202611281031"></script>
+<script src="hub-due.js?v=202611281031"></script>
+<script src="hub-sync.js?v=202611281031"></script>
+<script src="hub-notebook.js?v=202611281031"></script>
+<script src="hub-hand.js?v=202611281031"></script>
+<script src="hub-ink.js?v=202611281031"></script>
 <script>window.INPUTLIB_ONLY = true;</script>
 <script src="input-sessions/library.js?v=202610281502"></script>
 <script type="text/x-hub-app">
@@ -1415,7 +1415,7 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
     }
   }
   async function type(){
-    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611281020'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+    const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611281031'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
     if (!sheet) return;
     const given = await sheet.ask({ who: 'admin' }); if (!given) return;
     S.adminEnter(given);
@@ -1433,6 +1433,7 @@ function showTab(key){
   document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
   document.getElementById('panel-'+key).style.display='';
   if (key === 'roster' && typeof repaintReady === 'function') repaintReady();
+  if (key === 'assignments' && typeof paintWhoMarks === 'function') { try { paintWhoMarks(); } catch (e) {} }
 }
 document.getElementById('tabs').addEventListener('click', e=>{
   const btn = e.target.closest('.tab'); if(!btn) return; showTab(btn.dataset.tab);
@@ -3139,7 +3140,7 @@ async function renderStoreRoster(next){
   const admBtn = document.getElementById('storeAdminPin');
   if (admBtn) admBtn.addEventListener('click', async () => {
     try {
-      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611281020'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
+      const sheet = window.hubPin || await new Promise(res => { const sc = document.createElement('script'); sc.src = 'hub-pin.js?v=202611281031'; sc.onload = () => res(window.hubPin); sc.onerror = () => res(null); document.head.appendChild(sc); });
       if (!sheet) return;
       const pin = await sheet.ask({ who: 'admin', choose: true, change: !!PINS.admin }); if (!pin) return;
       await S.setAdminPin(pin); PINS = await S.pins().catch(() => PINS); renderStoreRoster();
@@ -4066,6 +4067,12 @@ function paintWhoMarks(){
 }
 try { paintWhoMarks(); } catch (e) {}
 document.addEventListener('hub:ready', () => { try { paintWhoMarks(); } catch (e) {} });
+/* the course's fresh copy can land after the box is drawn (28 Nov 2026: the saved tutors showed as "Their tutor that day"
+   until a redraw): for the first two minutes, redraw when the stored choice changes, unless a box is being used */
+(function(){ const now = () => { try { return JSON.stringify((JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}).markers || {}); } catch (e) { return ''; } };
+  let seen = now(), n = 0; const t = setInterval(() => { if (++n > 60) return clearInterval(t);
+    const v = now(); if (v === seen) return; const box = document.getElementById('whoMarks');
+    if (box && box.contains(document.activeElement)) return; seen = v; try { paintWhoMarks(); } catch (e) {} }, 2000); })();
 /* The Input sessions door on the tutor dashboard lands on the links block. */
 /* from the timetable's own settings: the clock, the time zone, the layout and the tutors */
 if (location.hash === '#ttSettings') { showTab('settings'); setTimeout(() => { const el = document.getElementById('courseZone'); if (el) el.closest('div').scrollIntoView({ block: 'start' }); }, 300); }
