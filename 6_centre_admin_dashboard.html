@@ -433,6 +433,16 @@
   .asg-none{margin:0; font-size:.86rem; color:var(--grey);}
   .asg.own .asg-state, .asg[data-key="a5"] .asg-state{background:var(--a-forest, var(--teal)) !important; color:var(--paper) !important;}
   /* bigger cards (Ramy, 29 Oct 2026: "make the cards bigger") */
+  .whomarks{margin-top:26px; padding:18px 20px 16px; border-radius:14px; background:var(--paper); border-top:3px solid var(--teal); box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3));}
+  .whomarks h3{margin:0 0 4px; font-family:'Newsreader',Georgia,serif; font-size:1.3rem; font-weight:500;}
+  .whomarks .lede{margin:0 0 14px;}
+  .whomarks .wm-grid{display:grid; grid-template-columns:minmax(70px,.6fr) repeat(var(--wm-n,2), minmax(0,1fr)); gap:10px 14px; align-items:center;}
+  .whomarks .wm-h{font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--grey);}
+  .whomarks .wm-k{font-weight:700;}
+  .whomarks .wm-a5{font-size:.9rem; color:var(--grey);}
+  .whomarks select{width:100%; min-width:0; min-height:40px;}
+  .whomarks .wm-status{margin:10px 0 0; font-size:.86rem; color:var(--grey); min-height:1.2em;}
+  @media (max-width:560px){ .whomarks{padding:16px 14px 14px;} .whomarks .wm-grid{gap:8px 8px; grid-template-columns:44px repeat(var(--wm-n,2), minmax(0,1fr));} .whomarks .wm-h:first-child{visibility:hidden;} }
   #assignmentRows.asg-grid{grid-template-columns:repeat(auto-fill, minmax(380px, 1fr)); gap:18px;}
   #assignmentRows .asg{min-height:170px; padding:26px 28px 24px; gap:14px;}
   #assignmentRows .asg h3{font-size:1.6rem;}
@@ -1330,6 +1340,8 @@
       <article class="asg" data-key="a5"><div class="asg-head"><span class="code">A5</span><span class="asg-state"></span></div><h3>Plagiarism Reflection</h3><p class="asg-aside">Center sanction: set for one trainee only after a plagiarism finding. Not one of the four.</p>
         <div class="asg-when"></div></article>
     </div>
+    <!-- WHO MARKS WHAT (Ramy, 28 Nov 2026): a tutor per assignment and group, read by the tutor dashboard (hubMarkerFor) -->
+    <div id="whoMarks" class="whomarks"></div>
     </section>
   </div>
 
@@ -4017,6 +4029,43 @@ renderStoreRoster();
     host.addEventListener('keydown', e => { const el = e.target.closest('.asg'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(el); } });
   } catch (e) {}
 })();
+/* WHO MARKS WHAT (Ramy, 28 Nov 2026: "this should be done with course admin"). One row per assignment, one column per
+   TP group, the tutors from Contacts in each box. Empty = the trainee's tutor on the day. Saved merged into the course's
+   settings, as the PIN switch is. */
+function paintWhoMarks(){
+  const host = document.getElementById('whoMarks'); if (!host) return;
+  let cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  let w = null; try { w = JSON.parse(localStorage.getItem('connect_assignment_wording_v2')); } catch (e) {}
+  const keys = hubAssignmentOrder(w).filter(k => k !== 'a5');
+  const groups = [...new Set(Object.values(loadRoster().trainees || {}).map(t => String(t.group || '')).filter(Boolean))].sort();
+  const tutors = [...new Set((cs.tutorContacts || []).map(c => String((c && c.name) || '').trim()).filter(Boolean))];
+  const m = cs.markers || {};
+  const NAMES = { fol: 'FOL', lrt: 'LRT', lsrt: 'LSRT', lfc: 'LFC' };
+  if (!groups.length || !tutors.length) { host.innerHTML = '<h3>Who marks what</h3><p class="lede">Add the tutors under Settings > Contacts, and the trainees to their groups, to choose who marks each assignment.</p>'; return; }
+  const opt = (v, cur, label) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
+  host.style.setProperty('--wm-n', groups.length);
+  host.innerHTML = '<h3>Who marks what</h3><p class="lede">Each assignment goes to this tutor’s list, for that group. The other tutor is the 2nd marker. Left on “Their tutor that day”, it goes to whoever has the group when it comes in.</p>'
+    + '<div class="wm-grid"><span class="wm-h">Assignment</span>' + groups.map(g => `<span class="wm-h">Group ${esc(g)}</span>`).join('')
+    + keys.map(k => `<span class="wm-k">${esc(NAMES[k] || k)}</span>` + groups.map(g => { const cur = String(((m[k] || {})[g]) || '');
+        return `<select data-k="${esc(k)}" data-g="${esc(g)}" aria-label="${esc((NAMES[k] || k) + ', Group ' + g)}">` + opt('', cur, 'Their tutor that day') + tutors.map(t => opt(t, cur, t)).join('') + (cur && !tutors.includes(cur) ? opt(cur, cur, cur) : '') + '</select>'; }).join('')).join('')
+    + '<span class="wm-k">A5</span>' + groups.map(() => '<span class="wm-a5">The tutor who sets it</span>').join('')
+    + '</div><p class="wm-status" id="wmStatus" aria-live="polite"></p>';
+  host.querySelectorAll('select').forEach(sel => sel.addEventListener('change', async () => {
+    const st = document.getElementById('wmStatus'); st.textContent = 'Saving…';
+    try {
+      const kept = (() => { try { return JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) { return {}; } })();
+      const mk = JSON.parse(JSON.stringify(kept.markers || {})), k = sel.dataset.k, g = sel.dataset.g;
+      mk[k] = mk[k] || {}; if (sel.value) mk[k][g] = sel.value; else delete mk[k][g];
+      if (!Object.keys(mk[k]).length) delete mk[k];
+      const next = Object.assign({}, kept, { markers: mk });
+      await window.HubStore.putCourse('settings', next);
+      try { localStorage.setItem('connect_course_settings', JSON.stringify(next)); } catch (e) {}
+      st.textContent = 'Saved at ' + window.hubTimeOf(new Date()) + '.';
+    } catch (e) { st.textContent = 'Not saved: ' + (e && e.message || 'try again') + '.'; }
+  }));
+}
+try { paintWhoMarks(); } catch (e) {}
+document.addEventListener('hub:ready', () => { try { paintWhoMarks(); } catch (e) {} });
 /* The Input sessions door on the tutor dashboard lands on the links block. */
 /* from the timetable's own settings: the clock, the time zone, the layout and the tutors */
 if (location.hash === '#ttSettings') { showTab('settings'); setTimeout(() => { const el = document.getElementById('courseZone'); if (el) el.closest('div').scrollIntoView({ block: 'start' }); }, 300); }

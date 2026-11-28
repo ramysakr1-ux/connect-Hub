@@ -1050,6 +1050,21 @@ function myGroups(){
   const mine = gs.filter(g => String(hubTutorOn(cs, g, day) || '').trim().toLowerCase() === me);
   return mine.length && mine.length < gs.length ? mine : null;
 }
+/* the assignments this tutor marks: Course admin's Who marks what, else the trainee's tutor today (hubMarkerFor). A
+   browser that does not know its tutor, or a tutor who marks nothing by name, still sees everyone's, as before. */
+function myAssignmentRows(){
+  let me = ''; try { me = (localStorage.getItem('chub:tutorName') || '').trim().toLowerCase(); } catch (e) {}
+  if (!me || !window.hubMarkerFor) return assignmentRows(myPeople());
+  let cs = {}; try { cs = JSON.parse(localStorage.getItem('connect_course_settings') || '{}') || {}; } catch (e) {}
+  const day = window.hubToday ? hubToday() : new Date().toISOString().slice(0, 10);
+  const who = (k, g) => String(hubMarkerFor(cs, k, g, day) || '').trim().toLowerCase();
+  const all = assignmentRows(people());
+  const gs = [...new Set(people().map(t => String(t.group || '')).filter(Boolean))];
+  if (!gs.some(g => hubAssignmentOrder(null).some(k => who(k, g) === me))) return all;
+  /* A5 is marked by the tutor who set it: its 1st marker's name (Ramy, 28 Nov 2026) */
+  const a5By = r => String((((r.tr.assignments || {}).a5 || {}).markers || {}).first || '').trim().toLowerCase();
+  return all.filter(r => r.key === 'a5' && a5By(r) ? a5By(r) === me : who(r.key, String(r.tr.group || '')) === me);
+}
 function myPeople(){ const all = people(), g = myGroups(); return g ? all.filter(t => g.includes(String(t.group || ''))) : all; }
 function people(){
   /* A, B, C, D, E, F within each group, not alphabetical (Ramy, 21 Oct 2026) */
@@ -1108,7 +1123,7 @@ function assignmentRows(list){
 function paintQueue(){
   const list=people(), mineList=myPeople();
   const tpWaiting=mineList.filter(t=>tpState(t).act).length;
-  const aRows=assignmentRows(mineList);
+  const aRows=myAssignmentRows();
   const aWaiting=aRows.filter(r=>r.s.act).length, aReturn=aRows.filter(r=>r.s.ret).length;
   const stuck=aRows.filter(r=>r.stage==='resubmission_needed'||r.stage==='returned_unmarked').length;
   /* Red is what the tutor has to do (Ramy, 28 Sep 2026): feedback to write
@@ -1743,7 +1758,7 @@ function paintBrief(){
   } catch (e) {}
   /* nothing waiting on the tutor */
   const list = myPeople();
-  const waiting = list.filter(t => tpState(t).act).length + assignmentRows(list).filter(r => r.s.act || r.s.ret).length;
+  const waiting = list.filter(t => tpState(t).act).length + myAssignmentRows().filter(r => r.s.act || r.s.ret).length;
   const toRead = list.reduce((n2, t) => n2 + selfToRead(t).length, 0);
   if (list.length && !waiting && !toRead && !stage1DueList().length) chips.push('<span class="dv6-chip clear">\u2713 Nothing waiting on you</span>');
   if (toRead) chips.push('<a class="dv6-chip wait" href="#rows"><b>' + toRead + '</b> ' + (toRead === 1 ? 'self-evaluation to read' : 'self-evaluations to read') + '</a>');
@@ -1945,7 +1960,7 @@ document.addEventListener('click', e => {
   const g = myGroups(); if (!g || g.length !== 1) return;
   FOCUS = g[0]; try { localStorage.setItem('chub:focusGroup', FOCUS); } catch (er) {}
   const mine = myPeople(), tpN = mine.filter(t => tpState(t).act).length;
-  TAB = tpN || !assignmentRows(mine).some(r => r.s.act) ? 'tp' : 'assignments'; FILTER = null; paint();
+  TAB = tpN || !myAssignmentRows().some(r => r.s.act) ? 'tp' : 'assignments'; FILTER = null; paint();
 });
 document.getElementById('queue').addEventListener('click', e=>{
   const b=e.target.closest('[data-tab]'); if(!b) return;

@@ -1562,6 +1562,13 @@ window.hubTutorOn = function(cs, group, date){
   for (var i = 0; i < rows.length; i++) if (rows[i] && rows[i].name && g && String(rows[i].group || '') === g) return String(rows[i].name);
   return '';
 };
+/* WHO MARKS WHAT (Ramy, 28 Nov 2026: "LSRT, we mark the first group. LRT, we mark the second group. And then FOL back to
+   the first group. And then LFC, the second group"). Course admin > Assignments names a tutor per assignment and group
+   (settings.markers[key][group]); with none named, the trainee's own tutor on the day marks it, as before. */
+window.hubMarkerFor = function(cs, key, group, date){
+  var m = cs && cs.markers && cs.markers[key], n = m && m[String(group == null ? '' : group)];
+  return n ? String(n) : (window.hubTutorOn ? window.hubTutorOn(cs, group, date) : '');
+};
 /* the level a group teaches on a day, from its class: '' with no classes (the readers then fall back to the set or room) */
 window.hubLevelOn = function(cs, group, date){
   var k = window.hubClassOn(cs, group, date || (window.hubToday ? window.hubToday() : ''));
