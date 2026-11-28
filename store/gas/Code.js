@@ -5173,6 +5173,10 @@ function mergeAssignments_(was, now, who) {
       if (moves || (ASG_OPEN_[s] && i === s)) {
         var t = {}, f; for (f in I) t[f] = I[f];
         ASG_TUTOR_PARTS_.forEach(function(p){ if (p in S) t[p] = S[p]; else delete t[p]; });
+        /* v323: when the trainee last saved anything to it, kept by the store and never by a page (take it back, below) */
+        if (S.returnedAt !== undefined) t.returnedAt = S.returnedAt; else delete t.returnedAt;
+        if (S.takenBackAt !== undefined) t.takenBackAt = S.takenBackAt; else delete t.takenBackAt;
+        t.traineeAt = new Date().toISOString();
         out[k] = t;
       } else out[k] = S;
     } else {
@@ -5185,7 +5189,31 @@ function mergeAssignments_(was, now, who) {
       var sameRound = s === 'resubmitted' || (s === 'closed' && S.sub2)
         ? String(I.sub2At || '') === String(S.sub2At || '')
         : String(I.sub1At || '') === String(S.sub1At || '');
+      /* TAKE IT BACK (v323, Ramy, 28 Nov 2026). A tutor can take a returned assignment back to marking: a pass at any time,
+         one returned for resubmission or unmarked only while the trainee has saved nothing to it since it was returned
+         (opening the resubmission saves, so "has not opened it" counts). The store's own copy is kept whole, the
+         trainee's work, the marks and any signature included; only the stage moves. A record returned before v323 has
+         no time of return: it can be taken back if the trainee has not saved since v323 and never opened round two. */
+      var RET = { closed: 1, resubmission_needed: 1, returned_unmarked: 1 }, back = S.sub2 ? 'resubmitted' : 'submitted';
+      var untouched = s === 'closed' || (S.returnedAt ? (!S.traineeAt || String(S.traineeAt) <= String(S.returnedAt)) : (!S.traineeAt && !S.round2Mats));
+      /* asked for in so many words: the page sends takeBack naming the return it undoes, so an old tab still showing
+         "Awaiting marking" is never read as one */
+      var asked = I.takeBack !== undefined && I.takeBack !== null && String(I.takeBack) === String(S.returnedAt || S.marked2At || S.marked1At || '');
+      if (RET[s] && i === back && sameRound && untouched && asked) {
+        var tb = {}, g; for (g in S) tb[g] = S[g];
+        tb.stage = back; tb.takenBackAt = new Date().toISOString();
+        out[k] = tb;
+        continue;
+      }
       out[k] = ((marking || (s === 'closed' && i === 'closed')) && sameRound) ? keepSigned_(S, I) : S;
+      /* the store's times are the store's: a page's copy never sets or clears them */
+      if (out[k] !== S) {
+        var o2 = {}, h; for (h in out[k]) o2[h] = out[k][h];
+        ['traineeAt', 'returnedAt', 'takenBackAt'].forEach(function(f){ if (S[f] !== undefined) o2[f] = S[f]; else delete o2[f]; });
+        delete o2.takeBack;
+        if (marking && RET[i]) o2.returnedAt = new Date().toISOString();
+        out[k] = o2;
+      }
     }
   }
   return out;

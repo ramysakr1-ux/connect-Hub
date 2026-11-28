@@ -516,6 +516,7 @@
   body.mkn:has(.mkn-sheetwrap:not([hidden])) #hubSync{opacity:0 !important; transition:none !important;}
   .mkn-prevframe{display:block; width:100%; height:min(72vh, 900px); border:1px solid var(--sand-line); border-radius:var(--r-strip); background:var(--paper);}
   .mkn-sheet[data-sheet="preview"]{width:min(1180px, 100%);}
+  .mkn-takeback{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:16px 0 0; font-size:.9rem; color:var(--grey);}
   .mkn-printrow{margin:16px 0 0;} .mkn-printrow .mkn-btn{display:inline-flex; align-items:center; text-decoration:none;}
   @media (max-width:560px){
     .mkn-all{display:none;}
@@ -1651,6 +1652,10 @@ function mknPanelHTML(st){
     if (g2) h += `<div class="mkn-own"><span class="mkn-cap">Overall comment${two ? ', resubmission' : ''}</span><p>${esc(g2)}</p></div>`;
     /* giving more time stays where the script is back with the trainee, as on the page before */
     if (sub.stage === 'resubmission_needed' || sub.stage === 'returned_unmarked') h += dueRowHTML(st.a, sub);
+    /* TAKE IT BACK (Ramy, 28 Nov 2026): a returned script can come back to marking while the trainee has not started on it */
+    { const tb = mknTakeBackOf(sub), nm = esc(st.first || 'The trainee');
+      if (tb && tb.ok) h += `<p class="mkn-takeback"><span>${sub.stage === 'closed' ? 'To change the marking, take it back.' : nm + ' hasn\u2019t started on it. To change the marking, take it back.'}</span> <button type="button" class="mkn-btn is-quiet" id="mknTakeBack">Take it back</button></p>`;
+      else if (tb) h += `<p class="mkn-takeback"><span>${nm} has opened it, so it stays with them until they ${sub.stage === 'returned_unmarked' ? 'submit it again' : 'resubmit'}.</span></p>`; }
     /* A CLOSED SCRIPT IS A RECORD (24 Nov 2026): its print sits under it, in place of Return, and is not gold */
     if (sub.stage === 'closed') h += `<p class="mkn-printrow"><a class="mkn-btn is-quiet" id="mknPrint" href="11_assignment_record.html?trainee=${encodeURIComponent(TRAINEE_ID)}&a=${encodeURIComponent(CURRENT)}" target="_blank" rel="noopener">Print / Save as PDF</a></p>`;
   }
@@ -2647,6 +2652,30 @@ function mknResubHTML(a, sub){
   return out || '<div class="mkn-sec"><p class="mkn-plain">Nothing submitted yet.</p></div>';
 }
 
+/* ======================= TAKE IT BACK (28 Nov 2026) =======================
+   The store decides (v323, mergeAssignments_): a pass at any time; returned for resubmission or unmarked only while the
+   trainee has saved nothing since the return. This is the page's reading of the same rule, to offer the button. */
+function mknTakeBackOf(sub){
+  const s = String((sub && sub.stage) || ''); if (!/^(closed|resubmission_needed|returned_unmarked)$/.test(s)) return null;
+  if (s === 'closed') return { ok: true };
+  const t = String(sub.traineeAt || ''), r = String(sub.returnedAt || '');
+  return { ok: r ? (!t || t <= r) : (!t && !sub.round2Mats) };
+}
+async function mknTakeBack(){
+  const sub = subFor(CURRENT), tb = mknTakeBackOf(sub); if (!tb || !tb.ok) return;
+  const st = mknState(), nm = (st && st.first) || 'The trainee', what = NAMES[CURRENT] || String(CURRENT).toUpperCase();
+  if (!(await confirmModal('Take back ' + nm + '\u2019s ' + what + '? ' + nm + ' stops seeing your feedback until you return it again. Your marks and comments stay as they are.', 'Take it back'))) return;
+  const was = sub.stage, back = sub.sub2 ? 'resubmitted' : 'submitted';
+  sub.takeBack = String(sub.returnedAt || sub.marked2At || sub.marked1At || '');
+  sub.stage = back; saveSubs();
+  await mknWithin(mknFlush(), 10000);
+  const all = await mknWithin(mknStored(), 10000), rec = all && all[CURRENT];
+  delete sub.takeBack;
+  if (rec && rec.stage === back) { Object.assign(sub, rec); delete sub.takeBack; saveSubs(); render(); return; }
+  sub.stage = (rec && rec.stage) || was; if (rec) Object.assign(sub, rec); saveSubs(); render();
+  alert(rec ? nm + ' has started on it, so it stays with them.' : 'Lite could not reach the course. Nothing was changed. Try again in a moment.');
+}
+
 /* ======================= OWN WORK ======================= */
 function mknOwnKey(round){ return 'mk:own:' + TRAINEE_ID + ':' + CURRENT + ':' + round; }
 /* the last check of this script in this tab; never on the record */
@@ -2827,6 +2856,7 @@ document.addEventListener('click', e => {
   /* own work */
   if (t.closest('#mknOwn')) { if (MKN_OWN_BUSY) return; const st = mknState(); if (st && !mknOwnGet(st.round) && !flagsOf(st.sub, st.round).length) mknOwnRun(); else mknOwnSheet(); return; }
   if (t.closest('#mknOwnRun')) { mknOwnRun(); return; }
+  if (t.closest('#mknTakeBack')) { mknTakeBack(); return; }
   const at = t.closest('[data-mknattach]'); if (at) { mknOwnAttach(+at.getAttribute('data-mknattach')); return; }
   const uf = t.closest('[data-mknunflag]'); if (uf) { mknOwnUnflag(+uf.getAttribute('data-mknunflag')); return; }
   const of = t.closest('[data-mknoff]'); if (of) { mknOwnOff(+of.getAttribute('data-mknoff'), true); return; }
