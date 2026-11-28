@@ -470,12 +470,10 @@
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
   /* A NEW NOTICE AT THE TOP UNTIL GOT IT (Ramy, 28 Nov 2026: "how can we make sure that they even get their attention?").
      Amber is attention; it never moves or blinks. */
-  .newnote{margin:0 0 16px; padding:16px 18px 14px; background:var(--paper); border-top:3px solid var(--amber, oklch(70% 0.14 70)); border-radius:0 0 12px 12px; box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3));}
-  .newnote .nk{margin:0 0 6px; font-size:.78rem; font-weight:700; letter-spacing:.04em; color:oklch(45% 0.1 70);}
-  .newnote .nb{margin:0 0 12px; font-size:1rem; line-height:1.55; white-space:pre-line; overflow-wrap:anywhere;}
-  .newnote .nr{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px;}
-  .newnote .ngot{font-family:'Karla',sans-serif; font-weight:700; font-size:.92rem; min-height:44px; padding:0 20px; border-radius:var(--r-control, 10px); border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); cursor:pointer;}
-  .newnote .nmore{font-size:.86rem; color:var(--grey);}
+  .newnote{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:0 0 14px; padding:10px 14px; background:var(--paper); border-top:3px solid var(--amber, oklch(70% 0.14 70)); border-radius:0 0 12px 12px; box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3));}
+  .newnote[hidden]{display:none;}
+  .newnote .nline{margin:0; font-size:.95rem;}
+  .newnote .ngot{margin-left:auto; font-family:'Karla',sans-serif; font-weight:700; font-size:.9rem; min-height:40px; padding:0 18px; border-radius:var(--r-control, 10px); border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); cursor:pointer;}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202611281304">
 </head>
@@ -1273,13 +1271,13 @@ if (fbBack){
       const olderN = posts.length - current.length;
       host.innerHTML = `<div class="shead"><h2>Course noticeboard</h2>${fresh ? `<span class="new">${fresh} new</span>` : ''}${olderN > 0 ? `<button class="more" type="button">${showAll ? 'Fewer' : 'Older notices (' + olderN + ')'}</button>` : ''}</div>`
 
-        + '<div class="pins">' + (list.length ? '' : '<p class="nonew" style="margin:0; padding:6px 4px; color:var(--grey); font-size:.92rem; font-weight:600;">Nothing new on the board.</p>') + list.map(p => `<article class="post"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}${outAt(p) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(window.hubNoticeText ? hubNoticeText(p) : p.text)}</p></div></article>`).join('') + '</div>';
+        + '<div class="pins">' + (list.length ? '' : '<p class="nonew" style="margin:0; padding:6px 4px; color:var(--grey); font-size:.92rem; font-weight:600;">Nothing new on the board.</p>') + list.map(p => `<article class="post" data-id="${e(p.id || '')}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to${p.to ? ' mine' : ''}">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}${outAt(p) > seenAt ? '<span class="dot" title="New since you last looked"></span>' : ''}</div><p class="body">${linkify(window.hubNoticeText ? hubNoticeText(p) : p.text)}</p></div></article>`).join('') + '</div>';
       host.hidden = false;
       const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });
     };
     draw();
-    /* A NEW NOTICE AT THE TOP UNTIL GOT IT (Ramy, 28 Nov 2026). The newest notice this trainee has not pressed Got it on
-       sits above the hero, in full, on every visit until they do. Got it goes to the store (op noticeSeen), which tells
+    /* A NEW NOTICE AT THE TOP UNTIL GOT IT (Ramy, 28 Nov 2026). A line above the hero says how many notices are new and who
+       from, on every visit until the trainee presses Read it, which goes down to the board. Read it goes to the store (op noticeSeen), which tells
        the tutors who has read it. Kept in this browser too, so it goes at once and is sent again if the store missed it.
        Only notices out from 28 Nov 2026, when Got it began. */
     (function(){
@@ -1296,12 +1294,16 @@ if (fbBack){
         const mine = got();
         const todo = current.filter(p => p.id && !p.seen && !mine.includes(String(p.id)) && outAt(p) >= FROM).sort((a, b) => outAt(b).localeCompare(outAt(a)));
         if (!todo.length) { box.hidden = true; box.innerHTML = ''; return; }
-        const p = todo[0], more = todo.length - 1;
-        box.innerHTML = `<p class="nk">New notice \u00b7 from ${e(String(p.by || 'your tutor').split(' ')[0])} \u00b7 ${e(when(outAt(p)))}</p>`
-          + `<p class="nb">${linkify(window.hubNoticeText ? hubNoticeText(p) : p.text)}</p>`
-          + `<div class="nr"><button type="button" class="ngot">Got it</button>${more ? `<span class="nmore">${more} more new on the noticeboard</span>` : ''}</div>`;
+        /* ONE LINE, NOT THE NOTICE AGAIN (Ramy, 28 Nov 2026: "This is too big ... Don't duplicate the notice"): it says there
+           is something new and who it is from; Read it goes down to the board and counts as read */
+        const from = [...new Set(todo.map(p => String(p.by || 'your tutor').split(' ')[0]))].join(' and ');
+        box.innerHTML = `<p class="nline"><b>${todo.length === 1 ? '1 new notice' : todo.length + ' new notices'}</b> from ${e(from)}</p><button type="button" class="ngot">${todo.length === 1 ? 'Read it' : 'Read them'}</button>`;
         box.hidden = false;
-        box.querySelector('.ngot').addEventListener('click', () => { const id = String(p.id); const m = got(); if (!m.includes(id)) m.push(id); keep(m); send([id]); paint(); });
+        box.querySelector('.ngot').addEventListener('click', () => {
+          const ids = todo.map(p => String(p.id)), m = got(); ids.forEach(id => { if (!m.includes(id)) m.push(id); }); keep(m); send(ids);
+          const el = document.querySelector('#stream .post[data-id="' + ids[0].replace(/"/g, '') + '"]') || document.getElementById('stream');
+          paint(); if (el) el.scrollIntoView({ block: 'center' });
+        });
       };
       paint();
     })();
