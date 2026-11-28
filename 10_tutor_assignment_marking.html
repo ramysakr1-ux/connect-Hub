@@ -13,7 +13,7 @@
 <title>Connect Lite — Mark assignment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Karla:wght@400;500;600;700&family=Instrument+Sans:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="hub-tokens.css?v=202611281031">
+<link rel="stylesheet" href="hub-tokens.css?v=202611281038">
 <style>
   *{box-sizing:border-box;}
   a{color:var(--teal);} a:hover{color:oklch(30% 0.06 195);}
@@ -526,7 +526,7 @@
   @media (prefers-reduced-motion:reduce){ body.mkn .mkn-panel, body.mkn .mkn-panel.open{transition:none;} }
   @media print{ #mknFoot, #mknScrim, .mkn-phead{display:none !important;} body.mkn .mkn-panel{position:static !important; transform:none !important; visibility:visible !important; max-height:none !important; box-shadow:none;} }
 </style>
-<link rel="stylesheet" href="hub-house.css?v=202611281031">
+<link rel="stylesheet" href="hub-house.css?v=202611281038">
 </head>
 <body class="hub-assign hub-paper">
 <div class="board">
@@ -535,18 +535,18 @@
 <div class="picker" id="picker"></div>
   <div id="app"></div>
 </div>
-<script src="assignment-defaults.js?v=202611281031"></script>
-<script src="assignment-history.js?v=202611281031"></script>
-<script src="hub-exchange.js?v=202611281031"></script>
-<script src="hub-docx.js?v=202611281031"></script>
-<script src="hub-marking.js?v=202611281031"></script>
-<script src="hub-due.js?v=202611281031"></script>
-<script src="hub-shared.js?v=202611281031"></script>
-<script src="hub-store.js?v=202611281031"></script>
-<script src="hub-say.js?v=202611281031"></script>
-<script src="hub-sync.js?v=202611281031"></script>
-<script src="hub-notebook.js?v=202611281031"></script>
-<script src="fol-interview.js?v=202611281031"></script>
+<script src="assignment-defaults.js?v=202611281038"></script>
+<script src="assignment-history.js?v=202611281038"></script>
+<script src="hub-exchange.js?v=202611281038"></script>
+<script src="hub-docx.js?v=202611281038"></script>
+<script src="hub-marking.js?v=202611281038"></script>
+<script src="hub-due.js?v=202611281038"></script>
+<script src="hub-shared.js?v=202611281038"></script>
+<script src="hub-store.js?v=202611281038"></script>
+<script src="hub-say.js?v=202611281038"></script>
+<script src="hub-sync.js?v=202611281038"></script>
+<script src="hub-notebook.js?v=202611281038"></script>
+<script src="fol-interview.js?v=202611281038"></script>
 <script type="text/x-hub-app">
 /* Whose room this is -- see hubTutorRoomOnly in hub-shared.js. A trainee or an
    assessor who reached this page got the whole editable feedback form, grade
@@ -2657,6 +2657,8 @@ function mknOwnGet(round){
   return null;
 }
 /* "Not a concern", remembered with the record so the other tutor sees it too: sub.flags.notConcern[round][key] */
+/* the short note of the last check kept on the record: when, by whom, each pass's state and how many passages it found */
+function mknOwnRec(sub, round){ const c = ((sub && sub.flags) || {}).checked, r = c && typeof c === 'object' ? c[round] : null; return r && typeof r === 'object' && r.at ? r : null; }
 function mknOffOf(sub, round){ const n = (sub.flags || {}).notConcern; return (n && typeof n === 'object' && n[round] && typeof n[round] === 'object') ? n[round] : {}; }
 /* what the checks found, and what is attached to the record, as one list. Each passage has a key (its kind and its
    words) for "Not a concern", and says whether it is attached. */
@@ -2671,7 +2673,17 @@ function mknOwnList(st){
 function mknOwnPillHTML(st){
   if (MKN_OWN_BUSY) return '<span class="mkn-pill is-dash" id="mknOwn" role="status">Own work · checking</span>';
   const o = mknOwnGet(st.round), list = mknOwnList(st), open = list.filter(x => !x.off && x.att < 0).length, att = flagsOf(st.sub, st.round).length;
-  if (!o) return att ? `<button type="button" class="mkn-pill is-amber" id="mknOwn">Own work · ${att} attached</button>` : '<button type="button" class="mkn-pill is-dash" id="mknOwn">Own work · not checked</button>';
+  if (!o && att) return `<button type="button" class="mkn-pill is-amber" id="mknOwn">Own work · ${att} attached</button>`;
+  /* A CHECK RUN IN ANOTHER TAB OR ON ANOTHER DAY (Ramy, 28 Nov 2026: "I checked all 8 assignments for plagiarism yesterday,
+     and now when I open them, it says own work not checked"). The record keeps when it was checked, by whom and how much
+     each pass found (sub.flags.checked[round]); never the passages, which can be another trainee's words. Pressing the
+     pill runs it again to show them. */
+  if (!o) { const rec = mknOwnRec(st.sub, st.round);
+    if (!rec) return '<button type="button" class="mkn-pill is-dash" id="mknOwn">Own work · not checked</button>';
+    const when = ' title="Checked ' + esc((() => { try { return new Date(rec.at).toLocaleDateString('en-US', { day: 'numeric', month: 'long' }); } catch (e) { return ''; } })()) + (rec.by ? ' by ' + esc(rec.by) : '') + '. Press to run it again and see the details."';
+    if (rec.found) return `<button type="button" class="mkn-pill is-amber" id="mknOwn"${when}>Own work · checked, ${rec.found} found</button>`;
+    if (['course', 'web', 'para'].some(p => /^(off|error)$/.test(rec[p] || ''))) return `<button type="button" class="mkn-pill is-plain" id="mknOwn"${when}>Own work · checked in part</button>`;
+    return `<button type="button" class="mkn-pill" id="mknOwn"${when}>${MKN_CHECK}Own work</button>`; }
   const part = ['course', 'web', 'para'].some(p => /^(off|error)$/.test((o[p] || {}).state));
   if (open) return `<button type="button" class="mkn-pill is-amber" id="mknOwn">Own work · ${open} to look at</button>`;
   if (att) return `<button type="button" class="mkn-pill is-amber" id="mknOwn">Own work · ${att} attached</button>`;
@@ -2728,6 +2740,14 @@ async function mknOwnRun(){
   }
   o.at = new Date().toISOString(); MKN_OWN = o; MKN_OWN_BUSY = false;
   try { sessionStorage.setItem(o.key, JSON.stringify(o)); } catch (e) {}
+  { const sub = subFor(CURRENT);
+    if (/^(submitted|resubmitted|closed)$/.test(String(sub.stage || ''))) {
+      sub.flags = (sub.flags && typeof sub.flags === 'object') ? sub.flags : {};
+      sub.flags.checked = Object.assign({}, (sub.flags.checked && typeof sub.flags.checked === 'object') ? sub.flags.checked : {}, { [round]: {
+        at: o.at, by: mknTutor(), course: o.course.state, web: o.web.state, para: o.para.state,
+        found: o.course.items.length + o.web.items.length + o.para.items.length } });
+      saveSubs();
+    } }
   render(); mknOwnSheet();
 }
 /* THE OWN-WORK SHEET (drawing v4-12) */
