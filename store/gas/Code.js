@@ -1856,7 +1856,7 @@ case 'inbox': {
          volunteer's link as "<courseId>-<random>", and the browser has no
          other way to learn which course it is on (30 Sep 2026). Not a secret
          -- the key already proves the course; the random half is the secret. */
-      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: sharedFor_(course.id, tutor || assessor), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id, me) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
+      var boot = { course: { id: course.id, settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor, me), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: sharedFor_(course.id, tutor || assessor), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id, me) : null, coming: comingFor_(course.id), guidance: reader ? guidanceFor_(course.id) : null } };
       if (tutor) boot.course.courseFeedback = courseFeedbackFor_(course.id);
       /* v205: the versions of the three records a page writes whole, so its next write can say which one it started from */
       if (tutor) boot.course.revs = courseRead_(course.id, 'revs') || {};
@@ -2033,7 +2033,7 @@ case 'inbox': {
     // ---- course-level, readable by all on the course, written by tutors ----
     case 'course': {
       if (!course) throw new Error('This link is not on a course');
-      var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: sharedFor_(course.id, tutor || assessor), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
+      var cres = { settings: settingsFor_(course, courseRead_(course.id, 'settings'), reader, me), wording: courseRead_(course.id, 'wording'), observations: courseRead_(course.id, 'observations'), stream: streamFor_(course, courseRead_(course.id, 'stream'), tutor, me), grid: gridFor_(course, courseRead_(course.id, 'grid'), reader, me), timetable: timetableFor_(courseRead_(course.id, 'timetable'), tutor), tppoints: tpPointsFor_(courseRead_(course.id, 'tppoints'), reader, me), volunteers: reader ? withoutVolunteerEmails_(courseRead_(course.id, 'volunteers'), assessor) : null, shared: sharedFor_(course.id, tutor || assessor), folpool: vol ? null : folPoolFor_(courseRead_(course.id, 'folpool') || {}, tutor || assessor, course.id, me), folprofiles: vol ? null : folProfilesFor_(courseRead_(course.id, 'folprofiles') || {}, tutor || assessor, course.id, me), volunteerNames: (me && !tutor && !assessor && !vol) ? volunteerNamesFor_(course.id) : null };
       if (tutor) cres.courseFeedback = courseFeedbackFor_(course.id);
       /* briefs: every version of each assignment brief, by its key, so the marking page opens the one an attempt answered (R30, 31 Oct 2026) */
       if (tutor || assessor) cres.briefs = courseRead_(course.id, 'briefs') || null;
@@ -3776,6 +3776,24 @@ case 'inbox': {
       });
       if (!peFound) throw new Error('That post is no longer there');
       return { saved: true, stream: peList };
+    }
+    /* a trainee's Got it on a notice (v324): their own token, on posts that are out and meant for them; nothing else */
+    case 'noticeSeen': {
+      if (!me || me.template || tutor || assessor) throw new Error('Only a trainee marks a notice as read');
+      var nsIds = (Array.isArray(req.ids) ? req.ids : [req.id]).map(function (x) { return String(x || ''); }).filter(Boolean).slice(0, 20);
+      if (!nsIds.length) throw new Error('No notice named');
+      var nsTok = String(me.token), nsAt = new Date().toISOString(), nsDone = [];
+      courseUpdate_(course.id, 'stream', function (list) {
+        return list.map(function (p) {
+          if (!p || p.draft || nsIds.indexOf(String(p.id)) === -1) return p;
+          if (p.to && String(p.to) !== String(me.group || '')) return p;
+          p.readBy = p.readBy && typeof p.readBy === 'object' ? p.readBy : {};
+          if (!p.readBy[nsTok]) p.readBy[nsTok] = nsAt;
+          nsDone.push(String(p.id));
+          return p;
+        });
+      });
+      return { seen: nsDone };
     }
     case 'unpost': {
       requireTutor_(tutor);
@@ -6672,16 +6690,25 @@ function downAt_(v) {
   if (!v || !/^\d{4}-\d{2}-\d{2}T/.test(String(v))) return '';
   var d = new Date(String(v)); return isNaN(d.getTime()) ? '' : d.toISOString();
 }
-function streamFor_(course, list, tutor) {
+/* WHO HAS READ A NOTICE (v324, Ramy, 28 Nov 2026: "how can we make sure that they even get their attention?"). A post
+   keeps readBy {token: when}, written by the trainee's own Got it (op noticeSeen). The tutor key gets it whole and puts
+   names to it. Anyone else gets the posts without it, a trainee with seen: true on the ones they have read: a token is a
+   person's link, and nobody but the tutors may see another's. */
+function streamFor_(course, list, tutor, me) {
   list = Array.isArray(list) ? list : [];
   if (tutor) return list;
   var s = course ? courseRead_(course.id, 'settings') : null;
   var now = courseDay_(s) ? new Date(courseDay_(s) + 'T23:59:59Z').getTime() : Date.now();
+  var tok = me && me.token ? String(me.token) : '';
   return list.filter(function (p) {
     if (!p || p.draft) return false;
     if (!p.publishAt) return true;
     var t = new Date(String(p.publishAt)).getTime();
     return isNaN(t) || t <= now;
+  }).map(function (p) {
+    var c = {}, k; for (k in p) if (k !== 'readBy') c[k] = p[k];
+    if (tok && p.readBy && p.readBy[tok]) c.seen = true;
+    return c;
   });
 }
 function pinnedAt_(course, at) {

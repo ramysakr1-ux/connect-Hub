@@ -417,6 +417,7 @@
   /* DELETE CLEAR OF THE ROUND BUTTON (Ramy, 23 Nov 2026): on a phone the notice's Delete wrapped to the right edge, where the
      round C button sits, and could not be tapped under it. On a phone it starts the line on the left, thumb-sized. */
   @media (max-width:560px){ .stream .post .rm{margin-left:0; min-height:40px; padding:0 10px 0 0;} .stream :is(.downacts, .heldacts) :is(.btn-post, .btn-back){min-height:40px;} }
+  .stream .readline{margin:8px 0 0; font-size:0.8rem; line-height:1.5; color:var(--grey);} .stream .readline b{color:var(--ink); font-weight:700;}
   .stream .downline{margin:8px 0 0; padding-top:6px; border-top:1px dashed var(--sand-line); font-size:0.78rem; line-height:1.5; color:var(--grey);}
   .stream .downline .more{font:inherit; font-weight:700; background:none; border:0; padding:0; color:var(--teal-deep); text-decoration:underline; text-underline-offset:3px; cursor:pointer;} .stream .downline .more:hover{color:var(--teal);}
   .stream :is(.downacts, .heldacts) .btn-post{font-family:'Karla',sans-serif; font-size:0.84rem; font-weight:700; padding:9px 18px; border-radius:var(--r-control); border:0; cursor:pointer;}
@@ -2114,7 +2115,18 @@ document.addEventListener('input', e => {
      will go down"). Without a time, a notice is up until the next course day; with one, until that time, then it folds
      under Older notices. Set when it is written, or on a notice already up. */
   let downFor = null;   // the post whose "comes down" picker is open
-  const downRow = p => downFor === p.id
+  /* WHO HAS READ IT (Ramy, 28 Nov 2026): the trainees' Got it, from the store (p.readBy, token: when), with names. Only
+     for notices out from 28 Nov 2026, when Got it began; a held one has no line yet. */
+    const readRow = p => { try {
+      const outIso = (p.publishAt && String(p.publishAt) > String(p.at)) ? String(p.publishAt) : String(p.at);
+      if (p.draft || outIso < '2026-11-28T00:00:00Z' || outIso > new Date().toISOString()) return '';
+      const ro = (JSON.parse(localStorage.getItem('connect_roster_v1') || '{}') || {}).trainees || {};
+      const who = Object.keys(ro).filter(k => ro[k] && (!p.to || String(ro[k].group || '') === String(p.to)));
+      if (!who.length) return '';
+      const rb = p.readBy || {}, read = who.filter(k => rb[k]), not = who.filter(k => !rb[k]).map(k => String(ro[k].name || '').split(' ')[0]).filter(Boolean);
+      return `<p class="readline"><b>Read by ${read.length} of ${who.length}.</b>${not.length ? ' Not yet: ' + e(not.join(', ')) : ''}</p>`;
+    } catch (er) { return ''; } };
+    const downRow = p => downFor === p.id
     ? `<div class="heldacts downacts"><label class="bywhen">Take it down at <input type="datetime-local" class="downpick" value="${p.downAt && window.HubDue ? e(HubDue.toLocalInput(p.downAt)) : ''}"></label><button class="btn-post primary" type="button" data-downset="${e(p.id)}"${busy ? ' disabled' : ''}>Set</button>${p.downAt ? `<button class="btn-back" type="button" data-downclear="${e(p.id)}">Keep the usual day</button>` : ''}<button class="btn-back" type="button" data-downcancel="1">Cancel</button></div>`
     : `<p class="downline">${p.downAt && window.HubDue ? (HubDue.state(p.downAt).past ? 'Came down ' : 'Comes down ') + e(HubDue.state(p.downAt).due) + '. ' : 'Up until the next course day. '}<button class="more" type="button" data-down="${e(p.id)}">${p.downAt ? 'Change' : 'Take it down at a set time'}</button></p>`;
   async function postDown(id, downAt){
@@ -2147,7 +2159,7 @@ document.addEventListener('input', e => {
       /* FOLDED UNTIL ASKED FOR (Ramy, 11 Nov 2026, with ten scheduled on C/21: "an option to hide all those announcements"):
          the held posts are one line until a tutor opens them; this browser remembers which */
       + (back.length ? `<p class="slabel heldline">Held back: ${back.length} post${back.length === 1 ? '' : 's'} the trainees do not see yet${back[0] && back[0].publishAt && window.HubDue ? '. The next goes up ' + e(HubDue.state(back[0].publishAt).due) : ''}. <button class="more" type="button" id="heldToggle">${heldOpen() ? 'Hide them' : 'Show them'}</button></p>` + (heldOpen() ? `<div class="pins">` + back.map(heldRow).join('') + '</div>' : '') + (posts.length ? `<p class="slabel">On the board</p>` : '') : '')
-      + (list.length ? '<div class="pins">' : '') + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(window.hubNoticeText ? hubNoticeText(p) : p.text)}</p>${downRow(p)}</div></article>`).join('') + (list.length ? '</div>' : '')
+      + (list.length ? '<div class="pins">' : '') + list.map(p => `<article class="post" data-id="${e(p.id)}"><span class="who" aria-hidden="true">${e(initials(p.by))}</span><div><div class="top"><b>${e(p.by || 'Tutor')}</b><span class="to">${p.to ? 'Group ' + e(p.to) : 'Whole course'}</span><span>${e(when(outAt(p)))}</span>${duePill(p)}<button class="rm" type="button" data-rm="${e(p.id)}" title="Delete this post">Delete</button></div><p class="body">${linkify(window.hubNoticeText ? hubNoticeText(p) : p.text)}</p>${readRow(p)}${downRow(p)}</div></article>`).join('') + (list.length ? '</div>' : '')
       + (posts.length || back.length ? (list.length ? '' : '<p class="empty">Nothing current on the board. A notice leaves it after its countdown, or after the next course day.</p>') : '<p class="empty">Nothing on the board yet. The trainees see this noticeboard on their home.</p>');
     const po = host.querySelector('#pinOpen'); if (po) po.addEventListener('click', () => { composing = true; draw(); host.querySelector('#streamText').focus(); });
     const pc = host.querySelector('#pinClose'); if (pc) pc.addEventListener('click', () => { composing = false; draw(); });

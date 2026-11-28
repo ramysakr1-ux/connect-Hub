@@ -468,6 +468,14 @@
   body.asking-name .board > :not(.chrome):not(#hero):not(.foot){display:none !important;}
   body.asking-name > :not(.board):not(script):not(style):not(link){display:none !important;}
   body.asking-name #hero > :not(.hero-name):not(h2):not(h1):not(.kind):not(#heroKind):not(#heroTitle):not(#heroWhen):not(.when){display:none !important;}
+  /* A NEW NOTICE AT THE TOP UNTIL GOT IT (Ramy, 28 Nov 2026: "how can we make sure that they even get their attention?").
+     Amber is attention; it never moves or blinks. */
+  .newnote{margin:0 0 16px; padding:16px 18px 14px; background:var(--paper); border-top:3px solid var(--amber, oklch(70% 0.14 70)); border-radius:0 0 12px 12px; box-shadow:var(--nb-shadow, 0 8px 24px -16px rgba(0,0,0,.3));}
+  .newnote .nk{margin:0 0 6px; font-size:.78rem; font-weight:700; letter-spacing:.04em; color:oklch(45% 0.1 70);}
+  .newnote .nb{margin:0 0 12px; font-size:1rem; line-height:1.55; white-space:pre-line; overflow-wrap:anywhere;}
+  .newnote .nr{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px;}
+  .newnote .ngot{font-family:'Karla',sans-serif; font-weight:700; font-size:.92rem; min-height:44px; padding:0 20px; border-radius:var(--r-control, 10px); border:1.5px solid var(--ink); background:var(--paper); color:var(--ink); cursor:pointer;}
+  .newnote .nmore{font-size:.86rem; color:var(--grey);}
 </style>
 <link rel="stylesheet" href="hub-house.css?v=202611281128">
 </head>
@@ -519,6 +527,7 @@
        information. We will let you know when the time comes."
        It never repeats the noticeboard, which is the course talking; this is
        what the course is asking of this person, today. -->
+  <section class="newnote" id="newNote" hidden aria-live="polite"></section>
   <section class="hero" id="hero" hidden>
     <p class="k" id="heroKind"></p>
     <h2 id="heroTitle"></h2>
@@ -1269,6 +1278,33 @@ if (fbBack){
       const m = host.querySelector('.more'); if (m) m.addEventListener('click', () => { showAll = !showAll; draw(); });
     };
     draw();
+    /* A NEW NOTICE AT THE TOP UNTIL GOT IT (Ramy, 28 Nov 2026). The newest notice this trainee has not pressed Got it on
+       sits above the hero, in full, on every visit until they do. Got it goes to the store (op noticeSeen), which tells
+       the tutors who has read it. Kept in this browser too, so it goes at once and is sent again if the store missed it.
+       Only notices out from 28 Nov 2026, when Got it began. */
+    (function(){
+      const box = document.getElementById('newNote'); if (!box) return;
+      const FROM = '2026-11-28T00:00:00Z', KEY = 'chub:noticeGot';
+      const got = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]') || []; } catch (er) { return []; } };
+      const keep = ids => { try { localStorage.setItem(KEY, JSON.stringify(ids.slice(-60))); } catch (er) {} };
+      const tmpl = () => !!(window.HubStore && HubStore.isTemplate && HubStore.isTemplate());
+      const send = ids => { if (!ids.length || tmpl() || !window.HubStore || !HubStore.call) return;
+        HubStore.call({ op: 'noticeSeen', token: HubStore.token(), ids: ids.slice(0, 20) }).catch(() => {}); };
+      /* pressed here but not yet on the store's copy: sent again */
+      { const mine = got(); send(posts.filter(p => p.id && !p.seen && mine.includes(String(p.id))).map(p => String(p.id))); }
+      const paint = () => {
+        const mine = got();
+        const todo = current.filter(p => p.id && !p.seen && !mine.includes(String(p.id)) && outAt(p) >= FROM).sort((a, b) => outAt(b).localeCompare(outAt(a)));
+        if (!todo.length) { box.hidden = true; box.innerHTML = ''; return; }
+        const p = todo[0], more = todo.length - 1;
+        box.innerHTML = `<p class="nk">New notice \u00b7 from ${e(String(p.by || 'your tutor').split(' ')[0])} \u00b7 ${e(when(outAt(p)))}</p>`
+          + `<p class="nb">${linkify(window.hubNoticeText ? hubNoticeText(p) : p.text)}</p>`
+          + `<div class="nr"><button type="button" class="ngot">Got it</button>${more ? `<span class="nmore">${more} more new on the noticeboard</span>` : ''}</div>`;
+        box.hidden = false;
+        box.querySelector('.ngot').addEventListener('click', () => { const id = String(p.id); const m = got(); if (!m.includes(id)) m.push(id); keep(m); send([id]); paint(); });
+      };
+      paint();
+    })();
     /* Seen once it has been on screen a moment -- the dots stay for this
        visit and are gone on the next. */
     setTimeout(() => { try { localStorage.setItem('chub:streamSeen', newestAt); } catch(e) {} }, 4000);
