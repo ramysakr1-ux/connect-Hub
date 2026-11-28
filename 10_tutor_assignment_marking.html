@@ -2710,7 +2710,9 @@ function mknOwnPillHTML(st){
   if (!o) { const rec = mknOwnRec(st.sub, st.round);
     if (!rec) return '<button type="button" class="mkn-pill is-dash" id="mknOwn">Own work · not checked</button>';
     const when = ' title="Checked ' + esc((() => { try { return new Date(rec.at).toLocaleDateString('en-US', { day: 'numeric', month: 'long' }); } catch (e) { return ''; } })()) + (rec.by ? ' by ' + esc(rec.by) : '') + '. Press to run it again and see the details."';
-    if (rec.found) return `<button type="button" class="mkn-pill is-amber" id="mknOwn"${when}>Own work · checked, ${rec.found} found</button>`;
+    /* a passage marked Not a concern is no longer one to look at */
+    const left = Math.max(0, (rec.found || 0) - Object.keys(mknOffOf(st.sub, st.round)).length);
+    if (left) return `<button type="button" class="mkn-pill is-amber" id="mknOwn"${when}>Own work · checked, ${left} to look at</button>`;
     if (['course', 'web', 'para'].some(p => /^(off|error)$/.test(rec[p] || ''))) return `<button type="button" class="mkn-pill is-plain" id="mknOwn"${when}>Own work · checked in part</button>`;
     return `<button type="button" class="mkn-pill" id="mknOwn"${when}>${MKN_CHECK}Own work</button>`; }
   const part = ['course', 'web', 'para'].some(p => /^(off|error)$/.test((o[p] || {}).state));
